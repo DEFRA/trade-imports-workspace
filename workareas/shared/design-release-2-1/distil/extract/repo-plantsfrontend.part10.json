@@ -1,6 +1,6 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 10 of repo:plantsfrontend read, in full, the high-risk plants notification view (check your answers) feature and the review helpers it shares with the notification list. Files read: src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/ — page.js (5 lines), refusal.js (26), controller.js (185), template.njk (114), check-answers.fit.spec.js (443, 21 tests), controller.test.js (963), copy/copy.en.js (140), copy/copy.cy.js (141), copy/copy.test.js (60), view-model/index.js (332), view-model/view-header.js (80), view-model/view-header.test.js (123), view-model/incomplete-cards.js (89), view-model/incomplete-cards.test.js (28), view-model/invalid-parties.js (37), view-model/rows/change-link.js (34), view-model/rows/error-row.js (49), view-model/rows/summary-row.js (26), view-model/rows/value-text.js (21) — and features/review/ — evaluation.js (12), lateness.js (36), lateness.test.js (47), late-rule.js (16), late-rule.test.js (29), notification-day-text.js (10), notification-day-text.test.js (12). Read for context only, claimed by other parts: obligations/sections/review.js (part 12), src/server/app/shared/kit.js (part 13), and, for the wording and values the view-model reads across feature boundaries, features/timing-windows.js, features/arrival-details/copy/copy.en.js (dateLabels), features/place-of-destination/copy/copy.en.js (headings), features/address-book-picker/address-lines.js and services/commodities/index.js (lineFieldsFor). Covered: the one page this slice serves, slug 'notification-view', with GET and POST; its header for a draft and a submitted notification (reference as H1, status tag, date line, Amend and Delete buttons, the import reference numbers section with its warning and the customs document code); the 'Check your answers' H1 and journey strip an amendment gets instead; its three numbered sections and every card and summary row on them (import details, one card per commodity line, arrival details, place of destination, consignor, identification numbers, contact), each row's key, its value text and its Change or Edit details link; the lateness warning and the submitted lateness banner; the error summary, the seven incomplete-card messages and the three party-error messages, what makes a party invalid, what refuses Continue and what it logs; the page foot (submit heading, Continue, save actions, Cancel amend) and the amendment-cancelled banner; every copy key in both locales; the 21 fit tests; and the view-model, view-header and rows/ helpers as mechanism claims. The slice stops before the declaration and confirmation pages, which part 11 claims.",
+  "structure": "Part 10, check your answers and the review helpers. Read in full: every file of features/check-answers (page.js, controller.js, controller.test.js, template.njk, refusal.js, check-answers.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js, view-model/index.js, view-header.js, view-header.test.js, incomplete-cards.js, incomplete-cards.test.js, invalid-parties.js and the four rows/ helpers) and every file of features/review (evaluation.js, lateness.js, lateness.test.js, late-rule.js, late-rule.test.js, notification-day-text.js, notification-day-text.test.js). One page, the notification view at slug 'notification-view', which plays three roles. For a draft and a submitted notification it shows a header: the reference as H1, a status tag, a date line, Amend and Delete buttons, and import reference numbers. For an amendment it is a 'Check your answers' review with the journey strip. Below that sit three numbered sections of summary cards (Import details, Commodity N, Arrival details, place of destination, Consignor, Identification numbers, Contact). Then come the outstanding-card and party-address errors, the late warning for a draft and the late banner for a submitted notification, the amendment-cancelled banner, and the submit form with Continue, the shared save actions and Cancel amend. Covered: the route, gate and Back link; every card, row key, value text and change link; every copy key in English and Welsh; the refusal and lateness rules; all 21 tests of check-answers.fit.spec.js; and the view-model and rows helpers as mechanism claims. The slice has not changed since the earlier extract's commit (a88175f), so every kept claim still says the same thing, and claims 175 to 177 add what that extract left out. obligations/sections/review.js and shared/kit.js were read for context only: parts 12 and 13 claim them.",
   "claims": [
     {
       "id": "repo-plantsfrontend-p10-001",
@@ -1417,6 +1417,30 @@
       "quote": "export const requestClock = (request) => request.app?.clock?.() ?? new Date()",
       "confidence": "verbatim",
       "note": "mechanism: supplies the instant the lateness rule compares the notification's arrival date against."
+    },
+    {
+      "id": "repo-plantsfrontend-p10-175",
+      "statement": "A refused Continue on an incomplete amendment leaves the notification in its amendment state.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js:580-598",
+      "quote": "expect((await store.get(result.journeyId)).status).toBe(AMEND)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p10-176",
+      "statement": "The amendment-cancelled banner is a GOV.UK success notification banner with the alert role, so a screen reader announces it on arrival.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/template.njk:24-31",
+      "quote": "{{ govukNotificationBanner({ type: \"success\", titleText: copy.cancelAmend.successTitle, text: copy.cancelAmend.successBody, role: \"alert\" }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p10-177",
+      "statement": "Amend this notification posts to the notification's amend action at /notifications/{reference}/amend.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/view-header.js:27-33, view-header.test.js:48-56 and check-answers.fit.spec.js:357",
+      "quote": "postAction: `${SET_BASE}/notifications/${REFERENCE}/amend`",
+      "confidence": "verbatim"
     }
   ]
 }

@@ -1,0 +1,765 @@
+{
+  "source": "repo:backend",
+  "structure": "Part 3, Accompanying documents, read on branch main. Read in full: the 13 files of src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/ (the Mongo records AccompanyingDocument and UploadSession with their repositories, the request bodies RegisterUploadRequest and ClaimUploadRequest, the response types AccompanyingDocumentDto, UploadSessionDto and DocumentListResponse, the enums DocumentType and ScanStatus, DocumentController with 8 endpoints and DocumentService), the 3 files of accompanyingdocument/file/ (FileStatus, UploadedFile, UploadedFileDto), the 3 files of cdp/uploader/ (CdpScanResultPayload, CdpScanResultForm with its lenient deserialiser, CdpScanResultFile) and s3/S3DocumentService.java. To answer how documents follow a notification, it also looked up the callers of DocumentService in notification/NotificationService.java (delete), notification/NotificationExpiryIndex.java (TTL index), outbox/OutboxService.java (only claimed, clean documents reach an event) and the documents bucket setting in application.yml, and checked docs/design-notes.md 'Accompanying documents and cdp-uploader' for the stated reasons. Covered: all 13 document types; every field of a document, a session and a file; the 8 endpoints (register session, get session by correlationId, claim, list, get, delete, scan-result callback, download file) with methods, paths, validation and status codes; the register, claim and scan flow with every ScanStatus and FileStatus; S3 download; document expiry and delete with the notification; and gaps on size and type limits and on copy and amend. Refs are file:line from the repo root; P stands for src/main/java/uk/gov/defra/trade/imports/animals.",
+  "claims": [
+    {
+      "id": "repo-backend-p3-001",
+      "statement": "An accompanying document's type is one of 13 values: ITAHC, VETERINARY_HEALTH_CERTIFICATE, SELF_DECLARATION, JOURNEY_LOG, IMPORT_PERMIT, CITES_PERMIT_OR_CERTIFICATE, AIR_WAYBILL, SEA_WAYBILL, RAIL_WAYBILL, BILL_OF_LADING, COMMERCIAL_INVOICE, PACKING_OR_SPECIES_LIST and OTHER.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/DocumentType.java:6-45",
+      "quote": "public enum DocumentType { ITAHC, VETERINARY_HEALTH_CERTIFICATE, SELF_DECLARATION, JOURNEY_LOG, IMPORT_PERMIT, CITES_PERMIT_OR_CERTIFICATE, AIR_WAYBILL, SEA_WAYBILL, RAIL_WAYBILL, BILL_OF_LADING, COMMERCIAL_INVOICE, PACKING_OR_SPECIES_LIST, OTHER",
+      "confidence": "verbatim",
+      "note": "The enum carries no separate code field: the API code is the constant name. Each label is only an OpenAPI description, so the user-facing wording lives in the frontend."
+    },
+    {
+      "id": "repo-backend-p3-002",
+      "statement": "The document type ITAHC is described as 'ITAHC (Intra Trade Animal Health Certificate)'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:7-8",
+      "quote": "@Schema(description = \"ITAHC (Intra Trade Animal Health Certificate)\")\n  ITAHC,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-003",
+      "statement": "The document type VETERINARY_HEALTH_CERTIFICATE is described as 'Other veterinary certificate or veterinary declaration'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:10-11",
+      "quote": "@Schema(description = \"Other veterinary certificate or veterinary declaration\")\n  VETERINARY_HEALTH_CERTIFICATE,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-004",
+      "statement": "The document type SELF_DECLARATION is described as 'Self-declaration'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:13-14",
+      "quote": "@Schema(description = \"Self-declaration\")\n  SELF_DECLARATION,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-005",
+      "statement": "The document type JOURNEY_LOG is described as 'Journey log'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:16-17",
+      "quote": "@Schema(description = \"Journey log\")\n  JOURNEY_LOG,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-006",
+      "statement": "The document type IMPORT_PERMIT is described as 'Import permit or authorisation'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:19-20",
+      "quote": "@Schema(description = \"Import permit or authorisation\")\n  IMPORT_PERMIT,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-007",
+      "statement": "The document type CITES_PERMIT_OR_CERTIFICATE is described as 'CITES permit or certificate'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:22-23",
+      "quote": "@Schema(description = \"CITES permit or certificate\")\n  CITES_PERMIT_OR_CERTIFICATE,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-008",
+      "statement": "The document type AIR_WAYBILL is described as 'Air waybill'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:25-26",
+      "quote": "@Schema(description = \"Air waybill\")\n  AIR_WAYBILL,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-009",
+      "statement": "The document type SEA_WAYBILL is described as 'Sea waybill'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:28-29",
+      "quote": "@Schema(description = \"Sea waybill\")\n  SEA_WAYBILL,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-010",
+      "statement": "The document type RAIL_WAYBILL is described as 'Rail waybill'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:31-32",
+      "quote": "@Schema(description = \"Rail waybill\")\n  RAIL_WAYBILL,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-011",
+      "statement": "The document type BILL_OF_LADING is described as 'Bill of lading'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:34-35",
+      "quote": "@Schema(description = \"Bill of lading\")\n  BILL_OF_LADING,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-012",
+      "statement": "The document type COMMERCIAL_INVOICE is described as 'Commercial invoice'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:37-38",
+      "quote": "@Schema(description = \"Commercial invoice\")\n  COMMERCIAL_INVOICE,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-013",
+      "statement": "The document type PACKING_OR_SPECIES_LIST is described as 'Packing list or species list'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:40-41",
+      "quote": "@Schema(description = \"Packing list or species list\")\n  PACKING_OR_SPECIES_LIST,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-014",
+      "statement": "The document type OTHER is described as 'Other supporting documents'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:43-44",
+      "quote": "@Schema(description = \"Other supporting documents\")\n  OTHER",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-015",
+      "statement": "The document types are the same list for every notification: nothing in the enum or the claim narrows the types by commodity, by the live-animals or germinal-products set, or by notification category.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentType.java:6; P/accompanyingdocument/DocumentService.java:63-79",
+      "quote": "public enum DocumentType {",
+      "confidence": "inferred",
+      "note": "Inferred from the claim setting any DocumentType without consulting the notification."
+    },
+    {
+      "id": "repo-backend-p3-016",
+      "statement": "Accompanying documents are stored in their own MongoDB collection, accompanying_documents, apart from the notification record, and are linked to it by notificationReferenceNumber.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/AccompanyingDocument.java:26,41-42",
+      "quote": "@Document(collection = \"accompanying_documents\") ... @Indexed\n  private String notificationReferenceNumber;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-017",
+      "statement": "An accompanying document records: id, version, notificationReferenceNumber, uploadId, correlationId, documentType, documentReference, dateOfIssue, scanStatus, claimed, files, created, updated and expireAt.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/AccompanyingDocument.java:34-70",
+      "quote": "private String id; ... private Long version; ... private String notificationReferenceNumber; ... private String uploadId; ... private String correlationId; private DocumentType documentType; private String documentReference; private LocalDate dateOfIssue; private ScanStatus scanStatus; ... private boolean claimed = false; ... private List<UploadedFile> files = new ArrayList<>(); ... private Instant created; ... private Instant updated; private Instant expireAt;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-018",
+      "statement": "Each accompanying document's uploadId is unique, and so is its correlationId.",
+      "kind": "constraint",
+      "ref": "P/accompanyingdocument/AccompanyingDocument.java:44-48",
+      "quote": "@Indexed(unique = true)\n  private String uploadId;\n\n  @Indexed(unique = true)\n  private String correlationId;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-019",
+      "statement": "An accompanying document is versioned for optimistic locking, and records when it was created and last updated.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/AccompanyingDocument.java:38-39,64-68",
+      "quote": "@Version\n  private Long version; ... @CreatedDate\n  private Instant created;\n\n  @LastModifiedDate\n  private Instant updated;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-020",
+      "statement": "A document holds a list of uploaded files, and is unclaimed until the trader's details are supplied.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/AccompanyingDocument.java:58-62",
+      "quote": "@Builder.Default\n  private boolean claimed = false;\n\n  @Builder.Default\n  private List<UploadedFile> files = new ArrayList<>();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-021",
+      "statement": "The date of issue is a calendar date with no time, stored as a YYYY-MM-DD string.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/AccompanyingDocument.java:54; docs/design-notes.md:8",
+      "quote": "private LocalDate dateOfIssue;",
+      "confidence": "verbatim",
+      "note": "The string storage is stated in design-notes.md line 8: 'Calendar dates (arrivalDate, exitDate, a document's dateOfIssue) are LocalDate, stored by LocalDateStringConverters as YYYY-MM-DD strings.'"
+    },
+    {
+      "id": "repo-backend-p3-022",
+      "statement": "The trader supplies three details for a document when claiming it: the document type, the document reference and the date of issue, and all three are required.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/ClaimUploadRequest.java:18-37",
+      "quote": "@NotNull ... DocumentType documentType, @NotBlank ... String documentReference, @NotNull ... LocalDate dateOfIssue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-023",
+      "statement": "A document reference must not be blank.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/ClaimUploadRequest.java:25",
+      "quote": "@NotBlank",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-024",
+      "statement": "A document reference is at most 58 characters long.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/ClaimUploadRequest.java:26,47",
+      "quote": "@Size(max = ClaimUploadRequest.REFERENCE_MAX_LENGTH) ... static final int REFERENCE_MAX_LENGTH = 58;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-025",
+      "statement": "A document reference may contain only letters, digits, spaces, full stops, slashes and hyphens.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/ClaimUploadRequest.java:27,45",
+      "quote": "static final String REFERENCE_PATTERN = \"^[A-Za-z0-9 ./-]*$\";",
+      "confidence": "verbatim",
+      "note": "The Javadoc gives the examples an air waybill '125-12345675' and a TRACES certificate 'CHEDA.GB.2026.1234567'."
+    },
+    {
+      "id": "repo-backend-p3-026",
+      "statement": "The date of issue has no range rule in the backend: any valid date, past or future, is accepted.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/ClaimUploadRequest.java:33-37",
+      "quote": "@NotNull\n    @Schema(description = \"Date of issue on the physical document\", ... example = \"2026-01-15\")\n    LocalDate dateOfIssue",
+      "confidence": "inferred",
+      "note": "Inferred from the only constraint being @NotNull; no @Past or @PastOrPresent."
+    },
+    {
+      "id": "repo-backend-p3-027",
+      "statement": "The backend's validation errors carry no user-facing messages for the document details: the constraints use the default messages, so the wording a trader sees comes from the frontend.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/ClaimUploadRequest.java:19-37",
+      "quote": "@NotNull ... @NotBlank\n    @Size(max = ClaimUploadRequest.REFERENCE_MAX_LENGTH)\n    @Pattern(regexp = ClaimUploadRequest.REFERENCE_PATTERN)",
+      "confidence": "inferred",
+      "note": "Inferred from no message attribute on any constraint."
+    },
+    {
+      "id": "repo-backend-p3-028",
+      "statement": "An upload session is a separate record in its own collection, document_upload_sessions, holding the notification reference number, the uploadId, the correlationId and when it was created.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/UploadSession.java:22-54",
+      "quote": "@Document(collection = \"document_upload_sessions\") ... private String notificationReferenceNumber; ... private String uploadId; ... private String correlationId; ... private Instant created;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-029",
+      "statement": "An upload session's uploadId is unique, and so is its correlationId.",
+      "kind": "constraint",
+      "ref": "P/accompanyingdocument/UploadSession.java:41-52",
+      "quote": "@Indexed(unique = true)\n  private String uploadId; ... @Indexed(unique = true)\n  private String correlationId;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-030",
+      "statement": "An upload session expires and is removed 24 hours after it was created, whether or not anything was uploaded through it.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/UploadSession.java:31,52-53",
+      "quote": "private static final String SESSION_RETENTION_PERIOD = \"24h\"; ... @CreatedDate\n  @Indexed(expireAfter = SESSION_RETENTION_PERIOD)\n  private Instant created;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-031",
+      "statement": "When registering an upload session, the uploadId is required, must be 1 to 100 characters and may contain only letters, digits, full stops, underscores and hyphens.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/RegisterUploadRequest.java:13-19",
+      "quote": "@NotBlank\n    @Pattern(regexp = \"^[A-Za-z0-9._-]+$\")\n    @Size(max = 100)\n    ... String uploadId,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-032",
+      "statement": "When registering an upload session, the correlationId is required, must be 1 to 100 characters and may contain only letters, digits, full stops, underscores and hyphens.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/RegisterUploadRequest.java:21-27",
+      "quote": "@NotBlank\n    @Pattern(regexp = \"^[A-Za-z0-9._-]+$\")\n    @Size(max = 100)\n    ... String correlationId) {}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-033",
+      "statement": "The caller opens the cdp-uploader session itself and then registers it here; the correlationId is the identifier the caller threaded through cdp-uploader's metadata, which the scan callback echoes back so the result can be matched to the session.",
+      "kind": "integration",
+      "ref": "P/accompanyingdocument/RegisterUploadRequest.java:9-11,24-25",
+      "quote": "Request body for registering an upload session the caller has already opened with cdp-uploader. ... \"Identifier the caller threaded through cdp-uploader's metadata, which the scan callback echoes back so the result can be matched to this session\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-034",
+      "statement": "POST /notifications/{referenceNumber}/document-uploads registers an upload session for a notification and answers 201 Created with the session (notificationReferenceNumber, uploadId, correlationId) and a Location header of <base URL>/document-uploads/<uploadId>.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:75-103,321-327",
+      "quote": "@PostMapping(\"/notifications/{referenceNumber}/document-uploads\") ... return ResponseEntity.created(location).body(UploadSessionDto.from(session)); ... return URI.create(baseUrl + \"/document-uploads/\" + uploadId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-035",
+      "statement": "Registering an upload session is refused with 400 for a validation error, 403 when the notification belongs to another organisation, 404 when the notification is not found and 409 when the session is already registered.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:81-86",
+      "quote": "@ApiResponse(responseCode = \"400\", description = \"Validation error\" ... @ApiResponse(responseCode = \"403\", description = \"Notification belongs to another organisation\" ... @ApiResponse(responseCode = \"404\", description = \"Notification not found\" ... @ApiResponse(responseCode = \"409\", description = \"Upload session already registered\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-036",
+      "statement": "A second registration with an uploadId or a correlationId already in use is refused as a conflict, with the message 'An upload session already exists for uploadId <uploadId> or correlationId <correlationId>'.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:193-212",
+      "quote": "} catch (DuplicateKeyException _) { ... throw new ConflictException(\n          \"An upload session already exists for uploadId \" + session.getUploadId()\n              + \" or correlationId \" + session.getCorrelationId());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-037",
+      "statement": "Registering a session writes no accompanying document: a notification gains a document only when a claim or a scan result arrives.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java:39-49,169-180",
+      "quote": "UploadSession session = UploadSession.builder() ... .build();\n\n    return saveSession(session);",
+      "confidence": "verbatim",
+      "note": "design-notes.md line 62 gives the reason: the frontend opens a session every time it paints the upload page."
+    },
+    {
+      "id": "repo-backend-p3-038",
+      "statement": "A notification can hold several upload sessions at once, because sessions are unique only by uploadId and correlationId, never by notification.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/UploadSession.java:37-52",
+      "quote": "@Indexed\n  private String notificationReferenceNumber;",
+      "confidence": "inferred",
+      "note": "Inferred from the notification index being non-unique; design-notes.md line 63 states it: 'A notification can hold several open sessions'."
+    },
+    {
+      "id": "repo-backend-p3-039",
+      "statement": "Every document endpoint except the scan callback needs the Trade-Imports-Organisation-Id header, and checks that the notification belongs to that organisation before doing anything.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentController.java:92,98,130,135,163,168-169,196,198,226,229-230,254,256-257,305,308-309",
+      "quote": "@RequestHeader(TraderOrganisationHeaderFilter.ORGANISATION_ID_HEADER) String organisationId ... notificationService.requireTraderAccess(referenceNumber, organisationId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-040",
+      "statement": "For endpoints addressed by uploadId (claim, get, delete, download), the organisation check finds the notification through the upload session, so an uploadId with no session is refused as not found with 'No upload session found with uploadId: <uploadId>'.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java:146-152; P/accompanyingdocument/DocumentController.java:168-169",
+      "quote": "return uploadSessionRepository.findByUploadId(uploadId)\n        .map(UploadSession::getNotificationReferenceNumber)\n        .orElseThrow(() -> new NotFoundException(\n            \"No upload session found with uploadId: \" + uploadId));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-041",
+      "statement": "Because uploadId endpoints reach the notification through the session, and sessions expire after 24 hours, a document whose session has expired can no longer be read, downloaded, deleted or claimed through the API: each answers 404.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java:146-152; P/accompanyingdocument/UploadSession.java:31,52-53",
+      "quote": "private static final String SESSION_RETENTION_PERIOD = \"24h\"; ... .orElseThrow(() -> new NotFoundException(\n            \"No upload session found with uploadId: \" + uploadId));",
+      "confidence": "inferred",
+      "note": "Inferred from the two facts together; not stated anywhere. The list endpoint, which goes by notification, still returns such a document. The reconciler may want to treat this as a constraint on how long a draft's documents stay usable."
+    },
+    {
+      "id": "repo-backend-p3-042",
+      "statement": "GET /notifications/{referenceNumber}/document-upload-sessions/{correlationId} returns the upload session a notification opened under that correlationId, with 200, so the browser's return to the upload page can find it.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:113-138",
+      "quote": "@GetMapping(\"/notifications/{referenceNumber}/document-upload-sessions/{correlationId}\") ... description = \"Returns the upload session a notification opened under a correlationId\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-043",
+      "statement": "A session is looked up by notification and correlationId together, so a correlationId cannot reach another notification's session; a miss answers 404 with 'No upload session found for notification <ref> with correlationId: <correlationId>'.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:51-59",
+      "quote": ".findByNotificationReferenceNumberAndCorrelationId(\n            notificationReferenceNumber, correlationId)\n        .orElseThrow(() -> new NotFoundException(\n            \"No upload session found for notification \" + notificationReferenceNumber\n                + \" with correlationId: \" + correlationId));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-044",
+      "statement": "Getting a session is refused with 400 for a validation error, 403 when the notification belongs to another organisation and 404 when the session or notification is not found.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:119-122",
+      "quote": "@ApiResponse(responseCode = \"400\", description = \"Validation error\" ... @ApiResponse(responseCode = \"403\" ... @ApiResponse(responseCode = \"404\", description = \"Session or notification not found\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-045",
+      "statement": "On the register and get-session endpoints, the reference number in the path must match the notification reference number pattern, and the correlationId path value must be 1 to 100 letters, digits, full stops, underscores or hyphens.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentController.java:49,89,125-128",
+      "quote": "private static final String UPLOAD_SESSION_IDENTIFIER_PATTERN = \"^[A-Za-z0-9._-]{1,100}$\"; ... @PathVariable @Pattern(regexp = ReferenceNumberGenerator.REFERENCE_NUMBER_PATTERN)",
+      "confidence": "verbatim",
+      "note": "The reference number pattern itself is in the notification package (part 2)."
+    },
+    {
+      "id": "repo-backend-p3-046",
+      "statement": "POST /document-uploads/{uploadId}/claim attaches the trader's document details (type, reference, date of issue) to a registered upload, marks the document claimed and answers 200 with the document.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:148-173; P/accompanyingdocument/DocumentService.java:61-79",
+      "quote": "@PostMapping(\"/document-uploads/{uploadId}/claim\") ... document.setDocumentType(request.documentType());\n    document.setDocumentReference(request.documentReference());\n    document.setDateOfIssue(request.dateOfIssue());\n    document.setClaimed(true);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-047",
+      "statement": "Claiming is refused with 400 for a validation error, 403 when the notification belongs to another organisation and 404 when the upload is not found; the uploadId path value must be 1 to 100 letters, digits, full stops, underscores or hyphens.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:154-161",
+      "quote": "@ApiResponse(responseCode = \"400\", description = \"Validation error\" ... @ApiResponse(responseCode = \"403\" ... @ApiResponse(responseCode = \"404\", description = \"Upload not found\" ... @Pattern(regexp = UPLOAD_SESSION_IDENTIFIER_PATTERN) String uploadId,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-048",
+      "statement": "Claiming can be repeated: each claim replaces the type, reference and date of issue on the same document, so a repeated claim never creates a second document.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:67-74,169-171",
+      "quote": "AccompanyingDocument document = existingOrNewDocumentFor(session); ... return accompanyingDocumentRepository\n        .findByCorrelationId(session.getCorrelationId())",
+      "confidence": "verbatim",
+      "note": "design-notes.md line 69: 'Claiming is repeatable: it replaces the details, so a repeated claim cannot produce a second document.' This is how a trader changes a document's details."
+    },
+    {
+      "id": "repo-backend-p3-049",
+      "statement": "A claim can arrive before the scan result: if no document exists yet for the session it creates one with scan status PENDING and no files.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java:169-180",
+      "quote": ".orElseGet(() -> AccompanyingDocument.builder() ... .scanStatus(ScanStatus.PENDING)\n            .files(new ArrayList<>())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-050",
+      "statement": "A claim does not check the scan status: a document can be claimed while its scan is PENDING or after it was REJECTED.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:61-79",
+      "quote": "AccompanyingDocument document = existingOrNewDocumentFor(session);\n\n    document.setDocumentType(request.documentType());",
+      "confidence": "inferred",
+      "note": "Inferred from claimUpload reading no scanStatus."
+    },
+    {
+      "id": "repo-backend-p3-051",
+      "statement": "A claim does not check the notification's status, so the backend lets documents be claimed on a notification in any state, including a submitted one.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:61-79; P/accompanyingdocument/DocumentController.java:168-170",
+      "quote": "notificationService.requireTraderAccess(\n        documentService.notificationReferenceNumberForUploadId(uploadId), organisationId);\n    AccompanyingDocument document = documentService.claimUpload(uploadId, request);",
+      "confidence": "inferred",
+      "note": "Inferred: requireTraderAccess checks only the organisation in what this part reads. Registering, deleting and the scan callback likewise read no notification status."
+    },
+    {
+      "id": "repo-backend-p3-052",
+      "statement": "POST /document-uploads/{pathSegment}/scan-results receives cdp-uploader's antivirus scan result and answers 204 No Content.",
+      "kind": "integration",
+      "ref": "P/accompanyingdocument/DocumentController.java:269-283",
+      "quote": "@PostMapping(\"/document-uploads/{pathSegment}/scan-results\") ... description = \"Receives the cdp-uploader antivirus scan result callback\") ... return ResponseEntity.noContent().build();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-053",
+      "statement": "The scan callback ignores its path segment and finds the session by the correlationId in the payload's metadata.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:265,275-281; P/cdp/uploader/CdpScanResultPayload.java:31-33",
+      "quote": "@param pathSegment the fixed segment the session's callback URL was opened with ... return metadata.get(\"correlationId\");",
+      "confidence": "verbatim",
+      "note": "design-notes.md line 73: the path variable is always the literal 'pending'."
+    },
+    {
+      "id": "repo-backend-p3-054",
+      "statement": "A scan callback with no correlationId, or a blank one, is refused as a bad request with 'Scan callback missing required correlationId in metadata'.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:214-221",
+      "quote": "throw new BadRequestException(\n          \"Scan callback missing required correlationId in metadata\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-055",
+      "statement": "A scan callback whose correlationId matches no session is refused as not found with 'No upload session found with correlationId: <correlationId>', so a result arriving after the session expired or was deleted writes nothing.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:85-87",
+      "quote": "UploadSession session = uploadSessionRepository.findByCorrelationId(correlationId)\n        .orElseThrow(() -> new NotFoundException(\n            \"No upload session found with correlationId: \" + correlationId));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-056",
+      "statement": "A scan result replaces the document's files with the files in the result and sets its scan status, creating the document if the claim has not arrived yet.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java:88-94",
+      "quote": "AccompanyingDocument document = existingOrNewDocumentFor(session); ... document.setFiles(mapUploadedFiles(payload));\n    document.setScanStatus(resolveScanStatus(payload));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-057",
+      "statement": "A document created by the scan callback is unclaimed and has no type, reference or date of issue until the trader claims it.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java:169-180; P/accompanyingdocument/AccompanyingDocumentDto.java:28-31",
+      "quote": "\"Whether the trader's document details have been supplied; an upload the user walked away from stays unclaimed\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-058",
+      "statement": "A scan result fails closed: the document is COMPLETE only when the result says exactly zero files were rejected; a missing or non-zero rejected count marks it REJECTED.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:233-238; P/cdp/uploader/CdpScanResultPayload.java:15-16",
+      "quote": "return rejectedCount != null && rejectedCount == 0\n        ? ScanStatus.COMPLETE\n        : ScanStatus.REJECTED;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-059",
+      "statement": "A document's scan status is PENDING (uploaded and awaiting antivirus scanning), COMPLETE (scanned and clean) or REJECTED (virus or malware detected).",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/ScanStatus.java:6-16",
+      "quote": "\"File has been uploaded and is awaiting antivirus scanning\")\n  PENDING, ... \"Antivirus scan completed successfully — file is clean\")\n  COMPLETE, ... \"Antivirus scan rejected the file (virus or malware detected)\")\n  REJECTED",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-060",
+      "statement": "A document's scan status moves from PENDING to COMPLETE or REJECTED only through a scan callback, and a later callback for the same session can move it again, since each one overwrites the status.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java:81-102,176",
+      "quote": ".scanStatus(ScanStatus.PENDING) ... document.setScanStatus(resolveScanStatus(payload));",
+      "confidence": "inferred",
+      "note": "Inferred from handleScanResult being the only writer of scanStatus besides the PENDING default."
+    },
+    {
+      "id": "repo-backend-p3-061",
+      "statement": "The scan result's form section is read leniently: only values carrying a fileId are recorded as files, an object-shaped value with no fileId is dropped with a warning naming the field, and other values are ignored.",
+      "kind": "integration",
+      "ref": "P/cdp/uploader/CdpScanResultForm.java:46-72",
+      "quote": "if (isFileEntry(value)) {\n          form.addFileEntry(fieldName, context.readTreeAsValue(value, CdpScanResultFile.class));\n        } else if (value.isObject()) {\n          log.warn(\n              \"Scan result form field {} is an object with no fileId, so no file entry was\"\n                  + \" recorded for it\",",
+      "confidence": "verbatim",
+      "note": "mechanism: filters cdp-uploader's echoed form fields down to file entries."
+    },
+    {
+      "id": "repo-backend-p3-062",
+      "statement": "The scan result payload carries an uploadStatus, a metadata map, a form section and numberOfRejectedFiles; each file entry carries fileId, filename, contentType, fileStatus, contentLength, checksumSha256, detectedContentType, s3Key, s3Bucket, hasError, errorCode and errorMessage, and unknown fields are tolerated.",
+      "kind": "integration",
+      "ref": "P/cdp/uploader/CdpScanResultPayload.java:19-23; P/cdp/uploader/CdpScanResultFile.java:27-40",
+      "quote": "String uploadStatus,\n    Map<String, String> metadata,\n    CdpScanResultForm form,\n    Integer numberOfRejectedFiles) ... @JsonIgnoreProperties(ignoreUnknown = true)\npublic record CdpScanResultFile(",
+      "confidence": "verbatim",
+      "note": "uploadStatus (e.g. 'ready') is only logged; nothing acts on it."
+    },
+    {
+      "id": "repo-backend-p3-063",
+      "statement": "The scan callback is not authenticated, so anyone who can reach it with a known correlationId could post a result.",
+      "kind": "non-functional",
+      "ref": "P/accompanyingdocument/DocumentController.java:269-283; docs/design-notes.md:72",
+      "quote": "The scan-result callback is unauthenticated: anyone who can reach it with a known `correlationId` can post a result.",
+      "confidence": "verbatim",
+      "note": "Security finding, stated in general terms. The design note plans a shared secret or HMAC check when cdp-uploader supports callback authentication."
+    },
+    {
+      "id": "repo-backend-p3-064",
+      "statement": "Each uploaded file records filename, contentType, contentLength (bytes), s3Key, s3Bucket, fileStatus, checksumSha256, detectedContentType, hasError, errorCode and errorMessage, all copied from cdp-uploader's callback.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/file/UploadedFile.java:20-75",
+      "quote": "String filename, ... String contentType, ... Long contentLength, ... String s3Key, ... String s3Bucket, ... FileStatus fileStatus, ... String checksumSha256, ... String detectedContentType, ... Boolean hasError, ... String errorCode, ... String errorMessage",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-065",
+      "statement": "A file's status is COMPLETE (scanned and clean) or REJECTED (rejected by the antivirus scan), read from cdp-uploader's lowercase 'complete' or 'rejected'.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/file/FileStatus.java:12-20",
+      "quote": "@JsonAlias(\"complete\")\n  @Schema(description = \"File was successfully scanned and is clean\")\n  COMPLETE,\n\n  @JsonAlias(\"rejected\")\n  @Schema(description = \"File was rejected by antivirus scan\")\n  REJECTED",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-066",
+      "statement": "A file's status is set only by cdp-uploader's callback; the backend never moves a file between COMPLETE and REJECTED itself.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/file/UploadedFile.java:57-75",
+      "quote": ".fileStatus(f.fileStatus())",
+      "confidence": "inferred",
+      "note": "Inferred from UploadedFile being an immutable record built only from a callback entry."
+    },
+    {
+      "id": "repo-backend-p3-067",
+      "statement": "A refused file carries a machine-readable errorCode, one of cdp-uploader's FILE_* codes, and a human-readable errorMessage; both are null when there is no error.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/file/UploadedFile.java:48-55",
+      "quote": "\"Machine-readable reason the file was refused, one of cdp-uploader's \"\n        + \"FILE_* codes; null when there is no error\") ... \"Human-readable error message if hasError is true; null otherwise\"",
+      "confidence": "verbatim",
+      "note": "The FILE_* codes and messages are cdp-uploader's; this repo does not list them."
+    },
+    {
+      "id": "repo-backend-p3-068",
+      "statement": "A clean file is stored in S3 under the key '{uploadId}/{fileId}'; a rejected file has no S3 key because it was not kept in S3.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/file/UploadedFile.java:14-16,35-36",
+      "quote": "{@code s3Key} follows the pattern {@code \"{uploadId}/{fileId}\"} for complete files and is\n * {@code null} for rejected files (the file was not persisted to S3).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-069",
+      "statement": "The API never exposes a file's S3 key or bucket: a document's files in a response carry filename, contentType, contentLength, fileStatus, checksumSha256, detectedContentType, hasError, errorCode and errorMessage only.",
+      "kind": "constraint",
+      "ref": "P/accompanyingdocument/file/UploadedFileDto.java:6-10,13-40",
+      "quote": "Deliberately omits {@code s3Key} and {@code s3Bucket} — these are internal S3 storage\n * coordinates that no API consumer requires and must not be exposed in responses.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-070",
+      "statement": "In API responses a file's hasError is always true or false: an unknown value is reported as false.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/file/UploadedFileDto.java:49-51",
+      "quote": "hasError = hasError != null && hasError;",
+      "confidence": "verbatim",
+      "note": "mechanism: normalises hasError on uploaded file responses."
+    },
+    {
+      "id": "repo-backend-p3-071",
+      "statement": "A document in an API response carries id, notificationReferenceNumber, uploadId, correlationId, documentType, documentReference, dateOfIssue, scanStatus, claimed, files, created and updated; expireAt and version are not returned.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/AccompanyingDocumentDto.java:15-34",
+      "quote": "String id,\n    String notificationReferenceNumber,\n    String uploadId, ... String correlationId,\n    DocumentType documentType,\n    String documentReference,\n    LocalDate dateOfIssue,\n    ScanStatus scanStatus, ... boolean claimed,\n    List<UploadedFileDto> files,\n    Instant created,\n    Instant updated)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-072",
+      "statement": "GET /notifications/{referenceNumber}/document-uploads returns all of a notification's accompanying documents as {\"items\": [...]}, with 200, including unclaimed, pending and rejected ones.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:182-204; P/accompanyingdocument/DocumentListResponse.java:10-13; P/accompanyingdocument/DocumentService.java:113-118",
+      "quote": "@GetMapping(\"/notifications/{referenceNumber}/document-uploads\") ... return ResponseEntity.ok(new DocumentListResponse(items)); ... .findAllByNotificationReferenceNumber(notificationReferenceNumber);",
+      "confidence": "verbatim",
+      "note": "No filter on claimed or scanStatus, and no stated order, so the frontend decides what the trader sees."
+    },
+    {
+      "id": "repo-backend-p3-073",
+      "statement": "Listing a notification's documents is refused with 400 for a validation error, 403 when the notification belongs to another organisation and 404 when the notification is not found; unlike register, the path reference number has no pattern check.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:188-196",
+      "quote": "@ApiResponse(responseCode = \"400\", description = \"Validation error\" ... @ApiResponse(responseCode = \"403\" ... @ApiResponse(responseCode = \"404\", description = \"Notification not found\" ... @PathVariable String referenceNumber,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-074",
+      "statement": "GET /document-uploads/{uploadId} returns one accompanying document with 200, and is refused with 403 for another organisation's notification and 404 when the upload is not found, with 'No accompanying document found with uploadId: <uploadId>' when the session exists but no document does.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:213-233; P/accompanyingdocument/DocumentService.java:139-144",
+      "quote": "@GetMapping(\"/document-uploads/{uploadId}\") ... new NotFoundException(\"No accompanying document found with uploadId: \" + uploadId));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-075",
+      "statement": "DELETE /document-uploads/{uploadId} removes a document from its notification and answers 204 No Content; it is refused with 403 for another organisation's notification and 404 when the upload is not found.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:242-260",
+      "quote": "@DeleteMapping(\"/document-uploads/{uploadId}\") ... @ApiResponse(responseCode = \"204\", description = \"Document deleted\" ... @ApiResponse(responseCode = \"404\", description = \"Upload not found\" ... @ApiResponse(responseCode = \"403\", description = \"Notification belongs to another organisation\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-076",
+      "statement": "Deleting a document also deletes its upload session, so a scan result arriving afterwards cannot bring the document back.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:104-111",
+      "quote": "accompanyingDocumentRepository.delete(document);\n    uploadSessionRepository.findByUploadId(uploadId).ifPresent(uploadSessionRepository::delete);",
+      "confidence": "verbatim",
+      "note": "design-notes.md line 70 states the reason."
+    },
+    {
+      "id": "repo-backend-p3-077",
+      "statement": "Deleting a document removes only its record; the file stays in the S3 documents bucket.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java:104-111; P/s3/S3DocumentService.java:41-71",
+      "quote": "accompanyingDocumentRepository.delete(document);",
+      "confidence": "inferred",
+      "note": "Inferred: S3DocumentService has only a read (getObject); nothing in this part deletes an S3 object."
+    },
+    {
+      "id": "repo-backend-p3-078",
+      "statement": "GET /document-uploads/{uploadId}/file downloads the document's file, streamed from S3, as an attachment under its original filename (UTF-8 encoded), with 200.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:292-319,353-359",
+      "quote": "@GetMapping(\"/document-uploads/{uploadId}/file\") ... ContentDisposition.attachment().filename(filename, StandardCharsets.UTF_8).build());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-079",
+      "statement": "A download is served with the content type the uploader declared, falling back to application/octet-stream when that value is not a valid media type.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:313,343-351",
+      "quote": "return MediaType.parseMediaType(declared);\n    } catch (InvalidMediaTypeException _) { ... return MediaType.APPLICATION_OCTET_STREAM;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-080",
+      "statement": "A download returns the document's first file only.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:154-161",
+      "quote": "UploadedFile file = document.getFiles().stream()\n        .findFirst()",
+      "confidence": "verbatim",
+      "note": "design-notes.md line 71: the upload workflow gives each session one file, and nothing in this service enforces that."
+    },
+    {
+      "id": "repo-backend-p3-081",
+      "statement": "A download is refused as not found with 'No file found for uploadId: <uploadId>' when the document has no file yet, and with 'File for uploadId: <uploadId> was rejected and is not available for download' when its file was rejected.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:157-166",
+      "quote": "\"No file found for uploadId: \" + uploadId)); ... \"File for uploadId: \" + uploadId + \" was rejected and is not available for download\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-082",
+      "statement": "Downloads are refused with 403 for another organisation's notification and 404 when the file is not found.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:296-300",
+      "quote": "@ApiResponse(responseCode = \"404\", description = \"File not found\" ... @ApiResponse(responseCode = \"403\", description = \"Notification belongs to another organisation\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-083",
+      "statement": "The browser uploads files straight to cdp-uploader, so this service never receives the uploaded bytes; it reads files only to stream a download from S3.",
+      "kind": "integration",
+      "ref": "docs/design-notes.md:60; P/s3/S3DocumentService.java:41-71",
+      "quote": "The browser uploads straight to cdp-uploader, so the uploaded bytes never arrive here; the only time this service handles them is a download, which streams from S3.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-084",
+      "statement": "Downloads read from the S3 documents bucket set by CDP_DOCUMENTS_BUCKET, which defaults to trade-imports-animals-documents.",
+      "kind": "integration",
+      "ref": "P/s3/S3DocumentService.java:44-47; src/main/resources/application.yml:45",
+      "quote": "documents-bucket: ${CDP_DOCUMENTS_BUCKET:trade-imports-animals-documents}",
+      "confidence": "verbatim",
+      "note": "The download reads the configured bucket, not the s3Bucket recorded on the file."
+    },
+    {
+      "id": "repo-backend-p3-085",
+      "statement": "Each download is recorded as one S3 get-object call whose duration counts only time spent waiting on S3, and a client that stops reading part way is logged and recorded as a success, not an S3 failure.",
+      "kind": "non-functional",
+      "ref": "P/s3/S3DocumentService.java:28-92",
+      "quote": "recording one {@code s3/get-object} call whose duration is the time spent\n   * waiting on S3, not the time spent writing to {@code outputStream}. ... log.info(\"Client stopped reading document {} from S3\", s3Key, clientFailure);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-086",
+      "statement": "The backend sets no limit on file size, file type or number of files per notification; any such limits are cdp-uploader's or the frontend's.",
+      "kind": "constraint",
+      "ref": "P/accompanyingdocument/; P/cdp/uploader/; P/s3/S3DocumentService.java",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in every file of this part: contentLength and contentType are recorded but never checked, and nothing counts a notification's documents."
+    },
+    {
+      "id": "repo-backend-p3-087",
+      "statement": "When notifications are deleted, all their accompanying documents and upload sessions are deleted with them.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java:128-137; P/notification/NotificationService.java:427-430",
+      "quote": "notificationRepository.deleteAllByReferenceNumberIn(referenceNumbers);\n        documentService.deleteForNotificationReferenceNumbers(referenceNumbers);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-088",
+      "statement": "A new accompanying document takes its notification's expiry time (expireAt) when first written, and has none if the notification has none or cannot be found, so it is removed by the same TTL rule as its notification.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:178,182-191; P/notification/NotificationExpiryIndex.java:31",
+      "quote": ".expireAt(notificationExpireAt(session.getNotificationReferenceNumber())) ... log.warn(\"Notification {} not found, so its new document has no expireAt\",",
+      "confidence": "verbatim",
+      "note": "design-notes.md line 45 adds that removal is not guaranteed to happen in the same pass as the notification, and writes no audit record or outbox event. How the notification's expiry is set is part 2's."
+    },
+    {
+      "id": "repo-backend-p3-089",
+      "statement": "Only claimed documents whose scan is COMPLETE are passed on with a notification's published event, oldest first; unclaimed, pending and rejected documents are left out.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:120-126; P/accompanyingdocument/AccompanyingDocumentRepository.java:14-16; P/outbox/OutboxService.java:83",
+      "quote": ".findAllByNotificationReferenceNumberAndScanStatusAndClaimedIsTrueOrderByCreatedAsc(\n            notificationReferenceNumber, ScanStatus.COMPLETE);",
+      "confidence": "verbatim",
+      "note": "How the documents are mapped into the event is part 4's."
+    },
+    {
+      "id": "repo-backend-p3-090",
+      "statement": "Documents are not copied when a notification is copied: nothing in the document code or the notification package's copy path reads or writes accompanying documents.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java; P/notification/",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked for every use of DocumentService and AccompanyingDocument in src/main: only NotificationService delete, NotificationExpiryIndex and OutboxService use them. The code shows no copy of documents, but says nothing either way."
+    },
+    {
+      "id": "repo-backend-p3-091",
+      "statement": "Documents are not part of a notification's amend snapshot: adding or removing a document does not count as a change to an amendment.",
+      "kind": "rule",
+      "ref": "docs/design-notes.md:33",
+      "quote": "Only the `notification` content sub-object is compared with its snapshot, both through the same deep clone, so uploaded documents and the opaque fulfilments payload never count as a change.",
+      "confidence": "verbatim",
+      "note": "The document code itself has no amend handling; documents attach to the reference number, so they stay with a notification through amend."
+    }
+  ]
+}

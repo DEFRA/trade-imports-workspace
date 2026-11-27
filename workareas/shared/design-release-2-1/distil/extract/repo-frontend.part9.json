@@ -1,7 +1,24 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 9, commodity search and selection, read the whole of src/server/app/sets/live-animals/journeys/linear/features/commodities/search/ except its *.test.js unit tests (search.controller.js, search.njk, _results.njk, search-results.njk, search-query.js, test-support.js, actions/commit-selection.js, selection/keys.js, selection/line-key.js, selection/remove-action.js, selection/rows.js, selection/selected-keys.js, view-model/commodity-groups.js, view-model/labels.js, view-model/result-order.js, view-model/selected-summary.js), plus the feature-level files the part names: page.js, evaluation.js, commodity-question-detour.js, lines.js, species-label.js, commodity-label.js, action-prefix.js, view-model/selected-commodity-rows.js, view-model/commodity-groups.js, copy/copy.en.js, copy/copy.cy.js, test-support.js, and the whole fit spec fit/search.fit.spec.js (847 lines, 8 describes, 31 tests). The slice is one page, the commodity search page at journey slug `commodities`, plus a second route it posts its result list to, `commodities/results`. Its layout is: a GET handler that renders search.njk (section caption, H1, inset, the shared appMultiSelectSearch macro wrapping the _results.njk macro, a help details block and the shared save actions); a POST handler on the page that branches four ways (search, clear, remove:<key>, or save); a POST handler on commodities/results that re-renders only the results macro inside search-results.njk with a screen-reader announcement; a selection/ layer that reads keys out of the payload, holds the result rows in flow-only answers under commoditySearchRows and orders keys canonically; a view-model/ layer that builds the grouped checkbox list, the bolded match labels and the chosen-species summary; and actions/commit-selection.js, which reconciles the commodityLines collection and redirects. The part covered that page's route and both handlers, its caption, H1, inset and help details, the search field with its label and hint, the Search, Add selection, Clear all and per-chip Remove controls, the result grouping, ordering, labelling, pre-ticking, match emphasis and no-results wording, the running selection summary, the one validation rule (Select a commodity), what a committed selection writes to commodityLines and where it leads, the commodity-question detour's return marker, the JavaScript enhancements and the no-JavaScript fallbacks the fit spec proves, the result list's measured styling, the English and Welsh copy keys the search page uses, and the mechanisms that build the selected-commodity rows and groups for the pages downstream. It leaves the commodity detail pages (consignment-details/, animal-identification/) and their copy keys to part 10.",
+  "structure": "Part 9, commodity search and selection, in the live-animals linear journey's commodities feature. Read in full: every non-test file under features/commodities/search/ (search.controller.js with its GET, POST and POST commodities/results routes; search.njk; _results.njk, the shared results-and-chosen-panel macro; search-results.njk, the live-refresh fragment; search-query.js; test-support.js; actions/commit-selection.js; selection/keys.js, line-key.js, rows.js, remove-action.js, selected-keys.js; view-model/selected-summary.js, labels.js, commodity-groups.js, result-order.js), the feature-level page.js, evaluation.js, commodity-question-detour.js, lines.js, species-label.js, commodity-label.js, action-prefix.js, view-model/selected-commodity-rows.js and view-model/commodity-groups.js, copy.en.js and copy.cy.js (search keys claimed; selectedCommodities headings claimed as the table builder in this slice uses them; consignmentDetails and identification keys left to part 10), the feature-level test-support.js, and fit/search.fit.spec.js (all 9 describe blocks, 44 tests). Covered: one page, slug commodities (maturity detailing), with a search box, grouped tick-box results, a chosen-species panel with chips, Remove and Clear all, an Add selection fallback button, a commodity-code help section, three save controls and one validation error; the live results route used with JavaScript; how a selection is stored (flow-only commoditySearchRows) and committed as commodityLines; the commodity-question detour from the commodity details and animal identification pages; and how commodity lines are published. The earlier extract's claims for this slice were checked against today's files and all still hold, so every kept id is kept; new claims start at repo-frontend-p9-103.",
   "claims": [
+    {
+      "id": "repo-frontend-p1-030",
+      "statement": "The commodities page collects the commodity lines collection, and so owns every answer inside a line, including each line's per-animal identifier records and their permanent addresses.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js:10,30",
+      "quote": "import { commoditiesPage as page } from '../page.js'\n...\nexport const meta = { ...page, collects: ['commodityLines'] }",
+      "confidence": "verbatim",
+      "note": "Ownership of the nested answers follows from the ancestor walk in dispatch.js, since no deeper page claims them."
+    },
+    {
+      "id": "repo-frontend-p1-118",
+      "statement": "Those six keys are stored under the names declaration, commoditySearchRows, transporterAddInProgress, justAddedTransporterName, transporterTypeRestart and transporterTypeChosen.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/selection/rows.js:4; src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add-session.js:3-6",
+      "quote": "export const STORED_SEARCH_ROWS = 'commoditySearchRows'\n---\nexport const TRANSPORTER_ADD_IN_PROGRESS = 'transporterAddInProgress'\nexport const JUST_ADDED_TRANSPORTER_NAME = 'justAddedTransporterName'\nexport const TRANSPORTER_TYPE_RESTART = 'transporterTypeRestart'\nexport const TRANSPORTER_TYPE_CHOSEN = 'transporterTypeChosen'",
+      "confidence": "verbatim"
+    },
     {
       "id": "repo-frontend-p9-001",
       "statement": "A trader reaches the commodity search page at the live-animals journey page slug `commodities`, which answers both a GET that shows the page and a POST that acts on what was submitted.",
@@ -848,6 +865,111 @@
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk:33-34",
       "quote": "      resultsId: \"commodity-search-results\",\n      resultsUrl: resultsUrl",
       "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p9-103",
+      "statement": "A search for the code 0102 lists its seven species in this order: Bison (Bison), Bison bison (American Bison), Bos sp. (Cattle), Bos taurus (Domestic Cattle), Bubalus (Water Buffaloes), Bubalus bubalis (Water Buffalo), Syncerus (African Buffaloes).",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js:448-466",
+      "quote": "'Bison (Bison)',\n      labelFor(BISON_BISON_ROW.speciesLatinName),\n      'Bos sp. (Cattle)',\n      labelFor(BOS_TAURUS_ROW.speciesLatinName),\n      'Bubalus (Water Buffaloes)',\n      labelFor(BUBALUS_BUBALIS_ROW.speciesLatinName),\n      'Syncerus (African Buffaloes)'",
+      "confidence": "verbatim",
+      "note": "The species are the fit stub's commodity list, not a specification of what the list holds; the claim proves the ordering and labelling only."
+    },
+    {
+      "id": "repo-frontend-p9-104",
+      "statement": "A search for \"buffalo\" lists three species under 0102: Bubalus (Water Buffaloes), Bubalus bubalis (Water Buffalo) and Syncerus (African Buffaloes), and nothing else.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js:129-157",
+      "quote": "await searchCommodities(page, 'buffalo')\n    const labels = [\n      'Bubalus (Water Buffaloes)',\n      labelFor(BUBALUS_BUBALIS_ROW.speciesLatinName),\n      'Syncerus (African Buffaloes)'\n    ]",
+      "confidence": "verbatim",
+      "note": "Stub data; evidence of matching on common name and of grouping, not of list content."
+    },
+    {
+      "id": "repo-frontend-p9-105",
+      "statement": "A search for \"ferret\" matches both Mustela putorius furo (Ferret) and Mustela spp. (Weasels (including ermines, polecats, ferrets, and related species)), so a common-name match is found anywhere inside the common name.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js:159-175",
+      "quote": "name: 'Mustela spp. (Weasels (including ermines, polecats, ferrets, and related species))',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p9-106",
+      "statement": "The Trade Tariff link in the help section opens with rel \"noreferrer noopener\", and its accessible name is \"Trade Tariff tool (opens in a new tab)\".",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk:42 and fit/search.fit.spec.js:107-118",
+      "quote": "<a href=\"{{ copy.help.lookupHref }}\" class=\"govuk-link\" rel=\"noreferrer noopener\" target=\"_blank\">{{ copy.help.lookupLink }}<br>{{ copy.help.lookupNewTab }}</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p9-107",
+      "statement": "The \"Add selection\" button posts the same action as the Search button, so pressing it runs the typed search again while taking up the ticked species.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/_results.njk:27-33 and search/search.controller.js:39, :148-149",
+      "quote": "text: params.copy.addSelection,\n      classes: \"govuk-button--secondary app-multi-select-search__update\",\n      name: \"action\",\n      value: \"search\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p9-108",
+      "statement": "The page only honours a choice of a species it has seen: one a search returned and the page stored, or one already on the notification as a commodity line.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/selection/rows.js:29-33 and selection/keys.js:12-13",
+      "quote": "export const knownRowsByKey = ({ answers, flowOnlyAnswers }) =>\n  new Map([\n    ...rowsByKey(flowOnlyAnswers?.[STORED_SEARCH_ROWS] ?? []),\n    ...lineRowsByKey(answers.commodityLines ?? [])\n  ])",
+      "confidence": "verbatim",
+      "note": "mechanism: builds the set of recognised species from the stored search rows and the saved commodity lines."
+    },
+    {
+      "id": "repo-frontend-p9-109",
+      "statement": "Each new search adds its rows to the species the page already recognises rather than discarding them, so the stored rows grow across searches until a selection is saved.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js:113-117",
+      "quote": "await replaceStoredSearchRows(request, h, [\n    ...rowsByKey.values(),\n    ...resultRows(results)\n  ])",
+      "confidence": "verbatim",
+      "note": "mechanism: commoditySearchRows is rewritten with the known rows plus the new results, keyed by commodity code and Latin name. This refines repo-frontend-p9-041's 'replaced on each search'."
+    },
+    {
+      "id": "repo-frontend-p9-110",
+      "statement": "A page can also link to the commodity question with the journey trail carried over and no return marker, in which case the commodity page continues through the journey as normal.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/commodity-question-detour.js:9-13",
+      "quote": "export const commodityQuestionPath = (request) =>\n  kit.carryTrail(request, commoditiesPagePath(request))",
+      "confidence": "inferred",
+      "note": "The callers are outside this slice; the 'continues as normal' part follows from commit-selection.js:31-34, which falls through to the next page when no return is honoured."
+    },
+    {
+      "id": "repo-frontend-p9-111",
+      "statement": "Commodity and species labels are escaped as HTML before the matched text is wrapped in bold, so a label shows as text and cannot inject markup.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/labels.js:1-9",
+      "quote": "export const commodityLabelHtml = (commodityCode, query) =>\n  escapeAndBoldMatches(commodityLabel(commodityCode), query)",
+      "confidence": "inferred",
+      "note": "Inferred from the helper's name escapeAndBoldMatches; its body is in client/common/helpers, outside this slice."
+    },
+    {
+      "id": "repo-frontend-p9-112",
+      "statement": "A line with no Latin name has an empty species label.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/species-label.js:1-4",
+      "quote": "if (!line.speciesLatinName) {\n    return ''\n  }",
+      "confidence": "verbatim",
+      "note": "mechanism: formats a commodity line's species for display."
+    },
+    {
+      "id": "repo-frontend-p9-113",
+      "statement": "In the chosen-species panel the commodities are listed in the order of the chosen species, which is commodity-code order, each commodity once.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/selected-summary.js:24-25 with selection/keys.js:9-13",
+      "quote": "const groupsFor = (rows) =>\n  [...Map.groupBy(rows, (row) => row.commodityCode)].map(groupFor)",
+      "confidence": "inferred",
+      "note": "mechanism: groups the chosen rows by commodity code; the order follows because the chosen keys are already sorted by code then Latin name."
+    },
+    {
+      "id": "repo-frontend-p9-114",
+      "statement": "The Welsh copy for the commodity search page reads: heading \"Beth ydych chi’n ei fewnforio?\", search label \"Chwilio am nwydd\", button \"Chwilio\", no-results \"Ni chanfuwyd unrhyw ganlyniadau\", count \"<n> wedi’u dewis\", \"Clirio’r cyfan\", \"Ychwanegu’r dewis\", help summary \"Help gyda chodau nwyddau\" and error \"Dewiswch nwydd\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js:9-39",
+      "quote": "title: 'Beth ydych chi’n ei fewnforio?',\n...\n    searchLabel: 'Chwilio am nwydd',\n...\n    searchButton: 'Chwilio',\n    noResults: 'Ni chanfuwyd unrhyw ganlyniadau',\n...\n      heading: (count) => `${count} wedi’u dewis`,\n      clearAll: 'Clirio’r cyfan',\n...\n    addSelection: 'Ychwanegu’r dewis',\n    help: {\n      summary: 'Help gyda chodau nwyddau',\n...\n      selectCommodity: 'Dewiswch nwydd'",
+      "confidence": "verbatim",
+      "note": "Machine draft per the file's first line."
     }
   ]
 }

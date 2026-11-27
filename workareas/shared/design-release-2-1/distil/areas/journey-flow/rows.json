@@ -2,146 +2,100 @@
   "area": "journey-flow",
   "rows": [
     {
-      "title": "A germinal products notification starts in its own set, with its own draft, stored category, service chrome and origin page, and each set opens only its own notifications",
-      "detail": "Germinal products is a sibling set of live animals in the animals frontend. A notification belongs to exactly one set, so a trader who follows a stale link, edits an address or guesses a path must never reach a germinal products notification through a live animals page, or the other way round. The service decides which set may open a notification from the category recorded on the notification when its draft was created, and reads a notification that carries no category as live animals, so every notification made before the germinal set existed keeps working in the live animals set with no data migration. The same set rule decides which questions the germinal pages ask: the notification data specification covers both sets in one page and marks the fields that apply to one of them, so a germinal page asks everything its live animals twin asks unless the specification marks that answer for the animals journey alone, and where both sets ask an answer whose permitted values differ, each set offers its own list.",
+      "title": "Each set opens only its own notifications, and asks the answers the data specification gives it",
+      "detail": "Germinal products is a sibling set of live animals in the animals frontend, and both keep their notifications in the one animals backend, so a notification must only ever be worked in the set that owns it. Each set's entry checks the category the set recorded when it created the draft and refuses the other set's notifications. A notification stored before the germinal set existed has no category and is treated as live animals, so it keeps working in the live-animals set with no data migration. The same row settles which answers the germinal set asks: the notification data specification covers both sets on one page and marks the exceptions, so every answer it sets out is asked in both sets unless it is marked for one, and where both sets ask an answer but allow different values each set offers its own list.",
       "acceptanceCriteria": [
         "Opening a germinal products notification through a live animals page shows the page not found page and changes nothing on the notification. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-023, -p1-031; repo:frontend repo-frontend-p1-094)",
         "Opening a live animals notification through a germinal products page shows the page not found page and changes nothing on the notification. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-023, -p1-031)",
-        "A notification whose record holds no category opens, saves and submits in the live animals set, and opening it through a germinal products page shows the page not found page. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-029, -p1-030; repo:frontend repo-frontend-p1-097, repo-frontend-p1-097-m1)",
-        "Each germinal products page asks the same answers as the live animals page it is copied from, except an answer the notification data specification marks as applying to the animals journey alone, which the germinal page does not ask. (confluence:6497338582 confluence-6497338582-p1-003, -p1-004; repo:frontend repo-frontend-p1-007)",
-        "Where both sets ask an answer whose permitted values differ between them, each set's page offers that set's own list of values. (confluence:6497338582 confluence-6497338582-p1-005; repo:perftests repo-perftests-p1-004)"
+        "A notification whose record holds no category opens, saves and submits in the live animals set, and opening it through a germinal products page shows the page not found page. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-029, -p1-030, -p1-031; repo:frontend repo-frontend-p1-097)",
+        "Where the notification data specification marks an answer as applying to the animals journey alone, the germinal products page copied from that live animals page does not ask it; every other answer it asks is the one its live animals twin asks. (confluence:6497338582 confluence-6497338582-p1-003, -p1-004; repo:frontend repo-frontend-p1-007)",
+        "Where both sets ask an answer whose permitted values differ between them, each set's page offers that set's own list of values. (confluence:6497338582 confluence-6497338582-p1-005)"
       ],
       "requirements": ["req-1901", "req-2210"],
       "sources": [
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "ruling-sam-2026-10-09-p1-023, -p1-029, -p1-030, -p1-031"
-        },
-        {
-          "source": "repo:frontend",
-          "ref": "repo-frontend-p1-007, repo-frontend-p1-094, repo-frontend-p1-097, repo-frontend-p1-097-m1 (src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js, src/server/app/bridge/obligation-source.js, src/server/app/routes.js)"
-        },
-        {
-          "source": "confluence:6497338582",
-          "ref": "confluence-6497338582-p1-003, -p1-004, -p1-005 (Preamble note panel)"
-        },
-        { "source": "repo:perftests", "ref": "repo-perftests-p1-004" }
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-023, -p1-029, -p1-030, -p1-031" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p1-007, -p1-094, -p1-097" },
+        { "source": "confluence:6497338582", "ref": "confluence-6497338582-p1-003, -p1-004, -p1-005" }
       ],
       "repos": ["backend", "frontend", "tests"],
       "kind": "feat",
       "status": "todo",
-      "gate": "Look at the germinal set's skeleton (its mount, chrome, category on the stored record, the cross-set guard and its copied origin page) before the other germinal page copies follow it: every later germinal row copies a live-animals feature folder into this set the same way.",
+      "gate": null,
       "openQuestions": [],
-      "notes": "Two slices, neither observable apart from the germinal set's skeleton and the category stored when a draft is created: the cross-set guard (req-1901) and the rule that decides which answers each set's pages ask (req-2210). Both are the set's own skeleton rules, proven on the set's first page beside the answers it already asks, so they belong with the germinal set's first row rather than in rows of their own. This is the journey-flow area's share of existing row inc-176, which already holds req-1901 and req-2210 beside the backend category field, the set mount and the set chrome. The combiner keeps inc-176's id, its germinal-products theme, its repos, its gate, its dependsOn (inc-129, inc-130, inc-135) and its externalDependsOn, and merges these criteria with the germinal-products, notification-record, notification-list and layout-and-sign-in areas' drafts of the same row, keeping one copy of each. The live-animals entry guard at src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js is journey-foundation's code, split off on feat/EUDPA-691-design-release-2-1-journey-foundation; the change here is a read of the stored category, so it is listed under shared, and the germinal-products theme already lands after journey-foundation. If the plan finds the guard itself must be reshaped rather than read from, that reshaping belongs on the journey-foundation branch and this row consumes it. c-274 (ruled): the germinal set keeps the real path shape under its own base path, so no criterion here states the prototype's flat paths or its category query. The field's name and values are the animals backend's to choose. Re-distil 25 November: req-1901 and req-2210 stay where they already sit; no wording of theirs changed.",
+      "notes": "Two slices: the cross-set guard (req-1901) and the rule deciding which answers each set asks (req-2210). Both are this area's share of existing row inc-176, which already holds them; the combiner keeps inc-176's id, theme germinal-products, repos (backend, frontend, tests), gate and dependsOn, and merges these criteria with the other areas' there, taking out any criterion another area states the same way. The guard reads the category the backend stores and returns on the read, which the notification-record area's requirements in inc-176 build, so the guard is not observable apart from them. The cross-set check is built at the set mount, in the germinal set and the router the germinal-products theme already owns, so the live-animals flow folder the split-off journey-foundation theme owns is not edited; if the plan finds the live-animals entry guard itself must change, that change belongs on the journey-foundation branch and this row consumes it, as inc-176's notes already say. Re-distil 27 November: neither requirement changed in substance.",
       "touches": [
         "frontend:src/server/app/sets/germinal-products",
+        "frontend:src/server/app/routes-germinal-products.js",
         "frontend:src/server/app/routes.js",
-        "tests:tests/animals/e2e/germinal-products"
+        "frontend:src/server/router.js",
+        "tests:tests/animals/e2e/germinal-products",
+        "tests:page-objects/germinal-products"
       ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js",
-        "frontend:src/server/app/bridge/obligation-source.js",
-        "frontend:src/server/app/routes-live-animals.js"
-      ],
+      "shared": [],
       "existingRow": "inc-176"
     },
     {
-      "title": "The rest of the germinal journey: arrival, transit countries, contact address, declaration and submission, certified for 'Germinal products'",
-      "detail": "The germinal products set is built from copies of the live animals pages, taken once this programme has finished changing them, so a trader who has used one set recognises the other: the same steps, the same questions, the same status strip and the same journey buttons. Three live animals steps do not apply to germinal products, because the notification data specification marks them for the animals journey alone: additional details, CPH number and permanent address. The germinal set therefore has no page for any of them, its overview carries no task for additional details, and its consignment addresses page carries no CPH number or permanent address row. A germinal notification is identified like a live animals one, so every germinal page shows the notification's status and its GBN-AG reference.",
+      "title": "The germinal journey follows the live animals journey, without the additional details, CPH number and permanent address steps",
+      "detail": "The germinal products set is built from copies of the live animals pages, taken once this programme has finished changing them, so a trader who has used one set recognises the other: the same pages under the same slugs beneath the germinal mount, the same status strip and the same journey buttons. Three live animals steps never apply, because the notification data specification marks them for the animals journey alone: additional details, CPH number and permanent address. So the germinal set has no page for any of them, its overview has no 'Additional details' task and its 'Consignment addresses' page has no CPH number or permanent address row. What the consignment is certified for has only one answer, so the draft is created holding 'Germinal products' and no page asks it. A germinal notification's strip shows a GBN-AG reference, like a live animals one.",
       "acceptanceCriteria": [
+        "A germinal products notification's journey pages are reached at /germinal-products/notifications/<reference>/<slug>, under the same slugs the live animals set uses. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006, -p1-007, -p1-009, -p1-010; repo:frontend repo-frontend-p1-007)",
         "Opening the additional details, CPH number or permanent address page of a germinal products notification shows the page not found page. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-016, -p1-017, -p1-018; prototype:dr2-1-source prototype-dr2-1-source-p1-056)",
-        "A germinal products notification's overview shows the same tasks, in the same sections and the same order, as a live animals notification's overview, except that it holds no 'Additional details' task. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-016; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-198)",
-        "A germinal products notification's 'Consignment addresses' page shows the consignment party rows alone, with no CPH number row and no permanent address row. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-017, -p1-018; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-198)",
-        "Every germinal products journey page shows the status strip with the notification's status and a reference of the form GBN-AG-<two-digit year>-<six characters>. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-027, -p1-086; prototype:dr2-1-specs prototype-dr2-1-specs-p7-124)",
-        "Every germinal products journey page ends with the same journey buttons, in the same order and with the same labels, as the live animals page it is copied from. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-011, -p1-014; prototype:dr2-1-specs prototype-dr2-1-specs-p7-147)",
-        "The high-risk plants frontend has no germinal set and no germinal page: its journey and its pages are unchanged by this row. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-056)"
+        "A germinal products notification's overview shows the same tasks, in the same sections and the same order, as a live animals notification's overview, except that it holds no 'Additional details' task. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-016; prototype:dr2-1-specs prototype-dr2-1-specs-p10-143)",
+        "A germinal products notification's 'Consignment addresses' page shows the consignment party rows alone, with no CPH number row and no permanent address row. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-017, -p1-018; prototype:dr2-1-specs prototype-dr2-1-specs-p10-144)",
+        "When identification applies to a germinal products notification, the page after it in the opening run is arrival details. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-016, -p1-017, -p1-018; prototype:dr2-1-source prototype-dr2-1-source-p1-123; prototype:dr2-1-specs prototype-dr2-1-specs-p10-145)",
+        "Every germinal products journey page shows the status strip with the notification's status and a reference of the form GBN-AG-<two-digit year>-<six characters>. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-027, -p1-086)",
+        "Every germinal products journey page ends with the same journey buttons, in the same order and with the same labels, as the live animals page it is copied from. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-011, -p1-014; prototype:dr2-1-specs prototype-dr2-1-specs-p10-146)",
+        "A germinal products draft is created holding 'Germinal products' as what the consignment is certified for, no germinal page asks it, and the germinal review shows 'Certified for' reading 'Germinal products' with no Change link. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-019, -p1-020; prototype:dr2-1-specs prototype-dr2-1-specs-p10-147)",
+        "The high-risk plants frontend has no germinal set and no germinal page: its journey and its pages are unchanged. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-056)"
       ],
       "requirements": ["req-1898"],
       "sources": [
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "ruling-sam-2026-10-09-p1-006 to -p1-011, -p1-013, -p1-014, -p1-016 to -p1-020, -p1-027, -p1-086"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "ruling-sam-2026-10-09-pm-p2-056 (the germinal set copies the overview, check answers, declaration and confirmation)"
-        },
-        {
-          "source": "prototype:dr2-1-specs",
-          "ref": "prototype-dr2-1-specs-p7-124, prototype-dr2-1-specs-p7-147 (COVERAGE.md)"
-        },
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p1-056"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "trace-prototype-dr2-1-p12-198"
-        },
-        {
-          "source": "repo:frontend",
-          "ref": "repo-frontend-p1-007 (src/server/app/routes.js): today the live-animals set is the frontend's only service routes"
-        },
-        { "source": "repo:perftests", "ref": "repo-perftests-p1-004" }
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-006 to -p1-011, -p1-013, -p1-014, -p1-016 to -p1-020, -p1-027, -p1-086" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-056" },
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p1-056, -p1-123" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p10-143 to -p10-147" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p1-007" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "One slice (req-1898, c-274). This is the journey-flow area's share of existing row inc-182, which already holds req-1898 beside req-182 (the certified-for answer) and req-1839 (the germinal transit countries task): the review and submission those criteria read are built by that row, so building this apart would repeat the same set-up, review and ladder. The combiner keeps inc-182's id, its germinal-products theme, its repos, its dependsOn (inc-099, inc-105, inc-178, inc-179, inc-181) and its externalDependsOn, and merges these criteria with the notification-hub and reason-and-additional-details areas' drafts of the same row, keeping one copy of each. The germinal set copies the live animals pages after this programme has changed them, so it waits on the live-animals rows through the germinal set's first row, which every germinal row follows. req-1898's navigation half — the step order of the opening run, where 'Save and continue' and 'Back' go, and where an amend returns to — is not here: the programme pushed that work out to EUDPA-774 on 6 November, which owns one journey order and 'Back' to wherever the trader came from for both sets, so no criterion here states where a button goes. The germinal set's own copies of the overview, check answers, declaration and confirmation pages are built by the rows inc-182 already depends on, so no criterion here repeats them. c-274 (ruled): the germinal pages keep the real path shape under the set's own base path, so no criterion states the prototype's flat paths. Criteria 2 and 3 state what each page shows, in order, so a reviewer checks a positive list rather than an absence. Re-distil 25 November: req-1898 stays in inc-182; its statement now names the 'Consignment addresses' page, so criterion 3 uses that heading in place of the earlier one.",
+      "notes": "One slice (req-1898), this area's share of existing row inc-182, which already holds it; the combiner keeps inc-182's id, theme germinal-products, repos and dependsOn and merges these criteria with the other areas' there, stating each once. c-274 (ruled by precedence): every set keeps the real path shape under its own base path, so no criterion states the prototype's flat paths. The opening-run criterion states only the step the set leaves out of the run; where each other button goes is the live animals flow the copies are taken from, and inc-182's notes record that the rest of the navigation half sits outside this programme, so no other criterion names a button destination. The certified-for criterion repeats inc-182's own and is stated once there. The germinal set's copies of the overview, check answers, declaration and confirmation come from the rows inc-182 already depends on. Re-distil 27 November: the statement did not change in substance; the 27 November ruling's claims on the germinal list and manage notifications do not reach these pages.",
       "touches": [
         "frontend:src/server/app/sets/germinal-products",
-        "tests:page-objects/germinal-products",
-        "tests:tests/animals/e2e/germinal-products"
+        "tests:tests/animals/e2e/germinal-products",
+        "tests:page-objects/germinal-products"
       ],
       "shared": [],
       "existingRow": "inc-182"
     },
     {
       "title": "End-to-end proof: a germinal products notification for bovine semen, from create to submitted",
-      "detail": "The germinal products set is proven whole, not page by page: one walk takes a bovine semen consignment from creating the notification to submitting it, so that a change to any germinal page that breaks the journey is caught. The walk lives in the test suite's existing animals project, beside the live animals journey walks, because germinal products is a sibling set in the same frontend rather than a new service.",
+      "detail": "The germinal products set is proven whole, not page by page: one walk takes a bovine semen consignment from creating the notification to submitting it, so a change to any germinal page that breaks the journey is caught. The walk lives in the test suite's existing animals project, beside the live animals journey walks, because germinal products is a sibling set in the same frontend rather than a new service.",
       "acceptanceCriteria": [
-        "A spec in the test suite's existing animals project walks a germinal products notification for bovine semen from create to submitted: the Netherlands as the country of origin, a net weight and a number of packages, Frozen, Internal market for Breeding, donor identification entered once for the species, Port of Dover by Road with transit through Belgium, and a consignee chosen on the 'Consignment addresses' page. (prototype:dr2-1-specs prototype-dr2-1-specs-p4-072, prototype-dr2-1-specs-p7-204; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-062, -p1-063)",
-        "Before declaring, that walk checks the germinal review page shows each answer it gave. (prototype:dr2-1-specs prototype-dr2-1-specs-p7-148, prototype-dr2-1-specs-p7-203; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-110)",
-        "The walk runs in the animals project's existing browser configuration, with no new test project added. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-062, -p1-063; repo:tests repo-tests-p8-006)"
+        "A spec in the test suite's existing animals project, under tests/animals/e2e/germinal-products, walks a germinal products notification for bovine semen from create to submitted: the Netherlands as the country of origin, a net weight and a number of packages, Frozen, Internal market for Breeding, donor identification entered once for the species, Port of Dover by Road with transit through Belgium, and a consignee chosen on the 'Consignment addresses' page. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-062, -p1-063)",
+        "Before declaring, that walk checks the germinal review page shows each answer it gave. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-110)",
+        "The walk runs in the animals project's existing browser configuration, with no new test project added. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-062, -p1-063)"
       ],
       "requirements": ["req-1899"],
       "sources": [
-        {
-          "source": "prototype:dr2-1-specs",
-          "ref": "prototype-dr2-1-specs-p4-072 (e2e/journeys.fit.spec.js), prototype-dr2-1-specs-p7-148, prototype-dr2-1-specs-p7-203, prototype-dr2-1-specs-p7-204 (COVERAGE.md)"
-        },
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "ruling-sam-2026-10-09-p1-062, -p1-063, -p1-110"
-        },
-        {
-          "source": "repo:tests",
-          "ref": "repo-tests-p8-006, repo-tests-p8-152: today every whole journey the suite walks is a live-animals one"
-        }
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-062, -p1-063, -p1-110" }
       ],
       "repos": ["tests"],
       "kind": "test",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "One slice (req-1899). This is the journey-flow area's share of existing row inc-184, which already holds it alone. The combiner keeps inc-184's id, its germinal-products theme, its repos and its dependsOn (inc-182, inc-183, inc-141, inc-172), and merges these criteria with the ones already there. Tests only, following the live-animals end-to-end proof rows: every behaviour the walk exercises is built by the germinal rows it depends on, and this row adds the walk across them, so its acceptance is observable the moment it lands. The spec sits in the existing animals project under tests/animals/e2e/germinal-products, with no new project. The walk asserts no button destination, because where 'Save and continue' and 'Back' go is EUDPA-774's work, which the programme pushed out. Re-distil 25 November: req-1899 stays in inc-184; its statement now names the 'Consignment addresses' page, so criterion 1 uses that heading, and the third criterion states the no-new-project rule the statement carries.",
+      "notes": "One slice (req-1899), this area's share of existing row inc-184, which already holds it alone; the combiner keeps inc-184's id, theme germinal-products, repos and dependsOn (inc-182, inc-183, inc-141, inc-172). Tests only, like the live animals end-to-end proof rows: every behaviour the walk exercises is built by the germinal rows it depends on, so its acceptance is observable once it lands, locally and in CI. The walk asserts no button destination. Re-distil 27 November: the statement did not change.",
       "touches": [
         "tests:tests/animals/e2e/germinal-products",
-        "tests:page-objects/germinal-products",
-        "tests:page-objects/shared/sets.ts"
+        "tests:page-objects/germinal-products"
       ],
       "shared": [],
       "existingRow": "inc-184"
     }
   ],
   "unobservable": [],
-  "splitOff": [
-    {
-      "requirement": "req-1639",
-      "theme": "journey-foundation",
-      "why": "It changes where a page saved after being opened from the review page goes, which is the live-animals journey's return rule in frontend:src/server/app/sets/live-animals/journeys/linear/flow, inside theme journey-foundation's touches. Its sibling rule for the overview context (req-1615, 'a page opened from a task on the overview returns to the overview when it is saved') is already held by that pointer and is the same code and the same recorded-origin mechanism, and the fit proof sits in frontend:fit, also journey-foundation's. The test the change makes red, tests/animals/e2e/features/change-from-cya.spec.ts, carries the two claims c-452 overruled (repo-tests-p4-116, repo-tests-p4-118), so it is edited by the branch that changes the rule."
-    }
-  ]
+  "splitOff": []
 }

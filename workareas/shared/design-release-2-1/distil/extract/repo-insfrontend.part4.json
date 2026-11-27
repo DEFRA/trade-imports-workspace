@@ -1,0 +1,1108 @@
+{
+  "source": "repo:insfrontend",
+  "structure": "Part 4, Address book list. Read in full: features/address-book/list/page.js (1 line, maturity), list.controller.js (395 lines: the GET handler, tab and type-filter selection, page loading and clamping, table heads and rows for addresses and transporters, the failed-load view), list.njk (101 lines: success banner, h1, intro, Add a new address button, the Filter addresses details holding the search box, search button and Type select, the MOJ sub-navigation tabs, panel h2, results line, Clear search link, table and pagination), view-model/list.js (134 lines: query strings, name lines, results label, role and transporter-type label search, row mapping for both tables), address-book-tabs.js (43 lines: three tabs and their type filters), copy/copy.en.js and copy/copy.cy.js (only the list keys and notApplicable are claimed here; the rest belongs to other parts), services/address-book client.js, index.js, stub.js, address-types.js, typed-seed.js and services/address-book-request.js (what the list sends to and gets from the address-book API, the stub's seeds and matching), and the fit helpers address-book-list.js, address-book-list-text.js, seed-address.js and every test in list.fit.spec.js (45 tests in 13 describe blocks, counting each parameterised case once per loop). To read cells and paging exactly, shared/list-page.js, shared/paths.js, address-book/fields.js and address-book/address-countries.js were also read, and are cited only where a list claim rests on them. Covered: the list route and heading, intro, add button, success banner slot, filter disclosure, search box with label and hint, Type filter and its options per tab, Clear search, the three tabs and their headings, both tables' columns and how each cell reads, results line and empty state, page size, pagination and page clamping, the load-failure behaviour, the address types and roles and how they group, the list request the client sends, the stub's list behaviour and seeds, the Welsh twins of the list keys, and every fit test. Not covered here: the add, view, edit and delete pages and the transporter tab's own pages, and the shared recoverable-error copy (shared layout part).",
+  "claims": [
+    {
+      "id": "repo-insfrontend-p4-001",
+      "statement": "The address book list is served at the path /address-book with a GET route.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:393; src/server/app/shared/paths.js:3",
+      "quote": "export const routes = kit.pageRoutes(addressBookPage, addressBookPath(), {\n  get\n})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-002",
+      "statement": "The address book list page is marked at the 'exploring' maturity level.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/address-book/list/page.js:1",
+      "quote": "export const addressBookPage = { id: 'address-book', maturity: 'exploring' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-003",
+      "statement": "The list needs the signed-in user's organisation id, and lists only that organisation's addresses and transporters.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:342",
+      "quote": "const organisationId = kit.requireOrganisationId(request)",
+      "confidence": "inferred",
+      "note": "Inferred: every list call passes organisationId, and the address-book URL is scoped as /organisation/{organisationId}/addresses."
+    },
+    {
+      "id": "repo-insfrontend-p4-004",
+      "statement": "The page's main heading (h1) and title are 'Address book'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.njk:20; src/server/app/features/address-book/copy/copy.en.js:21; list.controller.js:133",
+      "quote": "title: 'Address book',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-005",
+      "statement": "Under the heading, a lead paragraph reads 'Manage your addresses for use across all your import notifications'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.njk:22; copy/copy.en.js:22",
+      "quote": "intro: 'Manage your addresses for use across all your import notifications',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-006",
+      "statement": "The page shows a button 'Add a new address', always, whichever tab is selected.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.njk:24-29; copy/copy.en.js:2,34",
+      "quote": "const ADD_A_NEW_ADDRESS = 'Add a new address'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-007",
+      "statement": "The 'Add a new address' button links to the start of the choose-an-address-type step, /address-book/add/address-type?start=true.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:137; src/server/app/shared/paths.js:5-8",
+      "quote": "addHref: addressTypeStartPath()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-008",
+      "statement": "When a success message is waiting for the user (from an add, edit or delete), the list shows it in a success notification banner titled 'Success' above the heading, once.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.njk:12-18; list.controller.js:351; copy/copy.en.js:81",
+      "quote": "{% if successMessage %}\n    {{ govukNotificationBanner({\n      type: \"success\",\n      titleText: copy.successBanner.title,",
+      "confidence": "inferred",
+      "note": "Inferred 'once' from the name takeSuccessMessage; the messages themselves are set by the add, edit and delete pages (other parts)."
+    },
+    {
+      "id": "repo-insfrontend-p4-009",
+      "statement": "The search box and Type filter sit inside a GOV.UK details disclosure whose summary reads 'Filter addresses', closed when the page loads.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.njk:66-72; copy/copy.en.js:24",
+      "quote": "summary: 'Filter addresses',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-010",
+      "statement": "The search field is a search-type input named q, labelled 'Search', two thirds wide, and shows the current search term.",
+      "kind": "data",
+      "ref": "src/server/app/features/address-book/list/list.njk:40-52; copy/copy.en.js:25",
+      "quote": "label: 'Search',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-011",
+      "statement": "The search field's hint reads 'Search by name, address or country'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.njk:44-46; copy/copy.en.js:26",
+      "quote": "hint: 'Search by name, address or country',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-012",
+      "statement": "The search button shows a magnifying-glass icon with the visually hidden text 'Search'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.njk:31-37,53-55; copy/copy.en.js:27",
+      "quote": "<span class=\"govuk-visually-hidden\">{{ copy.list.search.button }}</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-013",
+      "statement": "Beside the search field is a select labelled 'Type', whose first option is 'Select one' with an empty value, meaning no type filter.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.njk:56-63; list.controller.js:121-122; copy/copy.en.js:29-32",
+      "quote": "typeFilter: {\n        label: 'Type',\n        placeholder: 'Select one'\n      }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-014",
+      "statement": "The filter form submits by GET to /address-book and carries the selected tab in a hidden addressType field, so a search stays on the current tab.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.njk:66-67",
+      "quote": "<form method=\"get\" action=\"{{ listHref }}\" class=\"govuk-!-margin-bottom-6\">\n    <input type=\"hidden\" name=\"addressType\" value=\"{{ addressType }}\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-015",
+      "statement": "The search term is read from the q query parameter with leading and trailing spaces removed.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:344",
+      "quote": "const searchTerm = request.query.q?.trim() ?? ''",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-016",
+      "statement": "The selected Type stays selected in the select after the search is submitted.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:123-127",
+      "quote": "selected: value === selectedValue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-017",
+      "statement": "On an address tab, a search sends the term to the address book, which matches it against the address's text fields.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-book/client.js:30-32",
+      "quote": "if (searchTerm) {\n    url.searchParams.set('q', searchTerm)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-018",
+      "statement": "On an address tab, a search also finds addresses whose country name contains the term: the frontend turns the term into the codes of every country whose name contains it, case-insensitively, and sends them as countryCode.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:197-204; address-countries.js countryCodesMatching; client.js:33-35",
+      "quote": "const countryCodes = countryCodesMatching(searchTerm, countries)",
+      "confidence": "verbatim",
+      "note": "mechanism: maps a free-text search term to country codes from the countries reference data."
+    },
+    {
+      "id": "repo-insfrontend-p4-019",
+      "statement": "On an address tab, a search also finds addresses holding a role whose Type column label contains the term, case-insensitively: the frontend sends those roles as searchRole.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/view-model/list.js:53-61; list.controller.js:199; client.js:36-38",
+      "quote": ".filter(([, { columnLabel }]) => columnLabel.toLowerCase().includes(term))",
+      "confidence": "verbatim",
+      "note": "mechanism: maps a search term to role codes through the role column labels of the current language."
+    },
+    {
+      "id": "repo-insfrontend-p4-020",
+      "statement": "In the stub, an address matches a search when the term appears, case-insensitively, in its name, address line 1, address line 2, town or city, county or postcode, or its country is one of the matched countries, or it holds one of the matched roles.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/address-book/stub.js:89-115",
+      "quote": "return (\n    textMatches ||\n    countryCodes.includes(address.countryCode) ||\n    holdsAnyOf(address, searchRoles)\n  )",
+      "confidence": "verbatim",
+      "note": "mechanism: the stub's own search over stored addresses; the real address-book API's matching is not in this repo. Email and phone are not searched."
+    },
+    {
+      "id": "repo-insfrontend-p4-021",
+      "statement": "A Type filter narrows within the search: an address must hold the chosen role and also match the search term.",
+      "kind": "rule",
+      "ref": "src/server/app/services/address-book/stub.js:117-126; list.controller.js:205",
+      "quote": ".filter((address) => passesRoleFilter(address, roles))\n    .filter((address) => matchesSearch(address, search))",
+      "confidence": "inferred",
+      "note": "Inferred from the stub, where the role filter and the search are applied one after the other; the real API's combination is not in this repo."
+    },
+    {
+      "id": "repo-insfrontend-p4-022",
+      "statement": "When a search term is in force, a 'Clear search' link shows above the table.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.njk:86-90; copy/copy.en.js:28",
+      "quote": "clear: 'Clear search',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-023",
+      "statement": "'Clear search' goes back to the first page of the same tab with no search term, and keeps the Type filter that was chosen.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:305-309",
+      "quote": "clearSearchHref: addressBookPageHref(1, {\n      addressType,\n      filterParam: typeFilter.param,\n      filterValue: typeFilterValue\n    }),",
+      "confidence": "verbatim",
+      "note": "The fit test only proves the case with no Type chosen, where the URL becomes ?addressType=ORIGIN_OR_CONSIGNOR."
+    },
+    {
+      "id": "repo-insfrontend-p4-024",
+      "statement": "The list is split into tabs, shown as an MOJ sub-navigation labelled 'Address types'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.njk:75-78; copy/copy.en.js:37",
+      "quote": "tabsLabel: 'Address types',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-025",
+      "statement": "There are three tabs, in this order: 'Origin and Consignor', 'Destination, Consignee and Importer', 'Transporter'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/address-book-tabs.js:25-29; copy/copy.en.js:38-51",
+      "quote": "ORIGIN_OR_CONSIGNOR: {\n        label: 'Origin and Consignor',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-026",
+      "statement": "The selected tab is chosen by the addressType query parameter (ORIGIN_OR_CONSIGNOR, DESTINATION_CONSIGNEE_OR_IMPORTER or TRANSPORTER), and the tab is a link that reloads the page, so tabs work without JavaScript.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:110-115,175-191",
+      "quote": "href: addressBookPageHref(1, { addressType: tab.addressType, searchTerm }),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-027",
+      "statement": "With no addressType, or one the list does not offer, the 'Origin and Consignor' tab is selected; an unknown value is logged and otherwise ignored.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:175-191; address-book-tabs.js:35",
+      "quote": "'Address book list ignored an address type it does not offer'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-028",
+      "statement": "Following a tab keeps the search term, goes to page 1 and drops the Type filter.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:110-115",
+      "quote": "href: addressBookPageHref(1, { addressType: tab.addressType, searchTerm }),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-029",
+      "statement": "Each tab's panel has its own h2 heading: 'Origin and Consignor addresses', 'Destination, Consignee and Importer addresses' and 'Transporter addresses'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.njk:80; list.controller.js:303; copy/copy.en.js:39-50",
+      "quote": "heading: 'Origin and Consignor addresses'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-030",
+      "statement": "The 'Origin and Consignor' tab lists the addresses holding the Place of origin or Consignor role.",
+      "kind": "rule",
+      "ref": "src/server/app/services/address-book/address-types.js:21-24; address-book-tabs.js:7-14; list.controller.js:205",
+      "quote": "[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR]: Object.freeze([\n    ROLES.PLACE_OF_ORIGIN,\n    ROLES.CONSIGNOR\n  ]),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-031",
+      "statement": "The 'Destination, Consignee and Importer' tab lists the addresses holding the Consignee, Importer or Place of destination role.",
+      "kind": "rule",
+      "ref": "src/server/app/services/address-book/address-types.js:25-29; address-book-tabs.js:7-14",
+      "quote": "[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]: Object.freeze([\n    ROLES.CONSIGNEE,\n    ROLES.IMPORTER,\n    ROLES.PLACE_OF_DESTINATION\n  ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-032",
+      "statement": "The 'Transporter' tab lists the organisation's transporters, from the transporters service rather than the addresses list.",
+      "kind": "integration",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:215-243",
+      "quote": "const transporterPage = await loadPage(organisationId, listTransporters, {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-033",
+      "statement": "On the address tabs the Type filter's query parameter is role; on the Transporter tab it is type.",
+      "kind": "data",
+      "ref": "src/server/app/features/address-book/address-book-tabs.js:12,19-22",
+      "quote": "typeFilter: Object.freeze({ param: 'role', values: roles })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-034",
+      "statement": "On the 'Origin and Consignor' tab the Type options are 'Place of Origin' and 'Consignor', in that order.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:117-129; copy/copy.en.js:57-61",
+      "quote": "PLACE_OF_ORIGIN: {\n        columnLabel: 'Place of origin',\n        optionLabel: 'Place of Origin'\n      },\n      CONSIGNOR: { columnLabel: 'Consignor', optionLabel: 'Consignor' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-035",
+      "statement": "On the 'Destination, Consignee and Importer' tab the Type options are 'Consignee', 'Importer' and 'Place of Destination', in that order.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:117-129; copy/copy.en.js:62-67; address-types.js:25-29",
+      "quote": "PLACE_OF_DESTINATION: {\n        columnLabel: 'Place of destination',\n        optionLabel: 'Place of Destination'\n      }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-036",
+      "statement": "On the 'Transporter' tab the Type options are 'Commercial' and 'Private', in that order.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/address-book-tabs.js:19-22; copy/copy.en.js:52-55",
+      "quote": "values: [TRANSPORTER_TYPES.COMMERCIAL, TRANSPORTER_TYPES.PRIVATE]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-037",
+      "statement": "The place roles are capitalised differently as filter options ('Place of Origin', 'Place of Destination') from the Type column ('Place of origin', 'Place of destination').",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:57-67",
+      "quote": "columnLabel: 'Place of origin',\n        optionLabel: 'Place of Origin'",
+      "confidence": "verbatim",
+      "note": "Two labels for one role on one page; for the reconciler to weigh against the design source."
+    },
+    {
+      "id": "repo-insfrontend-p4-038",
+      "statement": "A Type filter value the selected tab does not offer is ignored (no filter applied) and logged.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:245-264; address-book-tabs.js:40-41",
+      "quote": "'Address book list ignored a filter value the tab does not offer'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-039",
+      "statement": "On an address tab, choosing a Type lists only addresses holding that role; with no Type, the tab's whole role group is requested.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:205",
+      "quote": "roles: role ? [role] : selectedTab.roles",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-040",
+      "statement": "On the Transporter tab, choosing a Type lists only transporters of that type; with no Type, transporters of every type are listed.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:234",
+      "quote": "types: typeFilterValue ? [typeFilterValue] : []",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-041",
+      "statement": "The address tabs' table has the columns Name, Type, Address, Country and a fifth column whose heading 'Action' is visually hidden.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:58-68; copy/copy.en.js:69-77",
+      "quote": "const ADDRESS_TABLE_HEAD = [\n  { text: copy.list.table.name },\n  { text: copy.list.table.type },\n  { text: copy.list.table.address },\n  { text: copy.list.table.country },\n  actionHeadCell()\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-042",
+      "statement": "The Transporter tab's table has the columns Name, Address, Approval number, Type and a visually hidden 'Action' column; it has no separate Country column.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:70-76",
+      "quote": "const TRANSPORTER_TABLE_HEAD = [\n  { text: copy.list.table.name },\n  { text: copy.list.table.address },\n  { text: copy.list.table.approvalNumber },\n  { text: copy.list.table.type },\n  actionHeadCell()\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-043",
+      "statement": "The Name cell shows the name's first word on one line and the rest of the name on a second line.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/view-model/list.js:40-45; list.controller.js:83",
+      "quote": "return otherWords.length\n    ? [firstWord, otherWords.join(' ')]\n    : [firstWord].filter(Boolean)",
+      "confidence": "verbatim",
+      "note": "mechanism: splits a stored name into display lines."
+    },
+    {
+      "id": "repo-insfrontend-p4-044",
+      "statement": "The Type cell lists the address's roles by their column labels, separated by a comma and space, in the order the address holds them, such as 'Place of origin, Consignor'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/view-model/list.js:50-51",
+      "quote": "roles.map((role) => copyByRole[role]?.columnLabel ?? role).join(', ')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-045",
+      "statement": "The Type column labels for the five roles are 'Place of origin', 'Consignor', 'Consignee', 'Importer' and 'Place of destination'; a role without a label shows its code.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:56-68; view-model/list.js:51",
+      "quote": "CONSIGNEE: { columnLabel: 'Consignee', optionLabel: 'Consignee' },\n      IMPORTER: { columnLabel: 'Importer', optionLabel: 'Importer' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-046",
+      "statement": "The Address cell shows, one per line, each filled-in line of address line 1, address line 2, town or city, county and postcode, each line but the last ending in a comma; blank lines are left out.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:85; address-book/fields.js:23-29,38-41",
+      "quote": "{ html: linesHtml(address.postalLines, { lineEnding: ',' }) },",
+      "confidence": "inferred",
+      "note": "mechanism: postalLinesOf drops blank postal fields. Inferred 'but the last' from the fit test, which reads the cell as lines joined by ',\\n'; lines-html.js was not read."
+    },
+    {
+      "id": "repo-insfrontend-p4-047",
+      "statement": "The Country cell on the address tabs shows the country's name from the countries reference data, or the stored country code when the code is not in it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/view-model/list.js:70; address-countries.js countryLabelOf",
+      "quote": "countries.find((country) => country.code === countryCode)?.name ?? countryCode",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-048",
+      "statement": "The countries list the page uses always includes United Kingdom (GB), whatever the reference data holds.",
+      "kind": "data",
+      "ref": "src/server/app/features/address-book/address-countries.js GB_COUNTRY, getAddressFormCountries",
+      "quote": "const GB_COUNTRY = { code: 'GB', name: 'United Kingdom' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-049",
+      "statement": "Each address row ends with a 'View' link to that address's page, /address-book/{id}, with the address name added as visually hidden text.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:55-56,87; shared/paths.js:29; copy/copy.en.js:76",
+      "quote": "`<a class=\"govuk-link\" href=\"${pathWithReturn(recordPathOf(record.id), returnTo)}\">${copy.list.table.view}<span class=\"govuk-visually-hidden\"> ${escapeHtml(record.name)}</span></a>`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-050",
+      "statement": "Each transporter row ends with a 'View' link to the transporter's page, /address-book/transporter/{id}, carrying a return to the Transporter tab.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:96-100; shared/paths.js:20-21",
+      "quote": "html: viewLink(transporter, transporterPath, {\n        returnTo: transporterTabPath()\n      })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-051",
+      "statement": "A transporter's Address cell shows its filled-in postal lines followed by its country as the last line.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/view-model/list.js:124-131; list.controller.js:93",
+      "quote": "postalLines: [\n      ...postalLinesOf(transporter),\n      transporterCountryLabelOf(",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-052",
+      "statement": "A commercial transporter's country always shows as 'Northern Ireland'; a private transporter's shows its stored country's name.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/view-model/list.js:102-109; copy/copy.en.js:164",
+      "quote": "transporter.type === TRANSPORTER_TYPES.COMMERCIAL\n    ? fixedCommercialCountryLabel\n    : countryLabelOf(countries, transporter.countryCode)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-053",
+      "statement": "The Approval number cell shows the transporter's approval number, or 'Not applicable' when it has none or it is blank.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/view-model/list.js:73-74; copy/copy.en.js:79",
+      "quote": "notApplicable: 'Not applicable',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-054",
+      "statement": "The Transporter table's Type cell shows 'Private' or 'Commercial', or the stored type code when it has no label.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/view-model/list.js:133; copy/copy.en.js:52-55",
+      "quote": "transporterTypes: {\n      PRIVATE: 'Private',\n      COMMERCIAL: 'Commercial'\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-055",
+      "statement": "On the Transporter tab a search also matches transporters by country name, and a term found in 'Northern Ireland' also matches commercial transporters by the Northern Ireland code.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/view-model/list.js:89-100; list.controller.js:219-224",
+      "quote": "return [...new Set([...matched, NORTHERN_IRELAND_COUNTRY_CODE])]",
+      "confidence": "verbatim",
+      "note": "mechanism: maps a search term to country codes for the transporters list."
+    },
+    {
+      "id": "repo-insfrontend-p4-056",
+      "statement": "On the Transporter tab a search also matches transporters whose type label ('Private' or 'Commercial') contains the term, case-insensitively.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/view-model/list.js:76-87; list.controller.js:225-233",
+      "quote": ".filter(([, label]) => label.toLowerCase().includes(term))",
+      "confidence": "verbatim",
+      "note": "mechanism: maps a search term to transporter type codes."
+    },
+    {
+      "id": "repo-insfrontend-p4-057",
+      "statement": "Above the table a results line reads 'Showing {from}-{to} of {total}', such as 'Showing 1-8 of 30'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.njk:82-84; copy/copy.en.js:35; shared/list-page.js buildResultsLabel",
+      "quote": "results: (from, to, total) => `Showing ${from}-${to} of ${total}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-058",
+      "statement": "When nothing is listed, the results line reads 'Showing 0 of 0', and the table shows its headings with no rows.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/view-model/list.js:47-48; copy/copy.en.js:36; list.njk:92-95",
+      "quote": "noResults: 'Showing 0 of 0',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-059",
+      "statement": "The list has no empty-state message of its own: an empty address book and a search with no matches both show only 'Showing 0 of 0' and an empty table.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.njk; copy/copy.en.js:20-78",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in list.njk and the list copy keys: there is no empty-state paragraph or no-results guidance."
+    },
+    {
+      "id": "repo-insfrontend-p4-060",
+      "statement": "The list shows 8 rows a page.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:49",
+      "quote": "export const LIST_PAGE_SIZE = 8",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-061",
+      "statement": "GOV.UK pagination shows below the table only when there is more than one page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.njk:97-99; shared/list-page.js buildPaginationLinks",
+      "quote": "if (totalPages <= 1) {\n    return null\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-062",
+      "statement": "Pagination shows a Previous link except on the first page, a Next link except on the last, and page numbers for the first page, the pages either side of the current one, the current page and the last page, with an ellipsis where pages are skipped.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/list-page.js numbersToShow, itemsWithEllipses, buildPaginationLinks",
+      "quote": "const pagesEitherSideOfCurrent = 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-063",
+      "statement": "Every pagination link keeps the selected tab, the search term and the Type filter.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:312-319",
+      "quote": "addressBookPageHref(targetPage, {\n        addressType,\n        searchTerm,\n        filterParam: typeFilter.param,\n        filterValue: typeFilterValue\n      })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-064",
+      "statement": "List URLs are built with the parameters addressType, q, the Type parameter (role or type) and page, each only when it has a value, and page only when it is above 1.",
+      "kind": "data",
+      "ref": "src/server/app/features/address-book/view-model/list.js:10-32",
+      "quote": "if (page && page > 1) {\n    params.set('page', String(page))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-065",
+      "statement": "A page number that is missing, not a number or below 1 shows the first page.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/list-page.js parsePage; list.controller.js:343",
+      "quote": "return Number.isNaN(page) || page < FIRST_PAGE ? FIRST_PAGE : page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-066",
+      "statement": "A page number past the last page shows the last page instead, and the clamp is logged.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:141-173",
+      "quote": "'Address book page is past the last page, serving the last page'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-067",
+      "statement": "When the list cannot be loaded, the page answers with status 500 and shows the shared recoverable-error banner; the heading, intro, add button and filter still show, but the tabs, panel heading, results line, table and pagination do not.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:328-339,369-390; list.njk:74-100",
+      "quote": "listLoaded: false,",
+      "confidence": "verbatim",
+      "note": "The banner's words are shared copy (recoverableError) owned by the shared layout part."
+    },
+    {
+      "id": "repo-insfrontend-p4-068",
+      "statement": "A failure to load the list is logged as an error 'Failed to load address book' with the organisation, tab and Type filter.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:373-381",
+      "quote": "'Failed to load address book'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-069",
+      "statement": "When the countries reference data is unavailable, the list does not render its recoverable-error view: the 'Reference data unavailable' service-unavailable error is passed on to the generic error handling.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:370-372; address-countries.js getAddressFormCountries",
+      "quote": "if (Boom.isBoom(err)) {\n      throw err\n    }",
+      "confidence": "inferred",
+      "note": "Inferred: getAddressFormCountries throws Boom.serverUnavailable when no countries come back, and the list rethrows every Boom error."
+    },
+    {
+      "id": "repo-insfrontend-p4-070",
+      "statement": "The list asks the address-book API for a page of addresses with GET {address book base URL}/organisation/{organisationId}/addresses.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-book/client.js:8-11,24,40-43; services/address-book-request.js:24-32",
+      "quote": "const base = `${addressBookUrl}/organisation/${encodeURIComponent(organisationId)}/${resource}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-071",
+      "statement": "The list request always sends page and pageSize, sends role once for each role wanted, q when there is a search term, and countryCode and searchRole once for each matched country and role.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-book/client.js:13-38",
+      "quote": "url.searchParams.set('page', String(page))\n  url.searchParams.set('pageSize', String(pageSize))\n  for (const role of roles) {\n    url.searchParams.append('role', role)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-072",
+      "statement": "The address-book API answers a list request with items, page, pageSize, totalItems and totalPages, which the list uses for its rows, results line and pagination.",
+      "kind": "integration",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:103-108,208; services/stub-support.js pageOfMatches",
+      "quote": "const paginationOf = (loadedPage) => ({\n  page: loadedPage.page,\n  pageSize: loadedPage.pageSize,\n  totalItems: loadedPage.totalItems,\n  totalPages: loadedPage.totalPages\n})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-073",
+      "statement": "Every address-book request carries organisation-scoped headers, and is refused before it is sent when there is no organisation id.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-book-request.js:24-41",
+      "quote": "refuseWithoutOrganisation(organisationId, ADDRESS_BOOK_ORGANISATION_REQUIRED)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-074",
+      "statement": "A list response that is not OK from the address-book API is raised as an error, which the list shows as its load-failure view.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-book/client.js:45",
+      "quote": "await throwOnError(response)",
+      "confidence": "inferred",
+      "note": "Inferred that the error is not a Boom error and so reaches the 500 recoverable view; http-client.js was not read."
+    },
+    {
+      "id": "repo-insfrontend-p4-075",
+      "statement": "A 400 response from the address book on a write is raised as a validation failure carrying the problem body's field errors, and the first message for each field becomes that field's form error.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-book-request.js:43-64; services/address-book/index.js:34-43",
+      "quote": "Object.entries(problemBody?.errors ?? {}).map(([field, messages]) => [\n      field,\n      messages[0]\n    ])",
+      "confidence": "verbatim",
+      "note": "Read here as part of the address-book service; the forms that show these errors are other parts."
+    },
+    {
+      "id": "repo-insfrontend-p4-076",
+      "statement": "In stub mode the frontend uses an in-memory address book instead of the address-book API.",
+      "kind": "constraint",
+      "ref": "src/server/app/services/address-book/index.js:17",
+      "quote": "const addressBook = () => (isStubMode() ? stub : client)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-077",
+      "statement": "The stub leaves deleted addresses out of the list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/address-book/stub.js:121-122,168-175",
+      "quote": ".filter(isLive)",
+      "confidence": "verbatim",
+      "note": "mechanism: the stub soft-deletes by setting deleted: true."
+    },
+    {
+      "id": "repo-insfrontend-p4-078",
+      "statement": "In the stub an address passes the role filter when it holds any of the requested roles, or when no roles are requested.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/address-book/stub.js:83-87",
+      "quote": "roles.length === 0 || holdsAnyOf(address, roles)",
+      "confidence": "verbatim",
+      "note": "mechanism: stub list filter."
+    },
+    {
+      "id": "repo-insfrontend-p4-079",
+      "statement": "The stub lists a newly added address first.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/address-book/stub.js:141",
+      "quote": "addressesOf(organisationId).unshift(created)",
+      "confidence": "inferred",
+      "note": "mechanism: the stub keeps insertion order with new addresses at the front; the real API's sort order is not in this repo, and the list offers no sort control."
+    },
+    {
+      "id": "repo-insfrontend-p4-080",
+      "statement": "The list offers no way to sort: there is no sort control and no sort parameter in the list request.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.njk; services/address-book/client.js:13-47",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The scope names sort; looked in the template, controller, view-model and client and found none."
+    },
+    {
+      "id": "repo-insfrontend-p4-081",
+      "statement": "The stub seeds an organisation with one address by default: 'Stub Farm 1', 1 Stub Way, Stubton, ST1 1UB, United Kingdom, holding Place of origin and Consignor.",
+      "kind": "data",
+      "ref": "src/server/app/services/address-book/stub.js:15-29,70; features/address-book/fit/seed-address.js",
+      "quote": "name: `Stub Farm ${index}`,\n  addressLine1: `${index} Stub Way`,",
+      "confidence": "verbatim",
+      "note": "mechanism: stub test data, chosen by organisation id."
+    },
+    {
+      "id": "repo-insfrontend-p4-082",
+      "statement": "The stub seeds an organisation whose id ends in -paginated with 30 addresses, Stub Farm 1 to Stub Farm 30; one whose id ends in -typed with four addresses (Stub Origin Farm, Stub Pasture Farm, Stub Consignee Farm, Stub Importer Farm); one whose id ends in -roles-paged with 22; and an empty-seed organisation with none.",
+      "kind": "data",
+      "ref": "src/server/app/services/address-book/stub.js:37-71; typed-seed.js",
+      "quote": "if (organisationId.endsWith('-typed')) {\n    return typedSeedAddresses()\n  }",
+      "confidence": "verbatim",
+      "note": "mechanism: stub test data keyed on organisation id suffixes."
+    },
+    {
+      "id": "repo-insfrontend-p4-083",
+      "statement": "The typed seed holds Stub Origin Farm (Place of origin, Consignor), Stub Pasture Farm (Place of origin), Stub Consignee Farm (Consignee, Place of destination) and Stub Importer Farm (Importer).",
+      "kind": "data",
+      "ref": "src/server/app/services/address-book/typed-seed.js:3-20",
+      "quote": "consigneeAndDestination: {\n    name: 'Stub Consignee Farm',\n    roles: [ROLES.CONSIGNEE, ROLES.PLACE_OF_DESTINATION]\n  },",
+      "confidence": "verbatim",
+      "note": "mechanism: stub test data."
+    },
+    {
+      "id": "repo-insfrontend-p4-084",
+      "statement": "The stub refuses to save an address with no roles ('Select what this address can be used for') or with roles from more than one group ('An address can only have roles from one group').",
+      "kind": "rule",
+      "ref": "src/server/app/services/address-book/stub.js:128-136",
+      "quote": "return { roles: ['An address can only have roles from one group'] }",
+      "confidence": "verbatim",
+      "note": "mechanism: the stub's stand-in for the API's role validation; the add and edit pages are other parts."
+    },
+    {
+      "id": "repo-insfrontend-p4-085",
+      "statement": "There are three address types: ORIGIN_OR_CONSIGNOR, DESTINATION_CONSIGNEE_OR_IMPORTER and TRANSPORTER.",
+      "kind": "data",
+      "ref": "src/server/app/services/address-book/address-types.js:1-5",
+      "quote": "export const ADDRESS_TYPES = Object.freeze({\n  ORIGIN_OR_CONSIGNOR: 'ORIGIN_OR_CONSIGNOR',\n  DESTINATION_CONSIGNEE_OR_IMPORTER: 'DESTINATION_CONSIGNEE_OR_IMPORTER',\n  TRANSPORTER: 'TRANSPORTER'\n})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-086",
+      "statement": "Only the origin-or-consignor and destination-consignee-or-importer types are addresses held by roles; transporters are a separate kind of record with no roles.",
+      "kind": "data",
+      "ref": "src/server/app/services/address-book/address-types.js:7-10; address-book-tabs.js:16-23",
+      "quote": "export const ADDRESS_FORM_TYPES = Object.freeze([\n  ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,\n  ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER\n])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-087",
+      "statement": "An address can hold five roles: PLACE_OF_ORIGIN, CONSIGNOR, CONSIGNEE, IMPORTER and PLACE_OF_DESTINATION.",
+      "kind": "data",
+      "ref": "src/server/app/services/address-book/address-types.js:12-18",
+      "quote": "PLACE_OF_ORIGIN: 'PLACE_OF_ORIGIN',\n  CONSIGNOR: 'CONSIGNOR',\n  CONSIGNEE: 'CONSIGNEE',\n  IMPORTER: 'IMPORTER',\n  PLACE_OF_DESTINATION: 'PLACE_OF_DESTINATION'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-088",
+      "statement": "Each role belongs to exactly one address type: Place of origin and Consignor to origin-or-consignor; Consignee, Importer and Place of destination to destination-consignee-or-importer.",
+      "kind": "rule",
+      "ref": "src/server/app/services/address-book/address-types.js:20-40",
+      "quote": "export const addressTypeOfRole = (role) =>\n  ADDRESS_FORM_TYPES.find((addressType) =>\n    ROLES_BY_ADDRESS_TYPE[addressType].includes(role)\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-089",
+      "statement": "Place of origin and Place of destination are the place roles.",
+      "kind": "data",
+      "ref": "src/server/app/services/address-book/address-types.js:42-45",
+      "quote": "export const PLACE_ROLES = Object.freeze([\n  ROLES.PLACE_OF_ORIGIN,\n  ROLES.PLACE_OF_DESTINATION\n])",
+      "confidence": "verbatim",
+      "note": "What the place roles are used for is outside the list."
+    },
+    {
+      "id": "repo-insfrontend-p4-090",
+      "statement": "Roles offered for an address type are kept in that type's own order, and roles from another type are dropped.",
+      "kind": "rule",
+      "ref": "src/server/app/services/address-book/address-types.js:32-35",
+      "quote": "export const keepRolesOfferedBy = (addressType, candidateRoles) =>\n  ROLES_BY_ADDRESS_TYPE[addressType].filter((role) =>\n    candidateRoles.includes(role)\n  )",
+      "confidence": "verbatim",
+      "note": "mechanism: filters a list of role codes by address type; used outside the list."
+    },
+    {
+      "id": "repo-insfrontend-p4-091",
+      "statement": "In Welsh the list's title is 'Llyfr cyfeiriadau' and its intro 'Rheoli eich cyfeiriadau i’w defnyddio ar draws eich holl hysbysiadau mewnforio'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:23-25",
+      "quote": "title: 'Llyfr cyfeiriadau',\n    intro:\n      'Rheoli eich cyfeiriadau i’w defnyddio ar draws eich holl hysbysiadau mewnforio',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-092",
+      "statement": "In Welsh the filter reads 'Hidlo cyfeiriadau', the search label and button 'Chwilio', the hint 'Chwilio yn ôl enw, cyfeiriad neu wlad', Clear search 'Clirio’r chwiliad', the Type label 'Math' and its placeholder 'Dewiswch un'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:26-36",
+      "quote": "summary: 'Hidlo cyfeiriadau',\n      label: 'Chwilio',\n      hint: 'Chwilio yn ôl enw, cyfeiriad neu wlad',\n      button: 'Chwilio',\n      clear: 'Clirio’r chwiliad',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-093",
+      "statement": "In Welsh the add button reads 'Ychwanegu cyfeiriad newydd', the results line 'Yn dangos {from}-{to} o {total}' and the empty line 'Yn dangos 0 o 0'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:3,37-39",
+      "quote": "results: (from, to, total) => `Yn dangos ${from}-${to} o ${total}`,\n    noResults: 'Yn dangos 0 o 0',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-094",
+      "statement": "In Welsh the tabs are labelled 'Mathau o gyfeiriad' and read 'Tarddiad ac Anfonwr', 'Cyrchfan, Derbynnydd a Mewnforiwr' and 'Cludydd', with headings 'Cyfeiriadau tarddiad ac anfonwr', 'Cyfeiriadau cyrchfan, derbynnydd a mewnforiwr' and 'Cyfeiriadau cludwyr'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:40-54",
+      "quote": "TRANSPORTER: {\n        label: 'Cludydd',\n        heading: 'Cyfeiriadau cludwyr'\n      }",
+      "confidence": "verbatim",
+      "note": "The Welsh tab label uses 'Cludydd' and the heading 'cludwyr'; elsewhere the Welsh copy mixes 'cludydd' and 'cludwr'."
+    },
+    {
+      "id": "repo-insfrontend-p4-095",
+      "statement": "In Welsh the transporter types are 'Preifat' and 'Masnachol', and 'Not applicable' is 'Amherthnasol'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:55-58,82",
+      "quote": "PRIVATE: 'Preifat',\n      COMMERCIAL: 'Masnachol'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-096",
+      "statement": "In Welsh the role column labels are 'Man tarddiad', 'Anfonwr', 'Derbynnydd', 'Mewnforiwr' and 'Man cyrchfan', and the option labels 'Man Tarddiad', 'Anfonwr', 'Derbynnydd', 'Mewnforiwr' and 'Man Cyrchfan'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:59-71",
+      "quote": "PLACE_OF_ORIGIN: {\n        columnLabel: 'Man tarddiad',\n        optionLabel: 'Man Tarddiad'\n      },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-097",
+      "statement": "In Welsh the table headings are 'Enw', 'Math', 'Cyfeiriad', 'Gwlad', 'Rhif cymeradwyo', the hidden 'Cam gweithredu', and the row link 'Gweld'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:72-80",
+      "quote": "name: 'Enw',\n      type: 'Math',\n      address: 'Cyfeiriad',\n      country: 'Gwlad',\n      approvalNumber: 'Rhif cymeradwyo',\n      action: 'Cam gweithredu',\n      view: 'Gweld'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-098",
+      "statement": "In Welsh the success banner title is 'Llwyddiant', and a commercial transporter's fixed country is 'Gogledd Iwerddon'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:84,171",
+      "quote": "title: 'Llwyddiant',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-099",
+      "statement": "The Welsh address-book copy is a machine draft that no translator has reviewed, and must not be shown to users without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-100",
+      "statement": "A Welsh search on an address tab matches roles by their Welsh column labels, because the role search uses the current language's labels.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:53,199",
+      "quote": "const searchRoles = rolesWhoseLabelContains(searchTerm, copy.list.roles)",
+      "confidence": "inferred",
+      "note": "Inferred from copyFor({ en, cy }) choosing the copy by language; shared/copy.js was not read."
+    },
+    {
+      "id": "repo-insfrontend-p4-101",
+      "statement": "Fit test proves the header shows Dashboard and Address book links, that Address book opens /address-book with the heading 'Address book', and that Dashboard leads back to the dashboard.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:74 'Dashboard and Address book links are visible and navigate correctly'",
+      "quote": "test('Dashboard and Address book links are visible and navigate correctly'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-102",
+      "statement": "Fit test proves the seed address shows in a table with the headings Name, Type, Address, Country and Action, with cells for its name, its address lines joined by commas and 'United Kingdom'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:97",
+      "quote": "test('renders the seed address in a table with Name, Type, Address, Country and Action columns'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-103",
+      "statement": "Fit test proves the 'Add a new address' button opens the 'Choose an address type' page at the start path.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:118",
+      "quote": "test('clicking Add a new address opens Choose an address type'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-104",
+      "statement": "Accessibility fit tests prove the list has no serious or critical axe violations: on the default tab, on the Destination tab, with the filter open, with a Type chosen and the filter open, and on the Transporter tab with a Type chosen and the filter open.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:133,406,585,809,891",
+      "quote": "test('has no serious or critical axe violations', async ({ page }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-105",
+      "statement": "Fit test proves the list shows 8 addresses a page ('Showing 1-8 of 30' with 9 rows counting the header), and that 'Page 2' adds page=2 to the URL and shows 'Showing 9-16 of 30'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:139",
+      "quote": "test('lists 8 addresses a page'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-106",
+      "statement": "Fit test proves page 99 of 30 addresses shows the last page: 'Showing 25-30 of 30', six address rows and 'Page 4' marked current.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:153",
+      "quote": "test('shows the last page when the page number is past the last page'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-107",
+      "statement": "Fit tests prove page numbers 0 and 'abc' each show the first page, 'Showing 1-8 of 30'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:169-181",
+      "quote": "test(`shows the first page when the page number is ${pageNumber}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-108",
+      "statement": "Fit test proves the intro text and the 'Add a new address' button show.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:185",
+      "quote": "test('shows the intro and the Add a new address button'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-109",
+      "statement": "Fit test proves the Name cell shows 'Stub' and 'Farm 1' on two lines, and the Address cell shows '1 Stub Way,', 'Stubton,' and 'ST1 1UB' on separate lines.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:199",
+      "quote": "test('shows the name on two lines and the address on one line per stored line'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-110",
+      "statement": "Fit tests prove the three tabs show in order with 'Origin and Consignor' selected and its heading when no tab is chosen, and also when the tab asked for is unknown.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:270,279",
+      "quote": "test('shows the three tabs in order with Origin and Consignor selected when no tab is chosen'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-111",
+      "statement": "Fit tests prove each address tab opens selected with its own panel heading and lists exactly its addresses: Stub Origin Farm and Stub Pasture Farm on Origin and Consignor, Stub Consignee Farm and Stub Importer Farm on Destination, Consignee and Importer.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:290-303",
+      "quote": "test(`opens the ${label} tab with its own panel heading and exactly its addresses`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-112",
+      "statement": "Fit test proves the Type column reads 'Place of origin, Consignor' and 'Consignee, Place of destination' for multi-role addresses, under the headings Name, Type, Address, Country and a visually hidden Action.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:305",
+      "quote": "test('shows Place of origin, Consignor and Consignee, Place of destination in the Type column under the columns Name, Type, Address, Country and a visually hidden Action'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-113",
+      "statement": "Fit test proves each of the five roles held alone is labelled in the Type column as 'Place of origin', 'Consignor', 'Consignee', 'Importer' or 'Place of destination'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:326",
+      "quote": "test('labels each of the five roles held alone in the Type column'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-114",
+      "statement": "Fit test proves the default seed address (Place of origin and Consignor) shows on the Origin and Consignor tab and not on the Destination tab, which reads 'Showing 0 of 0'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:389",
+      "quote": "test('lists the default seed address on the Origin and Consignor tab only'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-115",
+      "statement": "Fit test proves that, with JavaScript off, following each address tab loads it selected with its heading and its addresses.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:421-435",
+      "quote": "test('loads the tab that is followed'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-116",
+      "statement": "Fit tests prove the Search field is hidden until 'Filter addresses' is opened and hidden again when it is closed, with and without JavaScript.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:443,603",
+      "quote": "test('keeps the Search field hidden until Filter addresses is opened, and hides it again when closed'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-117",
+      "statement": "Fit test proves the Search field's accessible description is 'Search by name, address or country'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:453",
+      "quote": "test('describes the Search field with the hint Search by name, address or country'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-118",
+      "statement": "Fit tests prove a search for 'farm 12', submitted with the Search button or with Enter, with JavaScript on or off, lists only Stub Farm 12 ('Showing 1-1 of 1') and puts addressType, q and an empty role in the URL.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:465-478,611-624; fit/address-book-list.js:129-146",
+      "quote": "test(`lists only the matches, with the term in the address book URL, when submitted with ${how}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-119",
+      "statement": "Fit test proves a search matching 11 addresses shows 'Showing 1-8 of 11', and 'Page 2' keeps the term in the URL (?addressType=ORIGIN_OR_CONSIGNOR&q=Farm+1&page=2) and shows 'Showing 9-11 of 11'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:480",
+      "quote": "test('lists the matches across all pages and keeps the term on the next page'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-120",
+      "statement": "Fit test proves a search with two matches shows 'Showing 1-2 of 2' and no pagination.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:499",
+      "quote": "test('counts the matches of a search that fits on one page and shows no pagination'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-121",
+      "statement": "Fit tests prove a search finds an address by a term in address line 1 ('12 stub way'), by a lower-case term in address line 2, and by part of its country name ('fran' finds the France address).",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:514,526,542",
+      "quote": "test('finds an address by part of its country name'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-122",
+      "statement": "Fit test proves typing in the Search field without submitting leaves the URL and the list unchanged ('Showing 1-8 of 30').",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:553",
+      "quote": "test('leaves the list as it is while text is typed and not yet submitted'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-123",
+      "statement": "Fit test proves 'Clear search' after a search goes to ?addressType=ORIGIN_OR_CONSIGNOR with an empty Search field.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:568",
+      "quote": "test('Clear search after a search returns to the whole selected tab with an empty Search field'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-124",
+      "statement": "Fit tests prove choosing the Consignor Type with no search term, submitted by button or Enter, or by button with JavaScript off, lists only Stub Origin Farm, shows no pagination, keeps the Origin and Consignor tab selected and keeps Consignor chosen.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:636-654,829",
+      "quote": "test(`lists only the addresses of the tab holding the Type, and keeps the tab and the Type chosen, when submitted with ${how}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-125",
+      "statement": "Fit test proves choosing the Consignee Type on the Destination tab lists only Stub Consignee Farm.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:656",
+      "quote": "test('lists only the Destination, Consignee and Importer addresses holding the Consignee Type'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-126",
+      "statement": "Fit test proves a search for 'brook' with the Consignor Type shows 'Showing 1-8 of 9' with pagination, the Next page link keeps addressType, q, role and page=2, and page 2 shows 'Showing 9-9 of 9' with Consignor still chosen.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:673",
+      "quote": "test('counts and pages the matches holding the Type past one page, and the next page keeps the tab, the search and the Type'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-127",
+      "statement": "Fit test proves the Type filter finds matches beyond the tab's first page: of 22 addresses, 'hill' with Consignor lists Stub Hill Yard 1 and 2, 'Showing 1-2 of 2', with no pagination.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:707",
+      "quote": "test('lists the addresses holding the Type that lie beyond the first page of the tab, counted and without pagination'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-128",
+      "statement": "Fit test proves choosing a Type without submitting requests no page and leaves the URL and the whole tab listed.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:726",
+      "quote": "test('requests no page and leaves the URL and the whole tab listed when a Type is chosen and not submitted'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-129",
+      "statement": "Fit test proves following another tab keeps the search term ('Stub') and clears the Type to 'Select one'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:746",
+      "quote": "test('keeps the search and clears the Type when another tab is followed'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-130",
+      "statement": "Fit tests prove a search finds addresses by a role label: 'consignor' finds Stub Origin Farm, 'place of origin' finds both origin-tab addresses, and 'importer' on the Destination tab finds an Importer address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:768,790",
+      "quote": "test('finds an address by the label of one of its roles'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-131",
+      "statement": "Fit test proves the Transporter tab lists the organisation's transporters under Name, Address, Approval number, Type and Action, with the private transporter's Address cell ending 'United Kingdom' and the commercial one's ending 'Northern Ireland'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:850",
+      "quote": "test('lists the organisation transporters under Name, Address, Approval number and Type, each Address cell ending in the country'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-132",
+      "statement": "Fit tests prove choosing the Commercial Type on the Transporter tab, by button or Enter, or by button with JavaScript off, lists only the commercial transporter, keeps the Transporter tab selected and keeps Commercial chosen.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:870-889,914",
+      "quote": "test(`lists only the commercial transporter, keeps the tab and shows the type chosen, when submitted with ${how}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-133",
+      "statement": "Fit test proves an empty address book shows 'Showing 0 of 0', the table headings with no rows, and the 'Add a new address' button.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:932; fit/address-book-list.js:82-89",
+      "quote": "test('shows Showing 0 of 0 and the table headings with no rows'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p4-134",
+      "statement": "No fit test proves the list's load-failure view, the success banner on the list, the 'View' row links, the 'Not applicable' approval number, the Previous link or pagination ellipses.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Walked all 45 tests in list.fit.spec.js; these behaviours in the controller and template have no list fit test. Other parts' fit specs may cover the success banner and View links."
+    }
+  ]
+}

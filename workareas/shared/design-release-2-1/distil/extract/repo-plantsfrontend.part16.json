@@ -1,6 +1,6 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 16 read three ledger files under src/server/app/sets/high-risk-plants/spec/ in full: decisions.json (1,654 lines, schema_version 1, 97 decisions d-001 to d-097), conflicts.json (423 lines, schema_version 1, 40 conflicts c-001 to c-040) and backlog-extras.json (557 lines, schema_version 1, 46 recorded increments). decisions.json is a flat array; each entry carries id, subject ({kind: conflict|behaviour, id}), ruling (resolve | adopt | park), a resolution paragraph that is the operative ruling, a rationale citing the sources (the draft SI reg 24A and reg 26 in annex 5 of the PHNNS policy paper, Annexes 1-6, two Confluence pages, a Mural board, the animals frontend extract, the engine skeleton and the design prototype), decidedBy (panel 75, sam 22), dissent (43 entries carry one), escalate (false on all 97), supersedes/supersededBy, decidedAt (84 on 2026-09-06, 1 on 2026-10-09, 8 on 2026-11-06, 4 on 2026-11-09) and status (90 current, 7 superseded). Rulings split 44 resolve, 30 adopt, 23 park; subjects split 44 conflicts and 53 behaviours. conflicts.json is the register of source disagreements: each entry carries id, the obligation fields it touches (7 carry an empty list), the sources that disagree, a detail paragraph naming the sides and the reconciler's provisional pick, a resolution echoing the deciding decision, resolvedBy (panel 33, sam 7) and the decision id; every one of the 40 is settled. backlog-extras.json holds the increments the set recorded outside the page backlog: 17 M0 hygiene fixes, doc-exemplar and restore chores, 10 end-to-end specs for the tests repo, 3 Sam-gated chores anchored at end, and one two-repo fix; each carries key, type, repo, title, a detail paragraph, milestone, gate and anchor. The part covers every decision, every conflict, the ledger-level shape of all three files, the judgements the increments record, and (checked against the repo at HEAD a88175f2) the handful of recorded facts the code has since moved past. It stops at spec/panel/ (rulings.json, critic.json), which part 17 claims, and at journey-spec.json, which another part claims.",
+  "structure": "Part 16 read the set's three spec ledgers under src/server/app/sets/high-risk-plants/spec/: decisions.json (schema of 97 rulings d-001 to d-097, each with subject conflict or behaviour, ruling resolve 44 / adopt 30 / park 23, resolution, rationale, decidedBy panel 75 / sam 22, decidedAt over four sittings, dissent on 43, escalate false on all, and supersedes / supersededBy on seven pairs), conflicts.json (40 conflicts c-001 to c-040, each with fields, sources, detail, resolution, resolvedBy panel 33 / sam 7 and the deciding ruling; none open) and backlog-extras.json (46 increments: 17 chore, 14 fix, 5 restore, 10 e2e; 32 in this repo, 10 in the tests repo, 3 in the plants backend, 1 in both). Since the earlier extract the only change to these ledgers is a rewording in five rulings (d-007, d-062, d-066, d-078, d-082) from records.finalise to records.submit, which changes no outcome, so all 187 earlier claims were kept with their ids. The claims run: ledger shape and counts (001-011), one claim per ruling (012-109), one per conflict (110-149), the backlog-extras increments that record a decision, departure or constraint (150-173), where the code matches or no longer matches a ruling (174-182), gaps in the ledgers (183-187), and new claims (188-200) for the records.submit wording and for recorded increments the code has since done (entry guard, Lighthouse scripts and workflow, end-to-end workflows, arm64 publish, concurrency group, security audit, weekly cron, SonarCloud, FIT job, Dependabot) or done differently (Dependabot's ESLint group). Panel rulings are part 17's.",
   "claims": [
     {
       "id": "repo-plantsfrontend-p16-001",
@@ -1552,6 +1552,123 @@
       "quote": "",
       "confidence": "gap",
       "note": "Some parks do name an actor in prose (d-070 names the service owner, d-072 names policy or design research, d-081 says policy is asked), but there is no field for an owner or a date and most parks name neither."
+    },
+    {
+      "id": "repo-plantsfrontend-p16-188",
+      "statement": "The rulings that describe submission (d-007, d-062, d-066, d-078, d-082) now name the submit step records.submit rather than records.finalise, and the engine's submit calls records.submit, so the ledger and the code agree on the submit step.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/decisions.json d-066 resolution against src/server/app/engine/write/submit.js:17",
+      "quote": "submitJourney awaits records.submit (real adapter POST /notifications/{journeyId}/submit; stub submit)",
+      "confidence": "inferred",
+      "note": "The ledger was reworded from records.finalise to records.submit since the earlier extract; no ruling's outcome changed. Code: `const submitted = await records.submit(current.journey.journeyId, actor)`."
+    },
+    {
+      "id": "repo-plantsfrontend-p16-189",
+      "statement": "The entry-guard restore increment is done in the code: the guard is no longer inert, it filters guarded journey paths, skips the commodity-type page and its sub-paths, and redirects to commodity-type, so the ledger's description of an entry guard that never redirects no longer describes the repo.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.js:22-69 against spec/backlog-extras.json increment restore-entry-guard",
+      "quote": "flow/entry-guard.js exports entryGuardTarget = async () => null, so routes.js's onPreHandler never redirects and any deep link reaches a mid-journey page.",
+      "confidence": "inferred",
+      "note": "Code: `export const guardedJourneyPath = (path) => {` and `export const entryGuardTarget = async (request, h) => {` returning `pagePath(request.params.journeyId, commodityTypePage.slug)`."
+    },
+    {
+      "id": "repo-plantsfrontend-p16-190",
+      "statement": "The Lighthouse-scripts increment is done: scripts/lighthouse now holds audit-targets.js, seed-notification.js and audit-targets.test.js, which the ledger records as missing.",
+      "kind": "behaviour",
+      "ref": "scripts/lighthouse/ against spec/backlog-extras.json increment lighthouse-scripts",
+      "quote": "neither module nor audit-targets.test.js exists (animals has all three)",
+      "confidence": "inferred",
+      "note": "Whether the 0.60 / 0.70 / 0.70 floors are kept was not checked in the scripts: run-audit.js names no score literal."
+    },
+    {
+      "id": "repo-plantsfrontend-p16-191",
+      "statement": "The Lighthouse workflow increment is done: the repo has a Lighthouse CI workflow that runs when Publish Branch Image completes or on dispatch, starts the stack for the branch, runs the audit in two shards and publishes the report to GitHub Pages.",
+      "kind": "behaviour",
+      "ref": ".github/workflows/lighthouse.yml:1-6 against spec/backlog-extras.json increment ci-lighthouse-workflow",
+      "quote": "No .github/workflows/lighthouse.yml.",
+      "confidence": "inferred",
+      "note": "Code: `workflows: [\"Publish Branch Image\"]` and `name: Lighthouse ${{ matrix.shard }} of 2`."
+    },
+    {
+      "id": "repo-plantsfrontend-p16-192",
+      "statement": "The three end-to-end workflow increments are done: the repo now has publish-branch.yml, e2e-tests.yml and cleanup-e2e-reports.yml, which the ledger records plants as lacking.",
+      "kind": "behaviour",
+      "ref": ".github/workflows/ against spec/backlog-extras.json increments ci-publish-branch-workflow, ci-e2e-tests-workflow, ci-cleanup-e2e-reports-workflow",
+      "quote": "it publishes the branch-tagged image the workspace stack's --branch probe and both the E2E and Lighthouse workflow_run triggers depend on. Plants has none.",
+      "confidence": "inferred",
+      "note": "Seen by listing the workflows folder; their contents were not read."
+    },
+    {
+      "id": "repo-plantsfrontend-p16-193",
+      "statement": "The arm64 publish increment is done: publish.yml has a publish-arm64 job that adds linux/arm64 to the Docker Hub tags.",
+      "kind": "behaviour",
+      "ref": ".github/workflows/publish.yml:52-54 against spec/backlog-extras.json increment ci-publish-arm64",
+      "quote": "publish.yml has no publish-arm64 job",
+      "confidence": "inferred",
+      "note": "Code: `# Adds linux/arm64 to the Docker Hub tags the build job has just published.` then `publish-arm64:`."
+    },
+    {
+      "id": "repo-plantsfrontend-p16-194",
+      "statement": "The publish concurrency-group increment is done in publish.yml: its group is now an evaluated expression rather than the literal double-dollar string the ledger records.",
+      "kind": "behaviour",
+      "ref": ".github/workflows/publish.yml:8-9 against spec/backlog-extras.json increment ci-publish-concurrency-group",
+      "quote": "(double dollar — the expression is never evaluated)",
+      "confidence": "inferred",
+      "note": "Code: `group: ${{ github.workflow }}`. publish-hotfix.yml was not checked."
+    },
+    {
+      "id": "repo-plantsfrontend-p16-195",
+      "statement": "The security-audit increment is done: the pull-request checks run the security audit as its own Security audit job, kept apart from the merge-gating validator, as the ledger asked.",
+      "kind": "behaviour",
+      "ref": ".github/workflows/check-pull-request.yml:71-72 against spec/backlog-extras.json increment ci-security-audit-non-gating",
+      "quote": "security-audit is a step INSIDE pr-validator, so any new advisory blocks the merge check",
+      "confidence": "inferred",
+      "note": "Code: `security-audit:` / `name: Security audit`."
+    },
+    {
+      "id": "repo-plantsfrontend-p16-196",
+      "statement": "The weekly-schedule increment is done: the pull-request checks now run on a Monday 07:00 cron, the same as animals.",
+      "kind": "behaviour",
+      "ref": ".github/workflows/check-pull-request.yml:4-5 against spec/backlog-extras.json increment ci-weekly-schedule",
+      "quote": "No schedule trigger, so the audit and checks never re-run on an idle main; animals runs '0 7 * * 1'.",
+      "confidence": "inferred",
+      "note": "Code: `- cron: '0 7 * * 1'`."
+    },
+    {
+      "id": "repo-plantsfrontend-p16-197",
+      "statement": "The SonarCloud increment is done in the pull-request and publish workflows: both now run the SonarCloud scan step the ledger records as commented out.",
+      "kind": "behaviour",
+      "ref": ".github/workflows/check-pull-request.yml:53 and publish.yml:48 against spec/backlog-extras.json increment ci-sonarcloud",
+      "quote": "The SonarCloud Scan step is commented out in check-pull-request.yml, publish.yml and publish-hotfix.yml",
+      "confidence": "inferred",
+      "note": "Code: `uses: SonarSource/sonarqube-scan-action@master`. publish-hotfix.yml was not checked."
+    },
+    {
+      "id": "repo-plantsfrontend-p16-198",
+      "statement": "The FIT-job increment is done: the pull-request checks now call the frontend's FIT test script, sharded, which the ledger records nothing calling.",
+      "kind": "behaviour",
+      "ref": ".github/workflows/check-pull-request.yml:168-201 against spec/backlog-extras.json increment ci-fit-job",
+      "quote": "plants has the test:fit:ci script but nothing calls it.",
+      "confidence": "inferred",
+      "note": "Code: `npm run test:fit:ci --` and `name: fit-blob-report-${{ matrix.shard }}`."
+    },
+    {
+      "id": "repo-plantsfrontend-p16-199",
+      "statement": "The frontend Dependabot increment is done but not as the ledger records it: the config is generated from the workspace's dependency-sets file rather than copied from animals, and it adds a seven-day cooldown, ignores Playwright and GOV.UK Frontend version updates and holds stylelint 18.",
+      "kind": "behaviour",
+      "ref": ".github/dependabot.yml:1-3 against spec/backlog-extras.json increment dependabot-frontend",
+      "quote": "Add .github/dependabot.yml copied from animals: daily 10:30 Europe/London, one rolling patch-and-minor group over '*' excluding govuk-frontend (its own CHANGELOG-driven upgrade), majors raised individually, eslint ignored, direct deps only, plus the same policy for github-actions.",
+      "confidence": "inferred",
+      "note": "Code: `# Generated by `tim deps dependabot trade-imports-plants-frontend --write` from` / `# config/dependency-sets.json in the trade-imports workspace.` The daily 10:30 Europe/London schedule, the patch-and-minor group, direct dependencies only and the github-actions policy match the ledger."
+    },
+    {
+      "id": "repo-plantsfrontend-p16-200",
+      "statement": "The ledger says ESLint is ignored by Dependabot, but the code groups ESLint and its plugins as one coupled set that Dependabot does propose, so the code departs from the recorded policy on ESLint.",
+      "kind": "behaviour",
+      "ref": ".github/dependabot.yml:16-28 against spec/backlog-extras.json increment dependabot-frontend",
+      "quote": "eslint ignored",
+      "confidence": "inferred",
+      "note": "Code: `# neostandard and the plugins declare eslint as a peer, so bumping` above an `eslint:` group with patterns 'eslint', '@eslint/*', 'eslint-plugin-*'."
     }
   ]
 }

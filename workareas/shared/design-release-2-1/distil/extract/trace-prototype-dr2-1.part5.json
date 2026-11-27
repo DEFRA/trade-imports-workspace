@@ -1,0 +1,705 @@
+{
+  "source": "trace:prototype-dr2-1",
+  "structure": "Part 5, Identification details. Read in full: the 'identification details' describe block of prototype-specs/e2e/description-of-the-goods.fit.spec.js (lines 189-323) and of snagging.fit.spec.js (lines 262-301), with their set-up helpers, and mined all 10 traces the part names, every action of each: cattle (115 actions; first animal, no-identifier error, second animal, all saved, remove, continue), horse, cat and pig (about 60 actions each; first panel only), poultry (66; one flock panel), germinal products (85; first view, three-error submit, valid submit), and snagging S15 (one animal saved), S16 (desktop, mobile 390x844 and no-JS contexts, before and after one animal saved), S17 (one animal saved, desktop, mobile and no-JS) and S18 (both animals saved). Every trace walks the opening run (create-notification, origin, what are you importing, reason, commodity details; germinal also total gross weight) to reach /design-release-2.1/animal-identification-details, which is the one page this part claims; the opening pages belong to other parts. Pages and order: commodity details (/consignment-details) then identification details for live animals; commodity details then total gross weight then identification details for germinal products; identification details then /additional-animal-details (cattle) or /arrival-details (germinal). The page has one fixed layout: notification status bar, caption, h1, inset, a 'Selected commodities' grid, an 'Add another commodity' link, then one section per commodity holding one grey-headed panel per species, then the form actions. What is conditional: the caption (live animals vs germinal), the summary's count column, the change-count link wording, the identifiers asked for (by species), whether animals are entered one at a time with a counter (cattle, horse, cat, pig) or in one panel (poultry, germinal), the button on the panel (Save and add another, then Save and finish on the last animal) and the saved animals table (appears below the entry form once one animal is saved; the form goes once all are saved). Evidence was read from DOM snapshots with eval (main innerText, outerHTML, inputs, hints, error summary, computed styles) and from the network log of the cattle trace. Trace refs below give the zip name without its folder (workareas/shared/design-release-2-1/sources/traces-prototype/) and the action id the snapshot was taken at. Snapshots render at 1280px wide, so the mobile screenshots of S16 and S17 could not be measured.",
+  "claims": [
+    {
+      "id": "trace-prototype-dr2-1-p5-001",
+      "statement": "A live animals notification reaches the identification details page at /design-release-2.1/animal-identification-details after a valid number of animals on commodity details.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip actions 34-38; request 207",
+      "quote": "GET 200 animal-identification-details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-002",
+      "statement": "A germinal products notification reaches identification details after the total gross weight page.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip actions 33-36",
+      "quote": "Fill \"12.5\" locator('#gross-weight') ... Expect \"toHaveURL\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-003",
+      "statement": "The page title is 'Identification details - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 44",
+      "quote": "Identification details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-004",
+      "statement": "The page heading (h1) is 'Identification details' for every species and for germinal products.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 44; germinal trace action 43",
+      "quote": "<h1 class=\"app-animal-identification-page__heading\">Identification details</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-005",
+      "statement": "For a live animals notification the caption above the heading reads 'About the consignment'.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 44 (also horse, cat, pig, poultry action 41/44)",
+      "quote": "<p class=\"app-animal-identification-page__caption\">About the consignment</p>",
+      "confidence": "verbatim",
+      "note": "The page sits in the 'Description of the goods' section by its spec file, and the germinal journey shows 'Description of the goods' here (claim p5-006). The two journeys disagree; recorded, not settled."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-006",
+      "statement": "For a germinal products notification the caption above the heading reads 'Description of the goods'.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip action 43",
+      "quote": "Description of the goods\n\nIdentification details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-007",
+      "statement": "An inset under the heading tells the user that all identification details must be added before the consignment arrives at the port of entry. It shows for live animals and germinal products.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 44; germinal trace action 43",
+      "quote": "You must add all identification details before the consignment arrives at the port of entry.",
+      "confidence": "verbatim",
+      "note": "Rendered with govuk-inset-text."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-008",
+      "statement": "A notification status bar above the caption shows a 'Draft' tag and the notification type with its reference, such as 'Live animals - GBN-AG-26-0C8HWL'.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 44",
+      "quote": "<strong class=\"govuk-tag app-dr2-review-status__tag app-dr2-review-status__tag--draft\">Draft</strong> <span class=\"app-dr2-notification-status__reference\">Live animals - GBN-AG-26-0C8HWL</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-009",
+      "statement": "For germinal products the status bar reads 'Germinal products' followed by the reference.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip action 43",
+      "quote": "Draft\nGerminal products - GBN-AG-26-0U1N8L",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-010",
+      "statement": "The page shows a 'Selected commodities' heading with one row per commodity chosen, under the column headings Commodity code, Commodity, Species and Number of animals (live animals).",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 44",
+      "quote": "Selected commodities\nCommodity code\nCommodity\nSpecies\nNumber of animals\n0102\nCattle\nDomestic cattle (Bos taurus)\n2\nChange",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-011",
+      "statement": "The selected commodities row shows the number of animals the user entered on commodity details (2 cattle, 2 horses, 2 cats, 2 pigs, 400 chickens).",
+      "kind": "data",
+      "ref": "traces cattle action 44, horse/cat/pig action 41, poultry action 44",
+      "quote": "010511\nChicken\nGallus domesticus\n400\nChange",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-012",
+      "statement": "For germinal products the selected commodities count column is headed 'Quantity (unit/pieces)' and shows the quantity entered.",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip action 43",
+      "quote": "Commodity code\nCommodity\nSpecies\nQuantity (unit/pieces)\n05111000\nCattle, Semen\nDomestic cattle (Bos taurus)\n20\nChange",
+      "confidence": "verbatim",
+      "note": "The test helper filled numberOfPackages[cattle-semen-bos-taurus] with 20 on commodity details (action 29), yet the quantity column shows 20. Whether the helper's field or the column is mislabelled is not settled here."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-013",
+      "statement": "Each selected commodity row has a 'Change' link to the commodity search, /design-release-2.1/what-are-you-importing?resetSearch=1.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 44",
+      "quote": "<a class=\"govuk-link\" href=\"/design-release-2.1/what-are-you-importing?resetSearch=1\">Change</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-014",
+      "statement": "Under the selected commodities an 'Add another commodity' link goes to /design-release-2.1/what-are-you-importing.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 44",
+      "quote": "<a class=\"govuk-link\" href=\"/design-release-2.1/what-are-you-importing\">Add another commodity</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-015",
+      "statement": "Below the summary the page has one section per commodity, headed with the commodity name and code in brackets: 'Cattle (0102)', 'Horse (0101)', 'Cat (01061900)', 'Pig (0103)', 'Chicken (010511)', 'Cattle, Semen (05111000)'.",
+      "kind": "copy",
+      "ref": "traces cattle action 44, horse/cat/pig action 41, poultry action 44, germinal action 43",
+      "quote": "<h2 class=\"app-animal-identification-commodity__heading\" id=\"commodity-group-cattle\"> Cattle (0102) </h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-016",
+      "statement": "Inside each commodity section there is a panel per species, whose header shows the species name and a 'Change number of animals' link to /design-release-2.1/consignment-details.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 44",
+      "quote": "<p class=\"app-animal-identification-panel__species-name\">Domestic cattle (Bos taurus)</p> <a class=\"govuk-link app-animal-identification-panel__change-count\" href=\"/design-release-2.1/consignment-details\">Change number of animals</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-017",
+      "statement": "For germinal products the panel's link reads 'Change number of commodities' and goes to /design-release-2.1/consignment-details.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip actions 39, 43",
+      "quote": "Change number of commodities",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-018",
+      "statement": "For cattle, horses, cats and pigs the user enters identification one animal at a time. The panel's entry heading names the species and which animal of how many, such as 'Enter details for Domestic cattle (Bos taurus) 1 of 2'.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 44",
+      "quote": "<h3 class=\"app-animal-identification-panel__entry-heading\">Enter details for Domestic cattle (Bos taurus) 1 of 2</h3>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-019",
+      "statement": "Under the entry heading a hint reads 'Enter at least one identifier.' for live animal species, poultry included.",
+      "kind": "copy",
+      "ref": "traces cattle action 44, horse/cat/pig action 41, poultry action 44",
+      "quote": "<p class=\"govuk-hint\">Enter at least one identifier.</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-020",
+      "statement": "For cattle the panel asks for three identifiers as optional text inputs: Passport, Ear tag and Identification number.",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 44",
+      "quote": "Passport ... Ear tag ... Identification number",
+      "confidence": "verbatim",
+      "note": "Inputs: identifiers[cattle-bos-taurus][passport], [ear-tag], [identification-number]; ids identifier-cattle-bos-taurus-<identifier>. Each is govuk-input--width-20 with no hint."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-021",
+      "statement": "For horses the panel asks for Passport, Microchip/transponder and Equine name.",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--identification-details-horse-the-identifiers-asked-for-depend-on-the-species.zip action 41",
+      "quote": "Passport\nMicrochip/transponder\nEquine name",
+      "confidence": "verbatim",
+      "note": "Input names identifiers[horse-equus-caballus][passport], [microchip], [horse-name]."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-022",
+      "statement": "The horse species is shown as 'Equus cabalus' in the summary, the panel header and the entry heading 'Enter details for Equus cabalus 1 of 2'.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--identification-details-horse-the-identifiers-asked-for-depend-on-the-species.zip action 41",
+      "quote": "Enter details for Equus cabalus 1 of 2",
+      "confidence": "verbatim",
+      "note": "The species id is horse-equus-caballus; the rendered name spells it 'cabalus' with one l. Possibly a typo in the prototype's reference data."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-023",
+      "statement": "For cats the panel asks for Passport, Microchip/transponder and Tattoo, under 'Enter details for Domestic cat (Felis catus) 1 of 2'.",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--identification-details-cat-the-identifiers-asked-for-depend-on-the-species.zip action 41",
+      "quote": "Enter details for Domestic cat (Felis catus) 1 of 2\n\nEnter at least one identifier.\n\nPassport\nMicrochip/transponder\nTattoo",
+      "confidence": "verbatim",
+      "note": "Input names identifiers[cat-felis-catus][passport], [microchip], [tattoo]."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-024",
+      "statement": "For pigs the panel asks for two identifiers, Ear tag and Identification number, under 'Enter details for Sus scrofa domesticus 1 of 2'.",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--identification-details-pig-the-identifiers-asked-for-depend-on-the-species.zip action 41",
+      "quote": "Enter details for Sus scrofa domesticus 1 of 2\n\nEnter at least one identifier.\n\nEar tag\nIdentification number",
+      "confidence": "verbatim",
+      "note": "Input names identifiers[pig-sus-scrofa][ear-tag], [identification-number]."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-025",
+      "statement": "The identifiers asked for depend on the species: cattle, horse, cat and pig each show a different set of fields.",
+      "kind": "rule",
+      "ref": "description-of-the-goods.fit.spec.js lines 251-268; traces horse, cat, pig action 41 and cattle action 44",
+      "quote": "the identifiers asked for depend on the species",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-026",
+      "statement": "While animals remain after the current one, the panel's button reads 'Save and add another'.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 44",
+      "quote": "<button type=\"submit\" value=\"save:cattle-bos-taurus\" name=\"action\" class=\"govuk-button\" ...> Save and add another </button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-027",
+      "statement": "On the last animal of a species the same panel button reads 'Save and finish'.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 75",
+      "quote": "Enter details for Domestic cattle (Bos taurus) 2 of 2 ... Save and finish",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-028",
+      "statement": "Saving an animal with no identifier is refused with the error 'Enter at least one identifier', in the error summary linked to the first identifier field.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip actions 57-62",
+      "quote": "There is a problem ... <a href=\"#identifier-cattle-bos-taurus-passport\">Enter at least one identifier</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-029",
+      "statement": "With no identifier the inline error 'Enter at least one identifier' shows on the first identifier field only (Passport for cattle).",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 62",
+      "quote": "govuk-form-group govuk-form-group--error::Passport\n\nError:\nEnter at least one identifier",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-030",
+      "statement": "An animal refused for having no identifier is not saved: the panel still shows 'Enter details for Domestic cattle (Bos taurus) 1 of 2'.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 62",
+      "quote": "Enter details for Domestic cattle (Bos taurus) 1 of 2",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-031",
+      "statement": "The page title stays 'Identification details - Import notification service - GOV.UK' when the error summary shows. It has no 'Error:' prefix.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 62; germinal trace action 59",
+      "quote": "Identification details - Import notification service - GOV.UK ## <div class=\"govuk-error-summary\"",
+      "confidence": "verbatim",
+      "note": "The GOV.UK error pattern prefixes the title with 'Error: '. Recorded, not reconciled."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-032",
+      "statement": "One identifier is enough to save an animal: the last cattle animal saved with only an identification number (ID-002).",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip actions 84-89",
+      "quote": "Domestic cattle (Bos taurus) 2\nID-002\nRemove",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-033",
+      "statement": "Saving the first animal moves the panel on to the next animal ('2 of 2') with empty fields.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip actions 70-75",
+      "quote": "Enter details for Domestic cattle (Bos taurus) 2 of 2 ... value=\"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-034",
+      "statement": "Once an animal is saved, a saved animals table appears in the same panel, below the entry fields and the save button.",
+      "kind": "behaviour",
+      "ref": "trace snagging--identification-details-s17-identification-details-where-saved-animals-appear-after-adding-one.zip actions 47 and 64",
+      "quote": "H3.app-animal-identification-panel__entry-heading ... BUTTON.govuk-button: Save and finish\nDIV.app-animal-identification-panel__saved: Animal | Passport | Ear tag | Domestic cattle (Bos taurus) 1",
+      "confidence": "verbatim",
+      "note": "Same order with JavaScript (action 47) and without it (action 64, no-JS context). S17 is the snag about where saved animals appear."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-035",
+      "statement": "The saved animals table has a first column headed 'Animal', then one column per identifier, then a Remove button for each row.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 75",
+      "quote": "Animal | Passport | Ear tag ;; Domestic cattle (Bos taurus) 1 | PP-001 | UK123456700001 | Remove",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-036",
+      "statement": "In the saved animals table each animal is named by its species and its number, such as 'Domestic cattle (Bos taurus) 1'.",
+      "kind": "copy",
+      "ref": "trace snagging--identification-details-s15-identification-details-species-in-the-saved-animals-table.zip action 53",
+      "quote": "Domestic cattle (Bos taurus) 1 | PP-001 | UK123456700001 | Remove",
+      "confidence": "verbatim",
+      "note": "S15 is the snag about the species in the saved animals table."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-037",
+      "statement": "The saved animals table shows a column only for identifiers that at least one saved animal has. With passport and ear tag saved it has 2 identifier columns, and it gains 'Identification number' once an animal saved with one.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip actions 75 and 89",
+      "quote": "data-identifier-count=\"2\" ... Animal | Passport | Ear tag ... data-identifier-count=\"3\" ... Animal | Passport | Ear tag | Identification number",
+      "confidence": "inferred",
+      "note": "Inferred from the column count changing between the two snapshots; no trace saved an animal with only an unused identifier first."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-038",
+      "statement": "An identifier an animal was saved without shows as an empty cell in the saved animals table.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 89",
+      "quote": "Domestic cattle (Bos taurus) 2</div> <div class=\"app-animal-identification-panel__saved-value\"></div> <div class=\"app-animal-identification-panel__saved-value\"></div> <div class=\"app-animal-identification-panel__saved-value\">ID-002</div>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-039",
+      "statement": "Once every animal of a species is saved, the entry heading, hint, fields and save button go, and the panel shows only the saved animals table.",
+      "kind": "behaviour",
+      "ref": "trace snagging--identification-details-s18-identification-details-text-shown-once-every-animal-is-entered.zip action 53",
+      "quote": "Change number of animals\nAnimal\nPassport\nEar tag\nDomestic cattle (Bos taurus) 1\nPP-001\nUK123456700001\nRemove\nDomestic cattle (Bos taurus) 2\nPP-002\nUK123456700002\nRemove\nSave and continue",
+      "confidence": "verbatim",
+      "note": "Panel body holds only DIV.app-animal-identification-panel__saved. S18 is the snag about the text shown once every animal is entered."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-040",
+      "statement": "No message or completion text appears once every animal is entered. The snag S18 is titled 'text shown once every animal is entered', but the trace shows no such text, so what text the designers expect here is not in this source.",
+      "kind": "copy",
+      "ref": "trace snagging--identification-details-s18-identification-details-text-shown-once-every-animal-is-entered.zip action 53",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-041",
+      "statement": "Removing a saved animal takes it out of the table and reopens its entry panel, such as 'Enter details for Domestic cattle (Bos taurus) 2 of 2' with 'Save and finish'.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip actions 97-98",
+      "quote": "Enter details for Domestic cattle (Bos taurus) 2 of 2\n\nEnter at least one identifier.\n\nPassport\nEar tag\nIdentification number\nSave and finish\nAnimal\nPassport\nEar tag\nDomestic cattle (Bos taurus) 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-042",
+      "statement": "The Remove button in a saved row identifies the species and the animal's position (value remove:<species>:<index>).",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 89",
+      "quote": "<button type=\"submit\" name=\"action\" value=\"remove:cattle-bos-taurus:1\" class=\"app-animal-identification-panel__saved-remove\"> Remove </button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-043",
+      "statement": "A successful save or remove posts the page and redirects back to it (302 to /design-release-2.1/animal-identification-details). A refused save re-renders the page with a 200 instead.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip requests 247, 287, 328, 369",
+      "quote": "POST 302 animal-identification-details ... location: /design-release-2.1/animal-identification-details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-044",
+      "statement": "Below the panels the page has a 'Save and continue' button, a secondary 'Save and return to overview' button and a 'Cancel and return to overview' link to /design-release-2.1/notification-hub.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 44",
+      "quote": "Save and continue ... <button type=\"submit\" value=\"hub\" name=\"action\" class=\"govuk-button govuk-button--secondary\"> Save and return to overview</button> ... <a class=\"govuk-link\" href=\"/design-release-2.1/notification-hub\">Cancel and return to overview</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-045",
+      "statement": "For cattle, Save and continue goes to /design-release-2.1/additional-animal-details. The trace did this with one of two animals still to enter (after removing the second), so a partly entered set did not stop it.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip actions 97-102; request 410",
+      "quote": "Click locator('button[name=\"action\"][value=\"continue\"]') ... Expect \"toHaveURL\"",
+      "confidence": "verbatim",
+      "note": "That Save and continue accepts incomplete identification is read from the order of steps: the remove at action 97 left animal 2 unsaved before continue at action 100. Fits the inset's 'before the consignment arrives' wording."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-046",
+      "statement": "For live animals the back link goes to commodity details, /design-release-2.1/consignment-details.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 44",
+      "quote": "govuk-back-link | /design-release-2.1/consignment-details | Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-047",
+      "statement": "For germinal products the back link goes to the total gross weight page, /design-release-2.1/consignment-gross-weight.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip action 43",
+      "quote": "##BACK## /design-release-2.1/consignment-gross-weight",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-048",
+      "statement": "For poultry the user gives one set of details for the whole flock: the panel heading is 'Enter details for Gallus domesticus' with no 'N of 400' count.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-poultry-one-flock-panel-per-species-with-classification-and-hatching-date.zip actions 38-39, 44",
+      "quote": "<h3 class=\"app-animal-identification-panel__entry-heading\">Enter details for Gallus domesticus</h3>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-049",
+      "statement": "The poultry panel asks for Flock ID, Classification, Description, Identification details and Hatching date.",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--identification-details-poultry-one-flock-panel-per-species-with-classification-and-hatching-date.zip action 44",
+      "quote": "Flock ID\nClassification\n...\nDescription\nIdentification details\nHatching date",
+      "confidence": "verbatim",
+      "note": "Inputs identifiers[chicken-gallus-domesticus][flock-id], [classification] (select), [description], [identification-details], [hatching-date]."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-050",
+      "statement": "The poultry Classification is a select with the options Broilers, Grandparent, Laying pullets, Parents, Pure line and Others, after a 'Select a classification' placeholder.",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--identification-details-poultry-one-flock-panel-per-species-with-classification-and-hatching-date.zip action 44",
+      "quote": "<option value=\"\">Select a classification</option> <option value=\"Broilers\">Broilers</option> <option value=\"Grandparent\">Grandparent</option> <option value=\"Laying pullets\">Laying pullets</option> <option value=\"Parents\">Parents</option> <option value=\"Pure line\">Pure line</option> <option value=\"Others\">Others</option>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-051",
+      "statement": "The poultry Hatching date has the hint 'Day-old chicks only. For example, 27/03/2026'.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--identification-details-poultry-one-flock-panel-per-species-with-classification-and-hatching-date.zip action 44",
+      "quote": "Day-old chicks only. For example, 27/03/2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-052",
+      "statement": "The Hatching date is a single text input with a calendar button ('Choose date') that opens a date picker dialog.",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--identification-details-poultry-one-flock-panel-per-species-with-classification-and-hatching-date.zip action 44",
+      "quote": "<button class=\"moj-datepicker__toggle moj-js-datepicker-toggle\" type=\"button\" aria-haspopup=\"dialog\" ...> <span class=\"govuk-visually-hidden\">Choose date</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-053",
+      "statement": "The poultry panel has no 'Save and add another' button: the flock is saved with the page's Save and continue.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-poultry-one-flock-panel-per-species-with-classification-and-hatching-date.zip actions 47, 44",
+      "quote": "Hatching date\nDay-old chicks only. For example, 27/03/2026\nChoose date\nSave and continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-054",
+      "statement": "The poultry panel is headed 'Chicken (010511)' with the species 'Gallus domesticus' and a 'Change number of animals' link.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--identification-details-poultry-one-flock-panel-per-species-with-classification-and-hatching-date.zip action 44",
+      "quote": "Chicken (010511)\n\nGallus domesticus\n\nChange number of animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-055",
+      "statement": "For germinal products the user gives one set of details per species: the panel heading is 'Enter details for Domestic cattle (Bos taurus)' with no count.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip action 43",
+      "quote": "Enter details for Domestic cattle (Bos taurus)\nDonor name/ID",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-056",
+      "statement": "The germinal panel has no 'Enter at least one identifier.' hint and no 'Save and add another' button.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip action 43",
+      "quote": "Change number of commodities\nEnter details for Domestic cattle (Bos taurus)\nDonor name/ID\nCollection date",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-057",
+      "statement": "The germinal panel asks for Donor name/ID, Collection date, Production date and Identification number/mark.",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip action 43",
+      "quote": "Donor name/ID\nCollection date\nFor example, 27/03/2026\nChoose date\nProduction date\nFor example, 27/03/2026\nChoose date\nIdentification number/mark",
+      "confidence": "verbatim",
+      "note": "Inputs identifiers[cattle-semen-bos-taurus][donor-id], [collection-date], [production-date], [identification-number]. No maxlength attribute on the donor input."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-058",
+      "statement": "Collection date and Production date each have the hint 'For example, 27/03/2026' and a 'Choose date' calendar button.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip action 43",
+      "quote": "identifier-cattle-semen-bos-taurus-collection-date-hint :: For example, 27/03/2026 ; identifier-cattle-semen-bos-taurus-production-date-hint :: For example, 27/03/2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-059",
+      "statement": "A Donor name/ID longer than 58 characters is refused with 'Donor name/ID must be 58 characters or less'.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip actions 52-59",
+      "quote": "Donor name/ID must be 58 characters or less",
+      "confidence": "verbatim",
+      "note": "Driven with 60 characters."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-060",
+      "statement": "A Collection date that is not a real date (99/99/2026) is refused with 'Collection date must be a real date'.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip actions 53, 59",
+      "quote": "Collection date must be a real date",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-061",
+      "statement": "A Production date not in DD/MM/YYYY form (2026-09-01) is refused with 'Enter a production date in the format DD/MM/YYYY'.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip actions 54, 59",
+      "quote": "Enter a production date in the format DD/MM/YYYY",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-062",
+      "statement": "Each germinal error shows in the error summary, linked to its field, and inline above that field.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip action 59",
+      "quote": "#identifier-cattle-semen-bos-taurus-donor-id=Donor name/ID must be 58 characters or less ; #identifier-cattle-semen-bos-taurus-collection-date=Collection date must be a real date ; #identifier-cattle-semen-bos-taurus-production-date=Enter a production date in the format DD/MM/YYYY",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-063",
+      "statement": "A refused germinal submit keeps what the user typed in each field.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip action 59",
+      "quote": "identifier-cattle-semen-bos-taurus-collection-date=99/99/2026 ; identifier-cattle-semen-bos-taurus-production-date=2026-09-01",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-064",
+      "statement": "Identification number/mark is optional, at least when other fields are invalid: it was left empty on the refused submit and got no error.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip action 59",
+      "quote": "identifier-cattle-semen-bos-taurus-identification-number=",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of an error for the empty field among three others."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-065",
+      "statement": "Germinal dates are accepted without leading zeros (1/9/2026, 2/9/2026).",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip actions 67-72",
+      "quote": "Fill \"1/9/2026\" getByLabel('Collection date' ... Fill \"2/9/2026\" getByLabel('Production date'",
+      "confidence": "inferred",
+      "note": "Inferred from the submit continuing to the next page with these values."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-066",
+      "statement": "For germinal products, valid details and Save and continue go to /design-release-2.1/arrival-details.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip actions 66-72; description-of-the-goods.fit.spec.js line 321",
+      "quote": "await expect(page).toHaveURL(urlFor('/arrival-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-067",
+      "statement": "The page uses the full-width grid column, and each species panel spans it (960px at desktop).",
+      "kind": "constraint",
+      "ref": "trace snagging--identification-details-s15-identification-details-species-in-the-saved-animals-table.zip action 53; cattle trace action 44",
+      "quote": "<div class=\"govuk-grid-column-full\"> ... .app-animal-identification-panel ... width=960px",
+      "confidence": "verbatim",
+      "note": "S16 is the snag about page layout and grey panels."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-068",
+      "statement": "Each species panel has a 1px mid-grey border, a light grey header (species name and change link) and a white body padded 20px. These are custom app-animal-identification-panel styles, not a govuk-frontend component.",
+      "kind": "constraint",
+      "ref": "trace snagging--identification-details-s15-identification-details-species-in-the-saved-animals-table.zip action 53",
+      "quote": ".app-animal-identification-panel bg=rgba(0, 0, 0, 0) pad=0px border=1px solid rgb(177, 180, 182) ... .app-animal-identification-panel__header bg=rgb(243, 242, 241) pad=20px ... display=flex ... .app-animal-identification-panel__body bg=rgb(255, 255, 255) pad=20px",
+      "confidence": "verbatim",
+      "note": "rgb(243, 242, 241) is the GOV.UK light grey and rgb(177, 180, 182) the GOV.UK mid grey. A govuk-summary-card has a similar grey-header-and-border shape and could replace it."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-069",
+      "statement": "The selected commodities summary is a CSS grid of divs (columns 180px, 200px, 200px, 180px, 120px), not a govuk-table or govuk-summary-list.",
+      "kind": "constraint",
+      "ref": "trace snagging--identification-details-s16-identification-details-page-layout-and-grey-panels.zip action 77",
+      "quote": ".app-animal-identification-page__summary-row bg=rgba(0, 0, 0, 0) display=grid cols=180px 200px 200px 180px 120px",
+      "confidence": "verbatim",
+      "note": "A govuk-table could replace it."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-070",
+      "statement": "The saved animals table is a CSS grid of divs sized to the identifier count (180px, then one equal column per identifier, then 72px for Remove), not a govuk-table.",
+      "kind": "constraint",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 75",
+      "quote": "style=\"grid-template-columns: 180px repeat(2, minmax(0, 1fr)) 72px;\"",
+      "confidence": "verbatim",
+      "note": "A govuk-table could replace it."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-071",
+      "statement": "The Remove control in the saved animals table is a submit button with a custom class, not a govuk-button.",
+      "kind": "constraint",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 75",
+      "quote": "class=\"app-animal-identification-panel__saved-remove\"> Remove </button>",
+      "confidence": "verbatim",
+      "note": "Reads as a link-style button; a govuk-link styled button or govuk-button--secondary could replace it."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-072",
+      "statement": "The caption, heading and section headings use custom app-animal-identification-page classes rather than govuk-caption and govuk-heading classes.",
+      "kind": "constraint",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 75 (class list)",
+      "quote": "app-animal-identification-page__caption ... app-animal-identification-page__heading ... app-animal-identification-commodity__heading ... app-animal-identification-panel__entry-heading",
+      "confidence": "verbatim",
+      "note": "govuk-caption-l, govuk-heading-l/m/s could replace them."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-073",
+      "statement": "The date fields (poultry hatching date, germinal collection and production dates) use the MOJ date picker, outside govuk-frontend, rather than the GOV.UK date input.",
+      "kind": "constraint",
+      "ref": "trace description-of-the-goods--identification-details-poultry-one-flock-panel-per-species-with-classification-and-hatching-date.zip action 44; germinal trace action 43",
+      "quote": "<div class=\"moj-datepicker\" data-module=\"moj-date-picker\" data-moj-date-picker-init=\"\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-074",
+      "statement": "Identifier inputs are govuk-input fields at width-20.",
+      "kind": "constraint",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip action 44",
+      "quote": "<input class=\"govuk-input govuk-input--width-20 app-animal-identification-page__input\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-075",
+      "statement": "The form actions stack the buttons in a column (custom app-origin-form-actions), 60px below the panels.",
+      "kind": "constraint",
+      "ref": "trace snagging--identification-details-s16-identification-details-page-layout-and-grey-panels.zip action 77; S15 trace action 53",
+      "quote": ".app-animal-identification-page__form-actions bg=rgba(0, 0, 0, 0) display=flex cols=none flexdir=column width=630px",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-076",
+      "statement": "Without JavaScript the page renders the same content: summary, panel, identifiers and buttons.",
+      "kind": "non-functional",
+      "ref": "trace snagging--identification-details-s16-identification-details-page-layout-and-grey-panels.zip action 59 (no-JS context)",
+      "quote": "Enter details for Domestic cattle (Bos taurus) 1 of 2\n\nEnter at least one identifier.\n\nPassport\nEar tag\nIdentification number\nSave and add another\nSave and continue",
+      "confidence": "verbatim",
+      "note": "That action 59 is the no-JS context is read from snagging.fit.spec.js line 278 (shootNoJs after shootMobile)."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-077",
+      "statement": "The page loads its own client script, animal-identification.js. No data API calls were seen: saving goes through form posts to the page itself.",
+      "kind": "integration",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip requests --grep identification",
+      "quote": "GET 200 animal-identification.js ... POST 302 animal-identification-details",
+      "confidence": "inferred",
+      "note": "Inferred absence of other calls from the filtered network log; the prototype kit holds the answers in its session."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-078",
+      "statement": "How the page lays out at mobile width is not recorded: S16 and S17 took 390x844 screenshots, but the trace snapshots render at 1280px, so the mobile layout of the panels and grids cannot be read from this source.",
+      "kind": "non-functional",
+      "ref": "trace snagging--identification-details-s16-identification-details-page-layout-and-grey-panels.zip actions 45-52; S17 actions 50-57",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-079",
+      "statement": "No trace shows more than one commodity or species on the identification page, so how several panels stack, and one species' completion beside another's, is not shown.",
+      "kind": "behaviour",
+      "ref": "all 10 traces in part 5",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-080",
+      "statement": "Horse, cat and pig were only shown on their first animal: their saving, saved table columns and errors are not in the traces.",
+      "kind": "behaviour",
+      "ref": "traces horse, cat and pig, actions 37-48",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-081",
+      "statement": "No poultry validation was exercised: whether any poultry field is required, and the errors for an invalid hatching date or no identifier, are not shown. Nor is what a saved flock looks like.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--identification-details-poultry-one-flock-panel-per-species-with-classification-and-hatching-date.zip",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-082",
+      "statement": "No germinal submit with empty fields was exercised, so which germinal fields are required, and their messages, are not shown.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--identification-details-germinal-products-donor-dates-and-identification-mark-with-date-and-length-errors.zip",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-083",
+      "statement": "'Save and return to overview', 'Cancel and return to overview', the selected commodities 'Change' link and 'Add another commodity' were never clicked on this page, so where they lead and what they save is only what their markup says.",
+      "kind": "behaviour",
+      "ref": "all 10 traces in part 5",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p5-084",
+      "statement": "Whether identifier values are checked for format or length (ear tag, passport, microchip) is not shown: only the empty case was refused for live animals.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--identification-details-cattle-passport-ear-tag-or-identification-number-for-each-animal-saved-one-at-a-time.zip",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

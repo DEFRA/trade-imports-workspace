@@ -1,0 +1,707 @@
+{
+  "source": "repo:insfrontend",
+  "structure": "Part 3, notification type and journey hand-shake. Read in full: the notification-type feature (page.js, controller.js, destinations.js, template.njk, copy.en.js, copy.cy.js, fit/notification-type.js and notification-type.fit.spec.js, with its imported hand-overs.test-support.js), common/constants/journey-set-bases.js, and the address-book hand-shake modules (handshake-context.js, journey-registry.js, return-to.js, success-message.js, record-id-params.js, fit/return-query.js) plus common/test-helpers/journey-handshake.js. Also read, for context only, common/helpers/set-base-url.js (how a set base URL is joined), shared/paths.js (the notification-type path and the dashboard section) and a few lines of address-book/add/add.controller.js where the hand-shake's cancel and landing values are used. Covered: the /notification-type page (route, maturity, heading, caption, four radio options and their order, the validation error, the Continue button, the back link, the hand-over to the animals and plants start entries, and the returning-notification path back to a live animals notification's origin page), the three journey set bases and the frontend each points at, the hand-shake context (the four query or payload fields, refusal when incomplete or unlisted, session storage), the journey registry (two journey types, five party fulfilment ids and the role each maps to, the return URL shape and its landing values), the return query rules (which returns are honoured and which refused), the success message carried in the session, the record id validation, and all nine tests of the notification-type fit spec. The address book pages themselves are other parts.",
+  "claims": [
+    {
+      "id": "repo-insfrontend-p3-001",
+      "statement": "The notification type question is served at the path /notification-type, as a GET and POST page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:2; src/server/app/features/notification-type/controller.js:157",
+      "quote": "export const notificationTypePath = () => '/notification-type'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-002",
+      "statement": "The notification type page has maturity 'exploring', so it is not a signed-off page.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/notification-type/page.js:1-4",
+      "quote": "id: 'notification-type',\n  maturity: 'exploring'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-003",
+      "statement": "The notification type page heading is 'What are you importing?', shown as the radio fieldset legend at large size and marked as the page heading.",
+      "kind": "copy",
+      "ref": "src/server/app/features/notification-type/copy/copy.en.js:2; template.njk:15-25",
+      "quote": "title: 'What are you importing?'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-004",
+      "statement": "The notification type page shows the caption 'About the consignment' above its heading, inside the legend.",
+      "kind": "copy",
+      "ref": "src/server/app/features/notification-type/copy/copy.en.js:3; template.njk:15",
+      "quote": "caption: 'About the consignment'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-005",
+      "statement": "The page title (browser tab) is the heading text 'What are you importing?'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/notification-type/controller.js:63",
+      "quote": "...kit.base(copy.title, { backLink: dashboardPath() }),",
+      "confidence": "inferred",
+      "note": "kit.base is passed copy.title; that it becomes the document title is inferred from the shared kit, not read in this part."
+    },
+    {
+      "id": "repo-insfrontend-p3-006",
+      "statement": "The question is a single set of radio buttons named notificationType offering four options in this order: Live animals, Plants for planting, Potatoes (seed and ware), Wood products.",
+      "kind": "data",
+      "ref": "src/server/app/features/notification-type/destinations.js:13-35; copy/copy.en.js:4-9",
+      "quote": "liveAnimals: 'Live animals',\n    plantsForPlanting: 'Plants for planting',\n    potatoes: 'Potatoes (seed and ware)',\n    woodProducts: 'Wood products'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-007",
+      "statement": "The submitted values of the four options are live-animals, plants-for-planting, potatoes and wood-products.",
+      "kind": "data",
+      "ref": "src/server/app/features/notification-type/destinations.js:15,21,26,31",
+      "quote": "value: 'live-animals' ... value: 'plants-for-planting' ... value: 'potatoes' ... value: 'wood-products'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-008",
+      "statement": "None of the notification type options has a hint.",
+      "kind": "copy",
+      "ref": "src/server/app/features/notification-type/controller.js:53-58; copy/copy.en.js",
+      "quote": "NOTIFICATION_TYPES.map(({ value, copyKey }) => ({\n    value,\n    text: copy.options[copyKey],\n    checked: value === selected\n  }))",
+      "confidence": "inferred",
+      "note": "The radio items carry only value, text and checked; the copy file has no hint strings."
+    },
+    {
+      "id": "repo-insfrontend-p3-009",
+      "statement": "Opened fresh, the notification type page shows all four options unselected.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/notification-type/notification-type.fit.spec.js:25-37; fit/notification-type.js:6-18",
+      "quote": "await expect(radios.nth(index)).not.toBeChecked()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-010",
+      "statement": "The notification type page has one button, labelled 'Continue'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/notification-type/copy/copy.en.js:13; template.njk:31; notification-type.fit.spec.js:35-36",
+      "quote": "continue: 'Continue'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-011",
+      "statement": "The notification type page has a Back link that goes to the dashboard.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/notification-type/controller.js:63; notification-type.fit.spec.js:39-54",
+      "quote": "kit.base(copy.title, { backLink: dashboardPath() })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-012",
+      "statement": "On the notification type page the service navigation highlights Dashboard, because the page counts as part of the dashboard section.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:36-37; notification-type.fit.spec.js:51-53",
+      "quote": "export const inDashboardSection = (path) =>\n  path === dashboardPath() || path === notificationTypePath()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-013",
+      "statement": "Pressing Continue with no option chosen is refused with the error 'Select what you are importing'.",
+      "kind": "rule",
+      "ref": "src/server/app/features/notification-type/copy/copy.en.js:10-12; controller.js:23-27",
+      "quote": "notificationType: 'Select what you are importing'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-014",
+      "statement": "A submitted value that is not one of the four option values is refused with the same error as no choice.",
+      "kind": "rule",
+      "ref": "src/server/app/features/notification-type/controller.js:23-27",
+      "quote": "const rules = requiredOneOf(\n  FIELD,\n  NOTIFICATION_TYPES.map(({ value }) => value),\n  copy.errors.notificationType\n)",
+      "confidence": "inferred",
+      "note": "requiredOneOf takes one message; inferred that an unknown value gives that message."
+    },
+    {
+      "id": "repo-insfrontend-p3-015",
+      "statement": "A refused notification type answer redisplays the page with status 400, an error summary, the error against the radios and the title prefixed 'Error: '.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/notification-type/controller.js:146-151; template.njk:6,27; notification-type.fit.spec.js:56-74",
+      "quote": "return buildView(h, { selected, returningNotification, errors }).code(\n      HTTP_STATUS_BAD_REQUEST\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-016",
+      "statement": "The error summary link for the notification type error moves focus to the first option, Live animals.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/notification-type/notification-type.fit.spec.js:56-74",
+      "quote": "message: 'Select what you are importing',\n      label: 'Live animals',\n      expectedValue: 'live-animals',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-017",
+      "statement": "The notification type page is sent with Cache-Control: no-store.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/notification-type/controller.js:70",
+      "quote": ".header('Cache-Control', 'no-store')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-018",
+      "statement": "The notification type form posts with a CSRF crumb.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/notification-type/template.njk:8-9",
+      "quote": "<input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-019",
+      "statement": "Choosing Live animals hands the trader over to the animals frontend's live animals start entry: the animals frontend base URL followed by /live-animals/start.",
+      "kind": "integration",
+      "ref": "src/server/app/features/notification-type/destinations.js:14-19,43-47; hand-overs.test-support.js:2",
+      "quote": "['live-animals', `${animalsBaseUrl}/live-animals/start`],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-020",
+      "statement": "Choosing Plants for planting hands the trader over to the plants frontend's start entry: the plants frontend base URL followed by /high-risk-plants/start.",
+      "kind": "integration",
+      "ref": "src/server/app/features/notification-type/destinations.js:20-24; notification-type.fit.spec.js:97-115",
+      "quote": "`${PLANTS_BASE_URL}/high-risk-plants/start`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-021",
+      "statement": "Choosing Potatoes (seed and ware) hands the trader over to the same plants start entry, /high-risk-plants/start on the plants frontend.",
+      "kind": "integration",
+      "ref": "src/server/app/features/notification-type/destinations.js:25-29; hand-overs.test-support.js:4",
+      "quote": "['potatoes', `${plantsBaseUrl}/high-risk-plants/start`],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-022",
+      "statement": "Choosing Wood products hands the trader over to the same plants start entry, /high-risk-plants/start on the plants frontend.",
+      "kind": "integration",
+      "ref": "src/server/app/features/notification-type/destinations.js:30-34; hand-overs.test-support.js:5",
+      "quote": "['wood-products', `${plantsBaseUrl}/high-risk-plants/start`]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-023",
+      "statement": "The three plants options all land on one plants start page and pass nothing saying which of them was chosen.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/notification-type/destinations.js:43-47",
+      "quote": "return `${buildSetBaseUrl(SET_FRONTEND_BASE_URL_KEYS[setBase], setBase)}${START_ENTRY}`",
+      "confidence": "inferred",
+      "note": "The start URL has no query; the chosen plants type is lost at hand-over."
+    },
+    {
+      "id": "repo-insfrontend-p3-024",
+      "statement": "A hand-over is a 302 redirect to an absolute URL on the other frontend.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/notification-type/controller.js:133; notification-type.fit.spec.js:110-114",
+      "quote": "expect(response.status()).toBe(302)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-025",
+      "statement": "Each hand-over is logged at info with the organisation id, the CRN, the chosen type and the destination, and, when a returning notification was left, its reference and type.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/notification-type/controller.js:87-134",
+      "quote": "'Notification type chosen, handing over to the journey frontend'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-026",
+      "statement": "The notification type page can be opened for an existing notification by passing notification-id and current-notification-type in the query.",
+      "kind": "integration",
+      "ref": "src/server/app/features/notification-type/controller.js:29-51,72-85; notification-type.fit.spec.js:118",
+      "quote": "const reference = trimmedField(source, 'notification-id')\n  const type = trimmedField(source, 'current-notification-type')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-027",
+      "statement": "Opened for a live animals notification, the page shows Live animals already checked and no other option checked.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/notification-type/notification-type.fit.spec.js:120-128; controller.js:81-84",
+      "quote": "selected: returningNotification?.type,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-028",
+      "statement": "Only live animals notifications can be taken back to their journey; it is the only type with a return page, its 'origin' page.",
+      "kind": "rule",
+      "ref": "src/server/app/features/notification-type/destinations.js:18,55-58",
+      "quote": "returnPage: 'origin'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-029",
+      "statement": "When the query names a notification whose type cannot be taken back (any type but live animals, or none), the page opens with nothing chosen and logs a warning with the organisation id, reference and type.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/notification-type/controller.js:39-48,77-78",
+      "quote": "'Returning notification not recognised, type question opened with nothing chosen'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-030",
+      "statement": "A recognised returning notification is carried through the form as hidden notification-id and current-notification-type fields.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/notification-type/template.njk:10-13",
+      "quote": "<input type=\"hidden\" name=\"notification-id\" value=\"{{ returningNotification.reference }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-031",
+      "statement": "If the trader keeps Live animals for a returning live animals notification, Continue returns them to that notification's origin page on the animals frontend: /live-animals/notifications/<reference>/origin, with the reference encoded as one path segment.",
+      "kind": "integration",
+      "ref": "src/server/app/features/notification-type/destinations.js:67-72; controller.js:97-112,152-153; hand-overs.test-support.js:8-9; notification-type.fit.spec.js:130-150",
+      "quote": "`${animalsBaseUrl}/live-animals/notifications/${encodeURIComponent(reference)}/origin`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-032",
+      "statement": "Returning to the notification is logged at info with the organisation id, the CRN, the reference, the type and the destination.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/notification-type/controller.js:102-110",
+      "quote": "'Notification type kept, returning to the notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-033",
+      "statement": "If the trader picks a different type for a returning notification, they are handed over to the new type's start entry as a new notification; the existing notification is not changed or carried across.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/notification-type/controller.js:114-134,152-154",
+      "quote": "leftNotificationReference: returningNotification.reference,\n        leftNotificationType: returningNotification.type",
+      "confidence": "inferred",
+      "note": "Only the log records the left notification; the redirect is the plain start URL."
+    },
+    {
+      "id": "repo-insfrontend-p3-034",
+      "statement": "On submit, a posted notification-id whose type cannot be taken back is ignored and the choice is handled as a new notification, with a warning logged.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/notification-type/controller.js:138-145",
+      "quote": "'Returning notification not recognised, handled as a new notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-035",
+      "statement": "There is no notification type option or start entry for germinal products, although a germinal products set base exists.",
+      "kind": "data",
+      "ref": "src/server/app/features/notification-type/destinations.js:13-35; src/server/common/constants/journey-set-bases.js:4",
+      "quote": "GERMINAL_PRODUCTS: '/germinal-products'",
+      "confidence": "inferred",
+      "note": "NOTIFICATION_TYPES lists only four types, none using GERMINAL_PRODUCTS."
+    },
+    {
+      "id": "repo-insfrontend-p3-036",
+      "statement": "Three journey set bases are known: /live-animals, /high-risk-plants and /germinal-products.",
+      "kind": "data",
+      "ref": "src/server/common/constants/journey-set-bases.js:1-5",
+      "quote": "LIVE_ANIMALS: '/live-animals',\n  HIGH_RISK_PLANTS: '/high-risk-plants',\n  GERMINAL_PRODUCTS: '/germinal-products'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-037",
+      "statement": "The /live-animals and /germinal-products set bases are served by the animals frontend, whose base URL is the config value tradeImportsAnimalsFrontend.baseUrl.",
+      "kind": "integration",
+      "ref": "src/server/common/constants/journey-set-bases.js:8,10",
+      "quote": "[SET_BASES.LIVE_ANIMALS]: 'tradeImportsAnimalsFrontend.baseUrl',\n  [SET_BASES.HIGH_RISK_PLANTS]: 'tradeImportsPlantsFrontend.baseUrl',\n  [SET_BASES.GERMINAL_PRODUCTS]: 'tradeImportsAnimalsFrontend.baseUrl'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-038",
+      "statement": "The /high-risk-plants set base is served by the plants frontend, whose base URL is the config value tradeImportsPlantsFrontend.baseUrl.",
+      "kind": "integration",
+      "ref": "src/server/common/constants/journey-set-bases.js:9",
+      "quote": "[SET_BASES.HIGH_RISK_PLANTS]: 'tradeImportsPlantsFrontend.baseUrl',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-039",
+      "statement": "A journey URL is the frontend's configured base URL, with any trailing slash removed, followed by the set base.",
+      "kind": "integration",
+      "ref": "src/server/common/helpers/set-base-url.js:14-17",
+      "quote": "const baseUrl = config.get(baseUrlConfigKey).replace(/\\/$/, '')\n  return `${baseUrl}${setBase}`",
+      "confidence": "verbatim",
+      "note": "mechanism: joins a configured frontend base URL and a set base."
+    },
+    {
+      "id": "repo-insfrontend-p3-040",
+      "statement": "The Welsh notification type page reads: title 'Beth ydych chi’n ei fewnforio?', caption 'Am y llwyth', options 'Anifeiliaid byw', 'Planhigion i’w plannu', 'Tatws (hadyd a bwyta)', 'Cynhyrchion pren', error 'Dewiswch beth rydych chi’n ei fewnforio' and button 'Parhau'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/notification-type/copy/copy.cy.js:2-15",
+      "quote": "title: 'Beth ydych chi’n ei fewnforio?',\n  caption: 'Am y llwyth',\n  options: {\n    liveAnimals: 'Anifeiliaid byw',\n    plantsForPlanting: 'Planhigion i’w plannu',\n    potatoes: 'Tatws (hadyd a bwyta)',\n    woodProducts: 'Cynhyrchion pren'\n  },\n  errors: {\n    notificationType: 'Dewiswch beth rydych chi’n ei fewnforio'\n  },\n  continue: 'Parhau'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-041",
+      "statement": "The Welsh notification type copy is a machine draft not reviewed by a translator and must not ship to users without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/notification-type/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-042",
+      "statement": "The notification type page shows the Alpha phase banner reading 'This is a new service. Help us improve it and give your feedback by email.', linking to mailto:APHAServiceDesk@apha.gov.uk.",
+      "kind": "copy",
+      "ref": "src/server/app/features/notification-type/notification-type.fit.spec.js:76-95",
+      "quote": "'This is a new service. Help us improve it and give your feedback by email.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-043",
+      "statement": "The notification type page has no serious or critical axe accessibility violations, in its normal state and in its error state.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/notification-type/notification-type.fit.spec.js:153-178",
+      "quote": "await expectNoSeriousOrCriticalViolations(\n      page,\n      'notification type error state'\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-044",
+      "statement": "The notification type page needs a signed-in user with an organisation.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/notification-type/controller.js:90-91; notification-type.fit.spec.js:28-32",
+      "quote": "organisationId: kit.requireOrganisationId(request),\n      crn: request.auth.credentials.crn,",
+      "confidence": "inferred",
+      "note": "Every fit test signs in first; the controller requires an organisation id and reads auth credentials."
+    },
+    {
+      "id": "repo-insfrontend-p3-045",
+      "statement": "The notification type fit spec holds nine tests: four unselected options and one Continue button; back to dashboard with Dashboard highlighted; refused empty Continue linked to the first option; the alpha banner; Plants for planting hand-over; Live animals checked for a returning live animals notification; return to origin when Live animals stays chosen; and axe checks in normal and error states.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/notification-type/notification-type.fit.spec.js:24-179",
+      "quote": "test.describe('notification type question', () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-046",
+      "statement": "No fit test proves the Live animals, Potatoes or Wood products hand-overs end to end; only Plants for planting is tested as a hand-over.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/notification-type/notification-type.fit.spec.js:97-115",
+      "quote": "",
+      "confidence": "gap",
+      "note": "handOversFor in hand-overs.test-support.js lists all four, but the fit spec uses only expectedReturnUrl, SAMPLE_REFERENCE and the plants case; the others may be proven in unit tests, which are out of scope."
+    },
+    {
+      "id": "repo-insfrontend-p3-047",
+      "statement": "No fit test proves what happens when a returning notification switches to another type, or when an unrecognised returning type is passed.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/notification-type/notification-type.fit.spec.js:117-151",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-insfrontend-p3-048",
+      "statement": "A journey in another frontend borrows the address book by passing four values in the query or form: journey-type, notification-id, fulfilment-id and handshake-token.",
+      "kind": "integration",
+      "ref": "src/server/app/features/address-book/handshake-context.js:52-58,70-76",
+      "quote": "journeyType: trimmedField(request.query, 'journey-type'),\n    notificationId: trimmedField(request.query, 'notification-id'),\n    fulfilmentId: trimmedField(request.query, 'fulfilment-id'),\n    handshakeToken: trimmedField(request.query, 'handshake-token')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-049",
+      "statement": "With none of the four hand-shake values present, the address book is used on its own, with no journey borrowing it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/handshake-context.js:24-26",
+      "quote": "if (!journeyType && !notificationId && !fulfilmentId && !handshakeToken) {\n    return null\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-050",
+      "statement": "A hand-shake missing any one of the four values is refused with 400 Bad Request ('Incomplete journey handshake') and a warning logged with the journey type, notification id and fulfilment id.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/handshake-context.js:28-34",
+      "quote": "'Journey handshake refused, it is missing an id or its token'\n    )\n    throw Boom.badRequest('Incomplete journey handshake')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-051",
+      "statement": "A hand-shake whose journey type is not registered, or whose fulfilment id is not listed for that journey, is refused with 404 Not Found and a warning logged.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/handshake-context.js:36-42",
+      "quote": "'Journey handshake refused, the journey type or fulfilment id is not listed'\n    )\n    throw Boom.notFound()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-052",
+      "statement": "The hand-shake token is never logged; refusal logs carry only the journey type, notification id and fulfilment id.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/address-book/handshake-context.js:11-16",
+      "quote": "logger.warn({ journeyType, notificationId, fulfilmentId }, message)",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-insfrontend-p3-053",
+      "statement": "The hand-shake token is not checked by this frontend; it is only required to be present and is passed back to the journey on return.",
+      "kind": "integration",
+      "ref": "src/server/app/features/address-book/handshake-context.js:28; journey-registry.js:114-116",
+      "quote": "if (context.handshakeToken) {\n    url.searchParams.set('handshake-token', context.handshakeToken)\n  }",
+      "confidence": "inferred",
+      "note": "No code in this slice verifies the token's value or signature."
+    },
+    {
+      "id": "repo-insfrontend-p3-054",
+      "statement": "A valid hand-shake arriving in the query is kept in the trader's session, and opening the page without one clears any stored hand-shake.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/handshake-context.js:60-66,103-111",
+      "quote": "storeHandshakeContext(request, null)\n  return null",
+      "confidence": "verbatim",
+      "note": "mechanism: session key addressBookHandshake; used by the add page GET (add.controller.js:240)."
+    },
+    {
+      "id": "repo-insfrontend-p3-055",
+      "statement": "On a form submit, a hand-shake posted in the form replaces the stored one; without one, the session's stored hand-shake is used if its journey and fulfilment id are still registered, and discarded with a warning if not.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/handshake-context.js:78-101",
+      "quote": "'Session journey handshake discarded, the journey type or fulfilment id is not listed'",
+      "confidence": "verbatim",
+      "note": "mechanism: used by the add page POST (add.controller.js:416)."
+    },
+    {
+      "id": "repo-insfrontend-p3-056",
+      "statement": "Two journey types are registered to borrow the address book: gbn-ag and gbn-ag-germinal-products.",
+      "kind": "data",
+      "ref": "src/server/app/features/address-book/journey-registry.js:14-17",
+      "quote": "GBN_AG: 'gbn-ag',\n  GBN_AG_GERMINAL_PRODUCTS: 'gbn-ag-germinal-products'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-057",
+      "statement": "The gbn-ag journey returns to the animals frontend under /live-animals, and gbn-ag-germinal-products returns to the animals frontend under /germinal-products.",
+      "kind": "integration",
+      "ref": "src/server/app/features/address-book/journey-registry.js:36-49",
+      "quote": "baseUrlConfigKey: SET_FRONTEND_BASE_URL_KEYS[SET_BASES.GERMINAL_PRODUCTS],\n    setBase: SET_BASES.GERMINAL_PRODUCTS,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-058",
+      "statement": "No plants journey is registered to borrow the address book.",
+      "kind": "integration",
+      "ref": "src/server/app/features/address-book/journey-registry.js:36-49",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The registry has only the two animals frontend journeys; a high-risk-plants journey cannot borrow the address book today."
+    },
+    {
+      "id": "repo-insfrontend-p3-059",
+      "statement": "Five party fulfilment ids are listed, the same for both journeys, each naming the address role the journey is asking for: place of origin, consignor, consignee, importer and place of destination.",
+      "kind": "data",
+      "ref": "src/server/app/features/address-book/journey-registry.js:28-34",
+      "quote": "'89c0d1e2-f3a4-4b5f-8c0b-8d9e0f1a2b3c': ROLES.PLACE_OF_ORIGIN,\n  '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d': ROLES.CONSIGNOR,\n  'abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e': ROLES.CONSIGNEE,\n  'bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f': ROLES.IMPORTER,\n  'cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60': ROLES.PLACE_OF_DESTINATION",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-060",
+      "statement": "Consignee, importer and place of destination are receiving parties, sharing the destination consignee or importer address type.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/journey-registry.js:66-68; src/server/common/test-helpers/journey-handshake.js:82-86",
+      "quote": "export const RECEIVING_PARTIES = Object.freeze([\n  'consignee',\n  'importer',\n  'placeOfDestination'\n])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-061",
+      "statement": "Place of origin and consignor are sending parties.",
+      "kind": "rule",
+      "ref": "src/server/common/test-helpers/journey-handshake.js:88",
+      "quote": "export const SENDING_PARTIES = Object.freeze(['placeOfOrigin', 'consignor'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-062",
+      "statement": "When a journey asks for one party, the other roles offered are the rest of that party's address type: place of origin offers consignor; consignor offers place of origin; consignee offers importer and place of destination; importer offers consignee and place of destination; place of destination offers consignee and importer.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/journey-registry.js:70-81; src/server/common/test-helpers/journey-handshake.js:54-75",
+      "quote": "consignee: {\n    ownRole: 'CONSIGNEE',\n    otherRoles: ['IMPORTER', 'PLACE_OF_DESTINATION']\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-063",
+      "statement": "An address saved while a journey borrows the address book always keeps the role the journey asked for, plus any other roles chosen that its address type offers.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/journey-registry.js:83-89",
+      "quote": "return keepRolesOfferedBy(addressTypeOfRole(ownRole), [\n    ownRole,\n    ...postedRoles\n  ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-064",
+      "statement": "The roles question shown to a borrowing journey carries a hint built from the asked-for role's label.",
+      "kind": "copy",
+      "ref": "src/server/common/test-helpers/journey-handshake.js:77-80",
+      "quote": "copy.roles.journeyHint(\n    copy.roles.options[ROLES_BY_PARTY[party].ownRole].label\n  )",
+      "confidence": "inferred",
+      "note": "The hint's words live in the address-book copy file, another part's."
+    },
+    {
+      "id": "repo-insfrontend-p3-065",
+      "statement": "The trader is returned to the journey at <animals base URL><set base>/notifications/<notification-id>/address-return?fulfilment-id=<fulfilment-id>, with the notification id encoded as one path segment.",
+      "kind": "integration",
+      "ref": "src/server/app/features/address-book/journey-registry.js:25-26,99-125",
+      "quote": "'/notifications/{notification-id}/address-return?fulfilment-id={fulfilment-id}'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-066",
+      "statement": "The return URL also carries the handshake-token, the chosen addressId when there is one, and a landing value.",
+      "kind": "integration",
+      "ref": "src/server/app/features/address-book/journey-registry.js:114-122",
+      "quote": "url.searchParams.set('addressId', addressId)\n  }\n  if (landing) {\n    url.searchParams.set('landing', landing)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-067",
+      "statement": "The landing value tells the journey how the trader left: select, return or cancel.",
+      "kind": "data",
+      "ref": "src/server/app/features/address-book/journey-registry.js:19-23",
+      "quote": "SELECT: 'select',\n  RETURN: 'return',\n  CANCEL: 'cancel'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-068",
+      "statement": "Cancelling an add while a journey borrows the address book returns the trader to the journey with landing=cancel; cancelling from the address book alone goes to the address book list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:101-104",
+      "quote": ": buildReturnUrl(handshakeContext, { landing: ADDRESS_LANDING.CANCEL })",
+      "confidence": "verbatim",
+      "note": "Read for context only; the add page itself is another part."
+    },
+    {
+      "id": "repo-insfrontend-p3-069",
+      "statement": "After adding an address for a journey, the landing is return when the trader pressed the return action and select otherwise.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:106-109",
+      "quote": "payload.action === ADDRESS_LANDING.RETURN\n    ? ADDRESS_LANDING.RETURN\n    : ADDRESS_LANDING.SELECT",
+      "confidence": "inferred",
+      "note": "Read for context only; which button posts which action is in the add page, another part."
+    },
+    {
+      "id": "repo-insfrontend-p3-070",
+      "statement": "Address book pages accept a return query parameter naming where to send the trader when they leave.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/return-to.js:12,94-107",
+      "quote": "const RETURN_QUERY_KEY = 'return'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-071",
+      "statement": "A return that is a path on this service (starting with one slash and staying on this site), other than a /live-animals path, is honoured as given.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/return-to.js:14-28,76-80",
+      "quote": "if (path && !isLiveAnimalsPath(path)) {\n    return path\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-072",
+      "statement": "A return that is a /live-animals path is honoured as the same path on the animals frontend.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/return-to.js:39-48,81-83",
+      "quote": "`${liveAnimalsBaseUrl()}${liveAnimalsPath.slice(SET_BASES.LIVE_ANIMALS.length)}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-073",
+      "statement": "A return that is a full URL on the animals frontend's own origin is honoured.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/return-to.js:50-57",
+      "quote": "return url.origin === new URL(liveAnimalsBaseUrl()).origin ? url.href : null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-074",
+      "statement": "Any other return is refused and ignored: a URL on another site, a protocol-relative URL, a repeated return parameter, or one containing a backslash or line break. The refusal is logged at info with the path, the requested return and the reason.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/return-to.js:59-65,84-90,99-105",
+      "quote": "'not an INS path, a live-animals path or an animals frontend URL'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-075",
+      "statement": "In stub mode, a return to the animals frontend is refused and ignored.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/return-to.js:67-74",
+      "quote": "'animals frontend return refused in stub mode'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-076",
+      "statement": "No return to the plants frontend or to a /germinal-products path is honoured by the return query.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/return-to.js:39-57,76-92",
+      "quote": "pathname === SET_BASES.LIVE_ANIMALS ||\n    pathname.startsWith(`${SET_BASES.LIVE_ANIMALS}/`)",
+      "confidence": "inferred",
+      "note": "Only the animals frontend origin is accepted for full URLs; a /germinal-products path would be treated as an INS path, not mapped to the animals frontend."
+    },
+    {
+      "id": "repo-insfrontend-p3-077",
+      "statement": "An honoured return is carried on to the next address book page's link, except a return to the address book list, which is dropped because it is the default.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/return-to.js:109-112; src/server/app/features/address-book/fit/return-query.js:1-4",
+      "quote": "!honouredReturn || honouredReturn === addressBookPath()\n    ? path",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-078",
+      "statement": "Leaving a record's own pages goes to the honoured return, unless it points back at the record being left, else to the address book list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/return-to.js:121-129",
+      "quote": "/** Where a record's own pages send the user when they leave: the return they\n * carry, unless it points back at the record being left, else `fallback`. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-079",
+      "statement": "Leaving an address's edit page goes to the honoured return, else back to that address's page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/return-to.js:131-132",
+      "quote": "honouredReturn ?? addressPath(addressId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-080",
+      "statement": "A dead link to a record goes to the honoured return, else the address book list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/return-to.js:134-135",
+      "quote": "returnDestinationOf(request.params?.id ?? '', honouredReturnOf(request))",
+      "confidence": "inferred",
+      "note": "mechanism: used where a record cannot be found."
+    },
+    {
+      "id": "repo-insfrontend-p3-081",
+      "statement": "After an address is added, edited or deleted, a one-time success message is kept in the session and shown once on the address book list, then cleared.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/success-message.js:1-7; list/list.controller.js:351; add/add.controller.js:307; edit/edit.controller.js:161; delete/delete.controller.js:96",
+      "quote": "export const takeSuccessMessage = (request) =>\n  request.yar.get(SESSION_KEY, true)",
+      "confidence": "verbatim",
+      "note": "The message words are in the address-book copy, another part's."
+    },
+    {
+      "id": "repo-insfrontend-p3-082",
+      "statement": "No success message is shown to the trader on return to a borrowing journey; returning to a journey is a redirect to the journey's address-return URL.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/success-message.js; journey-registry.js:99-125",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The scope names a success message on return; the success message in this slice is set for the address book list only. What the journey shows on address-return is the animals frontend's."
+    },
+    {
+      "id": "repo-insfrontend-p3-083",
+      "statement": "A record id in an address book URL must be 24 hexadecimal characters; otherwise the trader is redirected to a fallback page and the failure is logged at info.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/record-id-params.js:8-30",
+      "quote": "const OBJECT_ID_PATTERN = /^[a-fA-F0-9]{24}$/",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-084",
+      "statement": "The record id validation message is 'Enter a valid record id', though the trader is redirected rather than shown it.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/record-id-params.js:11-14",
+      "quote": "'string.pattern.base': 'Enter a valid record id',\n    'any.required': 'Enter a valid record id'",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-insfrontend-p3-085",
+      "statement": "The test hand-shakes use notification ids GBN-AG-26-4F7K2P for gbn-ag and GBN-AG-26-9K3M7Q for germinal products, with the animals frontend at http://localhost:3000.",
+      "kind": "data",
+      "ref": "src/server/common/test-helpers/journey-handshake.js:4-16,30-34,90",
+      "quote": "notificationId = 'GBN-AG-26-4F7K2P'",
+      "confidence": "verbatim",
+      "note": "Test data, not a production rule; shows the GBN-AG reference shape the journey passes."
+    }
+  ]
+}

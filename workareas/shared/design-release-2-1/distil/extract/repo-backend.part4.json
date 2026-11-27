@@ -1,0 +1,1445 @@
+{
+  "source": "repo:backend",
+  "structure": "Part 4 read, in full on branch main, the 10 files of src/main/java/uk/gov/defra/trade/imports/animals/outbox/ (the outbox event record, its metadata, actor and status-change types, the event-type enum, the repository, the write service, the scheduled poller, the SNS publish service and the replay service), the 22 files of outbox/gbnag/ (GbnAgEventData and its mapper, then one record per part of the GBN-AG body: ExchangedDocument, Authentication and Clause, SpecifiedConsignment, TradeParty, DefinedContact, TradeAddress, TradeCountry, TradeCountrySubDivision, LogisticsLocation, LogisticsTransportMovement, TransportEvent, ReferencedDocument, ConsignmentItem, TradeLineItem, ApplicableClassification, CodedValue, LineTradeDelivery, LogisticsPackage, TradeProductInstance) and configuration/OutboxConfig.java, plus the outbox block of src/main/resources/application.yml. To say what triggers each event type and which notification fields go unpublished, it also looked, without claiming their own behaviour, at the call sites in notification/NotificationService.java and NotificationController.java (the replay and outbox-events routes, and the actor builder) and at the field lists of the notification model (NotificationBase, NotificationAggregate, Origin, AdditionalDetails, Transport, Transporter, Commodity, Species, AnimalIdentifier, ConsignmentParty, Address) and AccompanyingDocument and DocumentType. It covers: all 8 event types with their wire values, schema URLs and triggers; the event envelope (ids, aggregate version, organisation, metadata, actor, status changes, versionId); where events go (one SNS FIFO topic), the poller, batching, ordering, failure handling and replay; every field of the GBN-AG body and the notification field it comes from, with every fixed code the mapping writes (5 purpose codes, 11 internal-market purpose codes, 16 goods-certified-as codes, 4 transport mode codes, 4 transport-document type codes, 13 accompanying-document type codes, the CN classification, the 106 subdivision function code, 4 animal identifier types and 8 reference-list URLs); the notification fields the mapper does not publish; and gaps for the germinal products details, trade-line typeCodes and notification category the programme expects and main does not have.",
+  "claims": [
+    {
+      "id": "repo-backend-p4-001",
+      "statement": "The backend emits eight notification event types: NotificationSubmitted, NotificationSubmissionAmended, NotificationEdited, NotificationCreated, NotificationAmendmentRequested, NotificationAmendmentCancelled, NotificationDeleted and NotificationSubmissionDeleted.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventType.java:15-40",
+      "quote": "NOTIFICATION_SUBMITTED(\n        \"NotificationSubmitted\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-002",
+      "statement": "Each event type's wire value, the event type downstream consumers see, is the type name prefixed with uk.gov.defra.imports.notification., such as uk.gov.defra.imports.notification.NotificationSubmitted.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventType.java:51",
+      "quote": "this.value = \"uk.gov.defra.imports.notification.\" + value;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-003",
+      "statement": "Each event type names its governing JSON schema in DEFRA/trade-imports-schemas under schemas/profiles/imports/gb/events/, one file per type, such as gbn-ag-event-notification-submitted-v1.schema.json.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventType.java:52-53",
+      "quote": "this.schemaUrl = \"https://github.com/DEFRA/trade-imports-schemas/blob/main/\"\n            + \"schemas/profiles/imports/gb/events/\" + schemaUrl;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-004",
+      "statement": "A NotificationCreated event is written when a new notification is created, with the notification in DRAFT status.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:462-468",
+      "quote": "NotificationStatus.DRAFT,\n                    OutboxEventType.NOTIFICATION_CREATED,",
+      "confidence": "verbatim",
+      "note": "The lifecycle that writes events is part 2's; this records only which event each lifecycle step writes."
+    },
+    {
+      "id": "repo-backend-p4-005",
+      "statement": "A NotificationEdited event is written each time a DRAFT or AMEND notification's content is replaced, and the status is left as it was.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:124-125",
+      "quote": "return saveWithStatusAndOutboxEvent(notificationAggregate, referenceNumber, correlationId,\n            notificationAggregate.getStatus(), OutboxEventType.NOTIFICATION_EDITED, actor);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-006",
+      "statement": "Submitting a DRAFT notification writes a NotificationSubmitted event and sets the status to SUBMITTED.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:215-225",
+      "quote": "OutboxEventType eventType = notificationAggregate.getStatus() == NotificationStatus.AMEND\n            ? OutboxEventType.NOTIFICATION_SUBMISSION_AMENDED\n            : OutboxEventType.NOTIFICATION_SUBMITTED;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-007",
+      "statement": "Submitting a notification that is in AMEND writes a NotificationSubmissionAmended event and sets the status to SUBMITTED.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:215-225",
+      "quote": "? OutboxEventType.NOTIFICATION_SUBMISSION_AMENDED",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-008",
+      "statement": "Starting an amendment of a SUBMITTED notification writes a NotificationAmendmentRequested event and sets the status to AMEND.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:249-256",
+      "quote": "NotificationStatus.AMEND,\n            OutboxEventType.NOTIFICATION_AMENDMENT_REQUESTED,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-009",
+      "statement": "Cancelling an amendment writes a NotificationAmendmentCancelled event and sets the status back to SUBMITTED.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:282-289",
+      "quote": "NotificationStatus.SUBMITTED,\n            OutboxEventType.NOTIFICATION_AMENDMENT_CANCELLED,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-010",
+      "statement": "Deleting a DRAFT notification writes a NotificationDeleted event and sets the status to DELETED.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:381-390",
+      "quote": "OutboxEventType eventType = notificationAggregate.getStatus() == NotificationStatus.DRAFT\n            ? OutboxEventType.NOTIFICATION_DELETED\n            : OutboxEventType.NOTIFICATION_SUBMISSION_DELETED;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-011",
+      "statement": "Deleting a SUBMITTED or AMEND notification writes a NotificationSubmissionDeleted event and sets the status to DELETED.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:381-390",
+      "quote": ": OutboxEventType.NOTIFICATION_SUBMISSION_DELETED;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-012",
+      "statement": "Deleting a notification that is already DELETED writes no event, because the delete returns before any save.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:372-375",
+      "quote": "log.info(\"Notification {} is already DELETED, nothing changed\", referenceNumber);\n            return notificationAggregate;",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-backend-p4-013",
+      "statement": "The event is written in the same step as the notification save, under a per-notification outbox lock, so a notification change and its event are recorded together (a transactional outbox).",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:299-307",
+      "quote": "NotificationAggregate saved = notificationRepository.save(notification);\n                outboxService.appendEvent(saved, eventType, correlationId, actor);",
+      "confidence": "inferred",
+      "note": "mechanism: the save and appendEvent run inside executeWithOutboxLock in @Transactional service methods; the transaction handling itself is part 2's."
+    },
+    {
+      "id": "repo-backend-p4-014",
+      "statement": "Outbox events are stored in a MongoDB collection named outbox.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEvent.java:16",
+      "quote": "@Document(collection = \"outbox\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-015",
+      "statement": "Each event gets a new random UUID as its eventId.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:91",
+      "quote": ".eventId(UUID.randomUUID().toString())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-016",
+      "statement": "An event's aggregateId is Imports.Notification.GBN-AG. followed by the notification's reference number.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:36,137-139",
+      "quote": "static final String AGGREGATE_ID_PREFIX = \"Imports.Notification.GBN-AG.\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-017",
+      "statement": "Every event carries aggregateType Notification.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:33",
+      "quote": "static final String AGGREGATE_TYPE = \"Notification\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-018",
+      "statement": "Every event carries subType GBN-AG.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:34",
+      "quote": "static final String SUB_TYPE = \"GBN-AG\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-019",
+      "statement": "Each notification's events are numbered by aggregateVersion, starting at 1 and going up by one for each new event.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:55-58",
+      "quote": "long nextVersion = latestEvent.map(e -> e.getAggregateVersion() + 1).orElse(1L);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-020",
+      "statement": "Two events for one notification can never share an aggregateVersion: a unique index refuses the second, and the write fails with \"Duplicate aggregateVersion on outbox insert\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEvent.java:17-19; OutboxService.java:109-115",
+      "quote": "throw new OutboxWriteException(\n                \"Duplicate aggregateVersion on outbox insert\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-021",
+      "statement": "An event's timestamp is the time it was written, to the millisecond.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:60,97",
+      "quote": "Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-022",
+      "statement": "Each event carries the notification's organisationId at the top level of the envelope.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:98",
+      "quote": ".organisationId(notificationAggregate.getOrganisationId())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-023",
+      "statement": "Each event's metadata carries the correlation id of the request that caused it.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:100-101",
+      "quote": ".correlationId(correlationId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-024",
+      "statement": "Each event's metadata carries schemaVersion 1.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:35,102",
+      "quote": "static final String SCHEMA_VERSION = \"1\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-025",
+      "statement": "Each event's metadata carries the schemaUrl of its event type's schema.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:103",
+      "quote": ".schemaUrl(eventType.schemaUrl())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-026",
+      "statement": "Each event names the actor who caused it, with an id, source, userType, displayName, organisationId and onBehalfOfOrganisationId; any of these that is missing is left out of the published JSON.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/Actor.java:8-19",
+      "quote": "@JsonInclude(JsonInclude.Include.NON_NULL)\npublic class Actor {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-027",
+      "statement": "The actor's organisationId on an event is the organisation the request was made for, not a value the caller supplies in the actor.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:283-290",
+      "quote": ".organisationId(organisationId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-028",
+      "statement": "Each event carries the notification's full status history as statusChanges, each entry with the status, the date it changed and the actor who changed it.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/StatusChange.java:10-14; OutboxService.java:62-79",
+      "quote": "NotificationStatus status;\n    Instant dateChanged;\n    Actor actor;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-029",
+      "statement": "A new status change is added to the history only when the notification's status differs from the last recorded one, so an edit that keeps the status adds none.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:70-79",
+      "quote": "if (notificationAggregate.getStatus() != lastStatus) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-030",
+      "statement": "When the outbox records that an event was published is not part of the published event.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEvent.java:49-50",
+      "quote": "@JsonIgnore\n    private Instant publishedAt;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-031",
+      "statement": "An event's data is the GBN-AG body built from the notification as it stands when the event is written, so it is a snapshot of that moment.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:86-88",
+      "quote": "gbnAgEventDataMapper.toGbnAgEventData(notificationAggregate, versionId, claimedScannedDocuments),",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-backend-p4-032",
+      "statement": "NotificationCreated, NotificationEdited and NotificationDeleted events carry no versionId.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:41-44,121-124",
+      "quote": "private static final Set<OutboxEventType> NO_VERSION_ID_EVENTS = Set.of(\n        OutboxEventType.NOTIFICATION_CREATED,\n        OutboxEventType.NOTIFICATION_EDITED,\n        OutboxEventType.NOTIFICATION_DELETED);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-033",
+      "statement": "A NotificationSubmitted or NotificationSubmissionAmended event carries a versionId one higher than the number of submission events before it, so the first submission is version 1.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:125-128; OutboxEventType.java:43-45",
+      "quote": "return (int) (mintsNewVersion ? submissionCount + 1 : submissionCount);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-034",
+      "statement": "NotificationAmendmentRequested, NotificationAmendmentCancelled and NotificationSubmissionDeleted events carry the versionId of the latest submission, the count of submission events so far.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:125-128",
+      "quote": "return (int) (mintsNewVersion ? submissionCount + 1 : submissionCount);",
+      "confidence": "inferred",
+      "note": "Follows because these types are neither in NO_VERSION_ID_EVENTS nor in SUBMISSION_EVENTS."
+    },
+    {
+      "id": "repo-backend-p4-035",
+      "statement": "Events are published to one Amazon SNS topic, named by the outbox.sns.topic-arn setting, which reads the OUTBOX_SNS_TOPIC_ARN environment variable and is empty by default.",
+      "kind": "integration",
+      "ref": "src/main/resources/application.yml:159-160; src/main/java/uk/gov/defra/trade/imports/animals/configuration/OutboxConfig.java:49",
+      "quote": "topic-arn: ${OUTBOX_SNS_TOPIC_ARN:}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-036",
+      "statement": "When no SNS topic is configured, the outbox publishes nothing and the events wait unpublished.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:37-41",
+      "quote": "log.debug(\"Outbox SNS topic ARN not configured; skipping publish\");\n            return 0;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-037",
+      "statement": "The SNS topic is a FIFO topic: each message's group id is the notification's aggregateId and its deduplication id is the eventId, so one notification's events are delivered in order and a repeat publish of one event is deduplicated.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:112-113",
+      "quote": ".messageGroupId(event.getAggregateId())\n            .messageDeduplicationId(event.getEventId())",
+      "confidence": "inferred",
+      "note": "The FIFO topic is stated in the replay route's description (NotificationController.java:240); the ordering and dedup guarantees are SNS FIFO's."
+    },
+    {
+      "id": "repo-backend-p4-038",
+      "statement": "The SNS message body is the whole outbox event as JSON: envelope, metadata, actor, status changes and GBN-AG data.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:107-110",
+      "quote": "String messageBody = objectMapper.writeValueAsString(event);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-039",
+      "statement": "Each SNS message carries four string attributes, eventType, correlationId, schemaVersion and schemaUrl, with an empty string for any that is missing.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:119-136",
+      "quote": "ATTR_EVENT_TYPE, stringAttribute(event.getEventType()),\n            ATTR_CORRELATION_ID, stringAttribute(correlationId),\n            ATTR_SCHEMA_VERSION, stringAttribute(schemaVersion),\n            ATTR_SCHEMA_URL, stringAttribute(schemaUrl));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-040",
+      "statement": "A scheduled poller publishes unpublished events, running again 2,000 milliseconds after each run ends.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPoller.java:25; src/main/resources/application.yml:153",
+      "quote": "@Scheduled(fixedDelayString = \"${outbox.poller.interval-ms:2000}\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-041",
+      "statement": "The poller reads unpublished events in batches of 10.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:154; src/main/java/uk/gov/defra/trade/imports/animals/configuration/OutboxConfig.java:34-36",
+      "quote": "batch-size: 10",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-042",
+      "statement": "One poller run handles at most 500 events, a limit the OUTBOX_POLLER_MAX_EVENTS_PER_RUN environment variable can change.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:155; src/main/java/uk/gov/defra/trade/imports/animals/configuration/OutboxConfig.java:37-39",
+      "quote": "max-events-per-run: ${OUTBOX_POLLER_MAX_EVENTS_PER_RUN:500}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-043",
+      "statement": "Only one instance of the service polls at a time: each run takes a shared lock named outbox-poller, held for at least 1 second and at most 30 seconds.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPoller.java:19,28-41; src/main/resources/application.yml:156-157",
+      "quote": "lock-at-least-for: 1s\n    lock-at-most-for: 30s",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-044",
+      "statement": "The poller can be switched off with outbox.poller.enabled, and is on by default.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPoller.java:16; src/main/resources/application.yml:158",
+      "quote": "@ConditionalOnProperty(prefix = \"outbox.poller\", name = \"enabled\", havingValue = \"true\", matchIfMissing = true)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-045",
+      "statement": "The poller interval must be positive or the service will not start; a batch size or per-run limit of zero or less falls back to 10 and 500, and missing lock times fall back to 1 and 30 seconds.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/configuration/OutboxConfig.java:30-46",
+      "quote": "throw new IllegalArgumentException(\"outbox.poller.interval-ms must be positive\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-046",
+      "statement": "Unpublished events are published oldest first, by timestamp and then aggregateVersion.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventRepository.java:17; OutboxPublishService.java:50-52",
+      "quote": "findByPublishedAtIsNullOrderByTimestampAscAggregateVersionAsc(Pageable pageable);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-047",
+      "statement": "When an event is published the outbox records the time, to the millisecond, so it is not published again by the poller.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:79-83",
+      "quote": "event.setPublishedAt(publishedAt);\n                publishToSns(event, topicArn);\n                outboxEventRepository.save(event);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-048",
+      "statement": "An event with no data is skipped with an error log and never published; it stays in the outbox unpublished.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:71-77",
+      "quote": "\"Skipping outbox event with null payload: eventId={} aggregateId={} version={}\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-049",
+      "statement": "When SNS refuses a publish, the poller stops the run at that event and leaves it unpublished, so it is retried on the next run and no later event overtakes it.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:92-98",
+      "quote": "\"Failed to publish outbox event eventId={} aggregateId={} version={}\",",
+      "confidence": "inferred",
+      "note": "mechanism: publishedAt is reset to null and the batch loop breaks; the retry follows from the next poll selecting unpublished events."
+    },
+    {
+      "id": "repo-backend-p4-050",
+      "statement": "An event whose payload cannot be turned into JSON stops the run and is logged as needing manual investigation; it stays unpublished.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:84-91",
+      "quote": "\"Outbox event payload is not serializable; manual investigation required: \"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-051",
+      "statement": "Each published event is logged at info with its eventId, aggregateId and version.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:115-116",
+      "quote": "log.info(\"Published outbox event eventId={} aggregateId={} version={}\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-052",
+      "statement": "An operator can list every outbox event for a notification, oldest version first, at GET /notifications/{referenceNumber}/outbox-events.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:226-236",
+      "quote": "@GetMapping(\"/{referenceNumber}/outbox-events\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-053",
+      "statement": "An operator can re-publish every outbox event for a notification, in aggregate version order, with POST /notifications/{referenceNumber}/replay, which returns the number of events replayed.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:238-255",
+      "quote": "Re-publishes all outbox events for a notification to SNS FIFO in aggregate version order.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-054",
+      "statement": "A replay changes nothing in the outbox and re-sends each event with the same message group id and deduplication id as its first publish.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:240-242; OutboxReplayService.java:37-39",
+      "quote": "The outbox is read-only — no data is mutated. Each event is re-published with the same \"\n            + \"MessageGroupId (aggregateId) and MessageDeduplicationId (eventId) as the original publish.",
+      "confidence": "verbatim",
+      "note": "Within SNS FIFO's deduplication window a replayed event with the same deduplication id may be dropped by SNS."
+    },
+    {
+      "id": "repo-backend-p4-055",
+      "statement": "A replay for a notification with no outbox events fails as not found, with \"No outbox events found for: <reference number>\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxReplayService.java:30-33",
+      "quote": "throw new NotFoundException(\"No outbox events found for: \" + referenceNumber);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-056",
+      "statement": "A replay needs the calling user's id in a request header.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:251",
+      "quote": "@RequestHeader(value = HEADER_USER_ID, required = true) String userId",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-057",
+      "statement": "Every replay writes an audit record with action REPLAY_EVENTS, the reference number, the number of events, the trace id, the user id, the time and a result of SUCCESS or FAILURE.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxReplayService.java:50,56-66",
+      "quote": ".action(Action.REPLAY_EVENTS)\n            .result(result)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-058",
+      "statement": "A replay stops at the first event that cannot be turned into JSON and records the replay as FAILURE.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxReplayService.java:40-50",
+      "quote": "failed = true;\n                break;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-059",
+      "statement": "A replay does not catch an SNS refusal, so one ends the replay with an error and writes no audit record.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxReplayService.java:38-47",
+      "quote": "} catch (JsonProcessingException e) {",
+      "confidence": "inferred",
+      "note": "Only JsonProcessingException is caught; an SnsException would propagate before writeAuditRecord runs."
+    },
+    {
+      "id": "repo-backend-p4-060",
+      "statement": "A replay reports the number of events found, even when it stopped early on a failure.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxReplayService.java:50-53",
+      "quote": "return events.size();",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-backend-p4-061",
+      "statement": "The GBN-AG event body carries $model defra/certificate-internal/1.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/GbnAgEventData.java:9,15",
+      "quote": "public static final String MODEL_VALUE = \"defra/certificate-internal/1\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-062",
+      "statement": "The GBN-AG event body carries $type gbn-ag.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/GbnAgEventData.java:10,16",
+      "quote": "public static final String TYPE_VALUE = \"gbn-ag\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-063",
+      "statement": "The body has two parts: exchangedDocument, about the notification itself, and specifiedConsignment, about the consignment.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/GbnAgEventData.java:8-13",
+      "quote": "ExchangedDocument exchangedDocument,\n    SpecifiedConsignment specifiedConsignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-064",
+      "statement": "exchangedDocument.identifier is the notification's reference number.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ExchangedDocument.java:29",
+      "quote": "notificationAggregate.getReferenceNumber(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-065",
+      "statement": "exchangedDocument.traderAssignedId is the trader's own internal reference, from the origin answers.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ExchangedDocument.java:30",
+      "quote": "origin != null ? origin.getInternalReference() : null,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-066",
+      "statement": "exchangedDocument.notificationStatusCode is the notification's status name: DRAFT, SUBMITTED, AMEND or DELETED.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ExchangedDocument.java:31; notification/NotificationStatus.java:4",
+      "quote": "notificationAggregate.getStatus() != null ? notificationAggregate.getStatus().name() : null,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-067",
+      "statement": "exchangedDocument.versionId is the submission version the event carries, and is left out when the event has none.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ExchangedDocument.java:11,16,32",
+      "quote": "@JsonInclude(JsonInclude.Include.NON_NULL)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-068",
+      "statement": "exchangedDocument.issueDateTime is when the notification was last updated, as an ISO-8601 UTC instant.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ExchangedDocument.java:33,47-49",
+      "quote": "toUtcDateTime(notificationAggregate.getUpdated()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-069",
+      "statement": "exchangedDocument.referenceDocument lists the notification's accompanying documents that are claimed and scanned clean; a document still uploading, unclaimed or not clean is not published.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:83-84; gbnag/ExchangedDocument.java:35,40-45",
+      "quote": "documentService\n            .findClaimedScannedCleanByNotificationReferenceNumber(notificationAggregate.getReferenceNumber());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-070",
+      "statement": "A notification with no such documents has no referenceDocument key at all, never an empty list.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ExchangedDocument.java:38-43",
+      "quote": "// No documents means no referenceDocument key, never an empty array.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-071",
+      "statement": "Each published accompanying document carries a typeCode from its document type, urlId https://refdata.tbc.defra.gov.uk/gbn-ag-document-types, its document reference as identifier, and its date of issue as a date-only issueDateTime.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ReferencedDocument.java:18,37-44,79-83",
+      "quote": "static final String GBN_AG_DOCUMENT_TYPES = \"https://refdata.tbc.defra.gov.uk/gbn-ag-document-types\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-072",
+      "statement": "A veterinary health certificate is published with document typeCode 853.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ReferencedDocument.java:62",
+      "quote": "case VETERINARY_HEALTH_CERTIFICATE -> \"853\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-073",
+      "statement": "An air waybill document is published with typeCode 740.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ReferencedDocument.java:63",
+      "quote": "case AIR_WAYBILL -> \"740\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-074",
+      "statement": "A sea waybill document is published with typeCode 710.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ReferencedDocument.java:64",
+      "quote": "case SEA_WAYBILL -> \"710\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-075",
+      "statement": "A rail waybill document is published with typeCode 720.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ReferencedDocument.java:65",
+      "quote": "case RAIL_WAYBILL -> \"720\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-076",
+      "statement": "A bill of lading document is published with typeCode 705.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ReferencedDocument.java:66",
+      "quote": "case BILL_OF_LADING -> \"705\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-077",
+      "statement": "A commercial invoice is published with typeCode 380.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ReferencedDocument.java:67",
+      "quote": "case COMMERCIAL_INVOICE -> \"380\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-078",
+      "statement": "An ITAHC is published with typeCode 856, the inspection certificate code TRACES uses for the EU INTRA certificate.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ReferencedDocument.java:68",
+      "quote": "case ITAHC -> \"856\";                        // Inspection certificate, as TRACES codes the EU INTRA certificate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-079",
+      "statement": "An import permit is published with typeCode 911, import licence.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ReferencedDocument.java:69",
+      "quote": "case IMPORT_PERMIT -> \"911\";                // Import licence",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-080",
+      "statement": "A journey log is published with typeCode GBN3.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ReferencedDocument.java:70",
+      "quote": "case JOURNEY_LOG -> \"GBN3\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-081",
+      "statement": "A self-declaration is published with typeCode GBN1.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ReferencedDocument.java:71",
+      "quote": "case SELF_DECLARATION -> \"GBN1\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-082",
+      "statement": "A CITES permit or certificate is published with typeCode GBN2.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ReferencedDocument.java:72",
+      "quote": "case CITES_PERMIT_OR_CERTIFICATE -> \"GBN2\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-083",
+      "statement": "A packing or species list is published with typeCode GBN4.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ReferencedDocument.java:73",
+      "quote": "case PACKING_OR_SPECIES_LIST -> \"GBN4\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-084",
+      "statement": "A document of type Other is published with typeCode 916, related document; 916 is used only for Other and is never a default.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ReferencedDocument.java:58-59,74",
+      "quote": "case OTHER -> \"916\";                        // Related document",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-085",
+      "statement": "Every accompanying document type must have a published code: the mapping covers every type with no default, so a new type cannot be added without choosing its code.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ReferencedDocument.java:58-61",
+      "quote": "// Exhaustive on purpose: a new document type fails to compile until someone decides its code.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-086",
+      "statement": "exchangedDocument.firstSignatoryAuthentication.includedClause always holds a PURPOSE clause and a GOODS_CERTIFIED_AS clause, in that order.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Authentication.java:18-25",
+      "quote": "clauses.add(Clause.purpose(reasonForImport, referenceNumber));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-087",
+      "statement": "When the reason for import is internal market, an INTERNAL_MARKET_PURPOSE clause from the purpose in the internal market sits between the PURPOSE and GOODS_CERTIFIED_AS clauses; for any other reason it is left out.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Authentication.java:20-22",
+      "quote": "if (Clause.INTERNAL_MARKET_REASON.equals(reasonForImport)) {\n            clauses.add(Clause.internalMarketPurpose(notification.getPurposeInInternalMarket(), referenceNumber));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-088",
+      "statement": "The PURPOSE clause comes from the reason for import and names the list https://refdata.tbc.defra.gov.uk/gbn-ag-purposes.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:10,19-21",
+      "quote": "static final String GBN_AG_PURPOSES = \"https://refdata.tbc.defra.gov.uk/gbn-ag-purposes\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-089",
+      "statement": "The INTERNAL_MARKET_PURPOSE clause comes from the purpose in the internal market and names the list https://refdata.tbc.defra.gov.uk/gbn-ag-internal-market-purposes.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:11-12,23-26",
+      "quote": "\"https://refdata.tbc.defra.gov.uk/gbn-ag-internal-market-purposes\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-090",
+      "statement": "The GOODS_CERTIFIED_AS clause comes from the additional details' certified-for answer and names the list https://refdata.tbc.defra.gov.uk/gbn-ag-goods-certified-as.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:13,28-31; Authentication.java:23-24",
+      "quote": "static final String GBN_AG_GOODS_CERTIFIED_AS = \"https://refdata.tbc.defra.gov.uk/gbn-ag-goods-certified-as\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-091",
+      "statement": "A clause whose answer is not given is still published, with its identifier and no content or list.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:35-37",
+      "quote": "if (storedKey == null || storedKey.isBlank()) {\n            return new Clause(identifier, null, null);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-092",
+      "statement": "A clause answer with no code in its list is published unchanged as the content, with the list named, and a warning is logged with the notification's reference number.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:38-42",
+      "quote": "log.warn(\"Notification {} sends {} value {} unchanged, as its list has no code for it\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-093",
+      "statement": "Reason for import internalMarket is published as purpose code INTERNAL_MARKET.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:48",
+      "quote": "case INTERNAL_MARKET_REASON -> \"INTERNAL_MARKET\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-094",
+      "statement": "Reason for import transhipmentOrOnwardTravel is published as purpose code TRANSHIPMENT_OR_ONWARD_TRAVEL.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:49",
+      "quote": "case \"transhipmentOrOnwardTravel\" -> \"TRANSHIPMENT_OR_ONWARD_TRAVEL\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-095",
+      "statement": "Reason for import transit is published as purpose code TRANSIT.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:50",
+      "quote": "case \"transit\" -> \"TRANSIT\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-096",
+      "statement": "Reason for import reEntry is published as purpose code RE_ENTRY.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:51",
+      "quote": "case \"reEntry\" -> \"RE_ENTRY\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-097",
+      "statement": "Reason for import temporaryAdmissionHorses is published as purpose code TEMPORARY_ADMISSION.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:52",
+      "quote": "case \"temporaryAdmissionHorses\" -> \"TEMPORARY_ADMISSION\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-098",
+      "statement": "Internal market purpose transfer-of-ownership-sale-gift is published as TRANSFER_OF_OWNERSHIP_SALE_GIFT.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:59",
+      "quote": "case \"transfer-of-ownership-sale-gift\" -> \"TRANSFER_OF_OWNERSHIP_SALE_GIFT\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-099",
+      "statement": "Internal market purpose transfer-of-ownership-rescue is published as TRANSFER_OF_OWNERSHIP_RESCUE.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:60",
+      "quote": "case \"transfer-of-ownership-rescue\" -> \"TRANSFER_OF_OWNERSHIP_RESCUE\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-100",
+      "statement": "Internal market purpose breeding is published as BREEDING.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:61",
+      "quote": "case \"breeding\" -> \"BREEDING\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-101",
+      "statement": "Internal market purpose research is published as RESEARCH.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:62",
+      "quote": "case \"research\" -> \"RESEARCH\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-102",
+      "statement": "Internal market purpose racing-competition-show-or-training is published as RACING_COMPETITION_SHOW_OR_TRAINING.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:63",
+      "quote": "case \"racing-competition-show-or-training\" -> \"RACING_COMPETITION_SHOW_OR_TRAINING\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-103",
+      "statement": "Internal market purpose approved-premises-or-body is published as APPROVED_PREMISES_OR_BODY.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:64",
+      "quote": "case \"approved-premises-or-body\" -> \"APPROVED_PREMISES_OR_BODY\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-104",
+      "statement": "Internal market purpose companion-animal-not-for-resale-or-rehoming is published as COMPANION_ANIMAL_NOT_FOR_RESALE_OR_REHOMING.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:65",
+      "quote": "case \"companion-animal-not-for-resale-or-rehoming\" -> \"COMPANION_ANIMAL_NOT_FOR_RESALE_OR_REHOMING\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-105",
+      "statement": "Internal market purpose production is published as PRODUCTION.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:66",
+      "quote": "case \"production\" -> \"PRODUCTION\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-106",
+      "statement": "Internal market purpose slaughter is published as SLAUGHTER.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:67",
+      "quote": "case \"slaughter\" -> \"SLAUGHTER\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-107",
+      "statement": "Internal market purpose fattening is published as FATTENING.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:68",
+      "quote": "case \"fattening\" -> \"FATTENING\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-108",
+      "statement": "Internal market purpose restocking is published as RESTOCKING.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:69",
+      "quote": "case \"restocking\" -> \"RESTOCKING\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-109",
+      "statement": "Certified for further-keeping is published as goods-certified-as code FURTHER_KEEPING.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:76",
+      "quote": "case \"further-keeping\" -> \"FURTHER_KEEPING\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-110",
+      "statement": "Certified for slaughter is published as SLAUGHTER.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:77",
+      "quote": "case \"slaughter\" -> \"SLAUGHTER\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-111",
+      "statement": "Certified for confined-establishment is published as CONFINED_ESTABLISHMENT.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:78",
+      "quote": "case \"confined-establishment\" -> \"CONFINED_ESTABLISHMENT\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-112",
+      "statement": "Certified for germinal-products is published as GERMINAL_PRODUCTS.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:79",
+      "quote": "case \"germinal-products\" -> \"GERMINAL_PRODUCTS\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-113",
+      "statement": "Certified for registered-equine-animal is published as REGISTERED_EQUIDAE.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:80",
+      "quote": "case \"registered-equine-animal\" -> \"REGISTERED_EQUIDAE\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-114",
+      "statement": "Certified for travelling-circus-animal-act is published as TRAVELLING_CIRCUS_ANIMAL_ACT.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:81",
+      "quote": "case \"travelling-circus-animal-act\" -> \"TRAVELLING_CIRCUS_ANIMAL_ACT\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-115",
+      "statement": "Certified for exhibition is published as EXHIBITION.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:82",
+      "quote": "case \"exhibition\" -> \"EXHIBITION\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-116",
+      "statement": "Certified for event-or-activity-near-borders is published as EVENT_OR_ACTIVITY_NEAR_BORDERS.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:83",
+      "quote": "case \"event-or-activity-near-borders\" -> \"EVENT_OR_ACTIVITY_NEAR_BORDERS\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-117",
+      "statement": "Certified for release-into-the-wild is published as RELEASE_INTO_THE_WILD.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:84",
+      "quote": "case \"release-into-the-wild\" -> \"RELEASE_INTO_THE_WILD\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-118",
+      "statement": "Certified for dispatch-centre is published as DISPATCH_CENTRE.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:85",
+      "quote": "case \"dispatch-centre\" -> \"DISPATCH_CENTRE\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-119",
+      "statement": "Certified for relaying-area-purification-centre is published as RELAYING_AREA_PURIFICATION_CENTRE.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:86",
+      "quote": "case \"relaying-area-purification-centre\" -> \"RELAYING_AREA_PURIFICATION_CENTRE\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-120",
+      "statement": "Certified for ornamental-aquaculture-establishment is published as ORNAMENTAL_AQUACULTURE_ESTABLISHMENT.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:87",
+      "quote": "case \"ornamental-aquaculture-establishment\" -> \"ORNAMENTAL_AQUACULTURE_ESTABLISHMENT\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-121",
+      "statement": "Certified for technical-use is published as TECHNICAL_USE.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:88",
+      "quote": "case \"technical-use\" -> \"TECHNICAL_USE\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-122",
+      "statement": "Certified for quarantine-or-similar-establishment is published as QUARANTINE_OR_SIMILAR_ESTABLISHMENT.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:89",
+      "quote": "case \"quarantine-or-similar-establishment\" -> \"QUARANTINE_OR_SIMILAR_ESTABLISHMENT\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-123",
+      "statement": "Certified for live-aquatic-animals-for-human-consumption is published as LIVE_AQUATIC_ANIMALS_FOR_HUMAN_CONSUMPTION.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:90",
+      "quote": "case \"live-aquatic-animals-for-human-consumption\" -> \"LIVE_AQUATIC_ANIMALS_FOR_HUMAN_CONSUMPTION\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-124",
+      "statement": "Certified for other is published as OTHER.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/Clause.java:91",
+      "quote": "case \"other\" -> \"OTHER\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-125",
+      "statement": "specifiedConsignment.consignorParty is the consignor.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/SpecifiedConsignment.java:29",
+      "quote": "TradeParty.from(notification.getConsignor()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-126",
+      "statement": "specifiedConsignment.consigneeParty is the consignee.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/SpecifiedConsignment.java:30",
+      "quote": "TradeParty.from(notification.getConsignee()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-127",
+      "statement": "specifiedConsignment.despatchParty is the place of origin.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/SpecifiedConsignment.java:31",
+      "quote": "TradeParty.from(notification.getPlaceOfOrigin()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-128",
+      "statement": "specifiedConsignment.deliveryParty is the place of destination.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/SpecifiedConsignment.java:32",
+      "quote": "TradeParty.from(notification.getDestination()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-129",
+      "statement": "specifiedConsignment.importer is the importer.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/SpecifiedConsignment.java:33",
+      "quote": "TradeParty.from(notification.getImporter()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-130",
+      "statement": "specifiedConsignment.carrier is the transporter from the transport answers.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/SpecifiedConsignment.java:34",
+      "quote": "TradeParty.from(transport != null ? transport.getTransporter() : null),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-131",
+      "statement": "specifiedConsignment.originCountry is the country of origin.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/SpecifiedConsignment.java:35",
+      "quote": "TradeCountry.from(notification.getOrigin()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-132",
+      "statement": "specifiedConsignment.unloadingBaseportLocation.identifier is the port of entry, with no other location details.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/SpecifiedConsignment.java:36; LogisticsLocation.java:13-15",
+      "quote": "return identifier != null ? new LogisticsLocation(identifier, null, null, null, null) : null;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-133",
+      "statement": "specifiedConsignment.finalDestinationLocation is the destination holding's County Parish Holding number, with urlId https://refdata.tbc.defra.gov.uk/cph_number, and is left out when no CPH number is given.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/SpecifiedConsignment.java:37; LogisticsLocation.java:11,22-27",
+      "quote": "private static final String CPH_REGISTER = \"https://refdata.tbc.defra.gov.uk/cph_number\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-134",
+      "statement": "The final destination location carries no postal address, although the schema requires one there, because nothing collected says which address belongs to the holding.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/LogisticsLocation.java:17-21",
+      "quote": "The schema also\n     * requires a postal address here, but nothing collected says which address belongs to the\n     * holding, so it is left unset rather than guessed.",
+      "confidence": "verbatim",
+      "note": "A known mismatch with the event schema the reconciler may need to weigh."
+    },
+    {
+      "id": "repo-backend-p4-135",
+      "statement": "specifiedConsignment.mainCarriageLogisticsTransportMovement holds one transport movement whenever the notification has transport answers.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/LogisticsTransportMovement.java:24-36",
+      "quote": "return List.of(new LogisticsTransportMovement(",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-136",
+      "statement": "specifiedConsignment.transitTradeCountry lists each transited country by its code only, and is left out when there are none.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/SpecifiedConsignment.java:39; TradeCountry.java:31-38",
+      "quote": ".map(code -> new TradeCountry(CodedValue.of(code), null, null))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-137",
+      "statement": "specifiedConsignment.isOrHasUnweanedAnimals is true when the unweaned animals answer is yes (any case), false for any other answer, and left out when not answered.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/SpecifiedConsignment.java:40,44-49",
+      "quote": "return Optional.of(\"yes\".equalsIgnoreCase(additionalDetails.getUnweanedAnimals()));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-138",
+      "statement": "specifiedConsignment.includedConsignmentItem holds a single consignment item whose includedTradeLineItem lists the trade lines of every commodity, and is left out when the notification has no commodities.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ConsignmentItem.java:10-19",
+      "quote": "return List.of(new ConsignmentItem(lines));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-139",
+      "statement": "A consignment party (consignor, consignee, place of origin, destination, importer, or an animal's permanent address) is published with its name and postal address and no identifier, role code or type code.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeParty.java:21-29",
+      "quote": "return new TradeParty(\n            null, null, party.getName(),\n            null,\n            null, TradeAddress.from(party.getAddress()), definedContactFrom(party));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-140",
+      "statement": "A consignment party's email and phone are published as one definedContact, with no person name, only when at least one of them is given.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeParty.java:31-36; DefinedContact.java:3-7",
+      "quote": "return List.of(new DefinedContact(null, party.getEmail(), party.getPhone()));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-141",
+      "statement": "The carrier's identifier is the transporter's approval number, with urlId https://refdata.tbc.defra.gov.uk/uk_transporter_authorisation when one is given.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeParty.java:19-20,46-47",
+      "quote": "transporter.getApprovalNumber() != null ? UK_TRANSPORTER_AUTHORISATION : null,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-142",
+      "statement": "The carrier's partyTypeCode is the transporter type, coded against the EU TRACES list https://traces-codelists.ec.europa.eu/operator_activity_type.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeParty.java:17-18,42-44",
+      "quote": "List.of(CodedValue.of(transporter.getType(), OPERATOR_ACTIVITY_TYPE))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-143",
+      "statement": "The carrier is published with the transporter's name and postal address and no contact details.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeParty.java:45-52",
+      "quote": "TradeAddress.from(transporter.getAddress()),\n            null);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-144",
+      "statement": "A postal address is published as lineOne from address line 1, lineTwo from address line 2, cityName from town or city, postcodeCode from postcode, countryId from the country code and countrySubDivisionName from county.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeAddress.java:15-27",
+      "quote": "address.getAddressLine1(),\n            address.getAddressLine2(),\n            address.getTownOrCity(),\n            address.getPostcode(),\n            address.getCountryCode(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-145",
+      "statement": "A postal address never carries a countryName: only the ISO country code is held, and the consumer derives the name from countryId.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeAddress.java:25",
+      "quote": "null, // countryName - the domain holds the ISO code only; GBNAG derives the name from countryId",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-146",
+      "statement": "The origin country's code.value is the country of origin code, and the origin country is left out when no country is given.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeCountry.java:20-25",
+      "quote": "if (origin == null || origin.getCountryCode() == null) {\n            return null;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-147",
+      "statement": "The origin country's subdivision is published as one subordinateTradeCountrySubDivision entry: the MDM subdivision code as identifier, urlId https://refdata.tbc.defra.gov.uk/country_subdivisions and functionTypeCode 106, and is left out when no subdivision is given.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeCountrySubDivision.java:14-15,24-30",
+      "quote": "private static final String SUBDIVISION_OF_ORIGIN = \"106\";\n    private static final String COUNTRY_SUBDIVISIONS = \"https://refdata.tbc.defra.gov.uk/country_subdivisions\";",
+      "confidence": "verbatim",
+      "note": "106 is the UNCL3227 'Region of origin' location function, used here for the subdivision, as a TRACES CHED does."
+    },
+    {
+      "id": "repo-backend-p4-148",
+      "statement": "Subdivision codes are named against the MDM subdivision list, not ISO 3166-2, because not all of them are ISO codes.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeCountrySubDivision.java:19-23",
+      "quote": "The identifier is the MDM subdivision code, and the urlId names the MDM\n     * subdivision list, because those codes are not all ISO 3166-2.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-149",
+      "statement": "The origin country's regionOfOriginCode is published only when the trader answered yes to needing a region code and gave one; a code kept from before a no answer is not published.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeCountry.java:46-53",
+      "quote": "if (!\"yes\".equalsIgnoreCase(requiresRegionCode) || code == null || code.isBlank()) {\n            return null;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-150",
+      "statement": "The region of origin code is a disease zone from the health certificate, published separately from the subdivision, and only on the origin country.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeCountry.java:7-12",
+      "quote": "Only the origin country carries the two facts that say where in\n * the country the animals came from",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-151",
+      "statement": "Means of transport vessel is published as transport modeCode 1.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/LogisticsTransportMovement.java:43",
+      "quote": "case VESSEL -> 1;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-152",
+      "statement": "Means of transport railway is published as transport modeCode 2.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/LogisticsTransportMovement.java:44",
+      "quote": "case RAILWAY -> 2;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-153",
+      "statement": "Means of transport road vehicle is published as transport modeCode 3.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/LogisticsTransportMovement.java:45",
+      "quote": "case ROAD_VEHICLE -> 3;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-154",
+      "statement": "Means of transport airplane is published as transport modeCode 4.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/LogisticsTransportMovement.java:46",
+      "quote": "case AIRPLANE -> 4;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-155",
+      "statement": "The transport movement's usedLogisticsTransportMeans.name is the transport identification, such as a vehicle or flight number.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/LogisticsTransportMovement.java:16-21,32",
+      "quote": "LogisticsTransportMeans.from(transport.getTransportIdentification()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-156",
+      "statement": "The transport movement's transportContractRelatedReferencedDocument is the transport document reference as identifier, left out when no reference is given.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ReferencedDocument.java:25-30",
+      "quote": "return List.of(new ReferencedDocument(transportDocumentTypeCode(meansOfTransport), null, null, reference, null));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-157",
+      "statement": "Only the transport document's reference is collected, so its type code is inferred from the means of transport: vessel 705 bill of lading, railway 720 rail consignment note, road vehicle 730 road consignment note, airplane 740 air waybill, and none when the means is not given.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ReferencedDocument.java:20-23,46-56",
+      "quote": "case VESSEL -> \"705\";       // Bill of lading\n            case RAILWAY -> \"720\";      // Rail consignment note\n            case ROAD_VEHICLE -> \"730\"; // Road consignment note\n            case AIRPLANE -> \"740\";     // Air waybill",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-158",
+      "statement": "The transport movement's arrivalEvent carries the arrival date as scheduledOccurrenceDateTime, sent as the start of that day in UTC (such as 2026-07-21T00:00:00Z), and is left out when no arrival date is given.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TransportEvent.java:15-32",
+      "quote": "PIMS receives an instant, so the arrival date is sent as the start of that day in UTC, for\n     * example {@code 2026-07-21T00:00:00Z}.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-159",
+      "statement": "The arrival event carries no actual arrival time and no location, and the transport movement carries no identifier or urlId.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TransportEvent.java:19-22; LogisticsTransportMovement.java:28-30",
+      "quote": "toUtcDateTime(transport.getArrivalDate()),\n            null,\n            null));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-160",
+      "statement": "Each species on a commodity becomes its own trade line item.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeLineItem.java:17-25",
+      "quote": "return species.stream()\n            .map(s -> fromSpecies(entry, s))\n            .toList();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-161",
+      "statement": "A commodity with no species becomes one trade line item from the commodity's own totals, with the commodity name as commonName, no scientificName and no individual animals.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeLineItem.java:19-20,38-47",
+      "quote": "return List.of(fromComplementTotals(entry));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-162",
+      "statement": "A trade line's applicableClassification is the commodity code in the CN system (systemId CN, classCode.value the code), with no system name or class name, and is left out when there is no commodity code.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeLineItem.java:49-56; ApplicableClassification.java:12-19",
+      "quote": "private static final String SYSTEM_ID_CN = \"CN\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-163",
+      "statement": "A trade line's description is the commodity description, as a one-item list, left out when blank.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeLineItem.java:81-87",
+      "quote": "return List.of(commodityDescription);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-164",
+      "statement": "A trade line's scientificName is the species' text.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeLineItem.java:31",
+      "quote": "species.getText(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-165",
+      "statement": "A trade line's commonName is the species' common name, or the commodity name when the species has none.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeLineItem.java:58-64",
+      "quote": "if (fromSpecies != null) {\n            return fromSpecies;\n        }\n        return textOrNull(entry.getName());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-166",
+      "statement": "A trade line's specifiedLineTradeDelivery.productUnitQuantity.content is the number of animals (the species' count, or the commodity total), with no unit code.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/LineTradeDelivery.java:10-15; TradeLineItem.java:33,44",
+      "quote": "return List.of(new LineTradeDelivery(new ProductUnitQuantity(totalNoOfAnimals, null)));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-167",
+      "statement": "A trade line's physicalReferencedLogisticsPackage.itemQuantity is the number of packages (the species' count, or the commodity total), with no level or type code.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/LogisticsPackage.java:8-13; TradeLineItem.java:34,45",
+      "quote": "return List.of(new LogisticsPackage(null, null, totalNoOfPackages));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-168",
+      "statement": "Each identified animal on a species becomes an individualTradeProductInstance, with the horse name as name, its identifiers, and its permanent address as permanentLocation.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeProductInstance.java:34-39",
+      "quote": ".map(animal -> new TradeProductInstance(\n                animal.getHorseName(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-169",
+      "statement": "A species with no identified animals is published as one product instance holding the species' own ear tag, passport and microchip, with no name, tattoo or permanent location.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeProductInstance.java:28-33",
+      "quote": "identifiersOf(species.getEarTag(), species.getPassport(), species.getMicrochip(), null),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-170",
+      "statement": "An animal's identifiers are published in the order ear tag, passport, microchip, tattoo, with typeCodes EAR_TAG, PASSPORT, MICROCHIP and TATTOO and urlId https://codelists.tbc.defra.gov.uk/animal_identifier_types; a blank identifier is left out, and none at all leaves the list out.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeProductInstance.java:17-22,43-57",
+      "quote": "static final String ANIMAL_IDENTIFIER_TYPES = \"https://codelists.tbc.defra.gov.uk/animal_identifier_types\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-171",
+      "statement": "The destination country, port of exit and exit date the notification stores are not published in the GBN-AG body.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationBase.java:42-47; outbox/gbnag/SpecifiedConsignment.java:25-42",
+      "quote": "private String destinationCountry;",
+      "confidence": "inferred",
+      "note": "Inferred from the mapper: SpecifiedConsignment.from reads no destinationCountry, portOfExit or exitDate, and no other gbnag file does."
+    },
+    {
+      "id": "repo-backend-p4-172",
+      "statement": "An identified animal's identification details and description are not published.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/AnimalIdentifier.java:20-21; outbox/gbnag/TradeProductInstance.java:34-39",
+      "quote": "private String identificationDetails;\n    private String description;",
+      "confidence": "inferred",
+      "note": "TradeProductInstance reads only horseName, earTag, passport, microchip, tattoo and permanentAddress."
+    },
+    {
+      "id": "repo-backend-p4-173",
+      "statement": "A species' code (its value) is not published; only its text and common name are.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Species.java:15; outbox/gbnag/TradeLineItem.java:27-36",
+      "quote": "private String value;",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-backend-p4-174",
+      "statement": "The notification's created, submitted and expiry times, its document-fulfilment answers, its pre-amendment snapshot and its answers-differ-from-submitted flag are not published in the GBN-AG body.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java:51-70; outbox/gbnag/ExchangedDocument.java:22-36",
+      "quote": "private Instant submittedAt;",
+      "confidence": "inferred",
+      "note": "ExchangedDocument reads only referenceNumber, status and updated from the aggregate; organisationId goes on the event envelope instead."
+    },
+    {
+      "id": "repo-backend-p4-175",
+      "statement": "No party is published with a partyRoleCode, and no consignment party with an identifier.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeParty.java:25-29,45-52",
+      "quote": "null,\n            partyTypeCode,",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-backend-p4-176",
+      "statement": "The GBN-AG body has no germinal products details: no published field carries germinal product data beyond the GERMINAL_PRODUCTS goods-certified-as code.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ (all 22 files searched)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The 9 October ruling adds germinal products details to the animals backend; main neither stores nor maps them."
+    },
+    {
+      "id": "repo-backend-p4-177",
+      "statement": "Trade line items carry no typeCode: the TradeLineItem record has no such field, so no trade-line typeCode is published.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeLineItem.java:7-15",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The 9 October ruling adds trade-line typeCodes; main does not have them."
+    },
+    {
+      "id": "repo-backend-p4-178",
+      "statement": "The GBN-AG body and the event envelope carry no notification category.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/ and outbox/gbnag/ (all files searched)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The goal records that the 9 October ruling's notification category is stored on the record only and not published; main has no category anywhere, so this absence matches that ruling for publishing, while storing it is part 1's concern."
+    }
+  ]
+}

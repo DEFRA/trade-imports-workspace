@@ -1,0 +1,81 @@
+{
+  "source": "repo:perftests",
+  "structure": "repos/trade-imports-performance-tests (on main) is the k6 performance suite for INS. It runs against the stack rather than in it. The entry scripts are src/suites/*.k6.js (12 suites: smoke, average-load, peak-day, sustained-peak, p99-burst, spike-recovery, endurance, resilience, breakpoint-stubs, background-volume, health-check, combined). Each builds one run through src/k6/design-target.js (584 lines), which wires the journeys, readiness, faults, stub ceilings, eventing and summaries together. src/k6 holds 27 files and 5,599 lines; src/config and src/lib hold the endpoint catalogue, test data and the helpers the k6 modules call. The routes the scripts request from the services in scope sit in three groups. (1) The INS front door: the INS home at '/' (endpoint 'ins-dashboard'), sign-in, and the address book list, search, add, view, edit and delete pages (src/k6/front-door.js 453 lines, src/k6/readiness.js 137, src/lib/address-book.js 93, src/config/smoke.js 121). (2) The notification lifecycle in the animals frontend: the live-animals set root '/live-animals' and its notification list (the 'animals-dashboard' and dashboard search), creating a draft at '/live-animals/notifications', the notification hub, the notification view, declaration, confirmation, amend, cancel-amend, and the returning visit that re-opens a page after a session expires (src/k6/journeys.js 552, src/k6/returning-session.js 123, src/k6/browser-session.js 317, src/k6/pages.js 172, src/lib/redirects.js 120, src/config/journey-endpoints.js 102 for the shared endpoint names). (3) The live-animals journey pages the walker fills: origin, commodities, import-reason, consignment-details, identification, additional-details, accompanying-documents with upload and scan status, addresses with the party picker, cph-number, port-of-entry, transit-countries and transporters (src/k6/live-animals.js 235, src/k6/journey-pages.js 167, src/k6/documents.js 149, src/lib/form-fill.js 133, src/lib/forms.js 52, src/lib/documents.js 95, src/config/test-data.js 74). The scope leaves out: the high-risk plants journey (src/k6/high-risk-plants.js and the 'high-risk-plants' half of journey-endpoints.js), which requests the plants frontend rather than the animals frontend or the INS front door; the backend, stub, reference-data, eventing, dead-letter, resilience, stub-ceiling, call-count and background-volume probes, which call services directly rather than frontend routes; the thresholds, SLAs, traffic model and summary-text config; and the suites' run shapes, which say how hard each route is driven, not which route it is.",
+  "parts": [
+    {
+      "part": 1,
+      "title": "INS front door and address book",
+      "scope": "The INS front-door routes the k6 scripts request: the INS home at '/', the sign-in hops into it, the readiness probes that open INS pages and check their headings, and the address book's list, role-tab, search, add, view, edit and delete pages. Stops at the INS home: the animals set's own list and journey belong to parts 2 and 3.",
+      "read": [
+        "src/k6/front-door.js",
+        "src/k6/front-door.test.js",
+        "src/k6/readiness.js",
+        "src/lib/address-book.js",
+        "src/lib/address-book.test.js",
+        "src/config/smoke.js",
+        "src/config/trader-organisation.js"
+      ],
+      "covers": [
+        "the INS home at '/' as the scripts open it (endpoint 'ins-dashboard'): the path, what a session checks on it and what it reads from it",
+        "every address book route the scripts request (ADDRESS_BOOK_PATH and every path built from it): list, address-type tab, search with its query parameters including the worst-case search, add address, view, edit and delete confirmation, with each check's status, heading or text",
+        "the readiness probes that open INS pages: each path, page name and the heading text it expects verbatim",
+        "the address roles and address types the scripts expect each tab to find, and the refusal messages they raise when one is missing",
+        "the perf address and address-book load name prefix in src/config/smoke.js, and the trader organisation headers the scripts send"
+      ],
+      "prefix": "repo-perftests-p1"
+    },
+    {
+      "part": 2,
+      "title": "Live-animals set root and notification lifecycle",
+      "scope": "The animals frontend routes every notification run shares: the live-animals set root and its notification list with search, creating a draft, the notification hub, the notification view, declaration, confirmation, amend, cancel-amend and resubmission, the redirects and sign-in hops a browser session follows, and the returning visit. Stops at the journey's question pages, which part 3 claims; the plants half of the same files is out of scope.",
+      "read": [
+        "src/k6/journeys.js",
+        "src/k6/returning-session.js",
+        "src/k6/browser-session.js",
+        "src/k6/browser-session.test.js",
+        "src/k6/pages.js",
+        "src/lib/redirects.js",
+        "src/lib/redirects.test.js",
+        "src/config/journey-endpoints.js (sharedEndpoints and journeyEndpoints only)",
+        "src/config/smoke.js (the live-animals journey entry with setBase '/live-animals' only)"
+      ],
+      "covers": [
+        "the live-animals set root '/live-animals' and the notification list it renders (endpoints 'animals-dashboard' and 'animals-dashboard-search'): the paths, query parameters and what the scripts check or read on the page",
+        "creating a notification at '/live-animals/notifications' and the hub at '/live-animals/notifications/<id>', with the redirect the scripts follow to find the new id",
+        "the notification view, declaration and its save, confirmation, amend, cancel-amend and its save, and resubmission: each slug, form field, check and the page each lands on",
+        "every redirect, sign-in hop and stale-save handling in browser-session.js and redirects.js: the paths it recognises ('/auth', '/oauth2/authresp', '/idphub/', '/organisations', '/live-animals/notifications') and what it does on each",
+        "the returning visit: which page it re-opens, how it tells a session expired and when it signs in again",
+        "every shared endpoint name in sharedEndpoints and journeyEndpoints"
+      ],
+      "prefix": "repo-perftests-p2"
+    },
+    {
+      "part": 3,
+      "title": "Live-animals journey pages",
+      "scope": "The live-animals question pages the walker opens and saves, in step order, with the answers, field names and choices each save sends, the party picker searches and the accompanying-documents upload and scan. Stops at the shared lifecycle pages part 2 claims.",
+      "read": [
+        "src/k6/live-animals.js",
+        "src/k6/live-animals.test.js",
+        "src/k6/journey-pages.js",
+        "src/k6/documents.js",
+        "src/lib/form-fill.js",
+        "src/lib/form-fill.test.js",
+        "src/lib/forms.js",
+        "src/lib/forms.test.js",
+        "src/lib/documents.js",
+        "src/lib/documents.test.js",
+        "src/config/test-data.js",
+        "src/config/journey-endpoints.js (the 'live-animals' entry of STEP_ENDPOINTS only)"
+      ],
+      "covers": [
+        "the 12 draft steps in LIVE_ANIMALS_STEPS, in order, each by slug: origin, commodities, import-reason, consignment-details, commodities/identification, additional-details, accompanying-documents, addresses, cph-number, port-of-entry, transit-countries, transporters; and its reEdit list, amendEdit page and planFor",
+        "for each step: its path under the notification base, every form field name and value the save sends, every radio, checkbox or select it reads choices from and the label text it picks by, its action value and the check on where it lands",
+        "the party picker: the 5 slugs in PARTY_SLUGS (place-of-origin/select, consignors/select, consignees/select, importers/select, destinations/select), the search with q and action 'search', the save by the radio whose label names the perf address, and the worst-case search",
+        "transit-countries' add action, the default port of entry 'GB ABD' and country 'FR', and the arrival date the scripts enter",
+        "accompanying-documents: the document fields, the issued date, the upload request and its path, the scan status poll and what counts as scanned",
+        "the test data in src/config/test-data.js the steps draw from"
+      ],
+      "prefix": "repo-perftests-p3"
+    }
+  ]
+}

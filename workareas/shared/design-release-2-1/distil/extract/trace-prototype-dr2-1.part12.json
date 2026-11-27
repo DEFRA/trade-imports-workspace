@@ -1,0 +1,404 @@
+{
+  "source": "trace:prototype-dr2-1",
+  "structure": "Part 12, Notification hub and the run. Read in full: prototype-specs/e2e/journeys.fit.spec.js and prototype-specs/e2e/eudpa-691.fit.spec.js, and mined all 6 traces the part names, each opened with its full action list and its design-release request log: journeys 'a fresh notification lists every task as to do' (58 actions), journeys 'a hub task link returns to the hub after saving' (33), eudpa-691 A1 opening run Back from main import reason (54), A2 arrival details opened from the hub (74), B1 transit countries with none added in the run (76), B2 transit countries saved with none from the hub (72). Pages seen: /notification-hub (title 'Overview', the only page whose content this part claims in full: status line, 'Your commodities' cards, 'Notification tasklist' with five numbered sections, task links with ?from=hub, blue 'To do' and green 'Complete' tags, a hint on Consignment addresses, 'Review and submit' and 'Return to dashboard' buttons, no Back link). For the step pages (/reason-for-import, /what-are-you-importing, /arrival-details, /transit-countries, /transporter) only how they move is claimed: their Back link target, the hidden from=hub field, the 'Save and continue' and 'Save and return to overview' buttons, the 'Cancel and return to overview' link and where each POST redirects. Run order observed from the request logs: create-notification (302) > notification-type > origin-of-the-import > what-are-you-importing > reason-for-import > consignment-details > animal-identification-details; arrival-details (by Road) > transit-countries > transporter. Conditional on the hub: 'Identification details' is absent on a fresh notification and present once a commodity is chosen; 'Transit countries' appears after a Road arrival is saved. Not reached by any trace in this part: 'Save and return to overview', 'Cancel and return to overview', clicking Back on a page opened from the hub, 'Review and submit' and 'Return to dashboard' from the hub, any status other than To do and Complete; each is a gap claim.",
+  "claims": [
+    {
+      "id": "trace-prototype-dr2-1-p12-001",
+      "statement": "The notification hub is at /notification-hub and its page title is 'Overview - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 14 (toHaveTitle), snapshot action 36",
+      "quote": "Overview - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-002",
+      "statement": "The hub's main heading (h1) is 'Overview'.",
+      "kind": "copy",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do snapshot action 36, main outerHTML",
+      "quote": "<h1 class=\"app-notification-hub__title\">Overview</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-003",
+      "statement": "Above the heading, the hub shows a 'Draft' status tag and the notification's type and reference, as 'Live animals - <reference>'.",
+      "kind": "copy",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do snapshot action 36, .app-dr2-notification-status",
+      "quote": "Draft\nLive animals - GBN-AG-26-00OBWO",
+      "confidence": "verbatim",
+      "note": "The reference changes each run (GBN-AG-26-0OA30F, GBN-AG-26-0MI950, GBN-AG-26-0W9DQX in other traces), so it is generated per notification. The Draft tag uses govuk-tag with the custom modifier app-dr2-review-status__tag--draft."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-004",
+      "statement": "The hub has no Back link and no breadcrumbs.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do snapshot action 36, eval for .govuk-back-link and .govuk-breadcrumbs",
+      "quote": "no back link || no breadcrumbs",
+      "confidence": "verbatim",
+      "note": "The quote is the eval's own output, as the page holds no such element."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-005",
+      "statement": "The hub has a 'Your commodities' section (h2) holding summary cards.",
+      "kind": "copy",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 17, snapshot action 36",
+      "quote": "Your commodities",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-006",
+      "statement": "For a live-animals notification the first card shows the number of animals, labelled 'Animals', with the caption 'Total number of animals in this consignment'; it reads 0 on a fresh notification.",
+      "kind": "data",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do snapshot action 36, section aria-label 'Animals summary'",
+      "quote": "0\n\nAnimals\n\nTotal number of animals in this consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-007",
+      "statement": "The second card shows the number of packages, labelled 'Packages/boxes', with the caption 'Total number of packages in this consignment'; it reads 0 on a fresh notification.",
+      "kind": "data",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do snapshot action 36, section aria-label 'Packages summary'",
+      "quote": "0\n\nPackages/boxes\n\nTotal number of packages in this consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-008",
+      "statement": "The Animals card totals the animals entered on commodity details: after 100 chickens were entered it reads 100, while the Packages/boxes card still reads 0.",
+      "kind": "rule",
+      "ref": "trace eudpa-691--a2-opened-from-the-hub-arrival-details-returns-to-the-hub-on-save-and-continue action 33 (Fill \"100\" numberOfAnimals[chicken-gallus-domesticus]), snapshot action 51 cards",
+      "quote": "100 / Animals / Total number of animals in this consignment ## 0 / Packages/boxes / Total number of packages in this consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-009",
+      "statement": "The hub has a 'Notification tasklist' section (h2) of tasks grouped under five numbered h3 sections: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Documents', '5. Addresses'.",
+      "kind": "copy",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do actions 20-25, snapshot action 36",
+      "quote": "Notification tasklist\n1. About the consignment\n...\n2. Description of the goods\n...\n3. Transport and arrival\n...\n4. Documents\n...\n5. Addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-010",
+      "statement": "On a fresh live-animals notification, section 1 'About the consignment' lists three tasks in order: 'Where is this consignment coming from?', 'What are you importing?', 'Main import reason'.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 26, snapshot action 36",
+      "quote": "1. About the consignment\nWhere is this consignment coming from?\nTo do\nWhat are you importing?\nTo do\nMain import reason\nTo do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-011",
+      "statement": "On a fresh live-animals notification, section 2 'Description of the goods' lists 'Commodity details' and 'Additional details'.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 26, snapshot action 36",
+      "quote": "2. Description of the goods\nCommodity details\nTo do\nAdditional details\nTo do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-012",
+      "statement": "On a fresh live-animals notification, section 3 'Transport and arrival' lists 'Arrival details' and 'Transport details'.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 26, snapshot action 36",
+      "quote": "3. Transport and arrival\nArrival details\nTo do\nTransport details\nTo do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-013",
+      "statement": "Section 4 'Documents' lists one task, 'Upload documents'.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do snapshot action 36",
+      "quote": "4. Documents\nUpload documents\nTo do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-014",
+      "statement": "Section 5 'Addresses' lists one task, 'Consignment addresses'.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do snapshot action 36",
+      "quote": "5. Addresses\nConsignment addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-015",
+      "statement": "The 'Consignment addresses' task carries a hint under its link naming the roles it covers.",
+      "kind": "copy",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 36, snapshot action 36, .app-notification-hub-tasklist__hint",
+      "quote": "Consignor or Exporter, Consignee, Importer and Place of Destination",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-016",
+      "statement": "On a fresh notification every task shows a blue 'To do' status tag.",
+      "kind": "rule",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do actions 27-35, snapshot action 36",
+      "quote": "<strong class=\"govuk-tag govuk-tag--blue app-notification-hub-tasklist__tag\">\n  To do\n</strong>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-017",
+      "statement": "A task whose page has been saved with a complete answer shows a green 'Complete' status tag.",
+      "kind": "rule",
+      "ref": "trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving snapshot action 20",
+      "quote": "Main import reason => govuk-tag govuk-tag--green app-notification-hub-tasklist__tag : Complete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-018",
+      "statement": "'Identification details' is not listed on a fresh notification; it appears in section 2, between 'Commodity details' and 'Additional details', once a commodity has been chosen.",
+      "kind": "rule",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do snapshot action 36; trace eudpa-691--a2-opened-from-the-hub-arrival-details-returns-to-the-hub-on-save-and-continue snapshot action 51",
+      "quote": "2. Description of the goods :: Commodity details [...] => govuk-tag--green : Complete | Identification details [/design-release-2.1/animal-identification-details?from=hub] => govuk-tag--blue : To do | Additional details",
+      "confidence": "inferred",
+      "note": "Inferred from the row being absent before any commodity and present after chickens were chosen and counted. journeys.fit.spec.js line 364 filters 'Identification details' out of the fresh rows. Which commodity choices bring it in is not shown here."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-019",
+      "statement": "'Transit countries' appears in section 3, between 'Arrival details' and 'Transport details', once arrival details have been saved with Road as the means of transport.",
+      "kind": "rule",
+      "ref": "trace eudpa-691--a2-opened-from-the-hub-arrival-details-returns-to-the-hub-on-save-and-continue snapshot action 51 (after action 44 means-of-transport Road)",
+      "quote": "3. Transport and arrival :: Arrival details [/design-release-2.1/arrival-details?from=hub] => govuk-tag--green : Complete | Transit countries [/design-release-2.1/transit-countries?from=hub] => govuk-tag--blue : To do | Transport details",
+      "confidence": "inferred",
+      "note": "Inferred: absent on the fresh hub, present after a Road arrival. journeys.fit.spec.js also lists it for the rail journey (poultry-rail) and the germinal Road journey, so it may follow more than Road alone."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-020",
+      "statement": "Each hub task is a link to its page with ?from=hub: origin-of-the-import, what-are-you-importing, reason-for-import, consignment-details, animal-identification-details, additional-animal-details, arrival-details, transit-countries, transporter, upload-documents and roles-and-addresses.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do snapshot action 36; trace eudpa-691--a2 snapshot action 51",
+      "quote": "href=\"/design-release-2.1/origin-of-the-import?from=hub\">Where is this consignment coming from?</a>",
+      "confidence": "verbatim",
+      "note": "'Transport details' links to /transporter?from=hub; 'Commodity details' to /consignment-details?from=hub; 'Additional details' to /additional-animal-details?from=hub; 'Consignment addresses' to /roles-and-addresses?from=hub."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-021",
+      "statement": "The hub ends with a 'Review and submit' button that links to /review-notification.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 38, snapshot action 36",
+      "quote": "<a href=\"/design-release-2.1/review-notification\" role=\"button\" draggable=\"false\" class=\"govuk-button\" data-module=\"govuk-button\" data-govuk-button-init=\"\">\n  Review and submit\n</a>",
+      "confidence": "verbatim",
+      "note": "It is a link styled as a button, offered even while every task is To do."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-022",
+      "statement": "Beside it a secondary 'Return to dashboard' button links to the service's start (the dashboard).",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 39, snapshot action 36",
+      "quote": "<a href=\"/design-release-2.1\" role=\"button\" draggable=\"false\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\" data-govuk-button-init=\"\">\n  Return to dashboard\n</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-023",
+      "statement": "The hub is built from custom app-notification-hub classes rather than GOV.UK components: cards (app-notification-hub-card) for the commodity totals, and a custom task list (app-notification-hub-tasklist) with govuk-tag status tags; the GOV.UK Task list component (govuk-task-list) is not used.",
+      "kind": "constraint",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do snapshot action 36, main outerHTML",
+      "quote": "<ul class=\"app-notification-hub-tasklist\" role=\"list\">\n              \n                <li class=\"app-notification-hub-tasklist__item\">",
+      "confidence": "verbatim",
+      "note": "The GOV.UK Task list component with govuk-task-list__status could carry the tasks and statuses; the summary cards have no direct GOV.UK equivalent. Other custom classes: app-notification-hub-section, app-notification-hub-actions, app-dr2-notification-status, app-notification-hub-tasklist__item--with-hint."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-024",
+      "statement": "Starting a notification at /create-notification redirects to the notification type page; choosing 'live-animals' and continuing goes to /origin-of-the-import.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do requests 1, 2, 42, 43",
+      "quote": "GET 302 create-notification ; GET 200 notification-type ; POST 302 notification-type ; GET 200 origin-of-the-import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-025",
+      "statement": "In the opening run, Save and continue moves page to page in this order: origin of the import, what are you importing, main import reason, commodity details, then (for live animals) identification details.",
+      "kind": "behaviour",
+      "ref": "trace eudpa-691--a2-opened-from-the-hub-arrival-details-returns-to-the-hub-on-save-and-continue requests 83-207",
+      "quote": "POST 302 origin-of-the-import ; GET 200 what-are-you-importing ; POST 302 what-are-you-importing ; GET 200 reason-for-import ; POST 302 reason-for-import ; GET 200 consignment-details ; POST 302 consignment-details ; GET 200 animal-identification-details",
+      "confidence": "verbatim",
+      "note": "Seen with chickens, Internal market / Breeding. The traces then jump to /arrival-details by URL, so the run from identification details onward to arrival details is not in this part."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-026",
+      "statement": "In the opening run, saving arrival details with Road as the means of transport continues to the transit countries page.",
+      "kind": "behaviour",
+      "ref": "trace eudpa-691--b1 requests 287-288; action 47",
+      "quote": "POST 302 arrival-details ; GET 200 transit-countries",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-027",
+      "statement": "In the opening run, Save and continue on transit countries with no country added is accepted with no error and continues to the transporter page.",
+      "kind": "behaviour",
+      "ref": "trace eudpa-691--b1 request 328 (body transitCountries=%5B%5D&action=continue, location /design-release-2.1/transporter); snapshot action 55",
+      "quote": "location: /design-release-2.1/transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-028",
+      "statement": "Transit countries saved with no country added leaves the hub's 'Transit countries' task at 'To do', not Complete, whether saved in the opening run or from the hub.",
+      "kind": "rule",
+      "ref": "trace eudpa-691--b1 snapshot action 60; trace eudpa-691--b2 snapshot action 56",
+      "quote": "Transit countries : govuk-tag--blue To do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-029",
+      "statement": "In the opening run, the main import reason page's Back link goes to 'What are you importing?' (/what-are-you-importing).",
+      "kind": "behaviour",
+      "ref": "trace eudpa-691--a1 action 30, snapshot action 30",
+      "quote": "<a href=\"/design-release-2.1/what-are-you-importing\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-030",
+      "statement": "After Back from main import reason, the 'What are you importing?' page's own Back link goes to /origin-of-the-import.",
+      "kind": "behaviour",
+      "ref": "trace eudpa-691--a1 snapshot action 36",
+      "quote": "<a href=\"/design-release-2.1/origin-of-the-import\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-031",
+      "statement": "Going Back to 'What are you importing?' keeps the commodity already chosen: Save and continue without choosing again submits the saved cattle selection and carries the run on to main import reason.",
+      "kind": "behaviour",
+      "ref": "trace eudpa-691--a1 actions 34-38; request 206 (body and location)",
+      "quote": "commodityId=cattle&commodityCode=0102&selectedSpecies=%5B%22cattle-bos-taurus%22%5D ... location: /design-release-2.1/reason-for-import",
+      "confidence": "verbatim",
+      "note": "The snapshot at action 36 shows no selection in its static DOM; the selection is in the submitted form body, so it was restored by the page's script."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-032",
+      "statement": "In the opening run, the transporter page reached from transit countries has a Back link to the hub, not to transit countries.",
+      "kind": "behaviour",
+      "ref": "trace eudpa-691--b1 snapshot action 55",
+      "quote": "Transporter details - Import notification service - GOV.UK || <a href=\"/design-release-2.1/notification-hub\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim",
+      "note": "Unlike main import reason and what are you importing, whose run Back links go to the previous page. Recorded, not resolved."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-033",
+      "statement": "In the opening run, the transit countries page reached from arrival details has a Back link to /arrival-details.",
+      "kind": "behaviour",
+      "ref": "trace eudpa-691--b1 snapshot action 53",
+      "quote": "<a href=\"/design-release-2.1/arrival-details\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-034",
+      "statement": "Arrival details opened by URL, not from a previous page in the run, has a Back link to the hub.",
+      "kind": "behaviour",
+      "ref": "trace eudpa-691--b1 action 36 (Navigate /design-release-2.1/arrival-details), snapshot action 40",
+      "quote": "Arrival details - Import notification service - GOV.UK || <a href=\"/design-release-2.1/notification-hub\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-035",
+      "statement": "A page opened from a hub task link has a Back link to the hub.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving snapshot action 16 (reason-for-import?from=hub); trace eudpa-691--a2 snapshot action 55 (arrival-details?from=hub); trace eudpa-691--b2 snapshot action 53 (transit-countries?from=hub)",
+      "quote": "<a href=\"/design-release-2.1/notification-hub\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-036",
+      "statement": "A page opened from the hub carries the hub origin in a hidden form field 'from' with the value 'hub', so the save knows where it came from.",
+      "kind": "data",
+      "ref": "trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving snapshot action 16, request 163 body; trace eudpa-691--b2 request 407 body",
+      "quote": "from=hub&transhipmentDestinationCountry=&transitExitBorderControlPost=&transitDestinationCountry=&importReason=Re-entry&temporaryAdmissionExitDate=&temporaryAdmissionPortOfExit=&action=continue",
+      "confidence": "verbatim",
+      "note": "The same pages reached in the opening run carry no from field (reason-for-import at eudpa-691--a1 snapshot action 30 has no hidden inputs)."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-037",
+      "statement": "Opening 'Main import reason' from the hub, choosing 'Re-entry' and pressing Save and continue returns to the hub, where 'Main import reason' then shows 'Complete'.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving actions 14-20; request 163 (location /design-release-2.1/notification-hub)",
+      "quote": "location: /design-release-2.1/notification-hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-038",
+      "statement": "Opening 'Arrival details' from the hub shows the answers already saved, and Save and continue returns to the hub rather than going on to transit countries; 'Arrival details' stays Complete.",
+      "kind": "behaviour",
+      "ref": "trace eudpa-691--a2 actions 51-58; requests 367, 407, 408; snapshots actions 55 and 58",
+      "quote": "values: arrival-date-at-port=11/12/2026, port-of-entry=Dover - GBDVR, means-of-transport=Road, transport-identification=AB12 CDE, transport-document-reference=AWB-123",
+      "confidence": "verbatim",
+      "note": "In the opening run the same Road arrival continues to /transit-countries (requests 287-288)."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-039",
+      "statement": "Opening 'Transit countries' from the hub and pressing Save and continue with no country added returns to the hub, with no error.",
+      "kind": "behaviour",
+      "ref": "trace eudpa-691--b2 actions 51-55; request 407 (body from=hub&transitCountries=%5B%5D&action=continue, location /design-release-2.1/notification-hub)",
+      "quote": "location: /design-release-2.1/notification-hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-040",
+      "statement": "Every step page seen in this part offers two submit buttons: 'Save and continue' (action=continue) and a secondary 'Save and return to overview' (action=hub), both in the run and when opened from the hub.",
+      "kind": "copy",
+      "ref": "trace eudpa-691--a1 snapshot action 30; trace journeys--the-notification-hub-a-hub-task-link snapshot action 16; trace eudpa-691--b1 snapshots actions 53, 55",
+      "quote": "<button type=\"submit\" value=\"continue\" name=\"action\" class=\"govuk-button\" data-module=\"govuk-button\" data-govuk-button-init=\"\">\n  Save and continue\n</button> <button type=\"submit\" value=\"hub\" name=\"action\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\" data-govuk-button-init=\"\">\n  Save and return to overview\n</button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-041",
+      "statement": "Every step page seen in this part has a 'Cancel and return to overview' link to the hub.",
+      "kind": "copy",
+      "ref": "trace eudpa-691--a1 snapshot action 30; eudpa-691--a2 snapshot action 55; eudpa-691--b1 snapshot action 53; eudpa-691--b2 snapshot action 53",
+      "quote": "Cancel and return to overview -> /design-release-2.1/notification-hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-042",
+      "statement": "No trace in this part presses 'Save and return to overview', so where it goes and whether it saves is not shown.",
+      "kind": "behaviour",
+      "ref": "all 6 traces' action lists: every submit is button[name=\"action\"][value=\"continue\"]",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-043",
+      "statement": "No trace in this part clicks 'Cancel and return to overview', so whether it discards unsaved answers is not shown.",
+      "kind": "behaviour",
+      "ref": "all 6 traces' action lists",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-044",
+      "statement": "No trace in this part clicks Back on a page opened from the hub; only its href to the hub is seen.",
+      "kind": "behaviour",
+      "ref": "all 6 traces' action lists",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-045",
+      "statement": "Only the 'To do' and 'Complete' task statuses are seen; no trace in this part shows whether a task can be 'In progress', 'Cannot start yet' or have an error state on the hub.",
+      "kind": "rule",
+      "ref": "hub snapshots in all 6 traces",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Transit countries saved with none stays To do (claim p12-028), which suggests no partial status is shown, but that is not proven."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-046",
+      "statement": "No trace in this part clicks 'Review and submit' or 'Return to dashboard' from the hub; only their link targets are seen.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do actions 38-39",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-047",
+      "statement": "No trace in this part shows how a user reaches the hub from within the journey other than by the Back, Cancel and save links on step pages; every hub visit in these traces is a direct navigation to /notification-hub or a redirect after a save from the hub.",
+      "kind": "behaviour",
+      "ref": "all 6 traces' action lists: Navigate /design-release-2.1/notification-hub",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p12-048",
+      "statement": "This part shows the hub only for a live-animals notification; the hub's tasks and card labels for other notification types are not shown here.",
+      "kind": "behaviour",
+      "ref": "all 6 traces start live-animals",
+      "quote": "",
+      "confidence": "gap",
+      "note": "journeys.fit.spec.js GERMINAL_HUB_ROWS lists a different task set for germinal products (adds 'Total gross weight', drops 'Additional details'), but its trace belongs to another part."
+    }
+  ]
+}

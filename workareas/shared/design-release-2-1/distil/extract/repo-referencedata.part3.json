@@ -1,0 +1,394 @@
+{
+  "source": "repo:referencedata",
+  "structure": "Part 3 of 3, the service's shared contract and the scope's missing lists. Read in full: README.md (purpose, endpoints, port, ports-of-entry ordering, commodity search notes, metrics and configuration notes), AGENTS.md (code-quality notes for agents, no behaviour), the workspace page docs/repos/trade-imports-reference-data.md (purpose, owns / does not own, integrations, MDM commodity search behaviour, stack, how to run), ADR 0001 (record decisions as ADRs) and ADR 0002 (one shared reference-data service for several domains until one grows too large), application.yml and application-local.yml, MdmConfiguration, MdmErrorDecoder, GlobalExceptionHandler, the five exception classes, GlobalExceptionHandlerTest, MdmErrorDecoderTest and TokenEndpointUnavailableIT. To say which exceptions a caller can actually meet, MdmService and MdmClientInterceptor were grepped for where each exception is thrown (MDM no body / no result / no content / no total, MDM unreachable, token endpoint 502-504 or unreachable); NotFoundException and ConflictException are never thrown in src/main. Endpoints were confirmed with a grep of every request mapping in src/main/java: GET /countries, GET /ports-of-entry, GET /commodities, POST /commodities/species-check, and the MDM calls. Claims cover: the stated purpose, endpoints, port and callers; ADR 0002 as a ruling and ADR 0001 as the record-keeping rule; every error response GlobalExceptionHandler gives (status, type, title, detail, traceId, field errors) with the tests that prove each; MdmErrorDecoder's 502/503/504 mapping; the MDM and cache settings that change what a caller receives (base URL, cache TTL, timeouts, subscription key, system and dataset); and three gaps (transporters, document types, certification purposes) found by a case-insensitive repo-wide grep of src/main, src/test/java, doc/, README.md and the workspace page for transporter, haulier, carrier, document type, accompanying document, certification and purpose, which found nothing but the word Purpose as a heading. Page sizes for commodity search belong to part 2 and are only mentioned as documented.",
+  "claims": [
+    {
+      "id": "repo-referencedata-p3-001",
+      "statement": "The reference-data service serves countries, ports of entry and commodity reference data, all sourced from MDM.",
+      "kind": "integration",
+      "ref": "README.md:3-5",
+      "quote": "Spring Boot service that serves countries, ports of entry and commodity\nreference data from MDM: `GET /countries`, `GET /ports-of-entry`,\n`GET /commodities` and `POST /commodities/species-check`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-002",
+      "statement": "The service exposes exactly four reference endpoints to callers: GET /countries, GET /ports-of-entry, GET /commodities and POST /commodities/species-check.",
+      "kind": "integration",
+      "ref": "README.md:4-5; request mappings in src/main/java (CountriesController, PortsOfEntryController, CommoditiesController)",
+      "quote": "`GET /countries`, `GET /ports-of-entry`,\n`GET /commodities` and `POST /commodities/species-check`",
+      "confidence": "verbatim",
+      "note": "A grep of every @RequestMapping / @GetMapping / @PostMapping in src/main/java found only these four inbound routes; the other mappings are outbound Feign calls to MDM and the token endpoint."
+    },
+    {
+      "id": "repo-referencedata-p3-003",
+      "statement": "The service listens on port 8086 by default, overridable with PORT.",
+      "kind": "constraint",
+      "ref": "README.md:5-6; src/main/resources/application.yml:2",
+      "quote": "port: ${PORT:8086}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-004",
+      "statement": "The service serves its reference data to the Trade Imports frontends.",
+      "kind": "integration",
+      "ref": "docs/repos/trade-imports-reference-data.md:7 (Purpose)",
+      "quote": "REST microservice that serves reference data (countries, ports of entry and live-animal commodities) to the Trade Imports frontends.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-005",
+      "statement": "The animals frontend calls the service for countries, commodity search and the species check, through TRADE_IMPORTS_REFERENCE_DATA_URL (default http://localhost:8086).",
+      "kind": "integration",
+      "ref": "docs/repos/trade-imports-reference-data.md:31 (Integrations table, inbound animals-frontend row)",
+      "quote": "Countries (`services/countries/client.js`), commodity search and species check (`sets/live-animals/services/commodities/client.js`); the stack waits for this service before starting the frontend.",
+      "confidence": "verbatim",
+      "note": "The page does not list ports of entry among the animals frontend's calls."
+    },
+    {
+      "id": "repo-referencedata-p3-006",
+      "statement": "The INS frontend and the plants frontend are configured with the service's base URL, and countries and ports are primed at boot; which endpoints each one calls has not been checked.",
+      "kind": "integration",
+      "ref": "docs/repos/trade-imports-reference-data.md:32 (Integrations table, ins-frontend and plants-frontend row)",
+      "quote": "Configured with the base URL; the compose files say countries and ports are primed at boot. Exact endpoints per consumer not checked.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-007",
+      "statement": "The animals backend does not call the reference-data service.",
+      "kind": "integration",
+      "ref": "docs/repos/trade-imports-reference-data.md:38",
+      "quote": "No use of this service by `trade-imports-animals-backend` was found in its `application.yml`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-008",
+      "statement": "MDM is the source of truth for every list: the service holds no reference data of its own, and MongoDB is configured but nothing reads or writes through it.",
+      "kind": "constraint",
+      "ref": "docs/repos/trade-imports-reference-data.md:21 (Does not own); README.md:110",
+      "quote": "The source of truth for the data: that is MDM. This service holds no reference data of its own; MongoDB is configured but no repository is used in `src/main`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-009",
+      "statement": "The service does not serve BCPs beyond ports of entry.",
+      "kind": "constraint",
+      "ref": "docs/repos/trade-imports-reference-data.md:22 (Does not own)",
+      "quote": "BCPs beyond ports of entry.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-010",
+      "statement": "The service does not authenticate its own callers: no inbound authentication was found on its endpoints.",
+      "kind": "constraint",
+      "ref": "docs/repos/trade-imports-reference-data.md:25 (Does not own)",
+      "quote": "Authentication of its own callers: no inbound auth was found in the controllers.",
+      "confidence": "verbatim",
+      "note": "Recorded in general terms only. The service serves public reference lists."
+    },
+    {
+      "id": "repo-referencedata-p3-011",
+      "statement": "The service does not own notification, address or user data; those belong to the backend, address-book and ins-backend services.",
+      "kind": "constraint",
+      "ref": "docs/repos/trade-imports-reference-data.md:24 (Does not own)",
+      "quote": "Notification, address or user data (see the backend, address-book and ins-backend services).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-012",
+      "statement": "Countries and ports of entry come back cached and as a simplified view sorted by name; commodity search and the species check are not cached and come back in MDM's order.",
+      "kind": "behaviour",
+      "ref": "docs/repos/trade-imports-reference-data.md:7, :12",
+      "quote": "Countries and ports of entry are cached in memory and returned as a simplified, sorted view; commodity search and the species check are not cached and come back in MDM's order.",
+      "confidence": "verbatim",
+      "note": "The page says both lists are 'returned sorted by name' (line 12), while README.md:96 says ports are grouped in PortType order (airports, seaports, rail ports). Recorded, not reconciled; part 1 owns the ports ordering."
+    },
+    {
+      "id": "repo-referencedata-p3-013",
+      "statement": "Ruling (ADR 0002, accepted 2026-05-07): trade-imports-reference-data is one shared service for several reference-data domains until any one domain grows large enough to justify its own service.",
+      "kind": "rule",
+      "ref": "doc/adr/0002-use-reference-data-for-multiple-domains-until-they-get-too-large.md:15-17 (Decision)",
+      "quote": "We will use `trade-imports-reference-data` as a shared service to manage multiple reference data domains until any individual domain grows large enough to justify extraction into its own dedicated service.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-014",
+      "statement": "ADR 0002 lists countries as the domain managed when it was written, with commodity codes and BCPs/POEs planned to be added to this service first.",
+      "kind": "rule",
+      "ref": "doc/adr/0002-use-reference-data-for-multiple-domains-until-they-get-too-large.md:19-24",
+      "quote": "Currently managed domains:\n- **Countries** — data sourced from MDM\n\nPlanned future domains:\n- **Commodity codes** — to be added to this service initially\n- **BCPs/POEs** — to be added to this service initially",
+      "confidence": "verbatim",
+      "note": "The code now serves both planned domains (ports of entry, commodities); the ADR has not been updated. Transporters, document types and certification purposes are not named in it."
+    },
+    {
+      "id": "repo-referencedata-p3-015",
+      "statement": "Under ADR 0002, a domain is extracted into its own service once its complexity, data volume or operational needs make managing it inside the shared service a burden.",
+      "kind": "rule",
+      "ref": "doc/adr/0002-use-reference-data-for-multiple-domains-until-they-get-too-large.md:26",
+      "quote": "When a domain's complexity, data volume, or operational requirements become significant enough that managing it within this shared service becomes a burden, it will be extracted into its own service at that point.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-016",
+      "statement": "ADR 0002's consequences: adding a new reference-data domain needs no new service, and domains share deployment, monitoring and MDM connectivity.",
+      "kind": "rule",
+      "ref": "doc/adr/0002-use-reference-data-for-multiple-domains-until-they-get-too-large.md:30-33 (Consequences, Easier)",
+      "quote": "- Simpler initial setup — new reference data domains can be added without bootstrapping a new service\n- Reduced operational overhead while domains are small\n- Shared infrastructure (deployment, monitoring, MDM connectivity) across domains",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-017",
+      "statement": "ADR 0002's consequences: domain concerns must be kept well separated in the code so a later extraction is straightforward, and extraction is a planned activity.",
+      "kind": "rule",
+      "ref": "doc/adr/0002-use-reference-data-for-multiple-domains-until-they-get-too-large.md:35-38 (Consequences, More difficult / risks)",
+      "quote": "- As multiple domains grow, the service may become harder to reason about and deploy independently\n- Extraction of a domain into its own service later will require effort and coordination; this should be treated as a planned activity rather than an afterthought\n- Care must be taken to keep domain concerns well-separated within the codebase to make future extraction straightforward",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-018",
+      "statement": "Ruling (ADR 0001, accepted 2026-05-07): the service's architectural decisions are recorded as Architecture Decision Records under doc/adr/.",
+      "kind": "rule",
+      "ref": "doc/adr/0001-record-architecture-decisions.md:13-15 (Decision)",
+      "quote": "We will use Architecture Decision Records, as [described by Michael Nygard](http://thinkrelevance.com/blog/2011/11/15/documenting-architecture-decisions).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-019",
+      "statement": "The repo has no rulings ledger beyond its two ADRs.",
+      "kind": "rule",
+      "ref": "doc/adr/ (0001, 0002)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked for a decisions ledger in the repo; the partition's structure also records none. Only ADRs 0001 and 0002 exist."
+    },
+    {
+      "id": "repo-referencedata-p3-020",
+      "statement": "Every error the service answers itself is an RFC 7807 problem detail, with a type URI, a title, a detail and, when the request has a trace id, a traceId property.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/exceptions/GlobalExceptionHandler.java:19-21, :41-43",
+      "quote": "Answers application exceptions with RFC 7807 problem details that carry the request's trace id.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-021",
+      "statement": "When there is no trace id on the request, the error body has no traceId property.",
+      "kind": "behaviour",
+      "ref": "GlobalExceptionHandler.java:41-43; GlobalExceptionHandlerTest.java handleValidationException_shouldHandleNullTraceId, handleNotFoundException_shouldHandleNullTraceId, handleConflictException_shouldHandleNullTraceId, handleException_shouldHandleNullTraceId",
+      "quote": "if (traceId != null) {\n      problemDetail.setProperty(\"traceId\", traceId);\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-022",
+      "statement": "A request body that fails bean validation is answered 400 with title \"Validation Error\", detail \"Validation failed for one or more fields\", type https://api.cdp.defra.cloud/problems/validation-error, and an errors map of field name to its validation message.",
+      "kind": "behaviour",
+      "ref": "GlobalExceptionHandler.java:28-52; GlobalExceptionHandlerTest.java handleValidationException_shouldReturnBadRequestWithFieldErrors",
+      "quote": "ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(\n        HttpStatus.BAD_REQUEST,\n        \"Validation failed for one or more fields\"\n    );\n\n    problemDetail.setType(URI.create(\"https://api.cdp.defra.cloud/problems/validation-error\"));\n    problemDetail.setTitle(\"Validation Error\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-023",
+      "statement": "A constraint violation, an unreadable request body or a parameter of the wrong type is answered 400 with title \"Bad Request\", detail \"The request is not valid\" and type https://api.cdp.defra.cloud/problems/bad-request, with no per-field errors.",
+      "kind": "behaviour",
+      "ref": "GlobalExceptionHandler.java:54-76; GlobalExceptionHandlerTest.java handleBadRequestException_shouldReturnBadRequest; README.md:115",
+      "quote": "ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(\n        HttpStatus.BAD_REQUEST,\n        \"The request is not valid\"\n    );\n\n    problemDetail.setType(URI.create(\"https://api.cdp.defra.cloud/problems/bad-request\"));\n    problemDetail.setTitle(\"Bad Request\");",
+      "confidence": "verbatim",
+      "note": "The test proves the ConstraintViolationException case only; the unreadable-body and type-mismatch cases share the handler and are not tested in this file."
+    },
+    {
+      "id": "repo-referencedata-p3-024",
+      "statement": "When MDM is unavailable, the caller gets 503 with title \"Service Unavailable\", detail \"Reference data is unavailable. Please try again later.\" and type https://api.cdp.defra.cloud/problems/service-unavailable.",
+      "kind": "behaviour",
+      "ref": "GlobalExceptionHandler.java:118-145; GlobalExceptionHandlerTest.java handleMdmUnavailable_shouldReturnServiceUnavailable",
+      "quote": "HttpStatus.SERVICE_UNAVAILABLE,\n        \"Reference data is unavailable. Please try again later.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-025",
+      "statement": "MDM counts as unavailable, giving the caller a 503, when it answers 502, 503 or 504, cannot be reached, or returns no body, no result, no content or no total.",
+      "kind": "rule",
+      "ref": "README.md:115; MdmErrorDecoder.java:14-16; MdmService.java:34, :81, :91, :95, :112",
+      "quote": "a 503 when MDM returns no body, content or total, answers 502, 503 or 504, or is not reachable",
+      "confidence": "verbatim",
+      "note": "mechanism: MdmService and MdmErrorDecoder turn MDM transport failures and empty MDM responses into MdmUnavailableException."
+    },
+    {
+      "id": "repo-referencedata-p3-026",
+      "statement": "An MDM answer of 502, 503 or 504 is treated as MDM unavailable; any other MDM error status is left to Feign's default handling.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmErrorDecoder.java:14-17; MdmErrorDecoderTest.java decode_wrapsAnUnavailableMdmStatus, decode_leavesOtherStatusesToTheDefaultDecoder",
+      "quote": "case 502, 503, 504 -> new MdmUnavailableException(\"MDM unavailable\", decoded);\n      default -> decoded;",
+      "confidence": "verbatim",
+      "note": "mechanism: maps MDM HTTP error statuses to the service's unavailable exception."
+    },
+    {
+      "id": "repo-referencedata-p3-027",
+      "statement": "Any other MDM error, such as a 400 or 404 from MDM, reaches the caller as a 500.",
+      "kind": "behaviour",
+      "ref": "README.md:115; GlobalExceptionHandler.java:147-169",
+      "quote": "Any other MDM error is 500.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-028",
+      "statement": "When the token endpoint MDM calls need answers 502, 503 or 504 or cannot be reached, the caller gets the same 503 \"Reference data is unavailable. Please try again later.\" answer.",
+      "kind": "behaviour",
+      "ref": "GlobalExceptionHandler.java:123-126; MdmClientInterceptor.java:60-67; GlobalExceptionHandlerTest.java handleTokenEndpointUnavailable_shouldReturnServiceUnavailable; TokenEndpointUnavailableIT.java searchCommodities_answersServiceUnavailable_whenTheTokenEndpointAnswers503",
+      "quote": "if (ex.status() == 502 || ex.status() == 503 || ex.status() == 504) {\n            throw new TokenEndpointUnavailableException(\"Token endpoint unavailable\", ex);",
+      "confidence": "verbatim",
+      "note": "The integration test proves it end to end for GET /commodities?q=fox with the token endpoint answering 503."
+    },
+    {
+      "id": "repo-referencedata-p3-029",
+      "statement": "Any other token endpoint error reaches the caller as a 500.",
+      "kind": "behaviour",
+      "ref": "MdmClientInterceptor.java:67; GlobalExceptionHandler.java:147-169",
+      "quote": "throw ex;",
+      "confidence": "inferred",
+      "note": "Inferred: a non-502/503/504 FeignException is rethrown and, being a RuntimeException, falls to the 500 handler. No test proves it."
+    },
+    {
+      "id": "repo-referencedata-p3-030",
+      "statement": "An unexpected error is answered 500 with title \"Internal Server Error\", detail \"An unexpected error occurred. Please try again later.\" and type https://api.cdp.defra.cloud/problems/internal-error, without the error's own message.",
+      "kind": "behaviour",
+      "ref": "GlobalExceptionHandler.java:147-169; GlobalExceptionHandlerTest.java handleException_shouldReturnInternalServerError_forRuntimeException, _forIllegalStateException, _forIllegalArgumentException",
+      "quote": "HttpStatus.INTERNAL_SERVER_ERROR,\n        \"An unexpected error occurred. Please try again later.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-031",
+      "statement": "The handler would answer a not-found error 404 with title \"Resource Not Found\" and a conflict 409 with title \"Resource Conflict\", each with the error's own message as the detail, but no code path in the service raises either, so a caller cannot receive them from the service's own logic.",
+      "kind": "behaviour",
+      "ref": "GlobalExceptionHandler.java:78-116; NotFoundException.java; ConflictException.java; GlobalExceptionHandlerTest.java handleNotFoundException_shouldReturnNotFound, handleConflictException_shouldReturnConflict",
+      "quote": "@ExceptionHandler(NotFoundException.class)\n  public ProblemDetail handleNotFoundException(NotFoundException ex) {",
+      "confidence": "inferred",
+      "note": "Inferred: a grep of src/main/java finds NotFoundException and ConflictException only in their own files and the handler. The tests use notification examples, carried over from another service."
+    },
+    {
+      "id": "repo-referencedata-p3-032",
+      "statement": "Spring's own errors, such as a 404 for an unknown path, keep Spring's default answers rather than the service's problem details.",
+      "kind": "behaviour",
+      "ref": "README.md:115",
+      "quote": "Spring's other exceptions, such as a 404 for an unknown path, keep Spring's answers.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-033",
+      "statement": "A failure of the AWS STS connection is raised as a reference-data exception and so reaches a caller as a 500.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/configuration/AwsConfig.java:52; TradeImportsReferenceDataException.java; GlobalExceptionHandler.java:147",
+      "quote": "throw new TradeImportsReferenceDataException(\"Sts connection error\", ex);",
+      "confidence": "inferred",
+      "note": "Inferred from the throw site found by grep; AwsConfig is outside this part's read, and whether it can fail during a request rather than at start-up was not checked."
+    },
+    {
+      "id": "repo-referencedata-p3-034",
+      "statement": "The service calls MDM at MDM_SERVICE_URL, defaulting to http://localhost:8087, where trade-imports-stub listens locally.",
+      "kind": "integration",
+      "ref": "src/main/resources/application.yml:111-112; README.md:90-92",
+      "quote": "url: ${MDM_SERVICE_URL:http://localhost:8087}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-035",
+      "statement": "The service gets its MDM bearer token from the Trade Platform token endpoint at TRADE_PLATFORM_AUTH_URL, defaulting to http://localhost:8087/tenant/oauth2/v2.0/token, using OAuth2 client credentials.",
+      "kind": "integration",
+      "ref": "src/main/resources/application.yml:101-106; docs/repos/trade-imports-reference-data.md:18, :34",
+      "quote": "url: ${TRADE_PLATFORM_AUTH_URL:http://localhost:8087/tenant/oauth2/v2.0/token}",
+      "confidence": "verbatim",
+      "note": "The client secret default is [REDACTED] here."
+    },
+    {
+      "id": "repo-referencedata-p3-036",
+      "statement": "Every MDM call carries a subscription key header, Ocp-Apim-Subscription-Key, set from TRADE_PLATFORM_SUBSCRIPTION_KEY.",
+      "kind": "integration",
+      "ref": "src/main/resources/application.yml:113; MdmConfiguration.java:15; docs/repos/trade-imports-reference-data.md:33",
+      "quote": "ocpApimSubscriptionKey: ${TRADE_PLATFORM_SUBSCRIPTION_KEY:[REDACTED]}",
+      "confidence": "verbatim",
+      "note": "Default value redacted."
+    },
+    {
+      "id": "repo-referencedata-p3-037",
+      "statement": "Geo and port calls to MDM send system=GBNAG, and product calls send dataset=gbnag with no system.",
+      "kind": "integration",
+      "ref": "docs/repos/trade-imports-reference-data.md:18; MdmService.java:22-23",
+      "quote": "sends the subscription key and `system=GBNAG` on geo and port calls, and `dataset=gbnag` (no `system`) on product calls.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-038",
+      "statement": "MDM calls and token calls each time out after 3 seconds to connect and 3 seconds to read.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:107-108, :114-115",
+      "quote": "connectionTimeout: 3000\n  readTimeout: 3000",
+      "confidence": "verbatim",
+      "note": "How a timeout reaches the caller (as MDM unreachable, 503) is inferred from MdmService.fromMdm catching RetryableException; not tested in this part's files."
+    },
+    {
+      "id": "repo-referencedata-p3-039",
+      "statement": "Countries and ports of entry are cached for CACHE_MDM_TTL_MINUTES, 60 minutes by default, so a change in MDM can take up to that long to reach callers; empty results are not cached.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:5-7; README.md:106; docs/repos/trade-imports-reference-data.md:17",
+      "quote": "Caching of MDM responses (Caffeine caches `MDM_COUNTRIES_CACHE` and `MDM_POE_CACHE`, TTL `CACHE_MDM_TTL_MINUTES`, default 60; empty results are not cached).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-040",
+      "statement": "Commodity search takes a page size from 1 to 100, defaulting to 100, and a page from 0; any other value is refused with a 400.",
+      "kind": "rule",
+      "ref": "docs/repos/trade-imports-reference-data.md:15",
+      "quote": "`GET /commodities?q=&page=&size=` (size from 1 to 100, defaulting to 100, and page from 0; any other value is refused with a 400)",
+      "confidence": "verbatim",
+      "note": "Recorded here as the documented contract; part 2 owns commodity search behaviour and the code that enforces it."
+    },
+    {
+      "id": "repo-referencedata-p3-041",
+      "statement": "When HTTP_PROXY is set, every outbound call to MDM and the token endpoint goes through that proxy, as CDP requires for egress; without it, calls go direct.",
+      "kind": "constraint",
+      "ref": "README.md:114; src/main/resources/application.yml:36",
+      "quote": "When `HTTP_PROXY` is set to `http://host:port`, every outbound HTTP and HTTPS call goes through it, as CDP requires for egress; without it, calls go direct.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-042",
+      "statement": "The service's health endpoint is GET /health and shows no details; it does not reflect MDM's availability, so a down dependency never restarts the service.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:61-75; README.md:105; docs/repos/trade-imports-reference-data.md:81",
+      "quote": "`external.dependency.available` is for the dashboard only. It is not a Spring `HealthIndicator`, because CDP uses `/health` to decide whether a task is alive and would restart every task whenever a dependency went down.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-043",
+      "statement": "In the workspace stack, if the stub is left out, GET /countries fails until a stub answers, because the service fetches an MDM token first.",
+      "kind": "behaviour",
+      "ref": "docs/repos/trade-imports-reference-data.md:97",
+      "quote": "`/countries` then fails until a stub answers, because it fetches an MDM token first.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-044",
+      "statement": "The service serves no transporter list: it has no endpoint, model or MDM call for transporters or hauliers.",
+      "kind": "integration",
+      "ref": "repo-wide search: src/main, src/test/java, doc/, README.md, docs/repos/trade-imports-reference-data.md",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The scope expects the live-animals journey to read transporters. A case-insensitive grep for transporter, haulier and carrier found nothing; the only request mappings are /countries, /ports-of-entry, /commodities and /commodities/species-check."
+    },
+    {
+      "id": "repo-referencedata-p3-045",
+      "statement": "The service serves no document types list: it has no endpoint, model or MDM call for accompanying document types.",
+      "kind": "integration",
+      "ref": "repo-wide search: src/main, src/test/java, doc/, README.md, docs/repos/trade-imports-reference-data.md",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The scope expects the live-animals journey to read document types. A case-insensitive grep for 'document type', documentType and 'accompanying document' found nothing."
+    },
+    {
+      "id": "repo-referencedata-p3-046",
+      "statement": "The service serves no certification purposes list: it has no endpoint, model or MDM call for certification purposes.",
+      "kind": "integration",
+      "ref": "repo-wide search: src/main, src/test/java, doc/, README.md, docs/repos/trade-imports-reference-data.md",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The scope expects the live-animals journey to read certification purposes. A case-insensitive grep for certification and purpose found only the 'Purpose' heading of the workspace page. MDM product search fixtures under src/test/resources carry certifiedAs and certificateModelCodes fields, but the service maps none of them."
+    }
+  ]
+}

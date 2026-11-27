@@ -1,12 +1,12 @@
 {
   "source": "prototype:dr2-1-source",
-  "structure": "Part 5, Animal identification details. Read in full at commit 04a073b (checkout HEAD): app/views/design-release-2.1/animal-identification-details.html (184 lines, the DR2.1 override of the page), app/views/partials/animal-identification-saved-animals.html (29 lines, the saved-animals table with a Remove button per row), app/data/commodity-identifiers.js (49 lines, identifier fields keyed by CN commodity code), app/routes.js 1757-2224 (identifier fields per species, entry counts, germinal handling, completeness, the minimum-identifier rule, panel state, commodity groups, save buttons, saving from the body, field and date validation, saved-animals rows and table, remove), 10727-10756 (renderAnimalIdentificationDetailsPage) and 12390-12528 (GET and POST /animal-identification-details). For context only, not claimed beyond what the page itself shows: routes.js 832-881 (isGerminalProductCommodity, formatCommodityGroupHeading, getSelectedCommodityRows), 1495-1614 (journey steps, next path, soft-save redirects, section continue redirect), 4301-4323 (parseArrivalDisplayDate), 4989-4993 and 6371-6418 (where the minimum-identifier rule and identifier completeness are used by the review, submit and dashboard pages), app/data/commodities.js 1-230 (which commodities carry identifiers inline), and partials/design-release-2.1/journey-form-actions.html (the shared button set, claimed by the shell part). One page is covered: /design-release-2.1/animal-identification-details. It shows a caption, heading, inset text, a Selected commodities summary with Change and Add another commodity links, then one section per commodity holding one panel per selected species that has identifier fields; each panel shows the next incomplete animal's entry form (text inputs, or MOJ date pickers for germinal dates), a Save and add another / Save and finish button when the species has more than one animal, and a table of saved complete animals with Remove buttons. Germinal products (commodity codes 05119985 and 05111000) take one set of details per species in a single always-editable form. Claims cover the route, guards, skip rule, back link, every identifier field per code with label, type, hint and length limit, every action and where it leads, every validation message verbatim, the minimum-identifier rule and the completeness rules.",
+  "structure": "Part 5, Animal identification details, read at commit c2078fb (the checkout's HEAD). Read in full: app/views/design-release-2.1/animal-identification-details.html (203 lines: phase banner, back link, notification status, error summary, caption, h1, inset text, Selected commodities summary with Change and Add another commodity links, one section per commodity holding one panel per species with an entry form of date pickers, selects or text inputs, a per-panel save button and the saved-animals partial, then the shared journey form actions); app/views/partials/design-release-2.1/animal-identification-saved-animals.html (31 lines: the saved table with an Animal column, one column per used field and a Remove button per row); app/data/commodity-identifiers.js (48 lines: identifier fields by CN code, of which only the two germinal codes 05119985 and 05111000 are reached in DR2.1); app/data/commodity-identifiers-testing3.js (262 lines: the by-commodity and by-species identification fields for live animals in DR2.1, Testing 3 and Testing 4, each field in a group of identifier, classification, additional or date, with perAnimal saying whether details are per animal or per species, and the default Description plus Identification details for anything unlisted); app/routes.js 2005-2593 (field lookup, entry counts, completeness, minimum-for-submit, the missing-identifier error, saved-table fields, species label, panel state, commodity groups, save from body, field and date validation, saved animals, remove); app/routes.js 12293-12325 (renderAnimalIdentificationDetailsPage: caption, inset text, quantity column label, back link); app/routes.js 14240-14388 (GET and POST /animal-identification-details: remove, save:<species>, continue and soft-save, fallback reload). Read for context only, not claimed beyond what this page shows: routes.js 83 (GERMINAL_QUANTITY_LABEL), 315-321 (hasJourneyUpdates), 954-1010 (germinal flag, group heading, selected commodity rows), 1710-1735 (journey steps), 1834-1840 (back link target), 10345-10354 (allowsBlankJourneyAnswers), and app/data/commodities-germinal-products.js with generated/commodities-germinal.json (all 18 germinal commodities carry code 05119985 or 05111000). Since the previous extract, DR2.1 live animals take their fields from the Testing 3 table rather than the CN-code list, so the earlier claims on 01061900, 0101, 0102, 0103, sheep and goats are retired and replaced; flocks and batches get one set of details per species; selects appear; at least one identifier is now required on a panel save; the germinal-only page has its own caption, quantity label and change link.",
   "claims": [
     {
       "id": "prototype-dr2-1-source-p5-001",
       "statement": "The animal identification page is served at /animal-identification-details, mirrored under /design-release-2.1, and its form posts to /design-release-2.1/animal-identification-details.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12390, app/views/design-release-2.1/animal-identification-details.html:36",
+      "ref": "app/routes.js:14240, 14262; app/views/design-release-2.1/animal-identification-details.html:37",
       "quote": "<form method=\"post\" action=\"/design-release-2.1/animal-identification-details\" novalidate class=\"app-animal-identification-form\">",
       "confidence": "verbatim"
     },
@@ -19,52 +19,53 @@
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p5-003",
-      "statement": "The page caption is \"About the consignment\".",
+      "id": "prototype-dr2-1-source-p5-075",
+      "statement": "The page caption is \"Description of the goods\" when every selected commodity is a germinal product, and \"About the consignment\" otherwise.",
       "kind": "copy",
-      "ref": "app/views/design-release-2.1/animal-identification-details.html:47",
-      "quote": "<p class=\"app-animal-identification-page__caption\">About the consignment</p>",
+      "ref": "app/routes.js:12302-12304, 12318; app/views/design-release-2.1/animal-identification-details.html:48",
+      "quote": "pageCaption: isGerminalIdentification ? 'Description of the goods' : 'About the consignment',",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p5-004",
       "statement": "The page heading (h1) is \"Identification details\".",
       "kind": "copy",
-      "ref": "app/views/design-release-2.1/animal-identification-details.html:48",
+      "ref": "app/views/design-release-2.1/animal-identification-details.html:49",
       "quote": "<h1 class=\"app-animal-identification-page__heading\">Identification details</h1>",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p5-005",
-      "statement": "Inset text under the heading says all animal identification details must be added before the consignment arrives at the port of entry.",
+      "id": "prototype-dr2-1-source-p5-076",
+      "statement": "Inset text under the heading says \"You must add all identification details before the consignment arrives at the port of entry.\"",
       "kind": "copy",
-      "ref": "app/views/design-release-2.1/animal-identification-details.html:51-54",
-      "quote": "You must add all animal identification details before the consignment arrives at the port of entry.",
-      "confidence": "verbatim"
+      "ref": "app/routes.js:12319; app/views/design-release-2.1/animal-identification-details.html:52-55",
+      "quote": "identificationInsetText: 'You must add all identification details before the consignment arrives at the port of entry.',",
+      "confidence": "verbatim",
+      "note": "The word \"animal\" has gone from this sentence since the previous extract."
     },
     {
       "id": "prototype-dr2-1-source-p5-006",
       "statement": "The page shows an Alpha phase banner with a feedback link above the back link.",
       "kind": "copy",
-      "ref": "app/views/design-release-2.1/animal-identification-details.html:14-19",
+      "ref": "app/views/design-release-2.1/animal-identification-details.html:14-20",
       "quote": "text: \"Alpha\"\n    },\n    html: 'This is a new service. Help us improve it and <a class=\"govuk-link\" href=\"#\">give your feedback by email</a>.'",
       "confidence": "verbatim",
       "note": "The feedback link goes to \"#\" (placeholder)."
     },
     {
-      "id": "prototype-dr2-1-source-p5-007",
-      "statement": "The page has a \"Back\" link whose default target is the consignment details page (the journey back link helper may override it, for example when coming from the hub or review).",
+      "id": "prototype-dr2-1-source-p5-077",
+      "statement": "The page has a \"Back\" link whose default target is the gross weight page when the germinal gross weight field is shown, and the consignment details page otherwise; the journey back link helper may override it, for example when coming from the hub or review.",
       "kind": "behaviour",
-      "ref": "app/views/design-release-2.1/animal-identification-details.html:21-24; app/routes.js:10745",
-      "quote": "backLink: getJourneyBackLink(req, '/consignment-details'),",
+      "ref": "app/routes.js:12312, 1834-1840; app/views/design-release-2.1/animal-identification-details.html:22-25",
+      "quote": "backLink: getJourneyBackLink(req, getAnimalIdentificationBackLink(sessionData)),",
       "confidence": "verbatim",
-      "note": "getJourneyBackLink is outside this part's range; how it varies by entry point is claimed by the part that owns it."
+      "note": "getAnimalIdentificationBackLink (routes.js:1834-1840) and getJourneyBackLink sit outside this part's range and were read for context; when the gross weight field shows is claimed by the consignment part."
     },
     {
       "id": "prototype-dr2-1-source-p5-008",
       "statement": "The page includes the notification status block (notification reference and status) above the form.",
       "kind": "behaviour",
-      "ref": "app/views/design-release-2.1/animal-identification-details.html:34; app/routes.js:10748",
+      "ref": "app/views/design-release-2.1/animal-identification-details.html:35; app/routes.js:12315",
       "quote": "{% include \"partials/notification-status.html\" %}",
       "confidence": "verbatim",
       "note": "The page passes notificationReference: sessionData.notificationReference || PROTOTYPE_NOTIFICATION_REFERENCE. The partial's own content is claimed by the shell part."
@@ -73,7 +74,7 @@
       "id": "prototype-dr2-1-source-p5-009",
       "statement": "GET and POST of the page first make sure the notification has a prototype reference, then redirect away if origin, commodity, reason for import or consignment details are missing, in that order.",
       "kind": "rule",
-      "ref": "app/routes.js:12390-12408, 12412-12429",
+      "ref": "app/routes.js:14240-14257, 14262-14279",
       "quote": "ensurePrototypeNotificationReference(req.session.data)\n\n  if (redirectIfNoOrigin(req, res)) {\n    return\n  }\n\n  if (redirectIfNoCommodity(req, res)) {\n    return\n  }\n\n  if (redirectIfNoImportReason(req, res)) {\n    return\n  }\n\n  if (redirectIfNoConsignmentDetails(req, res)) {",
       "confidence": "verbatim",
       "note": "Where each guard redirects to is defined outside this part's range."
@@ -82,7 +83,7 @@
       "id": "prototype-dr2-1-source-p5-010",
       "statement": "If no selected species has any identifier fields, the page is skipped: visiting it redirects to the next journey step after consignment details.",
       "kind": "rule",
-      "ref": "app/routes.js:10730-10732",
+      "ref": "app/routes.js:12296-12298",
       "quote": "if (!hasAnimalIdentifiersRequired(sessionData)) {\n    return res.redirect(getNextJourneyPath('/consignment-details', sessionData))\n  }",
       "confidence": "verbatim"
     },
@@ -90,58 +91,278 @@
       "id": "prototype-dr2-1-source-p5-011",
       "statement": "Identification details are required in the journey (the page is a step) when at least one selected species has identifier fields.",
       "kind": "rule",
-      "ref": "app/routes.js:1796-1800, 1503-1505",
-      "quote": "return normalizeSelectedSpecies(sessionData.selectedSpecies).some((speciesId) => {\n    return getIdentifierFieldsForSpecies(speciesId).length > 0\n  })",
+      "ref": "app/routes.js:2081-2085, 1723-1725",
+      "quote": "return normalizeSelectedSpecies(sessionData.selectedSpecies).some((speciesId) => {\n    return getIdentifierFieldsForSpecies(speciesId, sessionData).length > 0\n  })",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p5-012",
-      "statement": "The page sits after consignment details and before additional animal details (when that page applies) or arrival details in the linear journey.",
+      "id": "prototype-dr2-1-source-p5-078",
+      "statement": "The page sits after consignment details, and after the gross weight page when that applies, and before additional animal details (when that page applies) or arrival details in the linear journey.",
       "kind": "behaviour",
-      "ref": "app/routes.js:1495-1511",
-      "quote": "'/consignment-details'\n  ]\n\n  if (hasAnimalIdentifiersRequired(sessionData)) {\n    steps.push('/animal-identification-details')\n  }\n\n  if (requiresAdditionalAnimalDetailsPage(sessionData)) {\n    steps.push('/additional-animal-details')\n  }\n\n  steps.push('/arrival-details')",
+      "ref": "app/routes.js:1710-1731",
+      "quote": "if (showsGerminalGrossWeightField(sessionData)) {\n    steps.push('/consignment-gross-weight')\n  }\n\n  if (hasAnimalIdentifiersRequired(sessionData)) {\n    steps.push('/animal-identification-details')\n  }\n\n  if (requiresAdditionalAnimalDetailsPage(sessionData)) {\n    steps.push('/additional-animal-details')\n  }\n\n  steps.push('/arrival-details')",
       "confidence": "verbatim",
       "note": "Read for context outside the part's ranges; the journey step list itself is claimed by the shell part."
     },
     {
-      "id": "prototype-dr2-1-source-p5-013",
-      "statement": "A species' identifier fields come from its commodity code's entry in the commodity identifiers list; if the code has no entry, the commodity's own identifiers list is used, otherwise there are none.",
+      "id": "prototype-dr2-1-source-p5-079",
+      "statement": "In Design Release 2.1 a live-animal species takes its identification fields from the by-commodity table: a species-specific entry first, then the commodity's entry, then the default fields. A germinal product takes its fields from its CN code's entry in the commodity identifiers list, and failing that from the commodity's own identifiers list.",
       "kind": "rule",
-      "ref": "app/routes.js:1765-1779",
-      "quote": "const codeIdentifiers = getIdentifiersForCommodityCode(match.commodity.code)\n\n  if (codeIdentifiers.length) {\n    return codeIdentifiers\n  }\n\n  return Array.isArray(match.commodity.identifiers) ? match.commodity.identifiers : []",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p5-014",
-      "statement": "Commodity code 01061900 (other live mammals, including cats, dogs and ferrets) asks for three identifiers: Microchip, Passport and Tattoo, all text inputs.",
-      "kind": "data",
-      "ref": "app/data/commodity-identifiers.js:4-8",
-      "quote": "'01061900': [\n    { id: 'microchip', label: 'Microchip' },\n    { id: 'passport', label: 'Passport' },\n    { id: 'tattoo', label: 'Tattoo' }\n  ],",
+      "ref": "app/routes.js:2013-2028, 2038-2058; app/data/commodity-identifiers-testing3.js:247-258",
+      "quote": "if (!hasJourneyUpdates(sessionData)) {\n    return null\n  }\n\n  const match = getSpeciesMatch(speciesId)\n\n  if (!match || isGerminalProductCommodity(match.commodity)) {\n    return null\n  }\n\n  return getTesting3Identification(match.commodity, match.species)\n...\nconst config = (species && bySpeciesId[species.id]) || byCommodityId[commodity.id] || defaultIdentification",
       "confidence": "verbatim",
-      "note": "That cat, dog, ferret and other live mammals share 01061900 comes from app/data/commodities.js:149-210, read for context."
+      "note": "hasJourneyUpdates is true for DR2.1, Testing 3 and Testing 4 (routes.js:315-321, read for context)."
     },
     {
-      "id": "prototype-dr2-1-source-p5-015",
-      "statement": "Commodity code 0102 (cattle) asks for two identifiers: Ear tag and Passport, both text inputs.",
-      "kind": "data",
-      "ref": "app/data/commodity-identifiers.js:9-12",
-      "quote": "'0102': [\n    { id: 'ear-tag', label: 'Ear tag' },\n    { id: 'passport', label: 'Passport' }\n  ],",
+      "id": "prototype-dr2-1-source-p5-080",
+      "statement": "Every live-animal species in Design Release 2.1 has identification fields, since an unlisted commodity or species gets the default fields, so the page is always a step when a live animal is selected.",
+      "kind": "rule",
+      "ref": "app/data/commodity-identifiers-testing3.js:20-21, 244-258",
+      "quote": "// Returns { perAnimal, fields } for a live animal commodity and species. One\n// that is not listed above gets the default fields, so a commodity added to\n// the generated list later still has an identification details page.",
+      "confidence": "inferred",
+      "note": "Inferred from the default fallback together with hasAnimalIdentifiersRequired (p5-011)."
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-081",
+      "statement": "The CN-code identifier entries for 01061900, 0102, 0101 and 0103 (Microchip, Passport, Tattoo, Ear tag, Horse name) are not reached for live animals in Design Release 2.1, because the by-commodity table answers first.",
+      "kind": "rule",
+      "ref": "app/data/commodity-identifiers.js:4-20; app/routes.js:2045-2049",
+      "quote": "if (testing3Identification) {\n    return testing3Identification.fields\n  }",
+      "confidence": "inferred",
+      "note": "Inferred: getTesting3IdentificationForSpecies returns a config for every live animal under DR2.1, so getIdentifiersForCommodityCode is only reached for germinal products. These entries still drive versions without the journey updates."
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-082",
+      "statement": "The live-animal identification fields come from the \"applicable fields for the selected commodity\" table alongside the Live Animals and Germinals Data Dictionary (Animal Identifiers section). Each commodity gets up to four groups: identifiers (text inputs, at least one must be entered), classification (one selection from a list), additional free-text details, and dates (date pickers).",
+      "kind": "constraint",
+      "ref": "app/data/commodity-identifiers-testing3.js:1-14",
+      "quote": "// Source: the \"applicable fields for the selected commodity\" table that sits\n// alongside the Live Animals and Germinals Data Dictionary (Animal Identifiers\n// section). Each commodity gets up to four groups of fields:\n//\n//   identifier      text inputs. At least one must be entered.\n//   classification  one selection from a list.\n//   additional      free-text details.\n//   date            date pickers.",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p5-016",
-      "statement": "Commodity code 0101 (horses) asks for three identifiers: Microchip, Passport and Horse name, all text inputs.",
-      "kind": "data",
-      "ref": "app/data/commodity-identifiers.js:13-17",
-      "quote": "'0101': [\n    { id: 'microchip', label: 'Microchip' },\n    { id: 'passport', label: 'Passport' },\n    { id: 'horse-name', label: 'Horse name' }\n  ],",
+      "id": "prototype-dr2-1-source-p5-083",
+      "statement": "A live-animal commodity marked per animal asks for one set of details for every animal; one identified as a flock or batch asks for one set of details per species.",
+      "kind": "rule",
+      "ref": "app/data/commodity-identifiers-testing3.js:16-18; app/routes.js:2030-2036",
+      "quote": "// `perAnimal: true` asks for one set of details for every animal. Commodities\n// identified as a flock or batch (a Flock ID, or no identifier at all) ask for\n// one set of details per species.",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p5-017",
-      "statement": "Commodity code 0103 (pigs) asks for one identifier: Ear tag, a text input.",
+      "id": "prototype-dr2-1-source-p5-084",
+      "statement": "A live-animal commodity or species with no entry in the table gets the default fields Description and Identification details, entered once per species.",
       "kind": "data",
-      "ref": "app/data/commodity-identifiers.js:18-20",
-      "quote": "'0103': [\n    { id: 'ear-tag', label: 'Ear tag' }\n  ],",
+      "ref": "app/data/commodity-identifiers-testing3.js:20-21, 140-141",
+      "quote": "const defaultIdentification = { perAnimal: false, fields: [description, identificationDetails] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-085",
+      "statement": "Horse (0101) asks per animal for Passport, Microchip/transponder and Equine name, all identifiers.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:144-145, 63-67",
+      "quote": "horse: { perAnimal: true, fields: [passport, microchip, equineName] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-086",
+      "statement": "Donkey (0101, species Equus asinus) asks per animal for Passport and Microchip/transponder.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:208-209",
+      "quote": "'horse-equus-asinus': { perAnimal: true, fields: [passport, microchip] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-087",
+      "statement": "Cattle (0102) asks per animal for Passport, Ear tag and Identification number, all identifiers.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:146-147",
+      "quote": "cattle: { perAnimal: true, fields: [passport, earTag, identificationNumber] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-088",
+      "statement": "Pig (0103) asks per animal for Ear tag and Identification number.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:148-149",
+      "quote": "pig: { perAnimal: true, fields: [earTag, identificationNumber] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-089",
+      "statement": "Sheep (010410) asks per animal for Ear tag and Identification number.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:150-151",
+      "quote": "sheep: { perAnimal: true, fields: [earTag, identificationNumber] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-090",
+      "statement": "Goat (010420) asks per animal for Microchip/transponder, Ear tag and Identification number.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:152-153",
+      "quote": "goat: { perAnimal: true, fields: [microchip, earTag, identificationNumber] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-091",
+      "statement": "Poultry (0105: chicken, turkey, duck, goose and guinea fowl) asks once per species (a flock) for Flock ID, Classification, Description, Identification details and Hatching date.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:103-106, 154-159",
+      "quote": "const poultry = {\n  perAnimal: false,\n  fields: [flockId, classification(POULTRY_CLASSIFICATIONS), description, identificationDetails, poultryHatchingDate]\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-092",
+      "statement": "Poultry always offers Hatching date, because the commodity picker does not separate day-old chicks from adult birds; its hint reads \"Day-old chicks only. For example, 27/03/2026\".",
+      "kind": "copy",
+      "ref": "app/data/commodity-identifiers-testing3.js:96-101",
+      "quote": "// The commodity picker does not separate day-old chicks from adult birds, so\n// poultry always offers the hatching date that only day-old chicks need.\nconst poultryHatchingDate = {\n  ...hatchingDate,\n  hint: `Day-old chicks only. ${DATE_HINT}`\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-093",
+      "statement": "The poultry Classification list offers Broilers, Grandparent, Laying pullets, Parents, Pure line and Others.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:23-30",
+      "quote": "const POULTRY_CLASSIFICATIONS = [\n  'Broilers',\n  'Grandparent',\n  'Laying pullets',\n  'Parents',\n  'Pure line',\n  'Others'\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-094",
+      "statement": "The game bird and hatching egg Classification list offers Broilers, Class A, Class B, Cross breed, Farmed stock fertilized eggs, Farmed stock unfertilized eggs, Farmed stocks, Farmed stocks gametes, Fertilized eggs, Gametes, Grandparent, Laying pullets, Others, Parents, Pure breed, Pure line, Unfertilized eggs, Wild stocks and Wild stocks gamete.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:32-52",
+      "quote": "const GAME_BIRD_AND_EGG_CLASSIFICATIONS = [\n  'Broilers',\n  'Class A',\n  'Class B',\n  'Cross breed',\n  'Farmed stock fertilized eggs',\n  'Farmed stock unfertilized eggs',\n  'Farmed stocks',\n  'Farmed stocks gametes',\n  'Fertilized eggs',\n  'Gametes',\n  'Grandparent',\n  'Laying pullets',\n  'Others',\n  'Parents',\n  'Pure breed',\n  'Pure line',\n  'Unfertilized eggs',\n  'Wild stocks',\n  'Wild stocks gamete'\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-095",
+      "statement": "The bee Classification list offers \"Honeybees or bumblebees queens with max. 20 attendants\", \"Honeybees or bumblebees with brood\" and \"Other honeybees or bumblebees\".",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:54-58",
+      "quote": "const BEE_CLASSIFICATIONS = [\n  'Honeybees or bumblebees queens with max. 20 attendants',\n  'Honeybees or bumblebees with brood',\n  'Other honeybees or bumblebees'\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-096",
+      "statement": "Rabbits (01061410 and 01061490) ask per animal for Microchip/transponder only.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:160-161",
+      "quote": "rabbit: { perAnimal: true, fields: [microchip] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-097",
+      "statement": "Domestic rabbits, other (01061490, species Lagomorpha other) ask per animal for Microchip/transponder, Description and Identification details.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:210-211",
+      "quote": "'rabbit-other-lagomorpha': { perAnimal: true, fields: [microchip, description, identificationDetails] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-098",
+      "statement": "Cats, dogs and other live mammals (01061900) ask per animal for Passport, Microchip/transponder and Tattoo.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:138, 162-166",
+      "quote": "const catOrDog = { perAnimal: true, fields: [passport, microchip, tattoo] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-099",
+      "statement": "Ferrets ask per animal for Passport, Microchip/transponder, Tattoo, Description and Identification details.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:167",
+      "quote": "ferret: { perAnimal: true, fields: [passport, microchip, tattoo, description, identificationDetails] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-100",
+      "statement": "Reptiles (01062000) ask once per species for Breed/category, Description and Identification details; Breed/category is a free-text field because the table gives no list of options for it.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:79-81, 168-169",
+      "quote": "reptile: { perAnimal: false, fields: [breedOrCategory, description, identificationDetails] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-101",
+      "statement": "Falcons, owls and other birds of prey (01063100) ask per animal for Microchip/transponder and Leg ring/band.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:170-171",
+      "quote": "'birds-of-prey': { perAnimal: true, fields: [microchip, legRing] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-102",
+      "statement": "Parrots (01063200) ask per animal for Microchip/transponder, Leg ring/band, Bird breed, Description and Identification details; Bird breed is free text.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:79-82, 172-173",
+      "quote": "parrot: { perAnimal: true, fields: [microchip, legRing, birdBreed, description, identificationDetails] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-103",
+      "statement": "Ostriches and emus (01063300) ask per animal for Microchip/transponder, Leg ring/band, Mark/clip, Unique code, Classification (poultry list), Description and Identification details.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:174-178",
+      "quote": "fields: [microchip, legRing, markClip, uniqueCode, classification(POULTRY_CLASSIFICATIONS), description, identificationDetails]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-104",
+      "statement": "Pigeons (01063910) ask once per species for Classification (poultry list), Description and Identification details.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:179-180",
+      "quote": "pigeons: { perAnimal: false, fields: [classification(POULTRY_CLASSIFICATIONS), description, identificationDetails] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-105",
+      "statement": "Other birds (01063980) get the default fields, except partridge, pheasant and the Galliformes order, which ask once per species for the game bird fields: Flock ID, Classification (game bird list), Description, Identification details and Hatching date.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:119-122, 181-182, 212-227",
+      "quote": "const gameBirds = {\n  perAnimal: false,\n  fields: [flockId, classification(GAME_BIRD_AND_EGG_CLASSIFICATIONS), description, identificationDetails, hatchingDate]\n}",
+      "confidence": "verbatim",
+      "note": "The partridge species are Alectoris, Amnoperdix, Dendrortyx, Margaroperdix, Melanoperdix, Perdix and Rhizothera; the pheasant species are Catreus, Chrysolohus, Lophura, Phasianus and Syrmaticus; plus Galliformes."
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-106",
+      "statement": "The Testing 3 commodities for game birds (day-old chicks and adult birds) use the game bird fields; poultry day-old chicks ask for Flock ID, Classification, Description, Identification details and Hatching date; poultry adult birds ask for the same without Hatching date; all once per species.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:108-117, 183-189",
+      "quote": "const poultryAdults = {\n  perAnimal: false,\n  fields: [flockId, classification(POULTRY_CLASSIFICATIONS), description, identificationDetails]\n}",
+      "confidence": "verbatim",
+      "note": "These commodity ids come from commodities-testing3.js; whether DR2.1 users can select them is owned by the commodity part. The Hatching date here has the plain hint \"For example, 27/03/2026\"."
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-107",
+      "statement": "Bees (01064100) ask once per species for Classification (bee list), Description and Identification details; other insects (01064900) get the default fields.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:190-193",
+      "quote": "bees: { perAnimal: false, fields: [classification(BEE_CLASSIFICATIONS), description, identificationDetails] },\n  // 01064900\n  'other-insects': defaultIdentification,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-108",
+      "statement": "Hatching eggs of chicken, turkey or goose, and other poultry (04071100, 04071911, 04071919) ask once per species for Classification (game bird and egg list), Egg mark, Identification mark, Description, Batch number, Collection date, Production date and Hatching date.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:124-136, 194-197",
+      "quote": "fields: [\n    classification(GAME_BIRD_AND_EGG_CLASSIFICATIONS),\n    eggMark,\n    identificationMark,\n    description,\n    batchNumber,\n    collectionDate,\n    productionDate,\n    hatchingDate\n  ]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-109",
+      "statement": "Camels, primates, whales dolphins and seals, other live animals, circus animals and hatching eggs of other birds are not in the table, so they use the default fields Description and Identification details.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers-testing3.js:198-204",
+      "quote": "// Not in the table, so these use the default fields\n  camel: defaultIdentification,\n  primates: defaultIdentification,\n  'whales-dolphins-seals': defaultIdentification,\n  'other-live-animals': defaultIdentification,\n  'circus-animals': defaultIdentification,\n  'hatching-eggs-other-birds': defaultIdentification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-110",
+      "statement": "Field labels in the live-animal table are: Passport, Microchip/transponder, Ear tag, Tattoo, Equine name, Identification number, Flock ID, Leg ring/band, Mark/clip, Unique code (identifiers); Classification, Breed/category, Bird breed (classification); Description, Identification details, Egg mark, Identification mark, Batch number (additional); Hatching date, Collection date, Production date (dates, hint \"For example, 27/03/2026\").",
+      "kind": "copy",
+      "ref": "app/data/commodity-identifiers-testing3.js:60-94",
+      "quote": "const microchip = { id: 'microchip', label: 'Microchip/transponder', group: 'identifier' }\n...\nconst equineName = { id: 'horse-name', label: 'Equine name', group: 'identifier' }",
       "confidence": "verbatim"
     },
     {
@@ -150,7 +371,8 @@
       "kind": "data",
       "ref": "app/data/commodity-identifiers.js:21-26",
       "quote": "'05119985': [\n    { id: 'donor-id', label: 'Donor name/ID', type: 'text', maxLength: 58 },\n    { id: 'collection-date', label: 'Collection date', type: 'date', hint: 'For example, 27/03/2026' },\n    { id: 'production-date', label: 'Production date', type: 'date', hint: 'For example, 27/03/2026' },\n    { id: 'identification-number', label: 'Identification number/mark', type: 'text', maxLength: 58 }\n  ],",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "Every germinal commodity in generated/commodities-germinal.json carries 05119985 except Cattle, Semen (05111000), read for context."
     },
     {
       "id": "prototype-dr2-1-source-p5-019",
@@ -169,27 +391,34 @@
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p5-021",
-      "statement": "Sheep (010410) and goats (010420) have no entry in the commodity identifiers list, so they fall back to their own commodity identifiers: a single Ear tag field.",
-      "kind": "data",
-      "ref": "app/routes.js:1774-1778; app/data/commodity-identifiers.js:3-33",
-      "quote": "return Array.isArray(match.commodity.identifiers) ? match.commodity.identifiers : []",
-      "confidence": "inferred",
-      "note": "Inferred from the fallback rule together with app/data/commodities.js:62-99 (read for context, outside this part's read list), where sheep and goat carry identifiers [{ id: 'ear-tag', label: 'Ear tag' }]. Poultry, rabbits and other codes carry an empty list and so get no identification panel."
+      "id": "prototype-dr2-1-source-p5-111",
+      "statement": "A date field is shown as an MOJ date picker, a Classification field as a dropdown, and every other field as a text input of width 20.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/animal-identification-details.html:126-170",
+      "quote": "{% if field.type == \"date\" %}\n                            <div class=\"app-animal-identification-page__date-field\">\n                              {{ mojDatePicker({\n...\n                          {% elif field.type == \"select\" %}\n...\n                              classes: \"govuk-input--width-20 app-animal-identification-page__input\",",
+      "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p5-022",
-      "statement": "A date identifier field is shown as an MOJ date picker; every other identifier field is a text input of width 20.",
-      "kind": "behaviour",
-      "ref": "app/views/design-release-2.1/animal-identification-details.html:121-150",
-      "quote": "{% if field.type == \"date\" %}\n                            <div class=\"app-animal-identification-page__date-field\">\n                              {{ mojDatePicker({",
+      "id": "prototype-dr2-1-source-p5-112",
+      "statement": "A dropdown's first option is \"Select a <label in lower case>\", that is \"Select a classification\", followed by each option of its list, with the saved or typed value selected.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/animal-identification-details.html:144-158",
+      "quote": "{% set selectItems = [{ value: \"\", text: \"Select a \" + (field.label | lower) }] %}\n                            {% for option in field.options %}\n                              {% set selectItemCount = selectItems.push({ value: option, text: option, selected: option == fieldValue }) %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-113",
+      "statement": "A dropdown value that is not one of its options is treated as no selection and saved as blank.",
+      "kind": "rule",
+      "ref": "app/routes.js:2508-2512",
+      "quote": "// A selection that is not in the list is treated as no selection.\n    if (field.type === 'select' && !(field.options || []).includes(value)) {\n      values[field.id] = ''\n      return\n    }",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p5-023",
       "statement": "A date picker shows the field's own hint, or \"For example, 27/03/2026\" when the field has none.",
       "kind": "copy",
-      "ref": "app/views/design-release-2.1/animal-identification-details.html:130-132",
+      "ref": "app/views/design-release-2.1/animal-identification-details.html:135-137",
       "quote": "text: field.hint or \"For example, 27/03/2026\"",
       "confidence": "verbatim"
     },
@@ -197,7 +426,7 @@
       "id": "prototype-dr2-1-source-p5-024",
       "statement": "Text identifier inputs have the field label only and no hint.",
       "kind": "copy",
-      "ref": "app/views/design-release-2.1/animal-identification-details.html:140-149",
+      "ref": "app/views/design-release-2.1/animal-identification-details.html:160-169",
       "quote": "{{ govukInput({\n                              label: {\n                                text: field.label\n                              },",
       "confidence": "verbatim"
     },
@@ -205,15 +434,66 @@
       "id": "prototype-dr2-1-source-p5-025",
       "statement": "Each identifier field is named identifiers[<species id>][<field id>] and has the id identifier-<species id>-<field id>, so fields are grouped per species.",
       "kind": "data",
-      "ref": "app/views/design-release-2.1/animal-identification-details.html:117-118",
+      "ref": "app/views/design-release-2.1/animal-identification-details.html:122-123",
       "quote": "{% set fieldName = \"identifiers[\" + panel.speciesId + \"][\" + field.id + \"]\" %}\n                          {% set fieldId = \"identifier-\" + panel.speciesId + \"-\" + field.id %}",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p5-026",
-      "statement": "Every identifier field is optional: an empty value raises no error.",
+      "id": "prototype-dr2-1-source-p5-114",
+      "statement": "A panel shows the hint \"Enter at least one identifier.\" under its entry heading when the species has any field in the identifier group, even if it has only one.",
+      "kind": "copy",
+      "ref": "app/routes.js:2314-2317; app/views/design-release-2.1/animal-identification-details.html:116-118",
+      "quote": "// Shown wherever the commodity has identifier fields, even if it has only one\n    identifierHint: fields.some((field) => field.group === 'identifier')\n      ? 'Enter at least one identifier.'\n      : null,",
+      "confidence": "verbatim",
+      "note": "No hint for germinal products (their fields have no group) or for reptiles, pigeons, bees, hatching eggs and the default fields."
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-115",
+      "statement": "For a live-animal species, the fields in the identifier group are the ones that count towards \"at least one identifier\"; where the species has no identifier field, Description is the field that must be entered.",
       "kind": "rule",
-      "ref": "app/routes.js:2147-2151",
+      "ref": "app/data/commodity-identifiers-testing3.js:13-14, 230-242",
+      "quote": "// Marks the fields that count towards \"at least one identifier\". With no\n// identifier in the set, Description is the field that must be entered.\nfunction withRequiredFields (fields) {\n  const hasIdentifier = fields.some((field) => field.group === 'identifier')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-116",
+      "statement": "An entry counts as complete when at least one of the fields that count as identifiers has a value; for germinal products, which have no such fields, every field must have a value.",
+      "kind": "rule",
+      "ref": "app/routes.js:2135-2155",
+      "quote": "// Fields flagged countsAsIdentifier need at least one of them\n// entered. Without that flag, every field must be entered.\n...\n  if (requiredOneOfFields.length) {\n    return requiredOneOfFields.some((field) => hasIdentifierFieldValue(animal, field))\n  }\n\n  return fields.every((field) => hasIdentifierFieldValue(animal, field))",
+      "confidence": "verbatim",
+      "note": "Classification, additional and date fields stay optional for live animals."
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-117",
+      "statement": "A panel save with none of the counting fields filled shows the error \"Enter at least one identifier\" when the species has more than one such field, or \"Enter a <label with a lower-case first letter>\" when it has one, for example \"Enter a description\" for the default fields; the error links to the first such field.",
+      "kind": "rule",
+      "ref": "app/routes.js:2157-2174, 14314-14324",
+      "quote": "return {\n    key: `identifier-${speciesId}-${requiredOneOfFields[0].id}`,\n    text: requiredOneOfFields.length > 1\n      ? 'Enter at least one identifier'\n      : `Enter a ${lowerCaseFirstLetter(requiredOneOfFields[0].label)}`\n  }",
+      "confidence": "verbatim",
+      "note": "Single-field cases in the table: rabbits (\"Enter a microchip/transponder\") and every species whose only counting field is Description (\"Enter a description\")."
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-118",
+      "statement": "The missing-identifier error is shown only when the panel's fields have no other error, and the page is shown again with the typed values kept.",
+      "kind": "rule",
+      "ref": "app/routes.js:14318-14334",
+      "quote": "if (!errorList.length && missingIdentifierError) {\n      errors[missingIdentifierError.key] = { text: missingIdentifierError.text }\n      errorList.push({\n        text: missingIdentifierError.text,\n        href: `#${missingIdentifierError.key}`\n      })\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-119",
+      "statement": "While a template is being created or edited, a panel save does not ask for at least one identifier; any answer may be left blank.",
+      "kind": "rule",
+      "ref": "app/routes.js:14314-14316, 10348-10354",
+      "quote": "const missingIdentifierError = allowsBlankJourneyAnswers(req.session.data)\n      ? null\n      : getMissingIdentifierError(panel.identifierFields, values, speciesId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-120",
+      "statement": "An empty field raises no format or length error; the only check on blank fields is the at-least-one-identifier rule on a panel save.",
+      "kind": "rule",
+      "ref": "app/routes.js:2514-2518, 14309-14316",
       "quote": "values[field.id] = value\n\n    if (!value) {\n      return\n    }",
       "confidence": "verbatim"
     },
@@ -221,7 +501,7 @@
       "id": "prototype-dr2-1-source-p5-027",
       "statement": "Identifier values are trimmed of surrounding spaces before they are checked and saved.",
       "kind": "rule",
-      "ref": "app/routes.js:2143-2145",
+      "ref": "app/routes.js:2504-2506",
       "quote": "String(rawIdentifiers[field.id]).trim()",
       "confidence": "verbatim"
     },
@@ -229,7 +509,7 @@
       "id": "prototype-dr2-1-source-p5-028",
       "statement": "A text identifier with a length limit that is too long shows the error \"<label> must be <limit> characters or less\", for example \"Donor name/ID must be 58 characters or less\" and \"Identification number/mark must be 58 characters or less\".",
       "kind": "rule",
-      "ref": "app/routes.js:2118-2120",
+      "ref": "app/routes.js:2479-2481",
       "quote": "if (field.maxLength && value.length > field.maxLength) {\n    return `${field.label} must be ${field.maxLength} characters or less`\n  }",
       "confidence": "verbatim"
     },
@@ -237,40 +517,43 @@
       "id": "prototype-dr2-1-source-p5-029",
       "statement": "A date identifier that is not in the pattern day/month/four-digit year (one or two digits for day and month) shows the error \"Enter a <label in lower case> in the format DD/MM/YYYY\", that is \"Enter a collection date in the format DD/MM/YYYY\" or \"Enter a production date in the format DD/MM/YYYY\".",
       "kind": "rule",
-      "ref": "app/routes.js:2113-2115, 2126-2128",
+      "ref": "app/routes.js:2474-2476, 2487-2489",
       "quote": "return /^\\d{1,2}\\/\\d{1,2}\\/\\d{4}$/.test(String(value || '').trim())\n...\n    return `Enter a ${field.label.toLowerCase()} in the format DD/MM/YYYY`",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "The same rule gives \"Enter a hatching date in the format DD/MM/YYYY\" for the live-animal Hatching date."
     },
     {
       "id": "prototype-dr2-1-source-p5-030",
       "statement": "A date identifier in the right format that is not a real calendar date shows the error \"<label> must be a real date\", that is \"Collection date must be a real date\" or \"Production date must be a real date\".",
       "kind": "rule",
-      "ref": "app/routes.js:2130-2132, 4301-4323",
+      "ref": "app/routes.js:2491-2493",
       "quote": "if (!parseArrivalDisplayDate(value)) {\n    return `${field.label} must be a real date`\n  }",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "Also \"Hatching date must be a real date\" for live animals."
     },
     {
       "id": "prototype-dr2-1-source-p5-031",
       "statement": "Identifier dates have no range limit: any real date in the past or future is accepted, and a production date is not checked against the collection date.",
       "kind": "rule",
-      "ref": "app/routes.js:2117-2135",
+      "ref": "app/routes.js:2478-2496",
       "quote": "if (!parseArrivalDisplayDate(value)) {\n    return `${field.label} must be a real date`\n  }\n\n  return null",
       "confidence": "inferred",
       "note": "Inferred: getIdentifierFieldError returns null after the real-date check, with no further date rule."
     },
     {
-      "id": "prototype-dr2-1-source-p5-032",
-      "statement": "Only the length rule applies to text identifiers; a value with no length limit (Microchip, Passport, Tattoo, Ear tag, Horse name) is never rejected for its content.",
+      "id": "prototype-dr2-1-source-p5-121",
+      "statement": "Only the length rule applies to text fields, and no live-animal field has a length limit, so a live-animal text value is never rejected for its content.",
       "kind": "rule",
-      "ref": "app/routes.js:2117-2124",
+      "ref": "app/routes.js:2478-2485; app/data/commodity-identifiers-testing3.js:62-94",
       "quote": "if (field.type !== 'date') {\n    return null\n  }",
-      "confidence": "verbatim"
+      "confidence": "inferred",
+      "note": "Inferred: none of the field definitions in commodity-identifiers-testing3.js carries maxLength."
     },
     {
       "id": "prototype-dr2-1-source-p5-033",
       "statement": "Each identifier error appears in an error summary titled \"There is a problem\", linking to the field (#identifier-<species id>-<field id>), and as an inline error on the field.",
       "kind": "behaviour",
-      "ref": "app/routes.js:2159-2166; app/views/design-release-2.1/animal-identification-details.html:38-43, 116",
+      "ref": "app/routes.js:2526-2533; app/views/design-release-2.1/animal-identification-details.html:39-44, 121, 138",
       "quote": "errorList.push({\n      text,\n      href: `#${errorId}`\n    })",
       "confidence": "verbatim"
     },
@@ -278,41 +561,43 @@
       "id": "prototype-dr2-1-source-p5-034",
       "statement": "When a save fails validation, the page is shown again with the values the user typed kept in that species' entry form.",
       "kind": "behaviour",
-      "ref": "app/routes.js:2026-2031, 12465-12472",
+      "ref": "app/routes.js:2387-2392, 14326-14333",
       "quote": "if (locals.errorSpeciesId === speciesId && panel.activeAnimal && locals.identifierValues) {\n        panel.activeAnimal = {\n          ...panel.activeAnimal,\n          identifierValues: locals.identifierValues\n        }\n      }",
       "confidence": "verbatim",
       "note": "Only the first species with an error keeps its typed values on a continue; other species' forms show what was saved before (see p5-055)."
     },
     {
-      "id": "prototype-dr2-1-source-p5-035",
-      "statement": "When at least one commodity is selected, the page shows a \"Selected commodities\" summary with columns Commodity code, Common name, Species and a quantity column, one row per commodity.",
+      "id": "prototype-dr2-1-source-p5-122",
+      "statement": "When at least one commodity is selected, the page shows a \"Selected commodities\" summary with columns Commodity code, Commodity, Species and a quantity column, one row per commodity.",
       "kind": "copy",
-      "ref": "app/views/design-release-2.1/animal-identification-details.html:56-85",
-      "quote": "Selected commodities\n...\n<div class=\"app-animal-identification-page__summary-key\">Commodity code</div>\n                  <div class=\"app-animal-identification-page__summary-value\">Common name</div>\n                  <div class=\"app-animal-identification-page__summary-species\">Species</div>",
-      "confidence": "verbatim"
+      "ref": "app/views/design-release-2.1/animal-identification-details.html:57-69",
+      "quote": "Selected commodities\n...\n<div class=\"app-animal-identification-page__summary-key\">Commodity code</div>\n                  <div class=\"app-animal-identification-page__summary-value\">Commodity</div>\n                  <div class=\"app-animal-identification-page__summary-species\">Species</div>",
+      "confidence": "verbatim",
+      "note": "The second column was headed \"Common name\" in the previous extract. For other live mammals (01061900) the rows are one per species (routes.js:983-1006, read for context)."
     },
     {
-      "id": "prototype-dr2-1-source-p5-036",
-      "statement": "The quantity column is headed \"Number of packages\" when every selected commodity is a germinal product, and \"Number of animals\" otherwise.",
+      "id": "prototype-dr2-1-source-p5-123",
+      "statement": "The quantity column is headed \"Quantity (unit/pieces)\" when every selected commodity is a germinal product, and \"Number of animals\" otherwise.",
       "kind": "rule",
-      "ref": "app/routes.js:10736-10740; app/views/design-release-2.1/animal-identification-details.html:66",
-      "quote": "const quantityColumnLabel = hasGerminalProducts && !hasLiveAnimals\n    ? 'Number of packages'\n    : 'Number of animals'",
-      "confidence": "verbatim"
+      "ref": "app/routes.js:83, 12302-12307; app/views/design-release-2.1/animal-identification-details.html:67",
+      "quote": "const quantityColumnLabel = isGerminalIdentification\n    ? GERMINAL_QUANTITY_LABEL\n    : 'Number of animals'",
+      "confidence": "verbatim",
+      "note": "GERMINAL_QUANTITY_LABEL = 'Quantity (unit/pieces)' (routes.js:83). It was \"Number of packages\" in the previous extract."
     },
     {
       "id": "prototype-dr2-1-source-p5-037",
       "statement": "In the summary, a commodity row with several species lists them one per line separated by commas, and the quantity cell shows the row's number of animals.",
       "kind": "behaviour",
-      "ref": "app/views/design-release-2.1/animal-identification-details.html:74-79",
+      "ref": "app/views/design-release-2.1/animal-identification-details.html:75-80",
       "quote": "{{ speciesName }}{% if not loop.last %},<br>{% endif %}\n...\n<div class=\"app-animal-identification-page__summary-animals\">{{ row.numberOfAnimals }}</div>",
       "confidence": "verbatim",
-      "note": "How the rows are built (one row per species for other live mammals, packages for germinal) is in getSelectedCommodityRows, outside this part's range."
+      "note": "How the rows are built is in getSelectedCommodityRows, outside this part's range."
     },
     {
       "id": "prototype-dr2-1-source-p5-038",
       "statement": "Each summary row has a \"Change\" link to the commodity search page with the search reset.",
       "kind": "behaviour",
-      "ref": "app/views/design-release-2.1/animal-identification-details.html:81",
+      "ref": "app/views/design-release-2.1/animal-identification-details.html:82",
       "quote": "<a class=\"govuk-link\" href=\"/design-release-2.1/what-are-you-importing?resetSearch=1\">Change</a>",
       "confidence": "verbatim"
     },
@@ -320,7 +605,7 @@
       "id": "prototype-dr2-1-source-p5-039",
       "statement": "Below the summary, an \"Add another commodity\" link goes to the commodity page.",
       "kind": "behaviour",
-      "ref": "app/views/design-release-2.1/animal-identification-details.html:87-89",
+      "ref": "app/views/design-release-2.1/animal-identification-details.html:88-90",
       "quote": "<a class=\"govuk-link\" href=\"/design-release-2.1/what-are-you-importing\">Add another commodity</a>",
       "confidence": "verbatim"
     },
@@ -328,7 +613,7 @@
       "id": "prototype-dr2-1-source-p5-040",
       "statement": "Identification panels are grouped into one section per commodity, headed \"<commodity name> (<commodity code>)\", for example \"Cattle (0102)\".",
       "kind": "behaviour",
-      "ref": "app/routes.js:1964-1993, 840-842; app/views/design-release-2.1/animal-identification-details.html:94-98",
+      "ref": "app/routes.js:962-964, 2325-2354; app/views/design-release-2.1/animal-identification-details.html:95-99",
       "quote": "return `${commodity.name} (${commodity.code})`",
       "confidence": "verbatim"
     },
@@ -336,80 +621,89 @@
       "id": "prototype-dr2-1-source-p5-041",
       "statement": "Within a commodity section there is one panel per selected species that has identifier fields and at least one entry to make, in the order the species were selected.",
       "kind": "behaviour",
-      "ref": "app/routes.js:1888-1905, 2015-2050",
+      "ref": "app/routes.js:2246-2256, 2376-2411",
       "quote": "if (fields.length === 0) {\n    return null\n  }\n\n  const total = getIdentificationEntryCount(sessionData, speciesId)\n\n  if (!total) {\n    return null\n  }",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p5-042",
-      "statement": "Each species panel is headed with the species name (scientific label) and has a \"Change number of animals\" link to the consignment details page.",
-      "kind": "behaviour",
-      "ref": "app/routes.js:1954-1956; app/views/design-release-2.1/animal-identification-details.html:102-105",
-      "quote": "<a class=\"govuk-link app-animal-identification-panel__change-count\" href=\"/design-release-2.1/consignment-details\">{{ panel.changeCountLabel or \"Change number of animals\" }}</a>",
+      "id": "prototype-dr2-1-source-p5-124",
+      "statement": "Each species panel is headed with the species label, which leads with the common name, for example \"African sacred ibis (Threskiornis aethiopicus)\"; the Latin name alone is shown when there is no common name or the common name only repeats the commodity name or the Latin name.",
+      "kind": "copy",
+      "ref": "app/routes.js:2220-2237, 2311",
+      "quote": "// The updated versions lead with the common name, for example \"African sacred ibis (Threskiornis\n// aethiopicus)\". It is left out when there is none, or when it would only\n// repeat the commodity name above it or the Latin name.",
       "confidence": "verbatim",
-      "note": "The label stays \"Change number of animals\" for germinal product panels too."
+      "note": "The same label is used in the entry heading and saved-animal rows."
     },
     {
-      "id": "prototype-dr2-1-source-p5-043",
-      "statement": "For live animals, the number of identification entries a species needs equals its number of animals from consignment details.",
+      "id": "prototype-dr2-1-source-p5-125",
+      "statement": "Each species panel has a link to the consignment details page reading \"Change number of commodities\" for a germinal product and \"Change number of animals\" otherwise.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:2312; app/views/design-release-2.1/animal-identification-details.html:105",
+      "quote": "changeCountLabel: isGerminalProduct ? 'Change number of commodities' : 'Change number of animals',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-126",
+      "statement": "For a per-animal species, the number of identification entries needed equals its number of animals from consignment details; for a flock or batch species it is one entry when it has any animals, and none otherwise.",
       "kind": "rule",
-      "ref": "app/routes.js:1781-1794",
-      "quote": "return Number((sessionData.numberOfAnimals || {})[speciesId]) || 0",
+      "ref": "app/routes.js:2060-2079",
+      "quote": "const numberOfAnimals = Number((sessionData.numberOfAnimals || {})[speciesId]) || 0\n\n  if (isPerSpeciesIdentificationEntry(speciesId, sessionData)) {\n    return numberOfAnimals > 0 ? 1 : 0\n  }\n\n  return numberOfAnimals",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p5-044",
       "statement": "Germinal products need only one set of identification details per species, whatever the quantity.",
       "kind": "rule",
-      "ref": "app/routes.js:1788-1791",
+      "ref": "app/routes.js:2067-2070",
       "quote": "// Germinal products only need one set of identification details per species.\n  if (isGerminalProductCommodity(match.commodity)) {\n    return 1\n  }",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p5-045",
-      "statement": "For live animals, a panel shows the entry form for the first animal (in order) whose details are not complete, headed \"Enter details for <species> <n> of <total>\".",
+      "id": "prototype-dr2-1-source-p5-127",
+      "statement": "For a per-animal species, a panel shows the entry form for the first animal (in order) whose details are not complete, headed \"Enter details for <species> <n> of <total>\".",
       "kind": "behaviour",
-      "ref": "app/routes.js:1913-1926; app/views/design-release-2.1/animal-identification-details.html:113",
-      "quote": "headingText: isGerminalProduct\n          ? `Enter details for ${speciesLabel}`\n          : `Enter details for ${speciesLabel} ${index + 1} of ${total}`",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p5-046",
-      "statement": "An animal's identification entry counts as complete only when every identifier field for its species has a value.",
-      "kind": "rule",
-      "ref": "app/routes.js:1850-1856",
-      "quote": "return fields.every((field) => {\n    const value = animal[field.id]\n\n    return value != null && String(value).trim() !== ''\n  })",
+      "ref": "app/routes.js:2266-2279; app/views/design-release-2.1/animal-identification-details.html:114",
+      "quote": "headingText: isSingleEntryForm\n          ? `Enter details for ${speciesLabel}`\n          : `Enter details for ${speciesLabel} ${index + 1} of ${total}`",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p5-047",
       "statement": "For germinal products, the panel always shows one editable form headed \"Enter details for <species>\", prefilled with what was saved, and never a saved-entries table.",
       "kind": "behaviour",
-      "ref": "app/routes.js:1928-1935, 1942-1944, 1957",
-      "quote": "// Germinal products use a single editable form, not the multi-animal save flow.\n  if (isGerminalProduct && !activeAnimal) {\n    activeAnimal = {\n      animalNumber: 1,\n      identifierValues: speciesSaved[0] || {},\n      headingText: `Enter details for ${speciesLabel}`\n    }\n  }",
+      "ref": "app/routes.js:2281-2289, 2298-2300, 2318",
+      "quote": "// Germinal products, flocks and batches use a single editable form, not the\n  // multi-animal save flow.\n  if (isSingleEntryForm && !activeAnimal) {\n    activeAnimal = {\n      animalNumber: 1,\n      identifierValues: speciesSaved[0] || {},\n      headingText: `Enter details for ${speciesLabel}`\n    }\n  }",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p5-048",
-      "statement": "When every animal of a live-animal species has complete details, its panel shows only the saved-animals table and no entry form.",
+      "id": "prototype-dr2-1-source-p5-128",
+      "statement": "A flock or batch species also gets one editable form headed \"Enter details for <species>\", prefilled with what was saved, and no saved-entries table.",
       "kind": "behaviour",
-      "ref": "app/routes.js:1957; app/views/design-release-2.1/animal-identification-details.html:108-111",
-      "quote": "isComplete: isGerminalProduct ? false : !activeAnimal,",
+      "ref": "app/routes.js:2260-2261, 2281-2289, 2318-2320",
+      "quote": "isComplete: isSingleEntryForm ? false : !activeAnimal,\n    activeAnimal,\n    savedAnimals: isPerSpeciesEntry ? [] : completeSavedAnimals,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-129",
+      "statement": "When every animal of a per-animal species has complete details, its panel shows only the saved-animals table and no entry form.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:2318; app/views/design-release-2.1/animal-identification-details.html:109-112",
+      "quote": "isComplete: isSingleEntryForm ? false : !activeAnimal,",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p5-049",
       "statement": "A species with only one animal (or a germinal product) has no per-panel save button: its details are saved with the page's main buttons.",
       "kind": "behaviour",
-      "ref": "app/routes.js:2036-2038, 12498-12501",
+      "ref": "app/routes.js:2397-2399, 14360-14362",
       "quote": "if (panel.totalAnimals <= 1) {\n          panel.showSaveButton = false\n          panel.saveButtonText = null",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "A flock or batch species needs one entry, so it has no per-panel save button either (p5-126)."
     },
     {
       "id": "prototype-dr2-1-source-p5-050",
       "statement": "A species with more than one animal has a panel button \"Save and add another\", which reads \"Save and finish\" when only one animal is left to complete.",
       "kind": "behaviour",
-      "ref": "app/routes.js:2039-2044; app/views/design-release-2.1/animal-identification-details.html:153-159",
+      "ref": "app/routes.js:2400-2405; app/views/design-release-2.1/animal-identification-details.html:173-179",
       "quote": "panel.saveButtonText = remainingForSpecies === 1\n            ? 'Save and finish'\n            : 'Save and add another'",
       "confidence": "verbatim"
     },
@@ -417,25 +711,25 @@
       "id": "prototype-dr2-1-source-p5-051",
       "statement": "The panel save button validates only that species' fields, saves them as the current animal's entry and returns to the page, which then shows the next incomplete animal.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12445-12496",
+      "ref": "app/routes.js:14295-14356",
       "quote": "const saveIndex = panel.activeAnimal.animalNumber - 1\n    const speciesSaved = req.session.data.animalIdentifiers[speciesId]\n\n    if (speciesSaved.length === saveIndex) {\n      speciesSaved.push(values)\n    } else {\n      speciesSaved[saveIndex] = values\n    }\n\n    return res.redirect('/animal-identification-details')",
       "confidence": "verbatim",
       "note": "The redirect is to the root path; the version mount prefixes it with /design-release-2.1 under DR2.1 (structure of the source)."
     },
     {
-      "id": "prototype-dr2-1-source-p5-052",
-      "statement": "Saving a panel with some fields left empty stores the partial entry, but the animal stays incomplete, so the same animal's form is shown again with the saved values filled in.",
+      "id": "prototype-dr2-1-source-p5-130",
+      "statement": "Outside a template, a panel save for a per-animal live species cannot store an entry with no identifier: it is refused with the missing-identifier error, so a saved entry always counts as complete.",
       "kind": "behaviour",
-      "ref": "app/routes.js:1913-1925, 12489-12495",
-      "quote": "const animal = speciesSaved[index] || {}\n\n    if (!isAnimalIdentifierEntryComplete(animal, fields)) {\n      activeAnimal = {\n        animalNumber: index + 1,\n        identifierValues: animal,",
+      "ref": "app/routes.js:14314-14334; app/data/commodity-identifiers-testing3.js:138-178, 208-211",
+      "quote": "if (errorList.length) {\n      req.session.data.errorList = errorList\n      req.session.data.errors = errors\n\n      return renderAnimalIdentificationDetailsPage(req, res, {",
       "confidence": "inferred",
-      "note": "Inferred: the save path has no required-field check, and the active animal is the first incomplete one, so a partial save returns to it. There is no error telling the user fields are missing."
+      "note": "Inferred: every per-animal entry in the table has at least one identifier-group field, so the missing-identifier check applies to every panel save. In a template a blank panel save stores an incomplete entry and the same animal's form shows again."
     },
     {
       "id": "prototype-dr2-1-source-p5-053",
       "statement": "A panel save for a species that has no animal left to enter does nothing and returns to the page.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12449-12451",
+      "ref": "app/routes.js:14299-14301",
       "quote": "if (!panel || !panel.activeAnimal) {\n      return res.redirect('/animal-identification-details')\n    }",
       "confidence": "verbatim"
     },
@@ -443,16 +737,16 @@
       "id": "prototype-dr2-1-source-p5-054",
       "statement": "Save and continue (and the soft-save buttons) save the typed details only for single-animal species and germinal products; details typed into a multi-animal species' form are not saved unless its panel button was used.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12498-12501, 2067-2069",
+      "ref": "app/routes.js:14360-14362, 2428-2430",
       "quote": "const identifierSave = saveActiveAnimalIdentifiersFromBody(req.session.data, req.body, {\n      onlySingleAnimalSpecies: true\n    })\n...\n    if (onlySingleAnimalSpecies && panel.totalAnimals > 1) {\n      return\n    }",
       "confidence": "verbatim",
-      "note": "Possible design gap: a user who fills a multi-animal form and presses Save and continue loses that entry silently."
+      "note": "Possible design gap: a user who fills a multi-animal form and presses Save and continue loses that entry silently. Flock and batch species count as single-entry and are saved here."
     },
     {
       "id": "prototype-dr2-1-source-p5-055",
       "statement": "On Save and continue, if any single-animal or germinal species' details fail validation, the page is shown again with all errors listed and the first failing species' typed values kept; otherwise errors are cleared.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12503-12514, 2087-2090",
+      "ref": "app/routes.js:14364-14375, 2448-2451",
       "quote": "if (identifierSave.errorList.length) {\n      req.session.data.errorList = identifierSave.errorList\n      req.session.data.errors = identifierSave.errors\n\n      return renderAnimalIdentificationDetailsPage(req, res, {\n        errorSpeciesId: identifierSave.firstErrorSpeciesId,\n        identifierValues: identifierSave.firstErrorValues\n      })\n    }",
       "confidence": "verbatim",
       "note": "saveActiveAnimalIdentifiersFromBody writes every species' values to the session, including ones with errors, before the page is re-shown."
@@ -461,7 +755,7 @@
       "id": "prototype-dr2-1-source-p5-056",
       "statement": "Save and continue on a valid page goes to the next journey step (additional animal details or arrival details), or back to the hub, review or template review when the user came from there.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12520-12523, 1588-1602",
+      "ref": "app/routes.js:14381-14384",
       "quote": "return res.redirect(getSectionContinueRedirect(\n      req,\n      getNextJourneyPath('/animal-identification-details', req.session.data)\n    ))",
       "confidence": "verbatim"
     },
@@ -469,7 +763,7 @@
       "id": "prototype-dr2-1-source-p5-057",
       "statement": "\"Save and return to overview\" (action hub) saves the draft and goes to the notification hub; in amend mode \"Save and return\" (action review) goes to the review page; when editing a template from its review it returns to the template review.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12516-12518, 1564-1586",
+      "ref": "app/routes.js:14377-14379",
       "quote": "if (isJourneySoftSaveAction(getJourneyFormAction(req))) {\n      return res.redirect(getJourneySaveRedirect(getJourneyFormAction(req), '/notification-hub', req.session.data))\n    }",
       "confidence": "verbatim"
     },
@@ -477,7 +771,7 @@
       "id": "prototype-dr2-1-source-p5-058",
       "statement": "The page ends with the shared DR2.1 journey form actions: Save and continue, Save and return to overview, and a Cancel and return to overview link (variants for amend and template-review editing).",
       "kind": "behaviour",
-      "ref": "app/views/design-release-2.1/animal-identification-details.html:172-175",
+      "ref": "app/views/design-release-2.1/animal-identification-details.html:192-195",
       "quote": "{% include \"partials/design-release-2.1/journey-form-actions.html\" %}",
       "confidence": "verbatim",
       "note": "Button texts come from partials/design-release-2.1/journey-form-actions.html (claimed by the shell part)."
@@ -486,31 +780,40 @@
       "id": "prototype-dr2-1-source-p5-059",
       "statement": "A post with any other action value simply reloads the page without saving.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12526",
+      "ref": "app/routes.js:14387",
       "quote": "return res.redirect('/animal-identification-details')",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p5-060",
-      "statement": "Saved live animals with complete details are listed in a table under the panel with an \"Animal\" column, one column per identifier field (headed with the field label) and a Remove button per row.",
+      "id": "prototype-dr2-1-source-p5-131",
+      "statement": "Saved per-animal entries are listed in a table under the panel with an \"Animal\" column, one column per field that at least one saved entry has filled in (headed with the field label), and a Remove button per row; an empty cell shows nothing.",
       "kind": "behaviour",
-      "ref": "app/views/partials/animal-identification-saved-animals.html:1-28; app/routes.js:1945-1947",
-      "quote": "<div class=\"app-animal-identification-panel__saved-key\">Animal</div>\n    {% for field in panel.identifierFields %}\n      <div class=\"app-animal-identification-panel__saved-value\">{{ field.label }}</div>",
+      "ref": "app/views/partials/design-release-2.1/animal-identification-saved-animals.html:1-31; app/routes.js:2176-2188, 2548-2551",
+      "quote": "{# Shows only the identification fields that have been filled in for at least one animal. #}\n{% set savedFields = panel.savedFields or panel.identifierFields %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-132",
+      "statement": "If no saved entry has any field filled in, the saved table falls back to the columns for the fields that count as identifiers.",
+      "kind": "rule",
+      "ref": "app/routes.js:2183-2187",
+      "quote": "return usedFields.length ? usedFields : getRequiredOneOfIdentifierFields(fields)",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p5-061",
       "statement": "Each saved animal row is labelled \"<species> <n>\", numbered by its position in the saved list.",
       "kind": "copy",
-      "ref": "app/routes.js:2176-2183",
-      "quote": "label: `${context.speciesLabel} ${index + 1}`,",
-      "confidence": "verbatim"
+      "ref": "app/routes.js:2543-2547",
+      "quote": "label: context.isSingleEntry\n      ? context.speciesLabel\n      : `${context.speciesLabel} ${index + 1}`,",
+      "confidence": "verbatim",
+      "note": "A flock or batch entry would be labelled with the species alone, but its panel shows no saved table (p5-128)."
     },
     {
       "id": "prototype-dr2-1-source-p5-062",
       "statement": "The saved-animals table shows only entries that are complete; a partially filled entry is not listed.",
       "kind": "rule",
-      "ref": "app/routes.js:1945-1947",
+      "ref": "app/routes.js:2301-2303",
       "quote": "const completeSavedAnimals = savedAnimals.filter((animal) => {\n    return isAnimalIdentifierEntryComplete(speciesSaved[animal.index] || {}, fields)\n  })",
       "confidence": "verbatim"
     },
@@ -518,15 +821,15 @@
       "id": "prototype-dr2-1-source-p5-063",
       "statement": "The saved-animals table appears both while animals are still being entered (below the entry form and save button) and once all are complete.",
       "kind": "behaviour",
-      "ref": "app/views/design-release-2.1/animal-identification-details.html:108-111, 161-163",
-      "quote": "{% if panel.savedAnimals and panel.savedAnimals.length %}\n                          {% include \"partials/animal-identification-saved-animals.html\" %}\n                        {% endif %}",
+      "ref": "app/views/design-release-2.1/animal-identification-details.html:109-112, 181-183",
+      "quote": "{% if panel.savedAnimals and panel.savedAnimals.length %}\n                          {% include \"partials/design-release-2.1/animal-identification-saved-animals.html\" %}\n                        {% endif %}",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p5-064",
       "statement": "Remove deletes that saved animal from the species' list, clears any errors and reloads the page; later animals move up a place and are renumbered.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12433-12443, 2207-2223",
+      "ref": "app/routes.js:14283-14293, 2576-2592",
       "quote": "removeSavedAnimal(req.session.data, speciesId, removeIndex)\n    req.session.data.errorList = null\n    req.session.data.errors = null\n\n    return res.redirect('/animal-identification-details')",
       "confidence": "verbatim",
       "note": "Renumbering is inferred from the splice and from labels being built from list position."
@@ -535,7 +838,7 @@
       "id": "prototype-dr2-1-source-p5-065",
       "statement": "Remove has no confirmation step.",
       "kind": "behaviour",
-      "ref": "app/views/partials/animal-identification-saved-animals.html:17-24; app/routes.js:12433-12443",
+      "ref": "app/views/partials/design-release-2.1/animal-identification-saved-animals.html:20-27; app/routes.js:14283-14293",
       "quote": "<button\n          type=\"submit\"\n          name=\"action\"\n          value=\"remove:{{ panel.speciesId }}:{{ animal.index }}\"",
       "confidence": "inferred",
       "note": "Inferred: the button submits straight to the remove handler, which deletes and redirects."
@@ -544,15 +847,24 @@
       "id": "prototype-dr2-1-source-p5-066",
       "statement": "A remove request for a position that does not exist is ignored; when the last saved animal of a species is removed, the species' identification record is deleted.",
       "kind": "rule",
-      "ref": "app/routes.js:2214-2222",
+      "ref": "app/routes.js:2583-2591",
       "quote": "if (!Array.isArray(saved) || !Number.isInteger(removeIndex) || removeIndex < 0 || removeIndex >= saved.length) {\n    return\n  }\n\n  saved.splice(removeIndex, 1)\n\n  if (saved.length === 0) {\n    delete sessionData.animalIdentifiers[speciesId]\n  }",
       "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p5-133",
+      "statement": "A second saved-animals table model is built with a Remove link-styled button per row, but the DR2.1 page renders the saved-animals partial instead and does not use it.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:2321, 2555-2574",
+      "quote": "html: `<button type=\"submit\" name=\"action\" value=\"remove:${context.speciesId}:${animal.index}\" class=\"govuk-link app-animal-identification-table__remove-button\">Remove</button>`",
+      "confidence": "inferred",
+      "note": "mechanism: builds savedAnimalsTable (head and rows) from saved entries. Inferred unused: the DR2.1 view reads panel.savedAnimals, never panel.savedAnimalsTable."
     },
     {
       "id": "prototype-dr2-1-source-p5-067",
       "statement": "Identification details are stored per species as a list of entries, each entry holding one value per identifier field id.",
       "kind": "data",
-      "ref": "app/routes.js:2092-2107",
+      "ref": "app/routes.js:2453-2468, 14339-14354",
       "quote": "if (!Array.isArray(sessionData.animalIdentifiers[speciesId])) {\n      sessionData.animalIdentifiers[speciesId] = []\n    }",
       "confidence": "verbatim"
     },
@@ -560,33 +872,43 @@
       "id": "prototype-dr2-1-source-p5-068",
       "statement": "Identification is complete for the notification when, for every selected species with identifier fields, every required entry is saved and complete (for germinal products, the one entry exists); a species with fields but no animals counts as incomplete.",
       "kind": "rule",
-      "ref": "app/routes.js:1858-1886",
+      "ref": "app/routes.js:2190-2218",
       "quote": "if (!total) {\n      return false\n    }\n\n    if (isGerminalIdentifierSpecies(speciesId)) {\n      return hasSavedGerminalIdentifierEntry(sessionData, speciesId)\n    }\n\n    const speciesSaved = saved[speciesId] || []\n\n    if (speciesSaved.length < total) {\n      return false\n    }\n\n    return speciesSaved.every((animal) => isAnimalIdentifierEntryComplete(animal, fields))",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "Used for the hub task status and readiness checks (routes.js:7485, 7516, 7650), outside this part."
     },
     {
       "id": "prototype-dr2-1-source-p5-069",
       "statement": "A germinal product species counts as identified once its one entry has been saved, even if some of its fields are empty.",
       "kind": "rule",
-      "ref": "app/routes.js:1812-1817",
+      "ref": "app/routes.js:2097-2102",
       "quote": "return total >= 1 && animals.length >= total",
       "confidence": "inferred",
       "note": "Inferred: hasSavedGerminalIdentifierEntry checks only that an entry exists, not that it is complete. Pressing Save and continue on the germinal form with all fields blank saves an empty entry and so marks it identified. This may be unintended."
     },
     {
+      "id": "prototype-dr2-1-source-p5-134",
+      "statement": "A flock or batch species saved through Save and continue with no identifier filled stays incomplete, because Save and continue does not apply the at-least-one-identifier check and the entry does not count as complete.",
+      "kind": "rule",
+      "ref": "app/routes.js:14359-14375, 2413-2471, 2147-2155",
+      "quote": "if (isJourneySoftSaveAction(getJourneyFormAction(req)) || action === 'continue') {\n    const identifierSave = saveActiveAnimalIdentifiersFromBody(req.session.data, req.body, {\n      onlySingleAnimalSpecies: true\n    })",
+      "confidence": "inferred",
+      "note": "Inferred: saveActiveAnimalIdentifiersFromBody runs only validateAnimalIdentifiers, never getMissingIdentifierError, so a blank single-entry form is saved without an error, and hasAnimalIdentifiersComplete then reports the species incomplete. The same holds for a single-animal per-animal species."
+    },
+    {
       "id": "prototype-dr2-1-source-p5-070",
       "statement": "Minimum-identifier rule for submitting: identification details are optional when only one species is selected; when more than one species is selected and any has identifier fields, each species with fields needs at least one complete entry (for germinal products, a saved entry).",
       "kind": "rule",
-      "ref": "app/routes.js:1819-1848",
+      "ref": "app/routes.js:2104-2133",
       "quote": "function requiresAnimalIdentifiersForSubmit (sessionData) {\n  return hasMultipleSpeciesSelected(sessionData) && hasAnimalIdentifiersRequired(sessionData)\n}\n\nfunction hasMinimumAnimalIdentifiersForSubmit (sessionData) {\n  if (!requiresAnimalIdentifiersForSubmit(sessionData)) {\n    return true\n  }\n\n  // Multiple species: at least one complete identifier entry per species.",
       "confidence": "verbatim",
-      "note": "The rule is used by the review/submit readiness check (routes.js:4989-4993, read for context): \"Animal identifiers are optional unless multiple species are selected, in which case at least one identifier is required per species.\" Species without identifier fields always pass. The page itself shows no message about this rule; the review and submit parts own how a failure is shown."
+      "note": "Used by the review/submit readiness check (routes.js:5779), outside this part. Species without identifier fields always pass. The page itself shows no message about this rule."
     },
     {
       "id": "prototype-dr2-1-source-p5-071",
       "statement": "The identification page itself never blocks Save and continue for missing details: with all fields empty the user moves on.",
       "kind": "rule",
-      "ref": "app/routes.js:12498-12523",
+      "ref": "app/routes.js:14359-14385",
       "quote": "if (isJourneySoftSaveAction(getJourneyFormAction(req)) || action === 'continue') {",
       "confidence": "inferred",
       "note": "Inferred: the continue path only checks the length and date rules on filled fields; the minimum-identifier rule is enforced later, at review and submit."
@@ -595,27 +917,28 @@
       "id": "prototype-dr2-1-source-p5-072",
       "statement": "The page gives no error message for the minimum-identifier rule; the slice has no copy telling the user which species still need an identifier.",
       "kind": "copy",
-      "ref": "app/routes.js:1757-2224, 12390-12528; app/views/design-release-2.1/animal-identification-details.html",
+      "ref": "app/routes.js:2005-2593, 12293-12325, 14240-14388; app/views/design-release-2.1/animal-identification-details.html",
       "quote": "",
       "confidence": "gap",
-      "note": "Looked in the page view, its partial, the identification helpers and the page's handlers. The review, submit and dashboard parts may hold the message (dashboard shows \"Information is missing\" and the submit page a soft item \"complete the animal identifier information in the notification\", routes.js:6371-6418, outside this part)."
+      "note": "Looked in the page view, its partial, the identification helpers and the page's handlers. The per-panel \"Enter at least one identifier\" error is about one entry, not the submit rule. The review, submit and dashboard parts may hold the message."
     },
     {
       "id": "prototype-dr2-1-source-p5-073",
       "statement": "A saved animal cannot be changed in place: the saved table offers only Remove, so correcting one means removing it and entering it again.",
       "kind": "behaviour",
-      "ref": "app/views/partials/animal-identification-saved-animals.html:16-25",
+      "ref": "app/views/partials/design-release-2.1/animal-identification-saved-animals.html:19-28",
       "quote": "<div class=\"app-animal-identification-panel__saved-action\">\n        <button",
       "confidence": "inferred",
       "note": "Inferred: the saved table offers only Remove; there is no Change link per animal. If the number of animals is reduced on consignment details, earlier saved entries beyond the new total are not trimmed by this part's code."
     },
     {
-      "id": "prototype-dr2-1-source-p5-074",
-      "statement": "The species panel and saved-table copy do not change for germinal products to talk about packages or samples: the heading names the species and the change link says \"Change number of animals\".",
+      "id": "prototype-dr2-1-source-p5-135",
+      "statement": "The page gives no copy explaining that flocks and batches need only one set of details, or why a species asks per animal or per species.",
       "kind": "copy",
-      "ref": "app/routes.js:1955-1956",
-      "quote": "panelHeaderText: speciesLabel,\n    changeCountLabel: 'Change number of animals',",
-      "confidence": "verbatim"
+      "ref": "app/views/design-release-2.1/animal-identification-details.html:94-190; app/routes.js:2239-2323",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the panel view and panel state; the only difference the user sees is the heading without \"<n> of <total>\" and the missing save button."
     }
   ]
 }

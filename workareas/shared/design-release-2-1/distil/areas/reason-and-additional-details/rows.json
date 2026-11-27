@@ -2,83 +2,64 @@
   "area": "reason-and-additional-details",
   "rows": [
     {
-      "title": "A germinal products draft already holds 'Germinal products' as what the goods are certified for, shown on its review and published in the certified-for clause",
-      "detail": "A trader importing germinal products is never asked what the goods are certified for, because there is only one answer it can have. The draft is created with 'Germinal products' already held, so the review shows it as settled information rather than something to answer, and the submitted notification carries it to the receiving system in the same certified-for clause a live animals notification uses.",
+      "title": "The germinal main import reason page: Transit asks for the port of exit and destination country, Internal market for the purpose, and no exit date",
+      "detail": "The germinal products set has its own copy of the main import reason page. Its two reasons each reveal the follow-on questions the live-animals page asks for that reason: Transit reveals 'Port of exit' then 'Destination country', with the same lists, and Internal market reveals the purpose question. The live-animals exit date belongs to temporary admission of horses, a reason the germinal page never offers, so no germinal answer reveals an exit date and the set builds nothing for one. The live-animals page keeps its own exit date question.",
       "acceptanceCriteria": [
-        "A newly created germinal products notification's review page shows an 'Additional details' card holding one row, 'Certified for', reading 'Germinal products', before the trader has answered any journey page (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-019; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-079)",
-        "The 'Certified for' row of a germinal products notification's review page shows the answer as plain text, with no Change link (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-020; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-079-m1)",
-        "Submitting a germinal products notification publishes the certified-for value 'Germinal products' in the GOODS_CERTIFIED_AS declaration clause of its published event, seen in the admin's outbox events view (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-019; confluence:6497338582 confluence-6497338582-p1-115, confluence-6497338582-p1-115-m1)"
-      ],
-      "requirements": ["req-182"],
-      "sources": [
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "ruling-sam-2026-10-09-p1-016, ruling-sam-2026-10-09-p1-019, ruling-sam-2026-10-09-p1-020, ruling-sam-2026-10-09-p1-057, ruling-sam-2026-10-09-p1-110"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "ruling-sam-2026-10-09-pm-p2-016, ruling-sam-2026-10-09-pm-p2-017"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "trace-prototype-dr2-1-p12-079, trace-prototype-dr2-1-p12-079-m1"
-        },
-        {
-          "source": "confluence:6497338582",
-          "ref": "§Live Animal Data Elements table, row \"Animals certified for\" (confluence-6497338582-p1-115, confluence-6497338582-p1-115-m1)"
-        }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": "One slice: the germinal half of the certified-for field (req-182), split from its live half by ruling:sam-2026-10-09 claim 13, so this row changes nothing on the live animals pages. The policy page marks the certified-for field as impacting the animals journey only while still offering 'Germinal products' among its values and never saying whether a germinal notification holds it; the owner's 9 October decision outranks the page and settles that the value is held and never asked, so no open question remains. existingRow inc-182 already carries this requirement with the rest of the germinal journey (req-1839, req-1898, req-2166), whose review and submit steps these criteria read, so building it apart would repeat the same set-up, review and ladder: the combiner keeps inc-182's id, theme (germinal-products), dependsOn and externalDependsOn, and merges these criteria in without repeats. No backend change is expected: the notification record already stores certified-for as free text and the mapper already publishes it as the GOODS_CERTIFIED_AS clause, so only the frontend sets the value at draft creation.",
-      "touches": [
-        "frontend:src/server/app/sets/germinal-products/set.js",
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/check-answers",
-        "tests:tests/animals/e2e/germinal-products",
-        "tests:page-objects/germinal-products"
-      ],
-      "shared": [
-        "frontend:src/server/app/services/persistence/records/notification-mapper",
-        "frontend:src/server/app/services/persistence/records/real/lifecycle/mutate.js"
-      ],
-      "existingRow": "inc-182"
-    },
-    {
-      "title": "The germinal main reason page reveals a port of exit and destination country for transit, and a purpose for internal market, and asks for no exit date",
-      "detail": "A trader importing germinal products through another country must say where the consignment leaves Great Britain and where it is going, and a trader importing for the internal market must say what it is for. The germinal copy of the main reason for import page therefore reveals a port of exit then a destination country when transit is chosen, and the internal market purpose when internal market is chosen. The exit date question the live animals page shows belongs to temporary admission of horses, a reason the germinal page does not offer, so the germinal page asks for no exit date at all.",
-      "acceptanceCriteria": [
-        "Choosing Transit on the germinal products main reason for import page reveals exactly two further questions, 'Port of exit' then 'Destination country', in that order (confluence:6497338582 confluence-6497338582-p3-040, confluence-6497338582-p3-047, confluence-6497338582-p3-050, confluence-6497338582-p3-056; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-023)",
-        "Choosing Internal market on the germinal products main reason for import page reveals exactly one further question, 'Purpose in the internal market' (confluence:6497338582 confluence-6497338582-p3-018; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-023)",
-        "Each of the two reasons the germinal products main reason for import page offers reveals only the questions above, so the page shows no exit date question for any answer a trader can give it (confluence:6497338582 confluence-6497338582-p3-018, confluence-6497338582-p3-058, confluence-6497338582-p3-064; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-025)"
+        "On the germinal main import reason page, choosing Transit reveals exactly two further questions, 'Port of exit' then 'Destination country', in that order, each offering the same list with the same 'Select one' placeholder as the live-animals page. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-023, -p1-025; prototype:dr2-1-source prototype-dr2-1-source-p4-047-m1; trace:prototype-dr2-1 trace-prototype-dr2-1-p3-082; confluence:6497338582 confluence-6497338582-p3-040, -p3-047, -p3-050, -p3-056)",
+        "Saving Transit on the germinal main import reason page with neither answered shows 'Select a port of exit' and 'Select a destination country', in the error summary and inline on each field. (trace:prototype-dr2-1 trace-prototype-dr2-1-p3-082)",
+        "On the germinal main import reason page, choosing Internal market reveals exactly one further question, 'Purpose in the internal market'. (confluence:6497338582 confluence-6497338582-p3-018; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-023, -p1-025)",
+        "Each of the two reasons the germinal main import reason page offers reveals only the questions above, so no answer a trader can give it shows an exit date question. (confluence:6497338582 confluence-6497338582-p3-058, -p3-064; ruling:sam-2026-11-27 ruling-sam-2026-11-27-p1-005, -p1-006)"
       ],
       "requirements": ["req-2236"],
       "sources": [
-        {
-          "source": "confluence:6497338582",
-          "ref": "§Reason of Import, table ac:local-id 9f4053113919: rows \"Reason for import\" (confluence-6497338582-p3-018), \"Destination country\" (confluence-6497338582-p3-040, confluence-6497338582-p3-047), \"Port of exit\" (confluence-6497338582-p3-050, confluence-6497338582-p3-056) and \"Exit date\" (confluence-6497338582-p3-058, confluence-6497338582-p3-064)"
-        },
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "ruling-sam-2026-10-09-p1-023, ruling-sam-2026-10-09-p1-025"
-        }
+        { "source": "confluence:6497338582", "ref": "§Reason of Import: confluence-6497338582-p3-018, -p3-040, -p3-047, -p3-050, -p3-056, -p3-058, -p3-064" },
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p4-047-m1" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p3-082" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-023, -p1-025" },
+        { "source": "ruling:sam-2026-11-27", "ref": "ruling-sam-2026-11-27-p1-005, -p1-006, -p1-007" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "One slice: which questions the germinal copy of the main reason for import page reveals, and that its reason list makes the exit date unreachable. The third criterion states the complete set of reveals rather than naming the absent question, so a reviewer checks a positive list. existingRow inc-024 already builds the germinal main reason page, its two reasons and its four purposes, and already carries the transit reveal and the internal market purpose reveal (req-2140, req-169, req-170); one germinal walk proves this too, so building it apart would repeat the same set-up, review and ladder. The combiner keeps inc-024's id, theme (germinal-products), dependsOn (inc-016, inc-141) and externalDependsOn, and merges this draft's criteria in without repeating the transit reveal it already states. This requirement was this area's own reconcile output, renumbered from req-reason-and-additional-details-001 by the merge's id map.",
+      "notes": "Already sits in inc-024 (the germinal start and its main import reason), whose criteria already state these reveals; this draft restates them so the combiner keeps req-2236 there. The 27 November ruling kept the default for the germinal exit date question: the set asks for none and builds nothing for one, and the live-animals set keeps its own (ruling-sam-2026-11-27-p1-007), which this row does not change. The last criterion states the complete set of reveals rather than naming the absent question.",
       "touches": [
         "frontend:src/server/app/sets/germinal-products/journeys/linear/features/import-reason",
-        "frontend:src/server/app/sets/germinal-products/obligations/sections/import-reason.js",
-        "tests:tests/animals/e2e/germinal-products",
-        "tests:page-objects/germinal-products"
+        "tests:page-objects/germinal-products",
+        "tests:tests/animals/e2e/germinal-products"
       ],
       "shared": [],
       "existingRow": "inc-024"
+    },
+    {
+      "title": "A germinal products draft is certified for 'Germinal products' from the start, shown on the review and published in the certified-for clause",
+      "detail": "There is only one answer a germinal products notification can have for what the consignment is certified for, so the germinal set never asks it and has no additional details page. The draft is created holding 'Germinal products'. The review shows it as settled information with no Change link, and the submitted notification publishes it in the same certified-for declaration clause a live-animals notification uses.",
+      "acceptanceCriteria": [
+        "A newly created germinal products notification's review page shows an 'Additional details' card holding one row, 'Certified for', reading 'Germinal products' as plain text with no Change link, before the trader has answered any journey page. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-019, -p1-020; confluence:6497338582 confluence-6497338582-p1-115, -p1-115-m1)",
+        "Opening the additional details page of a germinal products notification shows the page not found page. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-016)",
+        "Submitting a germinal products notification publishes the certified-for value 'Germinal products' in the GOODS_CERTIFIED_AS declaration clause of its published event, seen in the admin's outbox events view. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-019; confluence:6497338582 confluence-6497338582-p1-115, -p1-115-m1)"
+      ],
+      "requirements": ["req-182"],
+      "sources": [
+        { "source": "confluence:6497338582", "ref": "§Live Animal Data Elements, row \"Animals certified for\": confluence-6497338582-p1-115, -p1-115-m1" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-016, -p1-019, -p1-020, -p1-057, -p1-110" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-016, -p2-017" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Already sits in inc-182 (the rest of the germinal journey), whose criteria already state the created draft's certified-for answer, its review row and its published clause; this draft restates them so the combiner keeps req-182 there. No backend change is expected: the record already stores certified-for as free text and the publishing mapper already sends it as the certified-for clause, so the germinal set sets the value when it creates the draft. The value is set in the germinal set's own start rather than in the shared stub create lifecycle, which the split-off manage-notifications theme owns.",
+      "touches": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/start",
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/check-answers",
+        "tests:page-objects/germinal-products",
+        "tests:tests/animals/e2e/germinal-products"
+      ],
+      "shared": [],
+      "existingRow": "inc-182"
     }
   ],
   "unobservable": [],

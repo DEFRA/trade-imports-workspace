@@ -1,0 +1,762 @@
+{
+  "source": "repo:perftests",
+  "structure": "Part 3, live-animals journey pages. Read in full: src/k6/live-animals.js (the LIVE_ANIMALS_STEPS draft list of 12 steps, reEdit, amendEdit, planFor), src/k6/live-animals.test.js (2 tests), src/k6/journey-pages.js (save check, choice readers, page path, party picker with worst-case search, reachAndSubmit), src/k6/documents.js (accompanying-documents upload to cdp-uploader and scan-status poll), src/lib/form-fill.js and its test (blank-field fill rules, select options, species filter, d/m/yyyy date text), src/lib/forms.js and its test (hidden fields, prefilled fields, urlencoded body), src/lib/documents.js and its test (PDF and JPEG bytes, sizes, filenames, scan status settled and rejected), src/config/test-data.js (commodity search, worst-case search length, document issue date, scan poll and timeout, scan allowance, local stand-ins; its plants origins and potato arrival time belong to the plants journey, outside this source's scope) and the 'live-animals' entry of STEP_ENDPOINTS in src/config/journey-endpoints.js. Covered, in step order: origin, commodities (search then species), import-reason, consignment-details, commodities/identification, additional-details, accompanying-documents (upload and scan), addresses (5 party pickers), cph-number, port-of-entry, transit-countries (add then save), transporters; then reEdit, amendEdit and planFor, the endpoint tag names and the form-fill mechanics the steps rely on. Every path is relative to the notification base, which part 2 claims. The scripts read form names, option values and two radio labels; they read no headings, hints or error messages.",
+  "claims": [
+    {
+      "id": "repo-perftests-p3-001",
+      "statement": "The performance walker fills a live-animals notification draft in 12 steps, in this order: origin, commodities, import-reason, consignment-details, identification, additional-details, documents, addresses, cph-number, port-of-entry, transit-countries, transporters.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:169-221",
+      "quote": "export const LIVE_ANIMALS_STEPS = Object.freeze({\n  draft: [\n    reachAndSubmit('origin', 'origin', ENDPOINTS.origin, originAnswers),\n    commodities,\n    reachAndSubmit(\n      'import-reason', ... documentsStep,\n    addresses,\n    reachAndSubmit('cph-number', ... portOfEntry,\n    transitCountries,\n    transporters\n  ]",
+      "confidence": "verbatim",
+      "note": "This is the order the perf walker visits pages, which its test says follows the order the journey offers them for the steps it checks; it is not proof of the frontend's own task-list order for every step."
+    },
+    {
+      "id": "repo-perftests-p3-002",
+      "statement": "Each step opens its page at the notification base path followed by the page's slug.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/journey-pages.js:72",
+      "quote": "export const pagePath = ({ base }, slug) => `${base}/${slug}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-003",
+      "statement": "A step's save counts as saved only when it lands on a page that answered 200, with no redirect loop and no stale-save redirect; the check is named '<step> saved'.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-performance-tests/src/k6/journey-pages.js:15-29",
+      "quote": "export const isSaved = (page) =>\n  page.status === HTTP_OK && !page.tooManyRedirects && !page.staleActionHandled",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-004",
+      "statement": "The origin page is at '<base>/origin'.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:171",
+      "quote": "reachAndSubmit('origin', 'origin', ENDPOINTS.origin, originAnswers)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-005",
+      "statement": "The origin save sends countryOfOrigin, drawn at random from the options of the page's countryOfOrigin select, or 'FR' when the page offers none.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:35-47",
+      "quote": "countryOfOrigin: drawnAnswer(\n    context,\n    page.formInputs,\n    'countryOfOrigin',\n    FRANCE\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-006",
+      "statement": "The origin page has a countryOfOrigin select whose option values are country codes such as 'FR'.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:35-47",
+      "quote": "const FRANCE = 'FR'",
+      "confidence": "inferred",
+      "note": "Inferred: the script reads the select's options by that name and falls back to the code 'FR', so the options are codes."
+    },
+    {
+      "id": "repo-perftests-p3-007",
+      "statement": "The origin save answers regionOfOriginCodeRequirement with 'no'.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:48",
+      "quote": "regionOfOriginCodeRequirement: 'no'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-008",
+      "statement": "The origin save sends internalReferenceNumber as 'PERF-' followed by the virtual user, a hyphen, the iteration and a suffix.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:49",
+      "quote": "internalReferenceNumber: `PERF-${context.vu}-${context.iteration}${context.suffix}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-009",
+      "statement": "The commodities page is at '<base>/commodities'.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:56-60",
+      "quote": "pagePath(context, 'commodities')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-010",
+      "statement": "On the commodities page the walker searches by submitting commoditySearch 'Bos taurus' with action 'search'.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:61-65",
+      "quote": "{ commoditySearch: ANIMAL_COMMODITY_SEARCH, action: 'search' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-011",
+      "statement": "The commodity search finds cattle by its Latin name 'Bos taurus', not by the word 'cow', because MDM finds it that way.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-performance-tests/src/config/test-data.js:4-5",
+      "quote": "// Cattle is the one commodity whose pages match the live-animals step list exactly. MDM finds it by its Latin name, not by \"cow\".\nexport const ANIMAL_COMMODITY_SEARCH = 'Bos taurus'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-012",
+      "statement": "Cattle is the one commodity whose pages match the walker's live-animals step list exactly; other commodities show a different set of pages.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-performance-tests/src/config/test-data.js:4",
+      "quote": "// Cattle is the one commodity whose pages match the live-animals step list exactly.",
+      "confidence": "verbatim",
+      "note": "The second half is inferred from 'the one commodity'."
+    },
+    {
+      "id": "repo-perftests-p3-013",
+      "statement": "After the search, the commodities page lists species choices named 'species' whose values are '<commodity code>|<Latin name>'.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/lib/form-fill.js:113-120",
+      "quote": "@param {string[]} speciesValues - Species checkbox values, each `<commodity code>|<Latin name>`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-014",
+      "statement": "The commodities save sends one species value, drawn at random from the species listed under commodity code '0102'.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:67-81",
+      "quote": "species: pickFrom(\n            context,\n            speciesUnderCode(\n              choiceValues(searched, 'species'),\n              ANIMAL_COMMODITY_CODE\n            )\n          )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-015",
+      "statement": "A search for 'Bos taurus' can list the same Latin name under several commodity codes (such as 0102, 05111000 and 01022100), and only the exact code 0102 is kept.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/lib/form-fill.test.js:speciesUnderCode 'keeps only the species under the code'",
+      "quote": "speciesUnderCode(\n        ['0102|Bos taurus', '05111000|Bos taurus', '01022100|Bos taurus'],\n        '0102'\n      )\n    ).toEqual(['0102|Bos taurus'])",
+      "confidence": "inferred",
+      "note": "The codes are a unit-test fixture, not read from a live page; they show the walker expects codes beyond 0102 for the same name."
+    },
+    {
+      "id": "repo-perftests-p3-016",
+      "statement": "The import-reason page is at '<base>/import-reason'.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:173-176",
+      "quote": "reachAndSubmit(\n      'import-reason',\n      'import-reason',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-017",
+      "statement": "The import-reason save sends reasonForImport 'internalMarket'.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:178",
+      "quote": "reasonForImport: 'internalMarket'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-018",
+      "statement": "The import-reason save sends purposeInInternalMarket 'breeding' on the same page as the reason for import.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:179",
+      "quote": "purposeInInternalMarket: 'breeding'",
+      "confidence": "verbatim",
+      "note": "Both answers go in one save, so the purpose in the internal market is asked on the import-reason page itself."
+    },
+    {
+      "id": "repo-perftests-p3-019",
+      "statement": "The consignment-details page is at '<base>/consignment-details', and the walker answers every field it finds blank there.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:182-187",
+      "quote": "reachAndSubmit(\n      'consignment-details',\n      'consignment-details',\n      ENDPOINTS['consignment-details'],\n      (context, page) => blankFieldAnswers(page.formInputs, identityOf(context))\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-020",
+      "statement": "The identification page is at '<base>/commodities/identification', and the walker answers every field it finds blank there.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:188-193",
+      "quote": "reachAndSubmit(\n      'identification',\n      'commodities/identification',\n      ENDPOINTS.identification,\n      (context, page) => blankFieldAnswers(page.formInputs, identityOf(context))\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-021",
+      "statement": "The scripts do not name the fields of the consignment-details or identification pages: they fill whatever blank fields each page renders, so this source does not say which fields those pages ask.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:182-193",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in live-animals.js, form-fill.js and test-data.js. Only the fill rules by name pattern hint at the field names (numberOfAnimalsQuantity, numberOfPackages, a tag field)."
+    },
+    {
+      "id": "repo-perftests-p3-022",
+      "statement": "The blank-field fill answers only empty text, search, number, tel, email, untyped and textarea fields, and leaves radios, checkboxes and fields that already hold a value alone.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/lib/form-fill.js:3-31",
+      "quote": "const isBlankTextField = ({ type, value, name }) =>\n  TEXT_LIKE_TYPES.has(type ?? '') && !value && !SEARCH_FIELDS.has(name)",
+      "confidence": "verbatim",
+      "note": "mechanism: the perf walker's own form filler, working on the inputs read off a page."
+    },
+    {
+      "id": "repo-perftests-p3-023",
+      "statement": "The blank-field fill leaves search boxes named q, commoditySearch, search and referenceNumber empty.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/lib/form-fill.js:12-17",
+      "quote": "const SEARCH_FIELDS = new Set([\n  'q',\n  'commoditySearch',\n  'search',\n  'referenceNumber'\n])",
+      "confidence": "verbatim",
+      "note": "mechanism: the perf walker's form filler."
+    },
+    {
+      "id": "repo-perftests-p3-024",
+      "statement": "A blank field whose name starts 'numberOfAnimalsQuantity' is answered '1'.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/lib/form-fill.js:20",
+      "quote": "[/^numberOfAnimalsQuantity/, '1'],",
+      "confidence": "verbatim",
+      "note": "mechanism: the test shows the field is indexed per line, such as 'numberOfAnimalsQuantity-0'."
+    },
+    {
+      "id": "repo-perftests-p3-025",
+      "statement": "A blank field whose name starts 'numberOfPackages' is answered '5'.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/lib/form-fill.js:21",
+      "quote": "[/^numberOfPackages/, '5'],",
+      "confidence": "verbatim",
+      "note": "mechanism: the test names it 'numberOfPackages-0'."
+    },
+    {
+      "id": "repo-perftests-p3-026",
+      "statement": "A blank field whose name contains 'tag' is answered 'UK123456789012'.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/lib/form-fill.js:22",
+      "quote": "[/tag/i, 'UK123456789012'],",
+      "confidence": "verbatim",
+      "note": "mechanism: the test names an 'earTag-0' field, an animal identification field."
+    },
+    {
+      "id": "repo-perftests-p3-027",
+      "statement": "A blank field whose name contains 'quantity' (other than numberOfAnimalsQuantity) is answered '5'.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/lib/form-fill.js:23",
+      "quote": "[/quantity/i, '5'],",
+      "confidence": "verbatim",
+      "note": "mechanism: the perf walker's form filler."
+    },
+    {
+      "id": "repo-perftests-p3-028",
+      "statement": "The fill rules also answer commodityCode '0602 20 20', eppoCode 'PIEAB' and species 'Picea abies', which are plant values shared with the plants journey.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/lib/form-fill.js:24-26",
+      "quote": "[/commodityCode/, '0602 20 20'],\n  [/eppoCode/, 'PIEAB'],\n  [/species/, 'Picea abies']",
+      "confidence": "verbatim",
+      "note": "mechanism: one filler serves both journeys; these values matter for live animals only if a blank text field on a live-animals page has such a name."
+    },
+    {
+      "id": "repo-perftests-p3-029",
+      "statement": "Any other blank text field is answered 'PERF' followed by the virtual user and iteration, such as 'PERF37'.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/lib/form-fill.js:32-34",
+      "quote": "FIELD_RULES.find(([pattern]) => pattern.test(name))?.[1] ??\n  `PERF${vu}${iteration}`",
+      "confidence": "verbatim",
+      "note": "mechanism: the perf walker's form filler."
+    },
+    {
+      "id": "repo-perftests-p3-030",
+      "statement": "A select with nothing chosen is answered with its first option that is not the empty placeholder, and a select that already holds a value is left as it is.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/lib/form-fill.js:42-46",
+      "quote": "export const firstOption = (values) => values.find((value) => value) ?? ''\n\nconst selectAnswerEntries = (input, chooseOption) =>\n  input.value ? [] : [[input.name, chooseOption(input.options)]]",
+      "confidence": "verbatim",
+      "note": "mechanism: implies the pages' selects start with an empty placeholder option."
+    },
+    {
+      "id": "repo-perftests-p3-031",
+      "statement": "The additional-details page is at '<base>/additional-details'.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:194-197",
+      "quote": "reachAndSubmit(\n      'additional-details',\n      'additional-details',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-032",
+      "statement": "The additional-details save sends animalsCertifiedFor, choosing the choice whose label contains 'Slaughter'.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:199-203",
+      "quote": "animalsCertifiedFor: choiceLabelled(\n          page,\n          'animalsCertifiedFor',\n          'Slaughter'\n        )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-033",
+      "statement": "The additional-details page offers 'animals certified for' as a radio or checkbox group with a choice labelled 'Slaughter'.",
+      "kind": "copy",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:199-203",
+      "quote": "'Slaughter'",
+      "confidence": "inferred",
+      "note": "Inferred: choiceLabelled reads input[name=animalsCertifiedFor] and matches label text containing 'Slaughter'."
+    },
+    {
+      "id": "repo-perftests-p3-034",
+      "statement": "The additional-details save sends containsUnweanedAnimals, choosing the choice whose label contains 'No'.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:204-208",
+      "quote": "containsUnweanedAnimals: choiceLabelled(\n          page,\n          'containsUnweanedAnimals',\n          'No'\n        )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-035",
+      "statement": "When no choice's label contains the wanted text, the walker picks the first choice the page lists.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/journey-pages.js:58-63",
+      "quote": "const wanted = inputs.find((input) => labelOf(page, input).includes(text))\n\n  return (wanted ?? inputs[0])?.attr('value')",
+      "confidence": "verbatim",
+      "note": "mechanism: the walker's choice reader, matching a label by its for attribute."
+    },
+    {
+      "id": "repo-perftests-p3-036",
+      "statement": "The accompanying-documents page is at '<base>/accompanying-documents'.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/documents.js:21,134-138",
+      "quote": "const DOCUMENTS_SLUG = 'accompanying-documents'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-037",
+      "statement": "Each uploaded document is given the reference 'PERFDOC<vu>V<iteration>N<number>', because the backend accepts a document reference of letters and digits only.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-performance-tests/src/k6/documents.js:28-30",
+      "quote": "// The backend accepts a document reference of letters and digits only.\nconst referenceFor = ({ vu, iteration }, number) =>\n  `PERFDOC${vu}V${iteration}N${number}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-038",
+      "statement": "The document upload sends accompanyingDocumentReference with the document's reference.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/documents.js:33",
+      "quote": "accompanyingDocumentReference: reference,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-039",
+      "statement": "The document upload sends accompanyingDocumentType, drawn at random from the options of the page's accompanyingDocumentType select.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/documents.js:34-37",
+      "quote": "accompanyingDocumentType: pickFrom(\n    context,\n    selectOptions(page.formInputs, 'accompanyingDocumentType')\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-040",
+      "statement": "The document upload sends accompanyingDocumentDateOfIssue as a date 30 days before the run, written d/m/yyyy.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/documents.js:38-41; src/config/test-data.js:48-49",
+      "quote": "accompanyingDocumentDateOfIssue: slashDateText(\n    context.now,\n    -DOCUMENT_ISSUED_DAYS_AGO\n  )",
+      "confidence": "verbatim",
+      "note": "test-data.js: '// Date of issue given to every uploaded document.\\nexport const DOCUMENT_ISSUED_DAYS_AGO = 30'. The date is one text field, not day, month and year fields."
+    },
+    {
+      "id": "repo-perftests-p3-041",
+      "statement": "The document upload is sent with action 'add', together with the file, in one request.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/documents.js:42,95-100",
+      "quote": "action: 'add'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-042",
+      "statement": "The page's file-carrying button posts the document straight to the cdp-uploader and its virus scan, so the file's bytes never pass through the animals frontend.",
+      "kind": "integration",
+      "ref": "repos/trade-imports-performance-tests/src/k6/documents.js:118-129",
+      "quote": "Each document goes straight to the real cdp-uploader and its virus scan,\n * which is where the page's own file-carrying button posts, so the bytes never\n * pass through the frontend.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-043",
+      "statement": "After an upload, the upload service returns the browser to the accompanying-documents page, which takes the document on from there.",
+      "kind": "integration",
+      "ref": "repos/trade-imports-performance-tests/src/k6/documents.js:122-124",
+      "quote": "The upload service returns the browser to the\n * page, which takes the document on from there.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-044",
+      "statement": "An upload counts as done when the response is 200 and its URL, without query or fragment, ends at '<base>/accompanying-documents'.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-performance-tests/src/k6/documents.js:89-91,107-109",
+      "quote": "response.status === HTTP_OK &&\n  response.url.split(/[?#]/)[0].endsWith(`${base}/${DOCUMENTS_SLUG}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-045",
+      "statement": "The walker uploads PDF files (application/pdf, '.pdf') and JPEG files (image/jpeg, '.jpg'), named by the document reference.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/lib/documents.js:17-32,74-75",
+      "quote": "contentType: 'application/pdf'... contentType: 'image/jpeg'... `${reference}.${DOCUMENT_KINDS[kind].extension}`",
+      "confidence": "verbatim",
+      "note": "The mix of kinds and the size range come from the journey model, outside this part."
+    },
+    {
+      "id": "repo-perftests-p3-046",
+      "statement": "A document's size is drawn from a kilobyte range, counting a kilobyte as 1,000 bytes, as the animals frontend's upload limit counts.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-performance-tests/src/lib/documents.js:34-44",
+      "quote": "A kilobyte is 1,000 bytes, as the animals frontend's upload limit counts.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-047",
+      "statement": "The uploaded files start and end like a real PDF or JPEG and are padded in between.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/lib/documents.js:47-63",
+      "quote": "It starts and ends like a real PDF or JPEG, and is padded in between.",
+      "confidence": "verbatim",
+      "note": "mechanism: synthetic test files for the upload."
+    },
+    {
+      "id": "repo-perftests-p3-048",
+      "statement": "The animals frontend serves a scan status route at '<base>/accompanying-documents/status' that returns JSON with a documents list, each with a scanStatus.",
+      "kind": "integration",
+      "ref": "repos/trade-imports-performance-tests/src/k6/documents.js:62-66; src/lib/documents.js:77-84",
+      "quote": "const statusPath = `${base}/${DOCUMENTS_SLUG}/status`\n  ...\n  let documents = walker.session.getJson(statusPath, ENDPOINTS.status)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-049",
+      "statement": "The accompanying-documents page's script polls the status route every 3 seconds, and the walker polls at the same interval.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/documents.js:124-127; src/config/test-data.js:51-55",
+      "quote": "// The animals frontend's scan-poll.js POLL_INTERVAL_MS, and how long a scan may stay pending before the run records it as stuck.\nexport const DOCUMENT_SCAN = Object.freeze({\n  pollSeconds: 3,",
+      "confidence": "verbatim",
+      "note": "This is a JavaScript enhancement on the page; the source does not say what the page does without JavaScript."
+    },
+    {
+      "id": "repo-perftests-p3-050",
+      "statement": "A scan counts as settled once the status route lists at least one document and none has scanStatus 'PENDING'.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-performance-tests/src/k6/documents.js:58-60; src/lib/documents.js:77-85",
+      "quote": "// A scan has settled once the page lists the document and nothing is pending.\nconst isScanned = (listed) =>\n  Array.isArray(listed) && listed.length > 0 && scanHasSettled(listed)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-051",
+      "statement": "A document's scan status is one of 'PENDING', 'COMPLETE' or 'REJECTED', and both 'COMPLETE' and 'REJECTED' end the scan.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/lib/documents.js:11-12; src/lib/documents.test.js:scanHasSettled 'is true once every scan is complete or rejected'",
+      "quote": "scanHasSettled([{ scanStatus: 'COMPLETE' }, { scanStatus: 'REJECTED' }])\n    ).toBe(true)",
+      "confidence": "inferred",
+      "note": "'COMPLETE' appears only in the unit tests; the code knows only PENDING and REJECTED."
+    },
+    {
+      "id": "repo-perftests-p3-052",
+      "statement": "The run checks that no uploaded document's scan was rejected.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-performance-tests/src/k6/documents.js:83-86",
+      "quote": "'document scan not rejected': (listed) => !scanWasRejected(listed)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-053",
+      "statement": "A scan still pending 120 seconds after the upload landed is recorded as stuck.",
+      "kind": "non-functional",
+      "ref": "repos/trade-imports-performance-tests/src/config/test-data.js:51-55; src/k6/documents.js:65-74",
+      "quote": "timeoutSeconds: 120",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-054",
+      "statement": "The document scan is judged against a P99 under 60 seconds, the allowance for upload pages.",
+      "kind": "non-functional",
+      "ref": "repos/trade-imports-performance-tests/src/config/test-data.js:62-63",
+      "quote": "'Document scan allowance: P99 under 60s, as for upload pages (DR-EUDP-005 section 4.7, SYN-28, SYN-29)'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-055",
+      "statement": "The run records how long each scan took as document_scan_duration and counts uploads as documents_uploaded.",
+      "kind": "non-functional",
+      "ref": "repos/trade-imports-performance-tests/src/k6/documents.js:25-26,82,111-113",
+      "quote": "const scanDuration = new Trend('document_scan_duration', true)\nconst documentsUploaded = new Counter('documents_uploaded')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-056",
+      "statement": "In a local run, document storage and virus scanning are the stack's cdp-uploader container with a mock scan, so results depending on them are not CDP's.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-performance-tests/src/config/test-data.js:71-74",
+      "quote": "\"Stand-ins: SNS and SQS are floci, and document storage and virus scanning are the stack's cdp-uploader container with a mock scan, so results that depend on them are not CDP's\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-057",
+      "statement": "The accompanying-documents page continues with action 'continue'; with no documents to upload the walker only opens the page and continues.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/documents.js:128-148",
+      "quote": "With no documents the step only\n * opens the page and continues.",
+      "confidence": "verbatim",
+      "note": "So the page lets a user continue with no documents added."
+    },
+    {
+      "id": "repo-perftests-p3-058",
+      "statement": "The documents step uploads documents one after another on the same page, the number per notification coming from the journey model's documentsPerNotification.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/documents.js:140-142; src/k6/live-animals.js:231-234",
+      "quote": "documents: countAt(iteration, journeyModel.documentsPerNotification)",
+      "confidence": "verbatim",
+      "note": "So the page accepts more than one document."
+    },
+    {
+      "id": "repo-perftests-p3-059",
+      "statement": "The addresses page is at '<base>/addresses'.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:90-91",
+      "quote": "const path = pagePath(context, 'addresses')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-060",
+      "statement": "From the addresses page the walker picks five parties, in this order: place of origin, consignor, consignee, importer and destination, each at '<base>/<party>/select'.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:28-34,93-100",
+      "quote": "const PARTY_SLUGS = [\n  'place-of-origin/select',\n  'consignors/select',\n  'consignees/select',\n  'importers/select',\n  'destinations/select'\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-061",
+      "statement": "Each party picker is searched by submitting q with the performance-test address's name and action 'search'.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/journey-pages.js:114-118",
+      "quote": "{ q: addressName, action: 'search' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-062",
+      "statement": "Each party picker is saved by sending the 'party' radio whose label names the performance-test address, with action 'save'.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:97; src/k6/journey-pages.js:120-124",
+      "quote": "{ [field]: choiceLabelled(searched, field, addressName), action: 'save' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-063",
+      "statement": "A party picker's save lands back on the page the picker was opened from.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/journey-pages.js:92-97",
+      "quote": "The picker's own save lands on the page it came from.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-064",
+      "statement": "Search results on a party picker are listed as radios whose labels show the address's name.",
+      "kind": "copy",
+      "ref": "repos/trade-imports-performance-tests/src/k6/journey-pages.js:31-63,120-124",
+      "quote": "const labelOf = (page, input) =>\n  page.html.find(`label[for=\"${input.attr('id')}\"]`).text()",
+      "confidence": "inferred",
+      "note": "Inferred from the walker matching the address name in the radio labels."
+    },
+    {
+      "id": "repo-perftests-p3-065",
+      "statement": "Once per notification, while the worst-case search is pending, the first party picker is searched with a 255-character term before the real search, and the run checks it answered 200.",
+      "kind": "non-functional",
+      "ref": "repos/trade-imports-performance-tests/src/k6/journey-pages.js:74-90,108-113",
+      "quote": "const answered = walker.submit(\n    opened,\n    { q: worstCaseSearchTerm(WORST_CASE_SEARCH_LENGTH), action: 'search' },\n    endpoints.search\n  )\n\n  check(answered, {\n    'worst-case address search answered': (page) => page.status === HTTP_OK\n  })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-066",
+      "statement": "The longest searchable address field is 255 characters, the INS address book's name maximum length.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-performance-tests/src/config/test-data.js:1-2",
+      "quote": "// The longest searchable address field: ins-frontend features/address-book/fields.js FIELD_RULES.name.maxLength.\nexport const WORST_CASE_SEARCH_LENGTH = 255",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-067",
+      "statement": "After the five pickers the walker reopens the addresses page and saves it with no answers of its own.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:102-109",
+      "quote": "walker.submit(\n        walker.reach(page, path, ENDPOINTS.addresses.open),\n        {},\n        ENDPOINTS.addresses.save\n      )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-068",
+      "statement": "The party pickers search the address book, so the addresses a live-animals notification uses come from the trader's address book.",
+      "kind": "integration",
+      "ref": "repos/trade-imports-performance-tests/src/k6/journey-pages.js:4,92-106",
+      "quote": "import { worstCaseSearchTerm } from '../lib/address-book.js'",
+      "confidence": "inferred",
+      "note": "Inferred from the picker search using the address book's search term helper and the address book's name length."
+    },
+    {
+      "id": "repo-perftests-p3-069",
+      "statement": "The cph-number page is at '<base>/cph-number' and its save sends the holding number in three parts: cphCounty '12', cphParish '345' and cphHolding '6789'.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:213-217",
+      "quote": "reachAndSubmit('cph-number', 'cph-number', ENDPOINTS['cph-number'], () => ({\n      cphCounty: '12',\n      cphParish: '345',\n      cphHolding: '6789'\n    }))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-070",
+      "statement": "The port-of-entry page is at '<base>/port-of-entry'.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:113-116",
+      "quote": "reachAndSubmit(\n  'port-of-entry',\n  'port-of-entry',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-071",
+      "statement": "The port-of-entry save sends arrivalDateAtPort as a date 7 days after the run, written d/m/yyyy in one field.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:27,118",
+      "quote": "arrivalDateAtPort: slashDateText(context.now, ARRIVAL_DAYS_AHEAD)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-072",
+      "statement": "The port-of-entry save sends portOfEntry, drawn at random from the page's portOfEntry select, or 'GB ABD' when the page offers none.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:36,119-124",
+      "quote": "portOfEntry: drawnAnswer(\n      context,\n      page.formInputs,\n      'portOfEntry',\n      DEFAULT_PORT_OF_ENTRY\n    )",
+      "confidence": "verbatim",
+      "note": "const DEFAULT_PORT_OF_ENTRY = 'GB ABD'"
+    },
+    {
+      "id": "repo-perftests-p3-073",
+      "statement": "The port-of-entry save sends meansOfTransport 'ROAD_VEHICLE'.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:125",
+      "quote": "meansOfTransport: 'ROAD_VEHICLE'",
+      "confidence": "verbatim",
+      "note": "So the means of transport is asked on the port-of-entry page."
+    },
+    {
+      "id": "repo-perftests-p3-074",
+      "statement": "The port-of-entry save sends transportIdentification 'FR-892-LK'.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:126",
+      "quote": "transportIdentification: 'FR-892-LK'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-075",
+      "statement": "The port-of-entry save sends transportDocumentReference 'CMR-2026-884721'.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:127",
+      "quote": "transportDocumentReference: 'CMR-2026-884721'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-076",
+      "statement": "The transit-countries page is at '<base>/transit-countries'.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:136-140",
+      "quote": "pagePath(context, 'transit-countries')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-077",
+      "statement": "On transit-countries the walker adds a country by sending transitedCountry, drawn from the page's transitedCountry select or 'FR', with action 'add'.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:141-153",
+      "quote": "transitedCountry: drawnAnswer(\n          context,\n          opened.formInputs,\n          'transitedCountry',\n          FRANCE\n        ),\n        action: 'add'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-078",
+      "statement": "After adding a transit country the walker saves the transit-countries page with no further answers.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:155",
+      "quote": "return saved('transit-countries', walker.submit(added, {}, endpoints.save))",
+      "confidence": "verbatim",
+      "note": "So transit countries are added one at a time to a list on the page, which then saves."
+    },
+    {
+      "id": "repo-perftests-p3-079",
+      "statement": "The transporters page is at '<base>/transporters', and its save sends the first 'transporter' choice the page lists, with action 'save'.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:159-167",
+      "quote": "transporter: choiceValues(page, 'transporter')[0],\n    action: 'save'",
+      "confidence": "verbatim",
+      "note": "So the transporters page lists existing transporters as choices to pick from."
+    },
+    {
+      "id": "repo-perftests-p3-080",
+      "statement": "When the walker re-edits a live-animals notification it reopens origin, import-reason, consignment-details, additional-details, cph-number and port-of-entry.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:222-229",
+      "quote": "reEdit: [\n    'origin',\n    'import-reason',\n    'consignment-details',\n    'additional-details',\n    'cph-number',\n    'port-of-entry'\n  ]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-081",
+      "statement": "When the walker amends a submitted live-animals notification it edits the origin page.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:230",
+      "quote": "amendEdit: 'origin'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-082",
+      "statement": "Each live-animals run is planned with notificationType 'live-animals'.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js:231-234",
+      "quote": "notificationType: 'live-animals'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-083",
+      "statement": "Every live-animals page request is tagged with an endpoint name 'animals-<step>' for opening and 'animals-<step>-save' for saving, with '-search' for the commodity search and party picker, 'animals-documents-upload' and 'animals-documents-status' for documents, and 'animals-transit-countries-add' for adding a transit country.",
+      "kind": "non-functional",
+      "ref": "repos/trade-imports-performance-tests/src/config/journey-endpoints.js:1-43",
+      "quote": "documents: {\n      ...page(ANIMALS, 'documents'),\n      upload: `${ANIMALS}-documents-upload`,\n      status: `${ANIMALS}-documents-status`\n    },\n    addresses: {\n      ...page(ANIMALS, 'addresses'),\n      picker: picker(ANIMALS, 'party-picker')\n    },",
+      "confidence": "verbatim",
+      "note": "The thresholds and catalogue key on these names, so a step cannot send a request they do not know."
+    },
+    {
+      "id": "repo-perftests-p3-084",
+      "statement": "Each save posts the page's hidden fields with the answers on top, and leaves out any answer the page did not offer.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/lib/forms.js:20-33",
+      "quote": "Builds the fields a browser would post: the page's hidden fields, then the answers.",
+      "confidence": "verbatim",
+      "note": "mechanism: the walker's form builder; the test shows a 'crumb' hidden field, the pages' CSRF token."
+    },
+    {
+      "id": "repo-perftests-p3-085",
+      "statement": "Pages post as application/x-www-form-urlencoded, with a repeated key for several values.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/lib/forms.js:1-18",
+      "quote": "Encodes form fields as an `application/x-www-form-urlencoded` body.",
+      "confidence": "verbatim",
+      "note": "mechanism: the walker's body encoder. Consistent with pages that work without JavaScript as plain forms."
+    },
+    {
+      "id": "repo-perftests-p3-086",
+      "statement": "The walker can send a form as a browser would without touching it: filled text fields and selects as they stand, and a radio or checkbox only when ticked.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-performance-tests/src/lib/forms.js:35-52",
+      "quote": "Text fields and selects that hold a value are sent as they stand, and a\n * radio or checkbox is sent only when it is ticked. Empty fields are left out.",
+      "confidence": "verbatim",
+      "note": "mechanism: prefilledFields; not called by the live-animals step files in this part."
+    },
+    {
+      "id": "repo-perftests-p3-087",
+      "statement": "Dates the walker enters are written d/m/yyyy, in UTC, with no zero padding, the way the frontends render a date.",
+      "kind": "data",
+      "ref": "repos/trade-imports-performance-tests/src/lib/form-fill.js:122-133",
+      "quote": "Writes a date the way the frontends render one, in UTC.\n ...\n * @returns {string} A date as `d/m/yyyy`, with no zero padding.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-088",
+      "statement": "A unit test holds the draft to visiting commodities, import-reason, consignment-details, identification and additional-details in the order the journey offers them.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.test.js:'visits the commodity page, the main import reason, Commodity details, identification and additional details in the order the journey offers them'",
+      "quote": "const JOURNEY_ORDER = [\n      'commodities',\n      'import-reason',\n      'consignment-details',\n      'identification',\n      'additional-details'\n    ]",
+      "confidence": "verbatim",
+      "note": "The test title calls consignment-details 'Commodity details', a hint at that page's heading."
+    },
+    {
+      "id": "repo-perftests-p3-089",
+      "statement": "A unit test holds the re-edit list to include consignment-details.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.test.js:'names consignment-details among the steps the re-edit padding reopens'",
+      "quote": "expect(LIVE_ANIMALS_STEPS.reEdit).toContain('consignment-details')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p3-090",
+      "statement": "The scripts read no page headings, captions, hints or error messages on the live-animals pages, so this source says nothing about their wording beyond the 'Slaughter' and 'No' choice labels.",
+      "kind": "copy",
+      "ref": "repos/trade-imports-performance-tests/src/k6/live-animals.js, src/k6/journey-pages.js, src/k6/documents.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in every file in this part's read list. The only checks are on status, redirects and landing URL."
+    }
+  ]
+}

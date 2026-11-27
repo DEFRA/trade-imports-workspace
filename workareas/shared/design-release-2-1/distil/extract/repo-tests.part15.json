@@ -1,6 +1,6 @@
 {
   "source": "repo:tests",
-  "structure": "Part 15 of repos/trade-imports-ins-tests: INS transporters, INS accessibility and INS security. Read in full: the 4 transporter specs and their runner under tests/ins/e2e/features/transporters (transporter-type.spec.ts 3 tests, private-transporter.spec.ts 5, commercial-transporter.spec.ts 5, transporter-record.spec.ts 4 — 17 literal test() declarations, not the 21 the partition's covers names; run-transporters.ts declares no test, only the two shared expectations the private and commercial specs both call); the 9 specs under tests/ins/a11y plus its README (address-book-initial-state 2, address-book-filled-state 2, address-book-error-state 3, address-book-list-views 2, address-book-viewports 1 declaration generated twice by a viewport loop, dashboard-views 3, dashboard-viewports 1 generated twice, sign-in 2, a11y-scan-detects-violations 1 test plus 1 test.fail — 21 tests at run time from 19 literal declarations, not the 37 the covers names; several tests scan many pages through test.step, 37 being closer to the number of scans than the number of tests); and the 2 specs under tests/ins/security/address-book (address-book.spec.ts 1 test, address-book-auth.spec.ts 1 test — 2 declarations, not the 6 the covers names). Support code read as context: page-objects/ins/address-book/{transporter-type-page,transporter-form-page,private-transporter-page,commercial-transporter-page,transporter-view-page,list-page,delete-page}.ts, page-objects/ins/index.ts, page-objects/shared/base-page.ts, and (reached from those) shared-form-fields.ts and record-page.ts; domain/ins/constants/{transporter-types,transporter-form,trader-transporter}.ts and (reached from those) address-form.ts and address-book-types.ts; fixtures/{a11y,security,ui}.ts; utils/{a11y-utils,a11y-exclusions,narrow-page-scan}.ts and (reached from a spec) next-page-scan.ts; config/zap.ts; docs/a11y.md and docs/security.md; and the transporter to* methods of flows/ins/journey.ts. Covered: the transporter type question and its two options; the private and commercial transporter forms, their fields, their country rule and what saving stores; the transporter's own page, its rows and its Edit/Delete/Back controls; the Transporter tab's column order and search; every INS page and state scanned for accessibility with its viewport, rule set and exclusion; what the two INS security specs put through the ZAP proxy and how the run is gated; and the gaps — no transporter validation message, no country list, no reference-data lookup, no transporter page scanned for accessibility or driven through ZAP, and no proven transporter edit or delete.",
+  "structure": "Part 15 of repos/trade-imports-ins-tests: INS transporters, INS accessibility and INS security. This extract refreshes the earlier part 15 extract, written at commit c293b056. Re-read in full: the 4 transporter specs and their runner under tests/ins/e2e/features/transporters (transporter-type.spec.ts 3 tests, private-transporter.spec.ts 5, commercial-transporter.spec.ts 5, transporter-record.spec.ts 4: 17 literal test() declarations; run-transporters.ts declares no test, only the two shared expectations the private and commercial specs both call). Every other file in read was checked against that commit with git diff: the 9 specs under tests/ins/a11y plus its README (address-book-initial-state 2, address-book-filled-state 2, address-book-error-state 3, address-book-list-views 2, address-book-viewports 1 declaration generated twice by a viewport loop, dashboard-views 3, dashboard-viewports 1 generated twice, sign-in 2, a11y-scan-detects-violations 1 test plus 1 test.fail: 21 tests at run time from 19 literal declarations, several scanning many pages through test.step), the 2 specs under tests/ins/security/address-book (1 test each), the page objects, domain constants, fixtures, utils, config/zap.ts and flows/ins/journey.ts are unchanged. What changed since: the private transporter form's opening test is now tagged @cross-browser and @ios; docs/a11y.md's exclusion table now names the exported selectors and documents a new file upload button exclusion; utils/a11y-exclusions.ts adds that exclusion (used by no INS scan); utils/narrow-page-scan.ts now passes scan options through; docs/security.md says the attacking run is now scheduled on weekdays; and domain/ins/constants/address-book-types.ts drops the Branch address type, its tab and its role, which none of this part's claims relied on. Covered: the transporter type question and its two options; the private and commercial transporter forms, their fields, their country rule and what saving stores; the transporter's own page, its rows and its Edit/Delete/Back controls; the Transporter tab's column order and search; every INS page and state scanned for accessibility with its viewport, rule set and exclusion; what the two INS security specs put through the ZAP proxy and how the run is gated; and the gaps: no transporter validation message, no country list, no reference-data lookup, no transporter page scanned for accessibility or driven through ZAP, and no proven transporter edit or delete.",
   "claims": [
     {
       "id": "repo-tests-p15-001",
@@ -739,29 +739,12 @@
       "note": "No file under tests/ins/a11y opens insPages.notificationType; the README's not-scanned note does not cover it."
     },
     {
-      "id": "repo-tests-p15-091",
-      "statement": "The only accessibility exclusions the suite keeps as reusable selectors are two animals pages' conditional-reveal radios, the origin page's region of origin code requirement radio and the import reason page's radios, so no INS scan uses one.",
-      "kind": "non-functional",
-      "ref": "utils/a11y-exclusions.ts:1-3, docs/a11y.md:9-12",
-      "quote": "export const govukConditionalRevealRadioOnOrigin = '#regionOfOriginCodeRequirement';\n\nexport const govukConditionalRevealRadiosOnReason = 'input[name=\"reasonForImport\"][aria-controls]';",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-tests-p15-092",
       "statement": "Those radios are excluded because govuk-frontend sets aria-expanded on a conditional-reveal radio input and axe's aria-allowed-attr rule rejects it: an upstream disagreement in component code the service does not own, not a defect in the service.",
       "kind": "constraint",
       "ref": "docs/a11y.md:5-7",
       "quote": "govuk-frontend's conditional-reveal radios set `aria-expanded` on the radio input in its `radios.mjs`, and axe's `aria-allowed-attr` rule rejects that. This is an upstream disagreement in component code the service does not own, not a defect in the service.",
       "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p15-093",
-      "statement": "The accessibility documentation's exclusion table names selectors conditionalRadioInput and conditionalReasonRadios, which are not the names the exclusions file exports, so a reader following the table cannot find them.",
-      "kind": "constraint",
-      "ref": "docs/a11y.md:9-12, utils/a11y-exclusions.ts:1-3",
-      "quote": "| `conditionalRadioInput`   | Origin of import | The region of origin code requirement radio opens a conditional reveal.                   |",
-      "confidence": "inferred",
-      "note": "Read by comparing the table's selector column with the file's two exported names, govukConditionalRevealRadioOnOrigin and govukConditionalRevealRadiosOnReason."
     },
     {
       "id": "repo-tests-p15-094",
@@ -941,14 +924,6 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-tests-p15-116",
-      "statement": "The scheduled attacking run is manual only: the nightly schedule stays switched off until an end-to-end run has been verified, and its report is published behind a password because the site it goes to is otherwise public, with reports older than seven days pruned.",
-      "kind": "non-functional",
-      "ref": "docs/security.md:28",
-      "quote": "The GitHub Action is manual dispatch only; the nightly schedule stays disabled pending a verified end-to-end run.",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-tests-p15-117",
       "statement": "No transporter route is driven through the security proxy, so the transporter type question, both transporter forms and a transporter's own page fall outside the scan's traffic-driven coverage.",
       "kind": "non-functional",
@@ -1066,6 +1041,56 @@
       "ref": "domain/ins/constants/address-book-types.ts:143",
       "quote": "{ addressType: addressTypes.transporter, label: 'Transporter', hint: 'Private, Commercial' },",
       "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-131",
+      "statement": "The suite keeps three reusable accessibility exclusions: the origin page's region of origin code requirement radio, the import reason page's conditional-reveal radios and the accompanying documents page's file upload button. No INS scan uses any of them.",
+      "kind": "non-functional",
+      "ref": "utils/a11y-exclusions.ts:1-5, docs/a11y.md:9-20",
+      "quote": "export const govukConditionalRevealRadioOnOrigin = '#regionOfOriginCodeRequirement';\n\nexport const govukConditionalRevealRadiosOnReason = 'input[name=\"reasonForImport\"][aria-controls]';\n\nexport const govukFileUploadButtonOnDocuments = 'button.govuk-file-upload-button';",
+      "confidence": "verbatim",
+      "note": "No file under tests/ins/a11y or tests/ins/security names any of the three; the only INS exclusion is the sign-in stub's error summary list (repo-tests-p15-078)."
+    },
+    {
+      "id": "repo-tests-p15-132",
+      "statement": "The accessibility documentation's exclusion table names the same selectors the exclusions file exports, govukConditionalRevealRadioOnOrigin and govukConditionalRevealRadiosOnReason.",
+      "kind": "constraint",
+      "ref": "docs/a11y.md:9-12",
+      "quote": "| `govukConditionalRevealRadioOnOrigin`  | Origin of import | The region of origin code requirement radio opens a conditional reveal.                   |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-133",
+      "statement": "The file upload button is excluded because axe 4.14's label-content-name-mismatch rule joins the button's status text and its 'Choose file' text without a space, while the browser's accessible name contains the visible text and so meets WCAG 2.5.3 Label in Name: a fault in axe's text extraction, not in the service, to be removed once axe or govuk-frontend no longer reports it.",
+      "kind": "constraint",
+      "ref": "docs/a11y.md:14-20",
+      "quote": "This is a fault in axe's text extraction on component code the service does not own, not a defect in the service. It appears in govuk-frontend 6.5.1 and 6.6.0, with axe-core 4.14.1.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-134",
+      "statement": "The scheduled attacking security run runs at 01:00 UTC on weekdays and on manual dispatch; its report is published behind a password because the site it goes to is otherwise public, and reports older than seven days are pruned.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:28",
+      "quote": "The GitHub Action runs at 01:00 UTC on weekdays, and on manual dispatch. Its report publishes to GitHub Pages under `security-active/<date>/`, password-protected via the `ZAP_REPORT_PASSWORD` secret because that Pages site is otherwise public. Reports older than 7 days are pruned.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-135",
+      "statement": "The private transporter form's opening test is tagged @cross-browser and @ios, so the form's caption, heading, sections, country select and Back are also proven in the cross-browser and iOS runs. No other transporter test carries those tags.",
+      "kind": "non-functional",
+      "ref": "tests/ins/e2e/features/transporters/private-transporter.spec.ts:9-12",
+      "quote": "'opens with its caption, heading, the Standard Address Block and contact fields, and Back to the transporter type question',\n    { tag: ['@cross-browser', '@ios'] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-136",
+      "statement": "A narrow-viewport scan can take the same scan options as any other scan, so an exclusion can apply at a narrow viewport too; no INS narrow scan passes any.",
+      "kind": "non-functional",
+      "ref": "utils/narrow-page-scan.ts:20-27",
+      "quote": "export const scanNarrowPage = async (\n  page: Page,\n  runA11yScan: A11yFixtures['runA11yScan'],\n  scanOptions?: A11yScanOptions,\n): Promise<void> => {",
+      "confidence": "verbatim",
+      "note": "mechanism: passes the scan options on to the scan after the sideways-scroll check."
     }
   ]
 }

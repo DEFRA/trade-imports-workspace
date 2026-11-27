@@ -1,0 +1,635 @@
+{
+  "source": "repo:insbackend",
+  "structure": "Part 2, the notification query API, read on main in repos/trade-imports-ins-backend. Read in full: the controller (GET /notifications), the query service, the sort parser, the repository, the page response record, the trader organisation header filter, the global exception handler with its NotFound and Conflict exceptions, the problem details factory, and nine test files (controller unit test, query service unit test, sort unit test, the Testcontainers controller integration test and its IntegrationBase, the header filter test, the exception handler test, the problem details factory test and the OpenAPI date format test). Also looked at, for the response shape and page size only: AggregatedNotification.java (the serialised document, part 1's file) and the notification.list.page-size key in application.yml. Covered: one read-only endpoint, GET /notifications, with page (1-based, minimum 1, default 1), sort (arrivalDate or lastUpdated, asc or desc, default arrivalDate,desc, anything else falls back), referenceNumber (exact, trimmed, organisation-scoped, single-result page) and the Trade-Imports-Organisation-Id header (required by a filter on GET /notifications only, 400 problem+json when missing or blank); DELETED notifications are excluded from both list and search; a fixed server-side page size of 25; the page response fields and each notification field it returns with the date formats; the problem detail responses the handler can return (validation, not found, conflict, internal error), with trace id; and gaps for the dashboard filters the API does not offer (status, origin, commodity, date range), sort tie-breaks, partial reference search and a client page size.",
+  "claims": [
+    {
+      "id": "repo-insbackend-p2-001",
+      "statement": "The service exposes one read-only notification query endpoint, GET /notifications, described as listing notifications owned by the organisation in the Trade-Imports-Organisation-Id header.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:21-37",
+      "quote": "@RequestMapping(\"/notifications\") @Tag(name = \"Notification API\", description = \"Read-only query operations over the cross-journey aggregated notification store\") ... summary = \"List notifications\", description = \"Returns a paginated list of notifications owned by the organisation in \" + TraderOrganisationHeaderFilter.ORGANISATION_ID_HEADER",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-002",
+      "statement": "The query endpoint takes a page parameter that defaults to 1 when not given.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:46",
+      "quote": "@RequestParam(defaultValue = \"1\") @Min(1) int page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-003",
+      "statement": "Page numbers are 1-based: a page below 1 (0 or a negative number) is refused with HTTP 400 and the query is not run.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:46; src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationControllerTest.java:49-61",
+      "quote": "@Min(1) int page ... findAll_shouldReturn400_whenPageIsZero ... findAll_shouldReturn400_whenPageIsNegative",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-004",
+      "statement": "A page below 1 is answered with a Validation Error problem detail: status 400, type https://api.cdp.defra.cloud/problems/validation-error, detail \"Validation failed for one or more fields\", and an errors map keyed by the parameter name (page) holding the constraint message, such as \"must be greater than or equal to 1\".",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandler.java:60-84; src/test/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandlerTest.java:92-115",
+      "quote": "@ExceptionHandler(ConstraintViolationException.class) ... \"Validation failed for one or more fields\" ... problemDetail.setTitle(\"Validation Error\"); ... errors.put(lastPathSegment(violation), violation.getMessage()); ... assertThat(errors.get(\"page\")).isEqualTo(\"must be greater than or equal to 1\");",
+      "confidence": "inferred",
+      "note": "Inferred that the page check reaches this handler: the controller is @Validated with @Min(1), and the handler maps ConstraintViolationException; the controller tests only assert status 400, while the handler test builds the violation for findAll.page by hand."
+    },
+    {
+      "id": "repo-insbackend-p2-005",
+      "statement": "The page parameter has no upper limit: a page past the last one is accepted and, because the repository is asked for that page, returns an empty content list.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:46; AggregatedNotificationQueryService.java:33",
+      "quote": "@Min(1) int page ... PageRequest.of(page - 1, listPageSize, AggregatedNotificationSort.toSort(sort))",
+      "confidence": "inferred",
+      "note": "Only a minimum is declared. No test requests a page beyond the total."
+    },
+    {
+      "id": "repo-insbackend-p2-006",
+      "statement": "A page value that is not a whole number is not handled as a validation error; the catch-all handler for runtime exceptions would answer it with HTTP 500 rather than 400.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandler.java:142-164",
+      "quote": "@ExceptionHandler({ RuntimeException.class, IllegalStateException.class, IllegalArgumentException.class }) public ProblemDetail handleException(Exception ex)",
+      "confidence": "inferred",
+      "note": "Spring raises a type mismatch (a RuntimeException) for page=abc; no handler maps it to 400 and no test covers it. Recorded as observed from the handler set, not proven."
+    },
+    {
+      "id": "repo-insbackend-p2-007",
+      "statement": "The page size is fixed on the server, set by notification.list.page-size, which defaults to 25 and can be overridden by the NOTIFICATION_LIST_PAGE_SIZE environment variable.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:151-153; src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java:24-28",
+      "quote": "notification:\n  list:\n    page-size: ${NOTIFICATION_LIST_PAGE_SIZE:25} ... @Value(\"${notification.list.page-size}\") int listPageSize",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-008",
+      "statement": "A caller cannot choose the page size: the endpoint takes no size parameter.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:45-52",
+      "quote": "public AggregatedNotificationPageResponse findAll( @RequestParam(defaultValue = \"1\") @Min(1) int page, @RequestParam(required = false) String sort, @RequestParam(required = false) String referenceNumber,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-009",
+      "statement": "The 1-based page the caller asks for is read from the store as the zero-based page one lower (page 2 reads the store's page 1), at the configured page size.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java:33; src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryServiceTest.java:58-69",
+      "quote": "PageRequest.of(page - 1, listPageSize, ...) ... findOrganisationPage_shouldUseZeroBasedRepositoryPage_whenSecondPageRequested ... assertThat(pageableCaptor.getValue().getPageNumber()).isEqualTo(1);",
+      "confidence": "verbatim",
+      "note": "mechanism: converts the dashboard's 1-based page number to the store's zero-based page."
+    },
+    {
+      "id": "repo-insbackend-p2-010",
+      "statement": "The endpoint takes an optional sort parameter; the documented options are arrivalDate,desc (the default), arrivalDate,asc, lastUpdated,desc and lastUpdated,asc.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:35-36,47",
+      "quote": "\". Optional sort: arrivalDate,desc (default), arrivalDate,asc, lastUpdated,desc, \" + \"lastUpdated,asc.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-011",
+      "statement": "With no sort, or a blank sort, notifications are ordered by arrival date, newest first.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSort.java:18-20,39-41; src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSortTest.java:10-22",
+      "quote": "if (sortParam == null || sortParam.isBlank()) { return defaultSort(); } ... return Sort.by(Sort.Direction.DESC, ARRIVAL_DATE_FIELD);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-012",
+      "statement": "A sort value that is not exactly a field and a direction separated by one comma (such as arrivalDate on its own) falls back to arrival date, newest first, without an error.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSort.java:22-25; src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSortTest.java:24-29",
+      "quote": "String[] parts = sortParam.split(\",\"); if (parts.length != 2) { return defaultSort(); }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-013",
+      "statement": "A sort on any field other than arrivalDate or lastUpdated (such as commodity,asc) falls back to arrival date, newest first, without an error: the API sorts by no other field.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSort.java:32-36; src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSortTest.java:31-36",
+      "quote": "case ARRIVAL_DATE_FIELD -> Sort.by(sortDirection, ARRIVAL_DATE_FIELD); case LAST_UPDATED_FIELD -> Sort.by(sortDirection, LAST_UPDATED_FIELD); default -> defaultSort();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-014",
+      "statement": "The sort field name is matched case-sensitively after trimming spaces, so ArrivalDate,asc falls back to the default sort.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSort.java:27,32",
+      "quote": "String sortField = parts[0].strip(); ... return switch (sortField) {",
+      "confidence": "inferred",
+      "note": "Read from the switch on the stripped string; no test covers a mixed-case field."
+    },
+    {
+      "id": "repo-insbackend-p2-015",
+      "statement": "The sort direction is ascending only when it reads asc, in any letter case (arrivalDate,ASC sorts ascending).",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSort.java:28-30; src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSortTest.java:59-64",
+      "quote": "Sort.Direction sortDirection = \"asc\".equalsIgnoreCase(parts[1].strip()) ? Sort.Direction.ASC : Sort.Direction.DESC;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-016",
+      "statement": "Any direction other than asc (such as arrivalDate,sideways) sorts descending on the field given, without an error.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSort.java:28-30; src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSortTest.java:66-71",
+      "quote": "toSort_shouldDefaultToDescending_whenDirectionIsUnrecognised ... AggregatedNotificationSort.toSort(\"arrivalDate,sideways\")) .isEqualTo(Sort.by(Sort.Direction.DESC, \"arrivalDate\"))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-017",
+      "statement": "arrivalDate,asc sorts by arrival date, oldest first.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSortTest.java:38-43",
+      "quote": "toSort_shouldHonourAscendingDirection_forArrivalDate ... toSort(\"arrivalDate,asc\")) .isEqualTo(Sort.by(Sort.Direction.ASC, \"arrivalDate\"))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-018",
+      "statement": "lastUpdated,desc sorts by last updated time, most recent first.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSortTest.java:45-50",
+      "quote": "toSort_shouldHonourDescendingDirection_forLastUpdated ... toSort(\"lastUpdated,desc\")) .isEqualTo(Sort.by(Sort.Direction.DESC, \"lastUpdated\"))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-019",
+      "statement": "lastUpdated,asc sorts by last updated time, oldest first.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSortTest.java:52-57",
+      "quote": "toSort_shouldHonourAscendingDirection_forLastUpdated ... toSort(\"lastUpdated,asc\")) .isEqualTo(Sort.by(Sort.Direction.ASC, \"lastUpdated\"))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-020",
+      "statement": "Sorting by arrival date orders by the calendar date across month and year boundaries (31 December 2025 before 2 January 2026 before 30 September 2026 ascending, and the reverse descending), proven against a real database.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java:64-81",
+      "quote": "\"'arrivalDate,asc', GBN-AG-25-012, GBN-AG-26-001, GBN-AG-25-001\", \"'arrivalDate,desc', GBN-AG-25-001, GBN-AG-26-001, GBN-AG-25-012\" ... findAll_shouldOrderAcrossMonthAndYearBoundaries_whenSortedByArrivalDate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-021",
+      "statement": "The sort uses only the one field chosen, with no tie-break, so notifications sharing an arrival date (or last updated time) come back in no defined order and may shift between pages.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSort.java:32-41",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in AggregatedNotificationSort and the query service: Sort.by takes one field only, and no test covers equal dates. Also silent on where notifications with no arrival date sort."
+    },
+    {
+      "id": "repo-insbackend-p2-022",
+      "statement": "The controller passes the sort value to the query unchanged.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationControllerTest.java:63-72",
+      "quote": "findAll_shouldPassSortParamToService ... mockMvc.perform(listNotificationsRequest().param(\"sort\", \"lastUpdated,asc\")) .andExpect(status().isOk()); verify(queryService).findOrganisationPage(1, \"lastUpdated,asc\", null, ORGANISATION_ID);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-023",
+      "statement": "The controller passes the page number to the query and returns the page, total count and total pages the query gives.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationControllerTest.java:96-108",
+      "quote": "findAll_shouldPassPageParamToService ... .andExpect(jsonPath(\"$.page\").value(2)) .andExpect(jsonPath(\"$.totalElements\").value(120)) .andExpect(jsonPath(\"$.totalPages\").value(5));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-024",
+      "statement": "With no parameters the endpoint asks for page 1 with no sort and no reference, and answers 200 with an empty content array, page 1, size 25 and total 0 when there is nothing to show.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationControllerTest.java:33-47",
+      "quote": "findAll_shouldReturnPageOfNotifications_withDefaultParams ... .andExpect(jsonPath(\"$.page\").value(1)) .andExpect(jsonPath(\"$.size\").value(25)) .andExpect(jsonPath(\"$.totalElements\").value(0)); verify(queryService).findOrganisationPage(1, null, null, ORGANISATION_ID);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-025",
+      "statement": "The endpoint takes an optional referenceNumber parameter, documented as an exact match against a complete notification reference.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:36-37,48",
+      "quote": "\"Optional referenceNumber: exact match against a complete \" + \"notification reference.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-026",
+      "statement": "The controller passes the reference number to the query unchanged.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationControllerTest.java:74-83",
+      "quote": "findAll_shouldPassReferenceNumberParamToService ... param(\"referenceNumber\", \"GBN-AG-26-001\") ... verify(queryService).findOrganisationPage(1, null, \"GBN-AG-26-001\", ORGANISATION_ID);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-027",
+      "statement": "Spaces around the reference number are trimmed before it is looked up.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java:35; src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryServiceTest.java:115-125",
+      "quote": "String trimmedReference = StringUtils.trimToNull(referenceNumber); ... findOrganisationPage_shouldTrimReferenceBeforeOrganisationLookup_whenReferenceHasPadding ... \"  GBN-AG-26-001  \"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-028",
+      "statement": "A blank reference number (only spaces) is treated as no search: the normal organisation list is returned.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java:35-36; src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryServiceTest.java:127-136",
+      "quote": "findOrganisationPage_shouldListOrganisation_whenReferenceNumberIsBlank ... service.findOrganisationPage(1, null, \"   \", ORGANISATION_ID); verify(repository).findAllByOrganisationIdAndStatusNot(...)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-029",
+      "statement": "A reference number search returns only the notification with exactly that reference, proven against a real database.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java:83-99",
+      "quote": "findAll_shouldReturnOnlyMatchingReference_whenReferenceNumberGiven ... param(\"referenceNumber\", \"GBN-AG-26-002\")) ... .andExpect(jsonPath(\"$.content\", hasSize(1))) .andExpect(jsonPath(\"$.content[0].referenceNumber\").value(\"GBN-AG-26-002\")) ... .andExpect(jsonPath(\"$.totalElements\").value(1));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-030",
+      "statement": "A reference number search returns at most one notification, as a single-item page.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationRepository.java:13-14; AggregatedNotificationQueryService.java:41-45,59-66",
+      "quote": "Optional<AggregatedNotification> findByReferenceNumberAndOrganisationIdAndStatusNot( ... notification -> new PageImpl<>(List.of(notification), firstPage, 1)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-031",
+      "statement": "A reference number search answers 200 with an empty content list and total 0 when no notification has that reference; it is not a 404.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java:101-110; src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryServiceTest.java:86-97",
+      "quote": "findAll_shouldReturnEmptyContent_whenReferenceNotFound ... param(\"referenceNumber\", \"GBN-AG-26-999\")) .andExpect(status().isOk()) .andExpect(jsonPath(\"$.content\", hasSize(0))) .andExpect(jsonPath(\"$.totalElements\").value(0));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-032",
+      "statement": "A partial reference number (part of a reference, a prefix, or a different letter case) finds nothing, because the search only matches a whole reference exactly.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationRepository.java:13-14",
+      "quote": "findByReferenceNumberAndOrganisationIdAndStatusNot( String referenceNumber, String organisationId, String status);",
+      "confidence": "inferred",
+      "note": "Spring Data derives an equality query from this method name; no test sends a partial or mixed-case reference."
+    },
+    {
+      "id": "repo-insbackend-p2-033",
+      "statement": "The API offers no partial, prefix or free-text reference search.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationRepository.java; AggregatedNotificationController.java",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the controller parameters and the repository's two query methods. Silent on whether the dashboard needs a partial match."
+    },
+    {
+      "id": "repo-insbackend-p2-034",
+      "statement": "A reference number search always reports page 1 with total pages 1 when it matches, whatever page was asked for.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java:59-66; src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryServiceTest.java:99-113",
+      "quote": "findOrganisationPage_shouldReportFirstPage_whenReferenceMatchRegardlessOfRequestedPage ... service.findOrganisationPage(3, null, \"GBN-AG-26-001\", ORGANISATION_ID); ... assertThat(response.page()).isEqualTo(1); assertThat(response.totalPages()).isEqualTo(1);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-035",
+      "statement": "A reference number search that finds nothing reports page 1, total 0 and total pages 0.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java:61-65",
+      "quote": ".orElseGet(() -> Page.empty(firstPage));",
+      "confidence": "inferred",
+      "note": "An empty Spring page over the first page reports number 0 (sent as 1) and zero total pages; the tests assert only empty content and total 0."
+    },
+    {
+      "id": "repo-insbackend-p2-036",
+      "statement": "When a reference number is given the search runs instead of the list: the list query is not run, and sort has no effect on the single result.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java:36-46; src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryServiceTest.java:71-84",
+      "quote": "findOrganisationPage_shouldReturnSingleMatchForOrganisation_whenReferenceNumberGiven ... verify(repository, never()).findAllByOrganisationIdAndStatusNot(any(), any(), any());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-037",
+      "statement": "Without a reference number the list query runs and the reference lookup is not used.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryServiceTest.java:39-56",
+      "quote": "findOrganisationPage_shouldQueryByOrganisationExcludingDeleted_whenNoReferenceNumber ... verify(repository, never()).findByReferenceNumberAndOrganisationIdAndStatusNot(any(), any(), any());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-038",
+      "statement": "The list query reads only the caller's organisation's notifications, page 1 being the store's first page at the page size of 25.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryServiceTest.java:39-56",
+      "quote": "verify(repository).findAllByOrganisationIdAndStatusNot( eq(ORGANISATION_ID), eq(\"DELETED\"), pageableCaptor.capture()); assertThat(pageableCaptor.getValue().getPageNumber()).isZero(); assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(PAGE_SIZE);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-039",
+      "statement": "Notifications with status DELETED are left out of the list.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java:19,54-55; src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java:34-62",
+      "quote": "private static final String DELETED_STATUS = \"DELETED\"; ... repository.findAllByOrganisationIdAndStatusNot(organisationId, DELETED_STATUS, pageable); ... findAll_shouldExcludeDeletedAndOrderByArrivalDateDesc_whenDefaultSort ... .andExpect(jsonPath(\"$.content\", hasSize(3)))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-040",
+      "statement": "A reference number search does not find a DELETED notification: it answers with empty content and total 0.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java:41-43; src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java:112-121",
+      "quote": "findAll_shouldExcludeDeleted_whenReferenceMatchesDeletedNotification ... \"GBN-AG-26-003\", \"DELETED\" ... .andExpect(jsonPath(\"$.content\", hasSize(0))) .andExpect(jsonPath(\"$.totalElements\").value(0));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-041",
+      "statement": "Every status other than DELETED is returned (DRAFT and SUBMITTED are shown in the tests); the API has no status filter.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java:34-62",
+      "quote": ".andExpect(jsonPath(\"$.content[0].status\").value(\"DRAFT\")) ... .andExpect(jsonPath(\"$.content[1].status\").value(\"SUBMITTED\"))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-042",
+      "statement": "The default list, proven against a real database, leaves out the deleted notification and orders the rest by arrival date newest first, returning reference, status, origin country, commodity, arrival date and last updated for each, at page 1.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java:34-62",
+      "quote": ".andExpect(jsonPath(\"$.content[0].referenceNumber\").value(\"GBN-AG-26-002\")) ... .andExpect(jsonPath(\"$.content[1].lastUpdated\").value(\"2026-08-19T10:00:00Z\")) .andExpect(jsonPath(\"$.content[2].referenceNumber\").value(\"GBN-AG-26-004\")) .andExpect(jsonPath(\"$.totalElements\").value(3)) .andExpect(jsonPath(\"$.page\").value(1));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-043",
+      "statement": "When the organisation has no notifications the list answers 200 with empty content and total 0.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java:123-129",
+      "quote": "findAll_shouldReturnEmptyContent_whenStoreIsEmpty ... .andExpect(status().isOk()) .andExpect(jsonPath(\"$.content\", hasSize(0))) .andExpect(jsonPath(\"$.totalElements\").value(0));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-044",
+      "statement": "The API offers no filter by status.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:45-52; AggregatedNotificationRepository.java",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The scope expects the filters the dashboard needs. Looked in the controller parameters and the repository methods: the only status rule is leaving out DELETED."
+    },
+    {
+      "id": "repo-insbackend-p2-045",
+      "statement": "The API offers no filter by country of origin.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:45-52; AggregatedNotificationRepository.java",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the controller parameters and the repository methods. originCountry is returned but cannot be filtered on."
+    },
+    {
+      "id": "repo-insbackend-p2-046",
+      "statement": "The API offers no filter by commodity.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:45-52; AggregatedNotificationRepository.java",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the controller parameters and the repository methods. commodity is returned but cannot be filtered on."
+    },
+    {
+      "id": "repo-insbackend-p2-047",
+      "statement": "The API offers no filter by date range, on arrival date or last updated.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:45-52; AggregatedNotificationRepository.java",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the controller parameters and the repository methods. The dates can be sorted on but not filtered."
+    },
+    {
+      "id": "repo-insbackend-p2-048",
+      "statement": "The API offers no endpoint to fetch one notification by its id; GET /notifications is the only read.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:20-55",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The controller has one @GetMapping with no path. NotFoundException exists and is mapped to 404 but nothing in this slice throws it."
+    },
+    {
+      "id": "repo-insbackend-p2-049",
+      "statement": "Every notification query is scoped to the organisation sent in the Trade-Imports-Organisation-Id request header.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:49-53; AggregatedNotificationRepository.java:10-14",
+      "quote": "@RequestHeader( value = TraderOrganisationHeaderFilter.ORGANISATION_ID_HEADER, required = false) String organisationId) { return queryService.findOrganisationPage(page, sort, referenceNumber, organisationId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-050",
+      "statement": "An organisation does not see another organisation's notifications in the list: it gets 200 with empty content and total 0.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java:143-152",
+      "quote": "findAll_shouldReturnEmptyList_whenCallerOrgDoesNotOwnStoredNotification ... listNotificationsFor(OTHER_ORGANISATION_ID)) .andExpect(status().isOk()) .andExpect(jsonPath(\"$.content\", hasSize(0)))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-051",
+      "statement": "An organisation cannot find another organisation's notification by reference number: it gets 200 with empty content and total 0, not a 403 or 404.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java:154-163",
+      "quote": "findAll_shouldReturnEmptyReferenceMatch_whenCallerOrgDoesNotOwnStoredNotification ... listNotificationsFor(OTHER_ORGANISATION_ID).param(\"referenceNumber\", \"GBN-AG-26-001\")) .andExpect(status().isOk()) .andExpect(jsonPath(\"$.content\", hasSize(0)))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-052",
+      "statement": "The organisation header is required on GET /notifications only; other methods and other paths pass the header check untouched.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/filter/TraderOrganisationHeaderFilter.java:37-43; src/test/java/uk/gov/defra/trade/imports/ins/backend/filter/TraderOrganisationHeaderFilterTest.java:39-58",
+      "quote": "if (!\"GET\".equalsIgnoreCase(request.getMethod())) { return true; } return !\"/notifications\".equals(servletPath(request));",
+      "confidence": "verbatim",
+      "note": "Tests: shouldNotFilter_shouldSkip_whenMethodIsNotGet, shouldNotFilter_shouldSkip_whenPathIsNotNotifications (/health), shouldNotFilter_shouldApply_whenGetNotifications."
+    },
+    {
+      "id": "repo-insbackend-p2-053",
+      "statement": "A GET /notifications request with the organisation header missing or blank (only spaces) is refused with HTTP 400 before any query runs.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/filter/TraderOrganisationHeaderFilter.java:50-59; src/test/java/uk/gov/defra/trade/imports/ins/backend/filter/TraderOrganisationHeaderFilterTest.java:71-93",
+      "quote": "if (organisationId == null || organisationId.isBlank()) { ... rejectMissingHeader(response); return; }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-054",
+      "statement": "The missing-header refusal is an application/problem+json body with status 400, type https://api.cdp.defra.cloud/problems/bad-request, title \"Bad Request\" and detail \"Missing required header Trade-Imports-Organisation-Id\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/filter/TraderOrganisationHeaderFilter.java:31-33,77-85; src/test/java/uk/gov/defra/trade/imports/ins/backend/filter/TraderOrganisationHeaderFilterTest.java:95-103",
+      "quote": "String detail = \"Missing required header \" + ORGANISATION_ID_HEADER; ... HttpStatus.BAD_REQUEST, TYPE_BAD_REQUEST, \"Bad Request\", detail); ... response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);",
+      "confidence": "verbatim",
+      "note": "The same detail is used for a blank header as for a missing one."
+    },
+    {
+      "id": "repo-insbackend-p2-055",
+      "statement": "The missing-header refusal is logged at warn with the method, path and header name.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/filter/TraderOrganisationHeaderFilter.java:52-56",
+      "quote": "log.warn( \"Refused {} {}: header {} missing or blank\", request.getMethod(), request.getRequestURI(), ORGANISATION_ID_HEADER);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-056",
+      "statement": "A request with the organisation header present carries on to the query.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/filter/TraderOrganisationHeaderFilterTest.java:60-69",
+      "quote": "doFilter_shouldContinueChain_whenOrganisationHeaderIsPresent ... request.addHeader(ORGANISATION_ID_HEADER, \"5900001\"); ... verify(chain).doFilter(same(request), same(response));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-057",
+      "statement": "Through the web layer, a missing organisation header is answered 400 with status 400 and title \"Bad Request\" in the body, and the query is never called; the integration test proves the 400 on the running service.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationControllerTest.java:85-94; src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java:137-141",
+      "quote": "findAll_shouldReturnBadRequest_whenOrganisationHeaderIsMissing ... .andExpect(jsonPath(\"$.status\").value(400)) .andExpect(jsonPath(\"$.title\").value(\"Bad Request\")); verifyNoInteractions(queryService);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-058",
+      "statement": "The organisation header's value is trusted as sent: it is checked only for being present and not blank, not against the caller's sign-in, and it is not trimmed, so a value with surrounding spaces matches no notifications.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/filter/TraderOrganisationHeaderFilter.java:50-61; AggregatedNotificationController.java:49-53",
+      "quote": "String organisationId = request.getHeader(ORGANISATION_ID_HEADER); if (organisationId == null || organisationId.isBlank()) { ... } chain.doFilter(request, response);",
+      "confidence": "inferred",
+      "note": "Organisation scoping relies on the caller (the dashboard frontend) setting the header correctly; this slice has no check of who is calling. Recorded in general terms only."
+    },
+    {
+      "id": "repo-insbackend-p2-059",
+      "statement": "The page response carries six fields: content (the notifications), page (1-based), size (the page size), numberOfElements (how many are on this page), totalElements (how many match in all) and totalPages.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationPageResponse.java:10-26",
+      "quote": "public record AggregatedNotificationPageResponse( List<AggregatedNotification> content, int page, int size, int numberOfElements, long totalElements, int totalPages) { ... pageResult.getNumber() + 1,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-060",
+      "statement": "Each notification in the page is the stored read-model document as it is, with no separate response shape.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationPageResponse.java:6-9",
+      "quote": "{@link AggregatedNotification} is serialized directly — it is already the read-model shape the dashboard needs, with no separate payload to strip.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-061",
+      "statement": "Each notification returned carries aggregateId, aggregateVersion, referenceNumber, organisationId, status, originCountry, originCountrySubdivisionCode, commodity, arrivalDate and lastUpdated.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotification.java:25-40",
+      "quote": "private String aggregateId; private long aggregateVersion; private String referenceNumber; private String organisationId; private String status; private String originCountry; private String originCountrySubdivisionCode; private String commodity; private LocalDate arrivalDate; private Instant lastUpdated;",
+      "confidence": "inferred",
+      "note": "Inferred from the document class being serialised directly; tests assert referenceNumber, status, originCountry, originCountrySubdivisionCode, commodity, arrivalDate and lastUpdated in the JSON but not aggregateId, aggregateVersion or organisationId. No Jackson inclusion setting was found, so fields with no value would be sent as null."
+    },
+    {
+      "id": "repo-insbackend-p2-062",
+      "statement": "The origin country subdivision code (such as ES-CN for the Canary Islands, with origin country ES) is returned when one is stored.",
+      "kind": "data",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java:165-181",
+      "quote": "findAll_shouldReturnOriginCountrySubdivisionCode_whenStoredOnNotification ... .andExpect(jsonPath(\"$.content[0].originCountry\").value(\"ES\")) .andExpect(jsonPath(\"$.content[0].originCountrySubdivisionCode\").value(\"ES-CN\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-063",
+      "statement": "arrivalDate is returned as a calendar date with no time, in the form 2026-08-20.",
+      "kind": "data",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java:52; src/test/java/uk/gov/defra/trade/imports/ins/backend/OpenApiDateFormatTest.java:17-41",
+      "quote": ".andExpect(jsonPath(\"$.content[0].arrivalDate\").value(\"2026-08-20\")) ... \"arrivalDate, date\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-064",
+      "statement": "lastUpdated is returned as a UTC date and time, in the form 2026-08-19T10:00:00Z.",
+      "kind": "data",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java:58; src/test/java/uk/gov/defra/trade/imports/ins/backend/OpenApiDateFormatTest.java:17-41",
+      "quote": ".andExpect(jsonPath(\"$.content[1].lastUpdated\").value(\"2026-08-19T10:00:00Z\")) ... \"lastUpdated, date-time\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-065",
+      "statement": "The published API schema describes arrivalDate with format date and lastUpdated with format date-time everywhere they appear.",
+      "kind": "constraint",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/OpenApiDateFormatTest.java:17-41",
+      "quote": "schema_shouldDescribeEachDateFieldWithTheFormatOfItsType ... .as(\"format of every '%s' property in the API schemas\", property) .isNotEmpty() .containsOnly(expectedFormat);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-066",
+      "statement": "The API documents two responses for GET /notifications: 200 \"Paginated notifications returned\" and 400 \"Trade-Imports-Organisation-Id header is missing or blank\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:38-43",
+      "quote": "@ApiResponse(responseCode = \"200\", description = \"Paginated notifications returned\", ... responseCode = \"400\", description = \"Trade-Imports-Organisation-Id header is missing or blank\",",
+      "confidence": "verbatim",
+      "note": "The 400 for a page below 1 is not documented as a response."
+    },
+    {
+      "id": "repo-insbackend-p2-067",
+      "statement": "Every problem detail response carries the request's trace id as traceId when one is known, and leaves it out when not.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/support/ProblemDetailsFactory.java:15-25; src/test/java/uk/gov/defra/trade/imports/ins/backend/support/ProblemDetailsFactoryTest.java:19-43; GlobalExceptionHandlerTest.java:71-89",
+      "quote": "String traceId = MDC.get(MDC_TRACE_ID); if (traceId != null) { problemDetail.setProperty(PROPERTY_TRACE_ID, traceId); }",
+      "confidence": "verbatim",
+      "note": "Tests: problemDetail_shouldOmitTraceId_whenMdcEmpty, problemDetail_shouldIncludeTraceId_whenMdcHasTraceId, and each handler's shouldHandleNullTraceId test."
+    },
+    {
+      "id": "repo-insbackend-p2-068",
+      "statement": "An unexpected error is answered with HTTP 500, type https://api.cdp.defra.cloud/problems/internal-error, title \"Internal Server Error\" and detail \"An unexpected error occurred. Please try again later.\", without the error's own message.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandler.java:142-164; src/test/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandlerTest.java:212-256",
+      "quote": "HttpStatus.INTERNAL_SERVER_ERROR, \"An unexpected error occurred. Please try again later.\" ); problemDetail.setType(URI.create(\"https://api.cdp.defra.cloud/problems/internal-error\")); problemDetail.setTitle(\"Internal Server Error\");",
+      "confidence": "verbatim",
+      "note": "Tests cover RuntimeException, IllegalStateException and IllegalArgumentException. A database failure during the query would reach this handler."
+    },
+    {
+      "id": "repo-insbackend-p2-069",
+      "statement": "Unexpected errors are logged at error with the trace id and the exception.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandler.java:148-149",
+      "quote": "log.error(\"Unexpected error (trace: {})\", traceId, ex);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-070",
+      "statement": "A body validation error would be answered with HTTP 400, type validation-error, title \"Validation Error\", detail \"Validation failed for one or more fields\" and an errors map of field to message; the query endpoint takes no body, so it does not use this.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandler.java:31-55; src/test/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandlerTest.java:41-69",
+      "quote": "@ExceptionHandler(MethodArgumentNotValidException.class) ... \"Validation failed for one or more fields\" ... errors.put(error.getField(), error.getDefaultMessage());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-071",
+      "statement": "A not-found error is answered with HTTP 404, type https://api.cdp.defra.cloud/problems/not-found, title \"Resource Not Found\" and the error's own message as detail; nothing on the query endpoint raises it.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandler.java:96-114; NotFoundException.java:7-12; src/test/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandlerTest.java:136-172",
+      "quote": "HttpStatus.NOT_FOUND, ex.getMessage() ); problemDetail.setType(URI.create(\"https://api.cdp.defra.cloud/problems/not-found\")); problemDetail.setTitle(\"Resource Not Found\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-072",
+      "statement": "A conflict error is answered with HTTP 409, type https://api.cdp.defra.cloud/problems/conflict, title \"Resource Conflict\" and the error's own message as detail; nothing on the query endpoint raises it.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandler.java:119-137; ConflictException.java:7-12; src/test/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandlerTest.java:174-210",
+      "quote": "HttpStatus.CONFLICT, ex.getMessage() ); problemDetail.setType(URI.create(\"https://api.cdp.defra.cloud/problems/conflict\")); problemDetail.setTitle(\"Resource Conflict\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-073",
+      "statement": "Validation, not-found and conflict errors are logged at warn with the trace id and the exception.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandler.java:34,63,99,122",
+      "quote": "log.warn(\"Validation error (trace: {})\", traceId, ex); ... log.warn(\"Constraint violation (trace: {})\", traceId, ex); ... log.warn(\"Resource not found (trace: {})\", traceId, ex); ... log.warn(\"Resource conflict (trace: {})\", traceId, ex);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-074",
+      "statement": "The time taken by each list request is recorded as the metric controller.getAllNotifications.time.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:44",
+      "quote": "@Timed(\"controller.getAllNotifications.time\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-075",
+      "statement": "Each query is logged at debug with the page, page size, sort and organisation id, or with the reference and organisation id for a reference search.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java:37-53",
+      "quote": "\"Fetching notification by reference {} for dashboard organisationId={}\" ... \"Fetching notifications page {} (size {}) with sort {} organisationId={}\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p2-076",
+      "statement": "The query service is described as serving GET /notifications for the unified dashboard.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java:14",
+      "quote": "/** Serves {@code GET /notifications} for the unified dashboard. */",
+      "confidence": "verbatim"
+    }
+  ]
+}

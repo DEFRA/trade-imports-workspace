@@ -1,0 +1,764 @@
+{
+  "source": "repo:backend",
+  "structure": "Part 1, the notification record and its validation, read on main. Read in full: README.md (145 lines), AGENTS.md (21), docs/design-notes.md (144) and the workspace's docs/repos/trade-imports-animals-backend.md (63); the 26 record and wire-type files under src/main/java/uk/gov/defra/trade/imports/animals/notification/ (Notification, NotificationBase, NotificationDto, SaveNotificationDto, NotificationAggregate, NotificationStatus, NotificationView, NotificationViewData, NotificationFulfilmentsView, NotificationContentMapper, NotificationPageResponse, ReferenceNumberPageResponse, NotificationReferenceOnly, ReplayResponse, ActorRequest, AuditContext, Origin, Commodity, Species, AnimalIdentifier, AdditionalDetails, ConsignmentParty, Address, Transport, Transporter, MeansOfTransport); configuration/StrictLocalDateModule.java and configuration/LocalDateStringConverters.java; and all 8 files in exceptions/. The record is a NotificationAggregate document in the Mongo collection `notification`: identity and metadata (reference number, organisation, concurrency token, status, created, updated, submittedAt, expireAt, the pre-amend snapshots and answersDifferFromSubmitted) around a `notification` content sub-object and an opaque `fulfilments` list. The content sub-object shares NotificationBase with the inbound NotificationDto: origin, commodities (species, animal identifiers), reasonForImport, additionalDetails, five ConsignmentParty parties with an Address each, cphNumber, transport (transporter, means of transport), purposeInInternalMarket, destinationCountry, portOfExit and exitDate. Claims cover every field and its type, the four statuses, the date rules (strict YYYY-MM-DD binding, string storage, ISO instants), the response shapes (list view, page responses, fulfilments view, replay response), and every error response GlobalExceptionHandler and ProblemDetailsFactory produce with title and detail verbatim. The only bean-validation constraint on the record is @NotNull @Valid on the save body's notification member: no content field carries a constraint. The design notes' lifecycle, document, outbox and GBN-AG sections belong to parts 2 to 4; this part claims only what they say a record field means. AGENTS.md holds code-quality rules and no ruling on the record. Gaps: no germinal products details, no notification category and no trade-line typeCodes anywhere in the notification package, and no rulings ledger in the repo.",
+  "claims": [
+    {
+      "id": "repo-backend-p1-001",
+      "statement": "A notification is stored as one document in the MongoDB collection named notification.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java:23",
+      "quote": "@org.springframework.data.mongodb.core.mapping.Document(collection = \"notification\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-002",
+      "statement": "The stored record keeps its structured answers in a notification content sub-object and its obligation fulfilments as a separate list of opaque documents.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java:19-21, 60-62",
+      "quote": "A notification's identity and metadata, with its structured content in a {@link Notification} sub-object and its obligation fulfilments as opaque documents.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-003",
+      "statement": "Each record has a database id.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java:38-39",
+      "quote": "@Id\n    private String id;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-004",
+      "statement": "A notification's reference number is unique across all records, and a record may have none (the unique index is sparse).",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java:41-42",
+      "quote": "@Indexed(unique = true, sparse = true)\n    private String referenceNumber;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-005",
+      "statement": "Each record holds the id of the organisation it belongs to.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java:44",
+      "quote": "private String organisationId;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-006",
+      "statement": "Each record carries a concurrencyToken version number used for optimistic locking: a save at a stale token is refused.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java:46-47; docs/design-notes.md:25",
+      "quote": "@Version\n    private Long concurrencyToken;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-007",
+      "statement": "Each record has a status.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java:49",
+      "quote": "private NotificationStatus status;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-008",
+      "statement": "A notification's status is one of four values: DRAFT, SUBMITTED, AMEND or DELETED.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationStatus.java:3-4",
+      "quote": "DRAFT, SUBMITTED, AMEND, DELETED",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-009",
+      "statement": "Each record has server-stamped created and updated moments, stored as instants.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java:51-53; docs/design-notes.md:7",
+      "quote": "private Instant created;\n\n    private Instant updated;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-010",
+      "statement": "A client cannot set created or updated: the inbound notification shape has no such fields, and the server would discard them.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationDto.java:11-17",
+      "quote": "the aggregate's server-stamped {@code created}/{@code updated} instants are deliberately absent here; a client cannot set them and the server would discard them.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-011",
+      "statement": "Each record has a submittedAt moment holding the latest submission: set when a draft is submitted, refreshed when an amendment is resubmitted, unchanged when an amendment starts or is cancelled.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java:55; docs/design-notes.md:29",
+      "quote": "`submittedAt` is the latest submission: set when a DRAFT is submitted and refreshed when an AMEND is resubmitted. Starting an amendment leaves it unchanged, and cancelling one returns to SUBMITTED and keeps it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-012",
+      "statement": "Each record may carry an expireAt moment, which is never returned in an API response.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java:57-58",
+      "quote": "@JsonIgnore\n    private Instant expireAt;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-013",
+      "statement": "expireAt is set at creation only when a time to live in days is configured and the environment is not prod, and it counts from created, so later edits do not extend it.",
+      "kind": "rule",
+      "ref": "docs/design-notes.md:40, 45",
+      "quote": "`expireAt` is set at creation only when `NOTIFICATION_TTL_DAYS` is configured and `ENVIRONMENT` is not `prod`.",
+      "confidence": "verbatim",
+      "note": "The expiry mechanics (TTL indexes, removal) are part 2's; this claim records only what the field means on the record."
+    },
+    {
+      "id": "repo-backend-p1-014",
+      "statement": "The record keeps a pre-amend snapshot of the notification content and of the fulfilments, neither of which is ever returned in an API response.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java:64-68",
+      "quote": "@JsonIgnore\n    private Notification preAmendNotification;\n\n    @JsonIgnore\n    private List<Document> preAmendFulfilments;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-015",
+      "statement": "Each record has an answersDifferFromSubmitted flag that is always true or false, stored on write, false on a new notification, and read as false on a record stored without it.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java:70; docs/design-notes.md:32",
+      "quote": "`answersDifferFromSubmitted` is always yes or no, and is stored on write rather than computed on read",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-016",
+      "statement": "Only the notification content sub-object counts when deciding whether answers differ from those submitted: uploaded documents and the fulfilments payload never count as a change, and putting an answer back reads as unchanged.",
+      "kind": "rule",
+      "ref": "docs/design-notes.md:33",
+      "quote": "Only the `notification` content sub-object is compared with its snapshot, both through the same deep clone, so uploaded documents and the opaque fulfilments payload never count as a change. Putting an answer back reads as unchanged.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-017",
+      "statement": "The fulfilments payload is stored exactly as it arrives and never interpreted by the backend.",
+      "kind": "rule",
+      "ref": "docs/design-notes.md:30; src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationDto.java:31-32",
+      "quote": "`fulfilments` is an opaque payload, stored as it arrives and never interpreted here.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-018",
+      "statement": "Records are indexed for listing one organisation's notifications by status, newest created first.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java:25-27",
+      "quote": "name = \"organisationId_status_created\",\n        def = \"{'organisationId': 1, 'status': 1, 'created': -1}\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-019",
+      "statement": "Records are indexed for listing one organisation's notifications by status, latest arrival date first.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java:28-30",
+      "quote": "name = \"organisationId_status_arrivalDate\",\n        def = \"{'organisationId': 1, 'status': 1, 'notification.transport.arrivalDate': -1}\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-020",
+      "statement": "The notification content holds an origin.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationBase.java:17",
+      "quote": "private Origin origin;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-021",
+      "statement": "The origin holds five text values: countryCode, requiresRegionCode, internalReference, regionOfOriginCode and countrySubdivisionCode.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Origin.java:14-18",
+      "quote": "private String countryCode;\n    private String requiresRegionCode;\n    private String internalReference;\n    private String regionOfOriginCode;\n    private String countrySubdivisionCode;",
+      "confidence": "verbatim",
+      "note": "requiresRegionCode is a String, not a boolean, so the frontend's yes/no answer is stored as text."
+    },
+    {
+      "id": "repo-backend-p1-022",
+      "statement": "The notification content holds a list of commodities, empty by default.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationBase.java:19-20",
+      "quote": "@Builder.Default\n    private List<Commodity> commodities = new ArrayList<>();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-023",
+      "statement": "A commodity holds a name, a commodityCode and a description, all text.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Commodity.java:16-20",
+      "quote": "private String name;\n\n    private String commodityCode;\n\n    private String description;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-024",
+      "statement": "A commodity holds a whole-number total number of animals and a whole-number total number of packages.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Commodity.java:22-23",
+      "quote": "private Integer totalNoOfAnimals;\n    private Integer totalNoOfPackages;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-025",
+      "statement": "A commodity holds a list of species lines, empty by default.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Commodity.java:24-25",
+      "quote": "@Builder.Default\n    private List<Species> species = new ArrayList<>();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-026",
+      "statement": "A species line holds a value, a text and a commonName, all text.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Species.java:15-17",
+      "quote": "private String value;\n    private String text;\n    private String commonName;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-027",
+      "statement": "A species line holds a whole-number number of animals and a whole-number number of packages.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Species.java:18-19",
+      "quote": "private Integer noOfAnimals;\n    private Integer noOfPackages;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-028",
+      "statement": "A species line holds an ear tag, a passport and a microchip as text directly on the line.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Species.java:20-22",
+      "quote": "private String earTag;\n    private String passport;\n    private String microchip;",
+      "confidence": "verbatim",
+      "note": "These sit beside the animalIdentifiers list, which also holds earTag, passport and microchip per unit. The source does not say which one is current."
+    },
+    {
+      "id": "repo-backend-p1-029",
+      "statement": "A species line holds a list of animal identifier units.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Species.java:23",
+      "quote": "private List<AnimalIdentifier> animalIdentifiers;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-030",
+      "statement": "An animal identifier unit holds a microchip, a passport, a tattoo, an ear tag and a horse name, all text.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/AnimalIdentifier.java:15-19",
+      "quote": "private String microchip;\n    private String passport;\n    private String tattoo;\n    private String earTag;\n    private String horseName;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-031",
+      "statement": "An animal identifier unit holds free-text identificationDetails and description.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/AnimalIdentifier.java:20-21",
+      "quote": "private String identificationDetails;\n    private String description;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-032",
+      "statement": "An animal identifier unit holds the animal's permanent address as a party (name, email, phone and address).",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/AnimalIdentifier.java:22; ConsignmentParty.java:8-10",
+      "quote": "private ConsignmentParty permanentAddress;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-033",
+      "statement": "The notification content holds a reasonForImport as text.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationBase.java:22",
+      "quote": "private String reasonForImport;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-034",
+      "statement": "The notification content holds additional details: certifiedFor and unweanedAnimals, both text.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationBase.java:24; AdditionalDetails.java:14-15",
+      "quote": "private String certifiedFor;\n    private String unweanedAnimals;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-035",
+      "statement": "The notification content holds five parties: placeOfOrigin, consignor, consignee, importer and destination.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationBase.java:26-34",
+      "quote": "private ConsignmentParty placeOfOrigin;\n\n    private ConsignmentParty consignor;\n\n    private ConsignmentParty consignee;\n\n    private ConsignmentParty importer;\n\n    private ConsignmentParty destination;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-036",
+      "statement": "A party holds a name, an email, a phone and an address.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/ConsignmentParty.java:21-24",
+      "quote": "private String name;\n    private String email;\n    private String phone;\n    private Address address;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-037",
+      "statement": "A party on a notification is a literal copy of the address the trader picked, so later edits or deletions in the address book never reach the notification.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/ConsignmentParty.java:12-13",
+      "quote": "Held as a literal copy of the address the trader picked: later edits or deletions in the address book never reach the notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-038",
+      "statement": "An address is a Standard Address Block of addressLine1, addressLine2, townOrCity, county, postcode and countryCode, all text.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Address.java:8-22",
+      "quote": "private String addressLine1;\n    private String addressLine2;\n    private String townOrCity;\n    private String county;\n    private String postcode;\n    private String countryCode;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-039",
+      "statement": "An address's countryCode is an ISO 3166-1 alpha-2 code, not a country name.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Address.java:9",
+      "quote": "{@code countryCode} is an ISO 3166-1 alpha-2 code, not a display name.",
+      "confidence": "verbatim",
+      "note": "Stated in a doc comment; nothing validates the format."
+    },
+    {
+      "id": "repo-backend-p1-040",
+      "statement": "The notification content holds a CPH number as text.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationBase.java:36",
+      "quote": "private String cphNumber;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-041",
+      "statement": "The notification content holds a transport section.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationBase.java:38",
+      "quote": "private Transport transport;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-042",
+      "statement": "Transport holds a port of entry as text.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Transport.java:16",
+      "quote": "private String portOfEntry;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-043",
+      "statement": "Transport holds the arrival date as a calendar date with no time.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Transport.java:17-18",
+      "quote": "/** The chosen arrival day, as a calendar date. See {@link NotificationBase#exitDate}. */\n    private LocalDate arrivalDate;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-044",
+      "statement": "Transport holds a means of transport.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Transport.java:19",
+      "quote": "private MeansOfTransport meansOfTransport;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-045",
+      "statement": "The means of transport is one of AIRPLANE (Airplane), RAILWAY (Railway), ROAD_VEHICLE (Road vehicle) or VESSEL (Vessel); any other value is refused as unreadable.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/MeansOfTransport.java:5-16",
+      "quote": "@Schema(description = \"Airplane\")\n  AIRPLANE,\n\n  @Schema(description = \"Railway\")\n  RAILWAY,\n\n  @Schema(description = \"Road vehicle\")\n  ROAD_VEHICLE,\n\n  @Schema(description = \"Vessel\")\n  VESSEL",
+      "confidence": "verbatim",
+      "note": "That an unknown value is refused is inferred: Jackson fails to bind an unknown enum constant, which GlobalExceptionHandler answers as a 400 Malformed Request."
+    },
+    {
+      "id": "repo-backend-p1-046",
+      "statement": "Transport holds a transport identification and a transport document reference, both text.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Transport.java:20-21",
+      "quote": "private String transportIdentification;\n    private String transportDocumentReference;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-047",
+      "statement": "Transport holds a list of transited countries, each as text.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Transport.java:22",
+      "quote": "private List<String> transitedCountries;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-048",
+      "statement": "Transport holds a transporter with a name, an address, an approval number and a type.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Transport.java:23; Transporter.java:14-17",
+      "quote": "private String name;\n    private Address address;\n    private String approvalNumber;\n    private String type;",
+      "confidence": "verbatim",
+      "note": "The transporter's type is free text, not an enumeration."
+    },
+    {
+      "id": "repo-backend-p1-049",
+      "statement": "The notification content holds a purpose in the internal market as text.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationBase.java:40",
+      "quote": "private String purposeInInternalMarket;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-050",
+      "statement": "The notification content holds a destination country and a port of exit, both text.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationBase.java:42-44",
+      "quote": "private String destinationCountry;\n\n    private String portOfExit;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-051",
+      "statement": "The notification content holds an exit date as a calendar date, sent as YYYY-MM-DD.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationBase.java:46-47",
+      "quote": "/** The exit date the user chose, as YYYY-MM-DD on the wire. */\n    private LocalDate exitDate;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-052",
+      "statement": "A save request carries a notification, which is required and validated, and an optional actor.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/SaveNotificationDto.java:14-18",
+      "quote": "@Valid\n    @NotNull\n    NotificationDto notification;\n\n    ActorRequest actor;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-053",
+      "statement": "The inbound notification carries a reference number, a status, a concurrency token and the fulfilments payload, beside every content field.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationDto.java:23-32",
+      "quote": "private String referenceNumber;\n\n    private NotificationStatus status;\n\n    private Long concurrencyToken;\n\n    /** Opaque obligation-fulfilment payload — persisted byte-faithfully. */\n    private List<Document> fulfilments;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-054",
+      "statement": "No content field of the notification has a validation rule in the backend: no field is required, no text has a length limit and no code has a format check, so the API accepts any combination of answers.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/ (NotificationBase, Origin, Commodity, Species, AnimalIdentifier, AdditionalDetails, ConsignmentParty, Address, Transport, Transporter)",
+      "quote": "@Valid\n    @NotNull\n    NotificationDto notification;",
+      "confidence": "inferred",
+      "note": "Inferred from absence: SaveNotificationDto's @NotNull @Valid is the only jakarta.validation constraint across the record and wire types; none of the content classes carries one. Whether a field is mandatory to proceed or to submit is therefore enforced by the frontend only, if at all."
+    },
+    {
+      "id": "repo-backend-p1-055",
+      "statement": "An actor on a save request carries an id, a source, a user type, a display name, an organisation id and an on-behalf-of organisation id.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/ActorRequest.java:13-18",
+      "quote": "String id;\n    String source;\n    String userType;\n    String displayName;\n    String organisationId;\n    String onBehalfOfOrganisationId;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-056",
+      "statement": "An action is attributed to the request's CDP trace id, from the x-cdp-request-id header, and to the user id, from the User-Id header, and both must be present.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/AuditContext.java:10-17",
+      "quote": "@param traceId the CDP request correlation id (from the {@code x-cdp-request-id} header)\n * @param userId  the authenticated user identifier (from the {@code User-Id} header)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-057",
+      "statement": "A date-only field accepts only a plain date such as 2026-07-21: a value carrying a time or an offset is refused with 400 rather than having its date part kept.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/configuration/StrictLocalDateModule.java:9-17, 41; docs/design-notes.md:19",
+      "quote": "A date-only field rejects a value carrying a time or an offset with 400, rather than keeping the date part.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-058",
+      "statement": "The strict date rule applies to every calendar-date field, including any added later, and does not change how moments are read.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/configuration/StrictLocalDateModule.java:19-20",
+      "quote": "The override is set for the type rather than with {@code @JsonFormat} on each field, so a future {@code LocalDate} field cannot forget it. {@code Instant} binding is untouched.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-059",
+      "statement": "Calendar dates (arrival date, exit date and a document's date of issue) are stored as YYYY-MM-DD strings and read back as the same date in any server time zone.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/configuration/LocalDateStringConverters.java:8-37; docs/design-notes.md:8",
+      "quote": "Calendar dates (`arrivalDate`, `exitDate`, a document's `dateOfIssue`) are `LocalDate`, stored by `LocalDateStringConverters` as `YYYY-MM-DD` strings.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-060",
+      "statement": "Because stored dates are YYYY-MM-DD strings, sorting and range queries on them still work in date order.",
+      "kind": "non-functional",
+      "ref": "docs/design-notes.md:9",
+      "quote": "`YYYY-MM-DD` strings sort in date order, so sorts and range queries still work.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-061",
+      "statement": "Date-shaped strings in text fields, in the fulfilments payload and in outbox data stay strings and are not turned into dates.",
+      "kind": "rule",
+      "ref": "docs/design-notes.md:10",
+      "quote": "Date-shaped strings in `String` fields, `fulfilments` and outbox `data` stay strings.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-062",
+      "statement": "Moments (created, updated, submittedAt, expireAt and audit timestamps) are stored without a zone, so a change of server zone cannot shift them, and hold only millisecond precision.",
+      "kind": "data",
+      "ref": "docs/design-notes.md:7, 11",
+      "quote": "Moments (`created`, `updated`, `submittedAt`, `expireAt`, the audit `timestamp`) are `Instant`. An `Instant` decodes without a zone, so a change of JVM zone between the writer and the reader cannot shift it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-063",
+      "statement": "The API sends moments and calendar dates as ISO-8601 strings, never as epoch numbers or arrays, and this is pinned so it cannot change by accident.",
+      "kind": "constraint",
+      "ref": "docs/design-notes.md:12",
+      "quote": "`write-dates-as-timestamps` is pinned to `false`, the Spring Boot default, so it cannot change by accident.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-064",
+      "statement": "The OpenAPI schema marks each calendar-date field as format date and each moment as format date-time.",
+      "kind": "integration",
+      "ref": "docs/design-notes.md:15",
+      "quote": "The OpenAPI schema derives each date field's `format` from its Java type, so `format: date` tells a caller the value is a calendar date and `format: date-time` tells it the value is a moment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-065",
+      "statement": "Each row of the notification list carries the reference number, concurrency token, status, created moment, origin, commodities, consignor, consignee and transport, in a flat shape.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationView.java:23-44; NotificationViewData.java:16-24",
+      "quote": "String getReferenceNumber();\n\n    Long getConcurrencyToken();\n\n    NotificationStatus getStatus();\n\n    Instant getCreated();",
+      "confidence": "verbatim",
+      "note": "The list row carries no importer, place of origin, destination, submittedAt or updated."
+    },
+    {
+      "id": "repo-backend-p1-066",
+      "statement": "The notification list loads each row's whole stored record, fulfilments included, a cost the code accepts because the list is to be replaced by an event-populated dashboard service.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationView.java:12-15",
+      "quote": "Accepted trade-off: this endpoint is being replaced by an event-populated dashboard service and there are no live users to notice the cost.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-067",
+      "statement": "A page of the notification list carries content, page, size, numberOfElements, totalElements and totalPages, with page numbered from 1.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationPageResponse.java:13-29",
+      "quote": "pageResult.getNumber() + 1,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-068",
+      "statement": "A page of reference numbers carries the reference numbers as plain strings with page, size, numberOfElements, totalElements and totalPages, and its page is numbered from 0, unlike the notification list's.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/ReferenceNumberPageResponse.java:6-23",
+      "quote": "pageResult.getContent().stream()\n            .map(NotificationReferenceOnly::getReferenceNumber)\n            .toList(),\n        pageResult.getNumber(),",
+      "confidence": "inferred",
+      "note": "Inferred from Spring Data's Page.getNumber being zero-based, passed through without the + 1 the notification list adds."
+    },
+    {
+      "id": "repo-backend-p1-069",
+      "statement": "The fulfilments view returns the reference number, concurrency token, status, created, submittedAt, the fulfilments payload and answersDifferFromSubmitted, and none of the server-only fields.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationFulfilmentsView.java:13-36; docs/design-notes.md:31",
+      "quote": "String referenceNumber;\n\n    Long concurrencyToken;\n\n    NotificationStatus status;\n\n    Instant created;\n\n    Instant submittedAt;\n\n    List<Document> fulfilments;\n\n    boolean answersDifferFromSubmitted;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-070",
+      "statement": "Endpoints return either the full stored record or one of the view projections, never the inbound notification shape.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationDto.java:13-15",
+      "quote": "It is never a response body — every endpoint returns {@link NotificationAggregate} or one of the view projections",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-071",
+      "statement": "A replay response says how many events were replayed.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/ReplayResponse.java:3",
+      "quote": "public record ReplayResponse(int eventsReplayed) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-072",
+      "statement": "When the notification content is deep-copied, a missing or empty commodities list comes out as an empty list.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationContentMapper.java:14-23",
+      "quote": "if (source == null || source.isEmpty()) {\n            return new ArrayList<>();\n        }",
+      "confidence": "verbatim",
+      "note": "mechanism: deep-clones the notification content sub-object (used for the pre-amend snapshot and the answers-differ comparison) and normalises a null commodities list."
+    },
+    {
+      "id": "repo-backend-p1-073",
+      "statement": "Every error response is an RFC 7807 problem detail sent as application/problem+json, carrying the request's traceId when there is one.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:29-31; ProblemDetailsFactory.java:17-27",
+      "quote": "Global exception handler producing RFC 7807 ProblemDetail responses with trace IDs.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-074",
+      "statement": "A request body that fails validation gets 400 with type validation-error, title \"Validation Error\", detail \"Validation failed for one or more fields\", and an errors map of each field to its messages.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:38-41, 57-83",
+      "quote": "private static final String TITLE_VALIDATION_ERROR = \"Validation Error\";\n    private static final String DETAIL_VALIDATION_ERROR = \"Validation failed for one or more fields\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-075",
+      "statement": "A body that cannot be read (malformed JSON or a value that does not fit its field's type) gets 400 with type malformed-request, title \"Malformed Request\" and a fixed detail naming the expected date and timestamp forms.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:89-111",
+      "quote": "\"Request body could not be read. Check the JSON is well-formed, that each date-only \"\n                + \"field is a date, for example 2026-12-12, and that each timestamp is an \"\n                + \"RFC 3339 instant, for example 2026-12-12T00:00:00Z\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-076",
+      "statement": "The parser's own message for an unreadable body is logged and never returned, because it quotes the submitted value and names internal types.",
+      "kind": "constraint",
+      "ref": "docs/design-notes.md:20; src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:86-87",
+      "quote": "The parser message quotes the submitted value and names internal types, so it is logged, never returned.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-077",
+      "statement": "A method-parameter constraint violation gets 400 \"Validation Error\" with \"Validation failed for one or more fields\", and its errors map is keyed by the last segment of the violated property path.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:116-147",
+      "quote": "String field = propertyPath.contains(\".\")\n                ? propertyPath.substring(propertyPath.lastIndexOf('.') + 1)\n                : propertyPath;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-078",
+      "statement": "A missing required request parameter gets 400 \"Validation Error\" with the parameter's name mapped to \"Required request parameter is missing\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:149-154",
+      "quote": "return requestParameterProblem(ex.getParameterName(), \"Required request parameter is missing\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-079",
+      "statement": "A request parameter of the wrong type gets 400 \"Validation Error\" with the parameter's name mapped to \"Request parameter has an invalid value\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:156-161",
+      "quote": "return requestParameterProblem(ex.getName(), \"Request parameter has an invalid value\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-080",
+      "statement": "An application-level bad request (such as a callback payload missing required metadata) gets 400 with type bad-request, title \"Bad Request\" and the refusal's own message as detail.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:187-193; BadRequestException.java:3-7",
+      "quote": "HttpStatus.BAD_REQUEST, TYPE_BAD_REQUEST, \"Bad Request\", ex.getMessage());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-081",
+      "statement": "A request for a trader-scoped resource that belongs to another organisation gets 403 with type forbidden, title \"Forbidden\" and the refusal's message as detail.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:195-199; ForbiddenException.java:3-7",
+      "quote": "Raised when a trader-scoped resource exists under another {@code Trade-Imports-Organisation-Id} than the one on the request.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-082",
+      "statement": "A request for something that does not exist gets 404 with type not-found, title \"Resource Not Found\" and the refusal's message as detail.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:204-209",
+      "quote": "HttpStatus.NOT_FOUND, TYPE_NOT_FOUND, \"Resource Not Found\", ex.getMessage());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-083",
+      "statement": "A conflict such as a duplicate key gets 409 with type conflict, title \"Resource Conflict\" and the refusal's message as detail.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:214-220; ConflictException.java:3-6",
+      "quote": "HttpStatus.CONFLICT, TYPE_CONFLICT, \"Resource Conflict\", ex.getMessage());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-084",
+      "statement": "A save at a stale concurrency token gets 409 with title \"Stale Concurrency Token\", code STALE_CONCURRENCY_TOKEN and detail \"The record was modified by another request; refresh and try again.\"",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:243-264",
+      "quote": "\"The record was modified by another request; refresh and try again.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-085",
+      "statement": "A failure to write the outbox event gets 500 with title \"Internal Server Error\" and detail \"An error occurred during submission. Please try again.\"",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:269-290",
+      "quote": "\"An error occurred during submission. Please try again.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-086",
+      "statement": "Any other unexpected runtime failure gets 500 with title \"Internal Server Error\" and detail \"An unexpected error occurred. Please try again later.\"",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:295-315",
+      "quote": "\"An unexpected error occurred. Please try again later.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-087",
+      "statement": "Spring's own framework errors, such as 404 for an unknown path, keep Spring's default answers, because the handler catches only runtime exceptions.",
+      "kind": "behaviour",
+      "ref": "docs/design-notes.md:21",
+      "quote": "`GlobalExceptionHandler` handles `RuntimeException`, not every exception, so Spring still answers its own framework exceptions, such as 404 for an unknown path.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-088",
+      "statement": "The service listens on port 8085 and writes a notification and its outbox event in one MongoDB transaction, so MongoDB must run as a replica set.",
+      "kind": "constraint",
+      "ref": "README.md:3-5, 61-63",
+      "quote": "The service writes a notification and its outbox event in one transaction, and MongoDB allows transactions only on a replica set",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-089",
+      "statement": "Trader notification routes scope every record to the organisation named in the caller's Trade-Imports-Organisation-Id header, and answer 400 when that header is missing or blank.",
+      "kind": "rule",
+      "ref": "workspace docs/repos/trade-imports-animals-backend.md:15",
+      "quote": "Trader notification routes trust the caller's `Trade-Imports-Organisation-Id` header for tenant scoping (400 when missing or blank).",
+      "confidence": "verbatim",
+      "note": "The filter that enforces it is part 2's; recorded here because the record's organisationId is what the header scopes."
+    },
+    {
+      "id": "repo-backend-p1-090",
+      "statement": "The notification record has no germinal products details: nothing in the notification package or the design notes holds them.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/ (grep -rniE germinal); docs/design-notes.md",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The goal's 9 October ruling adds germinal products details to the animals backend; main does not have them yet."
+    },
+    {
+      "id": "repo-backend-p1-091",
+      "statement": "The notification record has no notification category: neither NotificationAggregate nor the content fields carry one.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java; NotificationBase.java (grep -rniE category)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The 9 October ruling stores a category on the record only and does not publish it on the event; main has neither."
+    },
+    {
+      "id": "repo-backend-p1-092",
+      "statement": "Commodity and species lines carry no trade-line typeCode.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/Commodity.java; Species.java (grep -rniE typeCode)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The 9 October ruling adds trade-line typeCodes in the animals backend; main does not have them."
+    },
+    {
+      "id": "repo-backend-p1-093",
+      "statement": "The repo holds no rulings ledger, so no owner ruling on the record is recorded in it; its design notes give reasons, not rulings.",
+      "kind": "constraint",
+      "ref": "README.md; AGENTS.md; docs/design-notes.md",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

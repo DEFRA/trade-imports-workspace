@@ -1,0 +1,449 @@
+{
+  "source": "repo:perftests",
+  "structure": "Part 1, INS front door and address book. Read in full: src/k6/front-door.js (453 lines: opening the INS home at '/', the dashboard-only session, the address-book session that adds, searches, views, edits and deletes an address, and the setup that makes the performance-test address findable under every declared role), src/k6/front-door.test.js (8 unit tests of the add helper and the setup), src/k6/readiness.js (137 lines: the readiness probes, two of which open INS pages and check their headings), src/lib/address-book.js (93 lines: the address book path, address types, declared roles, endpoint names, list and search path builder, worst-case search term), src/lib/address-book.test.js (its unit tests), src/config/smoke.js (121 lines: the stub identity, readiness timings, the perf address, the address-book load name prefix and the INS scenarios' endpoint lists) and src/config/trader-organisation.js (the organisation header). Also looked up WORST_CASE_SEARCH_LENGTH in src/config/test-data.js. Covered: the INS home route and its checks; every address-book route (list, address-type tab, role narrowing, search with q, worst-case search, address-type start page, add-address save, view, edit, delete); the readiness INS probes with their headings; the address types, declared roles and refusal messages; the perf address, load name prefix and trader organisation header. The JOURNEYS and live-animals/high-risk-plants scenario entries in smoke.js belong to other parts and are claimed only where they name INS endpoints.",
+  "claims": [
+    {
+      "id": "repo-perftests-p1-001",
+      "statement": "The scripts open the INS home at the path '/' of the INS frontend and name that request the 'ins-dashboard' endpoint.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:60",
+      "quote": "const page = walker.open('/', 'ins-dashboard')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-002",
+      "statement": "A session reaching the INS home unsigned is signed in on the way, through the Defra ID identity provider, before the home page answers.",
+      "kind": "integration",
+      "ref": "src/k6/front-door.js:50-51",
+      "quote": "Opens the INS dashboard, which signs the session in on the way.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-003",
+      "statement": "The scripts expect the signed-in INS home to answer HTTP 200 with the page heading 'Dashboard'.",
+      "kind": "copy",
+      "ref": "src/k6/front-door.js:66-69",
+      "quote": "'INS dashboard opens signed in': (dashboardPage) =>\n      dashboardPage.status === HTTP_OK && dashboardPage.heading === 'Dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-004",
+      "statement": "The scripts check that sign-in to the INS home went through Defra ID, and record that sign-in as a page request of its own.",
+      "kind": "integration",
+      "ref": "src/k6/front-door.js:62-73",
+      "quote": "'sign-in went through Defra ID': (session) =>\n      session.signedInThroughIdentityProvider()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-005",
+      "statement": "The scripts read nothing from the INS home beyond its status and heading: a dashboard-only session signs in and then re-opens '/' repeatedly as its only page.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:121-139",
+      "quote": "for (let view = 0; view < extraDashboardReads; view += 1) {\n    walker.open('/', 'ins-dashboard')\n  }",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any read of the dashboard's content in front-door.js; the address-book session goes from the home straight to the address book path rather than following a link."
+    },
+    {
+      "id": "repo-perftests-p1-006",
+      "statement": "The front-door scenario requests two endpoints: 'sign-in' and 'ins-dashboard'.",
+      "kind": "behaviour",
+      "ref": "src/config/smoke.js:76-82",
+      "quote": "const SIGN_IN_AND_DASHBOARD_ENDPOINTS = ['sign-in', 'ins-dashboard']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-007",
+      "statement": "The address book lives at the INS path '/address-book'.",
+      "kind": "data",
+      "ref": "src/lib/address-book.js:1",
+      "quote": "export const ADDRESS_BOOK_PATH = '/address-book'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-008",
+      "statement": "An address-book session opens the INS home first, then the address book list at '/address-book' (endpoint 'ins-address-book').",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:280-281",
+      "quote": "openInsDashboard(dashboard)\n  walker.open(ADDRESS_BOOK_PATH, ADDRESS_BOOK_SESSION_ENDPOINTS.list)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-009",
+      "statement": "The address book has two address types, each a tab of the list: ORIGIN_OR_CONSIGNOR and DESTINATION_CONSIGNEE_OR_IMPORTER.",
+      "kind": "data",
+      "ref": "src/lib/address-book.js:3-6",
+      "quote": "ORIGIN_OR_CONSIGNOR: 'ORIGIN_OR_CONSIGNOR',\n  DESTINATION_CONSIGNEE_OR_IMPORTER: 'DESTINATION_CONSIGNEE_OR_IMPORTER'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-010",
+      "statement": "An address type's tab is the list path with the query parameter addressType, such as '/address-book?addressType=ORIGIN_OR_CONSIGNOR'.",
+      "kind": "behaviour",
+      "ref": "src/lib/address-book.js:87; src/lib/address-book.test.js:109-117",
+      "quote": "const tabPath = `${ADDRESS_BOOK_PATH}?addressType=${addressType}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-011",
+      "statement": "A tab can be narrowed to one role with the query parameter role, placed after addressType.",
+      "kind": "behaviour",
+      "ref": "src/lib/address-book.js:88; src/lib/address-book.test.js:138-144",
+      "quote": "'/address-book?addressType=ORIGIN_OR_CONSIGNOR&role=CONSIGNOR'",
+      "confidence": "verbatim",
+      "note": "The doc comment calls it 'the `role` parameter the tab declares'."
+    },
+    {
+      "id": "repo-perftests-p1-012",
+      "statement": "A free-text search on a tab is the URL-encoded term in the query parameter q, placed after addressType and any role.",
+      "kind": "behaviour",
+      "ref": "src/lib/address-book.js:90-92; src/lib/address-book.test.js:127-136",
+      "quote": "'/address-book?addressType=ORIGIN_OR_CONSIGNOR&role=CONSIGNOR&q=Perf%20%26%20Co'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-013",
+      "statement": "The ORIGIN_OR_CONSIGNOR address type carries the roles PLACE_OF_ORIGIN and CONSIGNOR.",
+      "kind": "data",
+      "ref": "src/lib/address-book.js:13-16",
+      "quote": "[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR]: Object.freeze([\n    'PLACE_OF_ORIGIN',\n    'CONSIGNOR'\n  ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-014",
+      "statement": "The DESTINATION_CONSIGNEE_OR_IMPORTER address type carries the roles CONSIGNEE, IMPORTER and PLACE_OF_DESTINATION.",
+      "kind": "data",
+      "ref": "src/lib/address-book.js:17-21",
+      "quote": "[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]: Object.freeze([\n    'CONSIGNEE',\n    'IMPORTER',\n    'PLACE_OF_DESTINATION'\n  ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-015",
+      "statement": "Every address type has at least one declared role, so adding under every type reaches every role.",
+      "kind": "rule",
+      "ref": "src/lib/address-book.test.js:62-69",
+      "quote": "'declares the roles %s carries, so a setup adding under every declared type reaches it'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-016",
+      "statement": "An address-book session works on the ORIGIN_OR_CONSIGNOR tab.",
+      "kind": "behaviour",
+      "ref": "src/lib/address-book.js:10",
+      "quote": "export const SESSION_ADDRESS_TYPE = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-017",
+      "statement": "Adding an address starts at '/address-book/add/address-type?start=true', the address type page (endpoint 'ins-address-type').",
+      "kind": "behaviour",
+      "ref": "src/lib/address-book.js:8; src/k6/front-door.js:157-160",
+      "quote": "export const ADDRESS_TYPE_START_PATH = `${ADDRESS_BOOK_PATH}/add/address-type?start=true`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-018",
+      "statement": "The address type page is a form whose field addressType takes one of the address types; saving it (endpoint 'ins-address-type-save') leads to the add-address form.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:161-165",
+      "quote": "const form = submit(\n    typePage,\n    { addressType },\n    ADDRESS_BOOK_SESSION_ENDPOINTS.typeSave\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-019",
+      "statement": "The add-address form offers the roles of the chosen address type as checkboxes named 'roles'.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:167",
+      "quote": "const offeredRoles = checkboxValues(form.formInputs, 'roles')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-020",
+      "statement": "When the add-address form does not offer every role declared for its address type, the scripts stop with an error naming the address type, the roles not offered and the roles offered.",
+      "kind": "rule",
+      "ref": "src/k6/front-door.js:168-175; src/k6/front-door.test.js:119-135",
+      "quote": "`The add form for \"${addressType}\" does not offer ${notOffered.join(', ')} — it offers ${offeredRoles.join(', ')}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-021",
+      "statement": "The add-address form is posted (endpoint 'ins-address-add-save') with the address fields, a name, and every role declared for the address type ticked.",
+      "kind": "behaviour",
+      "ref": "src/lib/address-book.js:50-54; src/k6/front-door.js:177-181",
+      "quote": "export const addAddressAnswers = (address, name, addressType) => ({\n  ...address,\n  name,\n  roles: DECLARED_ROLES_BY_ADDRESS_TYPE[addressType]\n})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-022",
+      "statement": "The add-address form's fields, as the scripts post them, are name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone and email, with roles.",
+      "kind": "data",
+      "ref": "src/config/smoke.js:29-39",
+      "quote": "name: 'Perf Test Holding',\n  addressLine1: '4 Nursery Lane',\n  addressLine2: '',\n  townOrCity: 'Perth',\n  county: '',\n  postcode: 'PH1 5EX',\n  countryCode: 'GB',\n  phone: '01738 555 0143',\n  email: 'perf@example.co.uk'",
+      "confidence": "inferred",
+      "note": "Field names inferred from the perf address object the scripts spread into the add-address answers; addressLine2 and county are posted empty, so they are optional."
+    },
+    {
+      "id": "repo-perftests-p1-023",
+      "statement": "A successful add-address save lands, with HTTP 200, on the list tab of the address type it was added under.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:210-211",
+      "quote": "page.status === HTTP_OK && page.url.endsWith(addressBookListPath(addressType))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-024",
+      "statement": "The scripts check an added address by its name appearing in the text of the tab the save lands on.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:290-294",
+      "quote": "'address added': (page) =>\n      landedOnAddressTypeTab(page, SESSION_ADDRESS_TYPE) &&\n      textOf(page).includes(name)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-025",
+      "statement": "A refused add-address save stays on the add form, '/address-book/add/address', answering 400 with the heading 'There is a problem', in the scripts' model of it.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.test.js:55-59",
+      "quote": "status: 400,\n  url: '/address-book/add/address',\n  heading: 'There is a problem'",
+      "confidence": "inferred",
+      "note": "From a unit-test fake, not a request to the service; it implies the add-address form's path is '/address-book/add/address'."
+    },
+    {
+      "id": "repo-perftests-p1-026",
+      "statement": "An address-book session saves its address under the name 'Address Book Load <virtual user>-<iteration>'.",
+      "kind": "data",
+      "ref": "src/config/smoke.js:41; src/k6/front-door.js:273",
+      "quote": "const name = `${ADDRESS_BOOK_LOAD_NAME_PREFIX} ${options.vu}-${options.iteration}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-027",
+      "statement": "After adding, a session finds its address by searching the ORIGIN_OR_CONSIGNOR tab for its name (endpoint 'ins-address-book-search').",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:296-299",
+      "quote": "const found = walker.open(\n    sessionAddressTypeSearchPath(name),\n    ADDRESS_BOOK_SESSION_ENDPOINTS.search\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-028",
+      "statement": "Each address in a list or search result links to '/address-book/<address id>', and the scripts read the address id from the first such link.",
+      "kind": "behaviour",
+      "ref": "src/lib/address-book.js:62-66; src/k6/front-door.js:30-34",
+      "quote": "const addressHref = new RegExp(`^${ADDRESS_BOOK_PATH}/([^/?#]+)$`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-029",
+      "statement": "A list page also links to the add-address start page and may link to an address's edit page and to further pages with a 'page' parameter; none of those counts as an address link.",
+      "kind": "behaviour",
+      "ref": "src/lib/address-book.test.js:89-105",
+      "quote": "[['/address-book/abc-1/edit', '/address-book?page=2', '/']]",
+      "confidence": "inferred",
+      "note": "From unit-test inputs, which suggest the list offers pagination ('?page=2') and edit links; the scripts never request them."
+    },
+    {
+      "id": "repo-perftests-p1-030",
+      "statement": "When the search for its name finds no address, the session's 'address found by name' check fails and the session stops there.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:300-306",
+      "quote": "check(found, { 'address found by name': () => addressId !== '' })\n\n  if (addressId === '') {\n    return\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-031",
+      "statement": "An address's view page is '/address-book/<address id>' (endpoint 'ins-address-view'), and the scripts expect it to answer 200 and show the address's name.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:308-316",
+      "quote": "'address viewed': (page) =>\n      page.status === HTTP_OK && textOf(page).includes(name)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-032",
+      "statement": "An address's edit page is '/address-book/<address id>/edit' (endpoint 'ins-address-edit'), a form pre-filled with the address's current answers.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:213-224",
+      "quote": "`${ADDRESS_BOOK_PATH}/${addressId}/edit`",
+      "confidence": "inferred",
+      "note": "Pre-filled is inferred: the session posts the form's own values back with only townOrCity changed."
+    },
+    {
+      "id": "repo-perftests-p1-033",
+      "statement": "A session edits its address by changing the town or city to 'Dundee' and saving (endpoint 'ins-address-edit-save').",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:214-224",
+      "quote": "{ ...valuesOf(form), townOrCity: editedTown }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-034",
+      "statement": "A saved edit returns the user, with HTTP 200, to the address book list at '/address-book'.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:320-323",
+      "quote": "'address edited': (page) =>\n      page.status === HTTP_OK && page.url.endsWith(ADDRESS_BOOK_PATH)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-035",
+      "statement": "Deleting an address opens a confirmation page at '/address-book/<address id>/delete' (endpoint 'ins-address-delete') and posts it with no answers (endpoint 'ins-address-delete-save').",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:227-238",
+      "quote": "`${ADDRESS_BOOK_PATH}/${addressId}/delete`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-036",
+      "statement": "After a delete the user lands, with HTTP 200, on a page that no longer links to the deleted address.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:327-331",
+      "quote": "'address deleted': (page) =>\n      page.status === HTTP_OK &&\n      !hrefsOf(page).includes(`${ADDRESS_BOOK_PATH}/${addressId}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-037",
+      "statement": "An address-book session leaves nothing behind in the address book: it deletes the address it added.",
+      "kind": "rule",
+      "ref": "src/k6/front-door.js:255-260",
+      "quote": "Leaves nothing behind in the book.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-038",
+      "statement": "A share of address-book sessions runs a worst-case search on the ORIGIN_OR_CONSIGNOR tab before adding, and expects it to answer 200.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:240-253",
+      "quote": "'worst-case address search answered': (page) => page.status === HTTP_OK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-039",
+      "statement": "The worst-case search term is 255 characters long: 'Worst case search ' padded with x, matching no address name the suite adds.",
+      "kind": "non-functional",
+      "ref": "src/lib/address-book.js:74-75; src/config/test-data.js:2; src/lib/address-book.test.js:72-85",
+      "quote": "'Worst case search '.padEnd(length, 'x')",
+      "confidence": "verbatim",
+      "note": "Implies the address search accepts a 255-character term without refusing it."
+    },
+    {
+      "id": "repo-perftests-p1-040",
+      "statement": "The address-book scenario requests the endpoints sign-in, ins-dashboard, ins-address-book, ins-address-book-search, ins-address-type, ins-address-type-save, ins-address-add-save, ins-address-view, ins-address-edit, ins-address-edit-save, ins-address-delete and ins-address-delete-save, each a name in the endpoint catalogue.",
+      "kind": "behaviour",
+      "ref": "src/lib/address-book.js:28-40; src/config/smoke.js:83-91; src/lib/address-book.test.js:15-22",
+      "quote": "list: 'ins-address-book',\n  worstCaseSearch: 'ins-address-book-search',\n  typePage: 'ins-address-type',\n  typeSave: 'ins-address-type-save',\n  addSave: 'ins-address-add-save',\n  search: 'ins-address-book-search',\n  view: 'ins-address-view',\n  edit: 'ins-address-edit',\n  editSave: 'ins-address-edit-save',\n  delete: 'ins-address-delete',\n  deleteSave: 'ins-address-delete-save'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-041",
+      "statement": "Before a run, setup makes the performance-test address findable under every declared role: for each address type it searches the tab narrowed to each role for the address's name.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:336-378",
+      "quote": "addressBookListPath(addressType, { role, searchTerm: name })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-042",
+      "statement": "Setup adds one record under an address type only when some role of that type does not find the address, ticking every role of the type; a type whose roles all find it gets no add.",
+      "kind": "rule",
+      "ref": "src/k6/front-door.js:376-395; src/k6/front-door.test.js:152-200",
+      "quote": "'adds under a type ticking every declared role when only some of its roles are found'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-043",
+      "statement": "Setup logs which address types it added the performance-test address under, or that it was already found under every declared role.",
+      "kind": "copy",
+      "ref": "src/k6/front-door.js:397-401",
+      "quote": "`Performance-test address added under: ${typesNeedingAnAdd.join(', ')}`\n      : 'Performance-test address already found under every declared role'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-044",
+      "statement": "When an add under a type does not land on that type's tab, or a role still does not find the address after the add, setup stops with an error listing, per address type, the roles still missing or the status and heading of the page the save landed on.",
+      "kind": "rule",
+      "ref": "src/k6/front-door.js:351-420; src/k6/front-door.test.js:202-245",
+      "quote": "`Could not make the performance-test address found by every declared role: ${messages.join('; ')}`",
+      "confidence": "verbatim",
+      "note": "Each message is `${addressType}: ${roles.join(', ')}` or `${addressType}: save answered ${status} \"${heading}\"`."
+    },
+    {
+      "id": "repo-perftests-p1-045",
+      "statement": "The performance-test address is 'Perf Test Holding', 4 Nursery Lane, Perth, PH1 5EX, country GB, phone 01738 555 0143, email perf@example.co.uk.",
+      "kind": "data",
+      "ref": "src/config/smoke.js:29-39",
+      "quote": "name: 'Perf Test Holding',\n  addressLine1: '4 Nursery Lane',\n  addressLine2: '',\n  townOrCity: 'Perth',\n  county: '',\n  postcode: 'PH1 5EX',\n  countryCode: 'GB',\n  phone: '01738 555 0143',\n  email: 'perf@example.co.uk'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-046",
+      "statement": "Setup's address-book requests carry the readiness tags, phase 'readiness' and name 'readiness', which keep them out of every threshold.",
+      "kind": "non-functional",
+      "ref": "src/k6/readiness.js:12-13; src/k6/front-door.js:440-446",
+      "quote": "export const READINESS_TAGS = { phase: 'readiness', name: 'readiness' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-047",
+      "statement": "The readiness probe 'INS signed-in page' opens '/' (page name 'ins-dashboard') signed in and expects HTTP 200 with the heading 'Dashboard'.",
+      "kind": "copy",
+      "ref": "src/k6/readiness.js:87-95",
+      "quote": "path: '/',\n        pageName: 'ins-dashboard',\n        heading: 'Dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-048",
+      "statement": "The readiness probe 'address book read' opens '/address-book' (page name 'ins-address-book') signed in and expects HTTP 200 with the heading 'Address book'.",
+      "kind": "copy",
+      "ref": "src/k6/readiness.js:96-104",
+      "quote": "path: ADDRESS_BOOK_PATH,\n        pageName: 'ins-address-book',\n        heading: 'Address book'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-049",
+      "statement": "Readiness also probes the reference data's '/countries' for a non-empty list, and each of the animals, plants and INS backends' '/notifications?page=1' for HTTP 200 with the trader's organisation header.",
+      "kind": "integration",
+      "ref": "src/k6/readiness.js:26-52,77-86",
+      "quote": "serviceHttp.get(`${baseUrl}/notifications?page=1`, {\n    tags: READINESS_TAGS,\n    headers: traderOrganisationHeaders(organisationId)\n  })",
+      "confidence": "verbatim",
+      "note": "Service calls rather than frontend routes; recorded because readiness.js is in this part's read list."
+    },
+    {
+      "id": "repo-perftests-p1-050",
+      "statement": "Readiness re-runs every probe every 5 seconds for up to 300 seconds, then stops the run with an error naming each probe still failing.",
+      "kind": "non-functional",
+      "ref": "src/config/smoke.js:26; src/k6/readiness.js:123-136",
+      "quote": "`The stack was not functionally ready within ${READINESS.timeoutSeconds}s: ${failed.join(', ')}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-051",
+      "statement": "A service call made as the trader carries the organisation in the header 'Trade-Imports-Organisation-Id'.",
+      "kind": "integration",
+      "ref": "src/config/trader-organisation.js:1-11",
+      "quote": "export const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-052",
+      "statement": "The scripts sign in as the stub identity with CRN 2100010101 in organisation 5900001, with the password from AUTH_PASSWORD or the stub's default.",
+      "kind": "data",
+      "ref": "src/config/smoke.js:5-22,49-50",
+      "quote": "crn: '2100010101',\n  organisationId: '5900001'",
+      "confidence": "verbatim",
+      "note": "The stub's default password is [REDACTED] here."
+    },
+    {
+      "id": "repo-perftests-p1-053",
+      "statement": "The scripts follow at most 10 redirect hops per request.",
+      "kind": "constraint",
+      "ref": "src/config/smoke.js:24",
+      "quote": "export const MAX_REDIRECT_HOPS = 10",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-054",
+      "statement": "The scripts never request a role-narrowed tab for the DESTINATION_CONSIGNEE_OR_IMPORTER type except during setup, and never open the address-book list without an address type except the bare '/address-book'; what the bare list shows (which tab is chosen by default) is not said.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:281; src/lib/address-book.js:86-93",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in front-door.js, address-book.js and readiness.js: the bare list is checked only for its 'Address book' heading."
+    }
+  ]
+}

@@ -1,0 +1,775 @@
+{
+  "source": "prototype:dr2-1-specs",
+  "structure": "Part 2 read e2e/description-of-the-goods.fit.spec.js in full (362 lines, 13 tests in 4 describes), plus e2e/support/journey.js (283 lines) and e2e/support/fixtures.js (48 lines) for the shared assertions and journey steps those tests call. The spec covers section 2 of the task list, 'Description of the goods'. Describe 'commodity details' (3 tests): cattle number of animals validation, two commodities and removing them, germinal quantity/packages/temperature. Describe 'total gross weight' (2 tests): the germinal-only weight page and its absence for live animals. Describe 'identification details' (6 tests): cattle per-animal identifiers saved one at a time, three species-specific identifier sets (horse, cat, pig) from one loop, poultry flock panel, germinal donor/dates/mark with errors. Describe 'additional details' (2 tests): cattle certification purpose and unweaned animals, poultry certification purpose only. Routes covered, under the /design-release-2.1 mount: /create-notification?category=germinal-products, /consignment-details, /what-are-you-importing, /consignment-gross-weight, /animal-identification-details, /additional-animal-details and /arrival-details as the onward page. Shared assertions used: expectHeading (first h1), expectErrorSummary ('There is a problem' title and exact linked messages in order), expectInlineError (.govuk-error-message), expectBackLink (.govuk-back-link href), saveAndContinue (button name=action value=continue). fixtures.js only records visited pages for the trace index, so it adds no product claims.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-specs-p2-001",
+      "statement": "Every Design Release 2.1 route the suite visits sits under the /design-release-2.1 mount, a mirror of the root route table.",
+      "kind": "constraint",
+      "ref": "e2e/support/journey.js:3-5",
+      "quote": "// Design Release 2.1 is a mirror mount of the root route table.\nconst BASE = '/design-release-2.1'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-002",
+      "statement": "Description of the goods is section 2 of the task list and holds commodity details, identification details and additional details; which pages appear depends on the species chosen.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:9-10",
+      "quote": "// Section 2 of the DR2.1 task list: commodity details, identification details\n// and additional details. Which pages appear depends on the species chosen.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-003",
+      "statement": "After the reason for import page, a live animals notification lands on the commodity details page at /consignment-details.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:19-30",
+      "quote": "await answerReason(page, reason)\n  await expect(page).toHaveURL(urlFor('/consignment-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-004",
+      "statement": "A germinal products notification can be started directly at /create-notification?category=germinal-products, and then goes through origin, commodity search and reason to commodity details.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:20-29",
+      "quote": "if (type === 'germinal-products') {\n    await page.goto(url('/create-notification?category=germinal-products'))",
+      "confidence": "verbatim",
+      "note": "The helper goes straight on to answerOrigin, so the category query appears to skip the notification type page; the test does not assert the URL after the goto."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-005",
+      "statement": "The commodity details page has the title 'Commodity details - Import notification service - GOV.UK' and the heading 'Commodity details'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:39-40",
+      "quote": "await expect(page).toHaveTitle('Commodity details - Import notification service - GOV.UK')\n      await expectHeading(page, 'Commodity details')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-006",
+      "statement": "The commodity details page shows the section caption 'Description of the goods'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:42",
+      "quote": "await expect(main).toContainText('Description of the goods')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-007",
+      "statement": "The commodity details page lists the 'Selected commodities' in a table with columns Commodity code, Commodity and Species; for cattle the row reads 0102, Cattle, Domestic cattle (Bos taurus).",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:43-44",
+      "quote": "await expect(main).toContainText('Selected commodities')\n      await expect(main).toContainText(/Commodity code\\s+Commodity\\s+Species\\s+0102\\s+Cattle\\s+Domestic cattle \\(Bos taurus\\)/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-008",
+      "statement": "Each selected commodity on the commodity details page has a 'Remove' button.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:45",
+      "quote": "await expect(main.getByRole('button', { name: 'Remove' })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-009",
+      "statement": "The commodity details page has an 'Add another commodity' link back to the commodity search at /what-are-you-importing.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:46",
+      "quote": "await expect(main.getByRole('link', { name: 'Add another commodity' })).toHaveAttribute('href', url('/what-are-you-importing'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-010",
+      "statement": "For a live animal commodity, the commodity details page shows a block headed with the commodity name and code, such as 'Cattle (0102)'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:47",
+      "quote": "await expect(main).toContainText('Cattle (0102)')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-011",
+      "statement": "For live animals, each commodity block asks for 'Number of animals'.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:48",
+      "quote": "await expect(page.getByLabel('Number of animals')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-012",
+      "statement": "For live animals, each commodity block has an optional field labelled 'Number of packages (when required)' with the hint 'Such as crates, bags or boxes'.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:49-50",
+      "quote": "await expect(page.getByLabel('Number of packages (when required)')).toBeVisible()\n      await expect(main).toContainText('Such as crates, bags or boxes')",
+      "confidence": "verbatim",
+      "note": "The test continues with only the number of animals filled, so packages are not required for live animals."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-013",
+      "statement": "The commodity details page's back link goes to the commodity search at /what-are-you-importing, for live animals and germinal products.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:51, :107",
+      "quote": "await expectBackLink(page, url('/what-are-you-importing'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-014",
+      "statement": "Continuing with no number of animals shows the error 'Enter the number of animals' in a 'There is a problem' error summary, linked to the field with id number-of-animals-<species id> (for cattle, #number-of-animals-cattle-bos-taurus).",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:55-59",
+      "quote": "await expectErrorSummary(page, ['Enter the number of animals'])\n      await expect(page.locator('.govuk-error-summary__list a')).toHaveAttribute('href', '#number-of-animals-cattle-bos-taurus')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-015",
+      "statement": "A number of animals of 0 shows 'Enter a whole number greater than 0' in the error summary and inline under the field.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:62-67",
+      "quote": "await page.getByLabel('Number of animals').fill('0')\n      await saveAndContinue(page)\n      await expectErrorSummary(page, ['Enter a whole number greater than 0'])\n      await expectInlineError(page, 'Enter a whole number greater than 0')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-016",
+      "statement": "A valid number of animals for live animals continues from commodity details to identification details at /animal-identification-details.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:70-74",
+      "quote": "await page.getByLabel('Number of animals').fill('2')\n      await saveAndContinue(page)\n      await expect(page).toHaveURL(urlFor('/animal-identification-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-017",
+      "statement": "Every error the suite asserts appears in a GOV.UK error summary titled 'There is a problem', listing each message as a link in order.",
+      "kind": "copy",
+      "ref": "e2e/support/journey.js:38-44",
+      "quote": "await expect(summary.locator('.govuk-error-summary__title')).toHaveText('There is a problem')\n  await expect(summary.locator('.govuk-error-summary__list a')).toHaveText(messages)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-018",
+      "statement": "Choosing two commodities (horse and pig) gives the commodity details page one block each, 'Horse (0101)' and 'Pig (0103)', each with its own number of animals field.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:77-82",
+      "quote": "await expect(main).toContainText('Horse (0101)')\n    await expect(main).toContainText('Pig (0103)')\n    await expect(page.locator('input[name^=\"numberOfAnimals[\"]')).toHaveCount(2)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-019",
+      "statement": "Removing one of two commodities on the commodity details page stays on /consignment-details and leaves the other commodity listed.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:85-88",
+      "quote": "await main.locator('button[name=\"removeCommodity\"][value=\"horse\"]').click()\n    await expect(page).toHaveURL(urlFor('/consignment-details'))\n    await expect(main.locator('button[name=\"removeCommodity\"]')).toHaveCount(1)\n    await expect(main).toContainText('Pig (0103)')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-020",
+      "statement": "Removing the last commodity on the commodity details page returns the user to the commodity search at /what-are-you-importing.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:89-90",
+      "quote": "await main.locator('button[name=\"removeCommodity\"][value=\"pig\"]').click()\n    await expect(page).toHaveURL(urlFor('/what-are-you-importing'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-021",
+      "statement": "The remove button identifies the commodity by a short commodity value (such as horse or pig), not the species id.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:85, :89",
+      "quote": "button[name=\"removeCommodity\"][value=\"horse\"]",
+      "confidence": "inferred",
+      "note": "mechanism: the removeCommodity button value is the commodity key, while the fields use the species id such as horse-equus-caballus."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-022",
+      "statement": "For germinal products, the selected commodities table shows the commodity code 05111000, commodity 'Cattle, Semen' and species 'Domestic cattle (Bos taurus)'.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:101",
+      "quote": "await expect(main).toContainText(/Commodity code\\s+Commodity\\s+Species\\s+05111000\\s+Cattle, Semen\\s+Domestic cattle \\(Bos taurus\\)/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-023",
+      "statement": "For germinal products, the commodity block is headed 'Cattle, Semen (05111000)'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:102",
+      "quote": "await expect(main).toContainText('Cattle, Semen (05111000)')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-024",
+      "statement": "For germinal products, each commodity asks for 'Quantity (unit/pieces)' (field id quantity-<species id>) in place of a number of animals.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:103",
+      "quote": "await expect(page.getByLabel('Quantity (unit/pieces)')).toHaveAttribute('id', `quantity-${GERMINAL_ID}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-025",
+      "statement": "For germinal products, each commodity has an optional field labelled exactly 'Number of packages' (field id number-of-packages-<species id>).",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:104, :111-115",
+      "quote": "await expect(page.getByLabel('Number of packages', { exact: true })).toHaveAttribute('id', `number-of-packages-${GERMINAL_ID}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-026",
+      "statement": "The germinal quantity is posted as numberOfPackages[<species id>] and the germinal number of packages as germinalPackages[<species id>].",
+      "kind": "data",
+      "ref": "e2e/support/journey.js:169-176",
+      "quote": "await page.locator(`input[name=\"numberOfPackages[${speciesId}]\"]`).fill(String(value))\n  }\n  for (const [speciesId, value] of Object.entries(packages)) {\n    await page.locator(`input[name=\"germinalPackages[${speciesId}]\"]`).fill(String(value))",
+      "confidence": "verbatim",
+      "note": "mechanism: the prototype reuses the live-animal numberOfPackages field name for the germinal quantity. The reconciler decides whether the target needs this naming."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-027",
+      "statement": "For germinal products, the commodity details page asks a 'Temperature' question with the hint 'How the products will be stored.'",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:105",
+      "quote": "await expect(main.locator('fieldset', { hasText: 'Temperature' })).toContainText('How the products will be stored.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-028",
+      "statement": "The germinal storage temperature options are Ambient, Chilled and Frozen, in that order.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:106",
+      "quote": "await expect(page.locator('input[name=\"storageTemperature\"] + label')).toHaveText(['Ambient', 'Chilled', 'Frozen'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-029",
+      "statement": "The storage temperature is asked once for the page, not per commodity.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:106, :130",
+      "quote": "input[name=\"storageTemperature\"][value=\"Frozen\"]",
+      "confidence": "inferred",
+      "note": "Inferred from the field name storageTemperature carrying no species id, unlike the quantity and packages fields. Tested with one commodity only."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-030",
+      "statement": "Continuing germinal commodity details with nothing filled shows 'Enter the quantity' and 'Select a temperature', in that order, with the first linked to #quantity-<species id>; no error is shown for number of packages.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:111-115",
+      "quote": "await expectErrorSummary(page, ['Enter the quantity', 'Select a temperature'])\n      await expect(page.locator('.govuk-error-summary__list a').first()).toHaveAttribute('href', `#quantity-${GERMINAL_ID}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-031",
+      "statement": "A germinal quantity that is not a whole number greater than 0 (such as 'x') shows 'Enter a whole number greater than 0'.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:118-122",
+      "quote": "await quantity.fill('x')\n      await packages.fill('0')\n      await saveAndContinue(page)\n      await expectErrorSummary(page, ['Enter a whole number greater than 0', 'Number of packages must be a whole number greater than 0', 'Select a temperature'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-032",
+      "statement": "A germinal number of packages of 0 shows 'Number of packages must be a whole number greater than 0', linked to #number-of-packages-<species id>, listed between the quantity and temperature errors.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:118-124",
+      "quote": "'Number of packages must be a whole number greater than 0'\n...\nawait expect(page.locator('.govuk-error-summary__list a').nth(1)).toHaveAttribute('href', `#number-of-packages-${GERMINAL_ID}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-033",
+      "statement": "Germinal commodity details with a quantity and a temperature, and the packages left empty, continue to the total gross weight page at /consignment-gross-weight.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:127-133",
+      "quote": "await quantity.fill('20')\n      await packages.fill('')\n      await page.locator('input[name=\"storageTemperature\"][value=\"Frozen\"]').check()\n      await saveAndContinue(page)\n      await expect(page).toHaveURL(urlFor('/consignment-gross-weight'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-034",
+      "statement": "The total gross weight page has the title 'What is the total gross weight of the consignment? - Import notification service - GOV.UK' and the same text as its heading.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:145-146",
+      "quote": "await expect(page).toHaveTitle('What is the total gross weight of the consignment? - Import notification service - GOV.UK')\n      await expectHeading(page, 'What is the total gross weight of the consignment?')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-035",
+      "statement": "The total gross weight page shows the section caption 'Description of the goods'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:148",
+      "quote": "await expect(main).toContainText('Description of the goods')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-036",
+      "statement": "The total gross weight is one field (id gross-weight) for the whole consignment, with the hint 'This includes the weight of all the commodities in the consignment and their packaging.'",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:142, :149",
+      "quote": "await expect(weight).toHaveAccessibleDescription('This includes the weight of all the commodities in the consignment and their packaging.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-037",
+      "statement": "The total gross weight field has a 'kg' suffix.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:150",
+      "quote": "await expect(main.locator('.govuk-input__suffix')).toHaveText('kg')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-038",
+      "statement": "The total gross weight page's back link goes to commodity details at /consignment-details.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:151",
+      "quote": "await expectBackLink(page, url('/consignment-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-039",
+      "statement": "Continuing with no total gross weight shows 'Enter the total gross weight', linked to #gross-weight.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:155-159",
+      "quote": "await expectErrorSummary(page, ['Enter the total gross weight'])\n      await expect(page.locator('.govuk-error-summary__list a')).toHaveAttribute('href', '#gross-weight')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-040",
+      "statement": "A total gross weight that is text ('abc') or zero shows 'Enter a number greater than 0' in the error summary and inline.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:162-169",
+      "quote": "for (const value of ['abc', '0']) {\n        await weight.fill(value)\n        await saveAndContinue(page)\n        await expectErrorSummary(page, ['Enter a number greater than 0'])\n      }\n      await expectInlineError(page, 'Enter a number greater than 0')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-041",
+      "statement": "A decimal total gross weight (12.5) is accepted and continues to identification details at /animal-identification-details.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:172-175",
+      "quote": "await weight.fill('12.5')\n      await saveAndContinue(page)\n      await expect(page).toHaveURL(urlFor('/animal-identification-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-042",
+      "statement": "For germinal products, the identification details page's back link goes to the total gross weight page at /consignment-gross-weight.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:176",
+      "quote": "await expectBackLink(page, url('/consignment-gross-weight'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-043",
+      "statement": "Live animals have no total gross weight page: commodity details goes straight to identification details, and opening /consignment-gross-weight directly does not show that page.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:180-186",
+      "quote": "await expect(page).toHaveURL(urlFor('/animal-identification-details'))\n    await page.goto(url('/consignment-gross-weight'))\n    await expect(page).not.toHaveURL(urlFor('/consignment-gross-weight'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-044",
+      "statement": "Where a live animals notification is sent when it opens /consignment-gross-weight directly is not asserted.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:184-185",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The test only asserts the URL is not /consignment-gross-weight; the redirect target is unproven."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-045",
+      "statement": "The identification details page has the title 'Identification details - Import notification service - GOV.UK' and the heading 'Identification details'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:196-197",
+      "quote": "await expect(page).toHaveTitle('Identification details - Import notification service - GOV.UK')\n      await expectHeading(page, 'Identification details')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-046",
+      "statement": "The identification details page says 'You must add all identification details before the consignment arrives at the port of entry.', for live animals and germinal products.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:198, :295",
+      "quote": "await expect(main).toContainText('You must add all identification details before the consignment arrives at the port of entry.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-047",
+      "statement": "For cattle, identification details asks for each animal in turn, with a panel headed 'Enter details for <species> N of M', such as 'Enter details for Domestic cattle (Bos taurus) 1 of 2', M being the number of animals entered.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:199, :223",
+      "quote": "await expect(main).toContainText('Enter details for Domestic cattle (Bos taurus) 1 of 2')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-048",
+      "statement": "The cattle animal panel says 'Enter at least one identifier.'",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:200",
+      "quote": "await expect(main).toContainText('Enter at least one identifier.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-049",
+      "statement": "For cattle, each animal has three identifier fields: Passport, Ear tag and Identification number.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:201-204",
+      "quote": "await expect(main.locator('input[name^=\"identifiers[\"]')).toHaveCount(3)\n      for (const label of ['Passport', 'Ear tag', 'Identification number']) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-050",
+      "statement": "For live animals, the identification details page has a 'Change number of animals' link to commodity details at /consignment-details.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:205",
+      "quote": "await expect(main.getByRole('link', { name: 'Change number of animals' })).toHaveAttribute('href', url('/consignment-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-051",
+      "statement": "While animals remain after the current one, the panel's button is 'Save and add another'.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:206",
+      "quote": "await expect(main.getByRole('button', { name: 'Save and add another' })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-052",
+      "statement": "For live animals, the identification details page's back link goes to commodity details at /consignment-details.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:207",
+      "quote": "await expectBackLink(page, url('/consignment-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-053",
+      "statement": "Saving an animal with no identifier shows 'Enter at least one identifier', linked to the first identifier field (#identifier-cattle-bos-taurus-passport), and keeps the same animal open ('1 of 2').",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:211-216",
+      "quote": "await expectErrorSummary(page, ['Enter at least one identifier'])\n      await expect(page.locator('.govuk-error-summary__list a')).toHaveAttribute('href', '#identifier-cattle-bos-taurus-passport')\n      await expect(main).toContainText('Enter details for Domestic cattle (Bos taurus) 1 of 2')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-054",
+      "statement": "Saving the first animal moves the panel on to the next animal ('2 of 2').",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:219-223",
+      "quote": "await page.getByRole('button', { name: 'Save and add another' }).click()\n      await expect(main).toContainText('Enter details for Domestic cattle (Bos taurus) 2 of 2')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-055",
+      "statement": "On the last animal the panel's button is 'Save and finish'.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:224",
+      "quote": "await expect(main.getByRole('button', { name: 'Save and finish' })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-056",
+      "statement": "Saved animals are listed in a table with an Animal column ('Domestic cattle (Bos taurus) 1') and one column per identifier used, showing the values entered.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:225, :234-235",
+      "quote": "await expect(main).toContainText(/Animal\\s+Passport\\s+Ear tag\\s+Domestic cattle \\(Bos taurus\\) 1\\s+PP-001\\s+UK123456700001/)",
+      "confidence": "verbatim",
+      "note": "With one animal saved (passport and ear tag) the columns are Animal, Passport, Ear tag; after a second animal with an identification number the header gains 'Identification number'. So columns appear only for identifiers someone has entered."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-057",
+      "statement": "Each saved animal row has a 'Remove' button.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:226, :233",
+      "quote": "await expect(main.locator('button[value=\"remove:cattle-bos-taurus:0\"]')).toHaveText('Remove')",
+      "confidence": "verbatim",
+      "note": "mechanism: the button value is remove:<species id>:<zero-based animal index>."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-058",
+      "statement": "One identifier is enough to save an animal.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:230-235",
+      "quote": "await page.getByLabel('Identification number', { exact: true }).fill('ID-002')\n      await page.getByRole('button', { name: 'Save and finish' }).click()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-059",
+      "statement": "When every animal is saved, 'Save and finish' stays on identification details, lists every animal and shows no identifier fields.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:232-237",
+      "quote": "await expect(page.locator('button[value=\"remove:cattle-bos-taurus:1\"]')).toBeVisible()\n...\n      await expect(main.locator('input[name^=\"identifiers[\"]')).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-060",
+      "statement": "Removing a saved animal reopens its panel ('Enter details for Domestic cattle (Bos taurus) 2 of 2').",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:240-243",
+      "quote": "await page.locator('button[value=\"remove:cattle-bos-taurus:1\"]').click()\n      await expect(main).toContainText('Enter details for Domestic cattle (Bos taurus) 2 of 2')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-061",
+      "statement": "For cattle, Save and continue on identification details goes on to additional details at /additional-animal-details, even with an animal's panel still open and unsaved.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:240-248",
+      "quote": "await test.step('continue moves on to additional details', async () => {\n      await saveAndContinue(page)\n      await expect(page).toHaveURL(urlFor('/additional-animal-details'))",
+      "confidence": "verbatim",
+      "note": "The step runs straight after removing animal 2, so identification details are not required to continue; this matches 'You must add all identification details before the consignment arrives'."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-062",
+      "statement": "For horses, identification details asks for each animal under 'Enter details for Equus cabalus N of M', with three identifiers: Passport, Microchip/transponder and Equine name.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:252, :257-268",
+      "quote": "{ name: 'horse', species: SPECIES.horse, heading: 'Enter details for Equus cabalus 1 of 2', labels: ['Passport', 'Microchip/transponder', 'Equine name'] }",
+      "confidence": "verbatim",
+      "note": "The panel names horses by the Latin name 'Equus cabalus' (spelled with one l), not a common name as for cattle and cats."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-063",
+      "statement": "For cats, identification details asks for each animal under 'Enter details for Domestic cat (Felis catus) N of M', with three identifiers: Passport, Microchip/transponder and Tattoo.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:253, :257-268",
+      "quote": "{ name: 'cat', species: SPECIES.cat, heading: 'Enter details for Domestic cat (Felis catus) 1 of 2', labels: ['Passport', 'Microchip/transponder', 'Tattoo'] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-064",
+      "statement": "For pigs, identification details asks for each animal under 'Enter details for Sus scrofa domesticus N of M', with two identifiers: Ear tag and Identification number.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:254, :257-268",
+      "quote": "{ name: 'pig', species: { search: 'pig', id: 'pig-sus-scrofa' }, heading: 'Enter details for Sus scrofa domesticus 1 of 2', labels: ['Ear tag', 'Identification number'] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-065",
+      "statement": "For poultry (chicken), identification details shows one flock panel for the species, 'Enter details for Gallus domesticus', not one panel per bird.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:270-276",
+      "quote": "await expect(main).toContainText('Enter details for Gallus domesticus')\n    await expect(main).not.toContainText('1 of 400')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-066",
+      "statement": "The poultry flock panel asks for Flock ID, Classification, Description, Identification details and Hatching date.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:277-279",
+      "quote": "for (const label of ['Flock ID', 'Classification', 'Description', 'Identification details', 'Hatching date']) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-067",
+      "statement": "The poultry Classification is a select whose options are 'Select a classification', Broilers, Grandparent, Laying pullets, Parents, Pure line and Others, in that order.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:280-282",
+      "quote": "'Select a classification', 'Broilers', 'Grandparent', 'Laying pullets', 'Parents', 'Pure line', 'Others'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-068",
+      "statement": "The poultry Hatching date hint says 'Day-old chicks only. For example, 27/03/2026'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:283",
+      "quote": "await expect(page.getByLabel('Hatching date', { exact: true })).toHaveAccessibleDescription(/Day-old chicks only\\. For example, 27\\/03\\/2026/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-069",
+      "statement": "The poultry flock panel has no 'Save and add another' button.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:284",
+      "quote": "await expect(main.getByRole('button', { name: 'Save and add another' })).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-070",
+      "statement": "The poultry flock panel's fields have no asserted validation: which are required and their error messages are not tested.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:270-286, :351-356",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The poultry additional-details test continues from identification details with the flock panel empty and reaches /additional-animal-details, so an empty panel does not block Save and continue."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-071",
+      "statement": "For germinal products, identification details shows a table with Commodity code, Commodity, Species and Quantity (unit/pieces), such as 05111000, Cattle, Semen, Domestic cattle (Bos taurus), 20.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:296",
+      "quote": "await expect(main).toContainText(/Commodity code\\s+Commodity\\s+Species\\s+Quantity \\(unit\\/pieces\\)\\s+05111000\\s+Cattle, Semen\\s+Domestic cattle \\(Bos taurus\\)\\s+20/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-072",
+      "statement": "For germinal products, identification details has a 'Change number of commodities' link to commodity details at /consignment-details.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:297",
+      "quote": "await expect(main.getByRole('link', { name: 'Change number of commodities' })).toHaveAttribute('href', url('/consignment-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-073",
+      "statement": "For germinal products, identification details shows a panel headed 'Enter details for Domestic cattle (Bos taurus)', with no N of M count.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:298",
+      "quote": "await expect(main).toContainText('Enter details for Domestic cattle (Bos taurus)')",
+      "confidence": "inferred",
+      "note": "The assertion is a substring match, so it does not prove the absence of a count; inferred from the heading text asserted and the 20-unit quantity."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-074",
+      "statement": "For germinal products, the panel asks for Donor name/ID, Collection date, Production date and Identification number/mark.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:299-301",
+      "quote": "for (const label of ['Donor name/ID', 'Collection date', 'Production date', 'Identification number/mark']) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-075",
+      "statement": "The germinal date fields carry the hint 'For example, 27/03/2026'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:302",
+      "quote": "await expect(main).toContainText('For example, 27/03/2026')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-076",
+      "statement": "A Donor name/ID longer than 58 characters shows 'Donor name/ID must be 58 characters or less'.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:305, :309-310",
+      "quote": "await page.getByLabel('Donor name/ID', { exact: true }).fill('D'.repeat(60))\n...\n      'Donor name/ID must be 58 characters or less',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-077",
+      "statement": "A Collection date that is not a real date (99/99/2026) shows 'Collection date must be a real date'.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:306, :311",
+      "quote": "await page.getByLabel('Collection date', { exact: true }).fill('99/99/2026')\n...\n      'Collection date must be a real date',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-078",
+      "statement": "A Production date not in DD/MM/YYYY form (2026-09-01) shows 'Enter a production date in the format DD/MM/YYYY'.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:307, :312",
+      "quote": "await page.getByLabel('Production date', { exact: true }).fill('2026-09-01')\n...\n      'Enter a production date in the format DD/MM/YYYY'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-079",
+      "statement": "The germinal errors are listed in field order: donor, collection date, production date; leaving Identification number/mark empty adds no error.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:305-313",
+      "quote": "await expectErrorSummary(page, [\n      'Donor name/ID must be 58 characters or less',\n      'Collection date must be a real date',\n      'Enter a production date in the format DD/MM/YYYY'\n    ])",
+      "confidence": "inferred",
+      "note": "expectErrorSummary asserts the exact list, so the empty identification mark raised no error in this case. Whether any germinal identification field is required when empty is not tested."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-080",
+      "statement": "Germinal dates are accepted in d/m/yyyy form without leading zeros (1/9/2026).",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:317-318",
+      "quote": "await page.getByLabel('Collection date', { exact: true }).fill('1/9/2026')\n    await page.getByLabel('Production date', { exact: true }).fill('2/9/2026')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-081",
+      "statement": "For germinal products, valid identification details continue to arrival details at /arrival-details, skipping additional details.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:316-321",
+      "quote": "await page.getByLabel('Identification number/mark', { exact: true }).fill('ID-7')\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/arrival-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-082",
+      "statement": "The additional details page has the title 'Additional details - Import notification service - GOV.UK' and the heading 'Additional details'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:333-334",
+      "quote": "await expect(page).toHaveTitle('Additional details - Import notification service - GOV.UK')\n    await expectHeading(page, 'Additional details')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-083",
+      "statement": "The additional details page shows the text 'Commodity details'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:336",
+      "quote": "await expect(main).toContainText('Commodity details')",
+      "confidence": "verbatim",
+      "note": "The test does not say where on the page this appears (caption or summary)."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-084",
+      "statement": "Additional details asks 'What are the animals certified for?' with the hint 'You can find this information on the ITAHC.'",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:337-338",
+      "quote": "await expect(main).toContainText('What are the animals certified for?')\n    await expect(main).toContainText('You can find this information on the ITAHC.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-085",
+      "statement": "The certification purpose options are, in order: Further keeping, Slaughter, Confined establishment, Germinal products, Registered equine animal, Travelling circus/animal act, Exhibition, Event or activity near borders, Release into the wild, Dispatch centre, Relaying area / purification centre, Ornamental aquaculture establishment, Technical use, Quarantine or similar establishment, Live aquatic animals for human consumption, Other (16 options).",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:12-17, :339",
+      "quote": "'Further keeping', 'Slaughter', 'Confined establishment', 'Germinal products', 'Registered equine animal',\n  'Travelling circus/animal act', 'Exhibition', 'Event or activity near borders', 'Release into the wild',\n  'Dispatch centre', 'Relaying area / purification centre', 'Ornamental aquaculture establishment',\n  'Technical use', 'Quarantine or similar establishment', 'Live aquatic animals for human consumption', 'Other'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-086",
+      "statement": "For cattle, additional details asks 'Does the consignment contain any unweaned animals?' with the hint 'These are animals that are still feeding from their mother.'",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:340-341",
+      "quote": "await expect(main).toContainText('Does the consignment contain any unweaned animals?')\n    await expect(main).toContainText('These are animals that are still feeding from their mother.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-087",
+      "statement": "The unweaned animals options are Yes and No.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:342",
+      "quote": "await expect(page.locator('input[name=\"unweanedAnimals\"] + label')).toHaveText(['Yes', 'No'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-088",
+      "statement": "The additional details page's back link goes to identification details at /animal-identification-details, for cattle and poultry.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:343, :359",
+      "quote": "await expectBackLink(page, url('/animal-identification-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-089",
+      "statement": "Both additional details questions are optional: continuing with neither answered goes to arrival details at /arrival-details.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:346-348",
+      "quote": "// Both questions are optional to proceed.\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/arrival-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-090",
+      "statement": "For poultry, additional details comes after identification details and asks only the certification purpose (all 16 options), with no unweaned animals question.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:351-360",
+      "quote": "await expect(page.locator('input[name=\"certificationPurpose\"]')).toHaveCount(CERTIFICATION_PURPOSES.length)\n    await expect(page.locator('input[name=\"unweanedAnimals\"]')).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-091",
+      "statement": "Which species other than cattle get the unweaned animals question (horse, cat, pig) is not tested.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:326-362",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Only cattle (asked) and chicken (not asked) are tested."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-092",
+      "statement": "What happens to a notification with two commodities on identification details (panel order, per-species counts) is not tested.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:189-323",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Every identification details test uses one species."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-093",
+      "statement": "Number of animals values other than empty and 0 (such as decimals, negatives or text) and the live-animal number of packages validation are not tested.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:55-74",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-094",
+      "statement": "Commodity searches used by the suite map to these species and codes: cattle 0102 Bos taurus, chicken 010511 Gallus domesticus, cat 01061900 Felis catus, horse 0101 Equus cabalus, cattle semen 05111000 Bos taurus.",
+      "kind": "data",
+      "ref": "e2e/support/journey.js:111-117",
+      "quote": "cattle: { search: 'cattle', id: 'cattle-bos-taurus', latin: 'Bos taurus', code: '0102', name: 'Cattle' },\n  chicken: { search: 'chicken', id: 'chicken-gallus-domesticus', latin: 'Gallus domesticus', code: '010511', name: 'Chicken' },\n  cat: { search: 'felis', id: 'cat-felis-catus', latin: 'Felis catus', code: '01061900', name: 'Cat' },\n  horse: { search: 'horse', id: 'horse-equus-caballus', latin: 'Equus cabalus', code: '0101', name: 'Horse' },\n  cattleSemen: { search: 'semen', id: 'cattle-semen-bos-taurus', latin: 'Bos taurus', code: '05111000', name: 'Cattle, Semen' }",
+      "confidence": "verbatim",
+      "note": "Test data, not an assertion; the spec asserts the codes only for cattle, horse (0101), pig (0103) and cattle semen."
+    }
+  ]
+}

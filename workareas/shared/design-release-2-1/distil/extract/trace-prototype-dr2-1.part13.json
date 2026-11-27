@@ -1,0 +1,768 @@
+{
+  "source": "trace:prototype-dr2-1",
+  "structure": "Part 13 mined three whole end-to-end notification traces from journeys.fit.spec.js › notification journeys end to end, each opened and its full action list read: (1) cattle-air = journeys--notification-journeys-end-to-end-cattle-by-air-identification-unweaned-question-cph-number.zip (259 actions, 0 errors, reference GBN-AG-26-0T6VD7); (2) horse-sea = journeys--notification-journeys-end-to-end-horse-by-sea-temporary-admission.zip (238 actions, 0 errors, reference GBN-AG-26-0UZV93); (3) poultry-rail = journeys--notification-journeys-end-to-end-poultry-by-rail-flock-identification-transit-countries.zip (257 actions, 0 errors, reference GBN-AG-26-0965DB). Refs below say 'trace cattle-air|horse-sea|poultry-rail action N' with N the action number in that trace's actions list. The spec file was read in full to map test steps to pages. Every trace walks: create-notification (notification type live-animals) > origin-of-the-import > what-are-you-importing > reason-for-import > consignment-details > animal-identification-details > additional-animal-details > arrival-details > [transit-countries, poultry-rail only] > transporter > upload-documents > roles-and-addresses (place-of-origin, consignor-or-exporter, consignee, importer, place-of-destination pickers, then cph-number for cattle-air and poultry-rail only) > notification-hub > review-notification > declaration (refused once, then confirmed) > notification-submitted > review-notification?reference=<ref> (the submitted view). Snapshots were taken of the hub, review, declaration (clean and refused), submitted and submitted-view pages in each trace (declaration and its error in cattle-air only, as the three are the same copy), plus the roles-and-addresses page before and after the CPH step, the CPH page, the additional details page (cattle-air, poultry-rail), identification details (cattle-air, poultry-rail), transit countries (poultry-rail) and the reason page selects (horse-sea, poultry-rail). The POST network log of cattle-air and horse-sea was read. Page-by-page detail is owned by parts 1 to 12; this part claims the run order, which pages each species and transport mode gets or skips, the hub, review, declaration and submitted pages as each journey fills them, and cross-species differences only these traces show.",
+  "claims": [
+    {
+      "id": "trace-prototype-dr2-1-p13-001",
+      "statement": "The cattle by air journey runs, in order: create notification (live animals), origin of the import, what are you importing, main import reason, commodity details, identification details, additional details, arrival details, transporter, upload documents, consignment addresses (five address pickers then a CPH number), the notification hub, review, declaration and notification submitted.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air actions 8-217 (step groups 'notification type and origin' to 'notification submitted')",
+      "quote": "/design-release-2.1/create-notification ... a[href=\"/design-release-2.1/place-of-origin\"] ... getByRole('link', { name: 'Add a CPH number' }) ... /design-release-2.1/notification-hub ... getByRole('button', { name: 'Review and submit' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-002",
+      "statement": "The horse by sea journey runs the same pages as cattle by air but with no transit countries page and no CPH number step: after the five address pickers it saves the consignment addresses page straight to the hub.",
+      "kind": "behaviour",
+      "ref": "trace horse-sea actions 8-198; actions 117-133",
+      "quote": "a[href=\"/design-release-2.1/place-of-destination\"] ... Expect \"toHaveURL\" ... locator('button[name=\"action\"][value=\"continue\"]').first() ... hub shows every task complete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-003",
+      "statement": "The poultry by rail journey adds a transit countries page between arrival details and transporter, and also takes the CPH number step after the five address pickers.",
+      "kind": "behaviour",
+      "ref": "trace poultry-rail actions 56-88 and 128-149",
+      "quote": "arrival details ... transit countries ... locator('#transit-country-search') ... transporter ... getByRole('link', { name: 'Add a CPH number' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-004",
+      "statement": "Only the poultry journey, whose main import reason is Transit and whose means of transport is Rail, reaches the transit countries page; the traces cannot separate which answer opens it, since no journey here has one without the other.",
+      "kind": "rule",
+      "ref": "trace poultry-rail actions 36 and 65-71; journeys.fit.spec.js JOURNEYS poultry-rail transit",
+      "quote": "input[name=\"importReason\"][value=\"Transit\"]",
+      "confidence": "inferred",
+      "note": "The cattle (Air, Internal market) and horse (Sea, Temporary admission horses) journeys go from arrival details straight to transporter."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-005",
+      "statement": "The consignment addresses page shows a 'County parish holding (CPH) number' section with an 'Add a CPH number' link for cattle and for chicken, and shows no CPH section at all for a horse.",
+      "kind": "rule",
+      "ref": "trace cattle-air action 129; trace poultry-rail action 134; trace horse-sea action 129",
+      "quote": "County parish holding (CPH) number\n\nThe county parish holding (CPH) number identifies the holding where the animals will be kept.\n\nAdd a CPH number",
+      "confidence": "verbatim",
+      "note": "The horse page ends at the Place of destination section, then 'Save and continue'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-006",
+      "statement": "The 'Add a CPH number' link goes to /cph-number.",
+      "kind": "behaviour",
+      "ref": "trace poultry-rail action 134",
+      "quote": "Add a CPH number->/design-release-2.1/cph-number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-007",
+      "statement": "The CPH page is titled and headed 'Add the county parish holding number (CPH)', under the caption 'Addresses', with a 'What is a CPH number?' link, the field 'CPH number' with hint 'For example 12/345/6789', and three inputs County, Parish and Holding number.",
+      "kind": "copy",
+      "ref": "trace cattle-air action 133",
+      "quote": "Add the county parish holding number (CPH)\nWhat is a CPH number?\nCPH number\nFor example 12/345/6789\nCounty\n \nParish\n \nHolding number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-008",
+      "statement": "The CPH page's secondary actions say 'Save and return to hub' and 'Cancel and return to hub', where every other page in these journeys says 'overview'.",
+      "kind": "copy",
+      "ref": "trace cattle-air action 133; trace cattle-air action 129",
+      "quote": "Save and continue\nSave and return to hub\n\nCancel and return to hub",
+      "confidence": "verbatim",
+      "note": "The consignment addresses page just before it reads 'Save and return to overview' and 'Cancel and return to overview'. Two words for one destination."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-009",
+      "statement": "A CPH number entered as county 12, parish 345 and holding 6789 is shown back as '12/345/6789' on the consignment addresses page and on the review page.",
+      "kind": "rule",
+      "ref": "trace cattle-air actions 130-132, 141, 172",
+      "quote": "County parish holding (CPH) number\n12/345/6789",
+      "confidence": "verbatim",
+      "note": "mechanism: three separate inputs ('12', '345', '6789') are joined with slashes for display."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-010",
+      "statement": "After a CPH number is saved, the user returns to the consignment addresses page, which shows the number with Change and Remove links for the CPH number.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air actions 133-141",
+      "quote": "12/345/6789\n\nChange Remove\n CPH number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-011",
+      "statement": "'Save and continue' on a completed consignment addresses page goes to the notification hub.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air actions 142-144; journeys.fit.spec.js walk 'consignment addresses'",
+      "quote": "await expect(page).toHaveURL(urlFor('/notification-hub'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-012",
+      "statement": "For cattle the additional details page asks 'Does the consignment contain any unweaned animals?' with hint 'These are animals that are still feeding from their mother.' and Yes or No, below the certified-for question.",
+      "kind": "rule",
+      "ref": "trace cattle-air action 63",
+      "quote": "Does the consignment contain any unweaned animals?\nThese are animals that are still feeding from their mother.\nYes\nNo",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-013",
+      "statement": "For chicken the additional details page asks only 'What are the animals certified for?' and has no unweaned animals question.",
+      "kind": "rule",
+      "ref": "trace poultry-rail action 53",
+      "quote": "What are the animals certified for?\nYou can find this information on the ITAHC.\nFurther keeping\nSlaughter\n...\nOther\nSave and continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-014",
+      "statement": "For a horse the additional details page is answered with one choice, 'Registered equine animal', and saved straight away, so the horse journey shows no unweaned animals question either.",
+      "kind": "rule",
+      "ref": "trace horse-sea actions 55-58",
+      "quote": "input[name=\"certificationPurpose\"][value=\"Registered equine animal\"]",
+      "confidence": "inferred",
+      "note": "Inferred from the action list: one check then continue with no error. The horse page itself was not snapshotted."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-015",
+      "statement": "The additional details page lists 16 certified-for options in this order.",
+      "kind": "data",
+      "ref": "trace cattle-air action 63; trace poultry-rail action 53",
+      "quote": "Further keeping\nSlaughter\nConfined establishment\nGerminal products\nRegistered equine animal\nTravelling circus/animal act\nExhibition\nEvent or activity near borders\nRelease into the wild\nDispatch centre\nRelaying area / purification centre\nOrnamental aquaculture establishment\nTechnical use\nQuarantine or similar establishment\nLive aquatic animals for human consumption\nOther",
+      "confidence": "verbatim",
+      "note": "The same 16 options for cattle and chicken."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-016",
+      "statement": "The review page shows no row for the additional details answers: neither what the animals are certified for nor the unweaned animals answer appears anywhere on it.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air action 172; trace horse-sea action 160; trace poultry-rail action 178",
+      "quote": "2. Description of the goods\nCattle (0102)\nChange\nDomestic cattle (Bos taurus)\nNumber of animals\n2\nChange\nNumber of packages (when required)\nNot applicable\nIdentification details",
+      "confidence": "inferred",
+      "note": "Cattle answered 'Further keeping' and unweaned 'No', horse 'Registered equine animal', poultry 'Slaughter'; none of these words appear on the review. The hub lists 'Additional details' as Complete."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-017",
+      "statement": "Cattle identification is entered one animal at a time: ear tag and passport are filled and saved with a per-species save button, twice for two animals, and the page then lists both animals with a Remove link each.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air actions 49-57",
+      "quote": "Animal\nPassport\nEar tag\nDomestic cattle (Bos taurus) 1\nPASSPORT-1\nEAR-TAG-1\nRemove\nDomestic cattle (Bos taurus) 2\nPASSPORT-2\nEAR-TAG-2\nRemove",
+      "confidence": "verbatim",
+      "note": "The save button is button[value=\"save:cattle-bos-taurus\"]. After the second save, no entry inputs are shown for the species."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-018",
+      "statement": "Horse identification asks for microchip, passport and horse name for one horse, saved with 'Save and continue' directly.",
+      "kind": "data",
+      "ref": "trace horse-sea actions 49-52",
+      "quote": "[name=\"identifiers[horse-equus-caballus][microchip]\"] ... [name=\"identifiers[horse-equus-caballus][passport]\"] ... [name=\"identifiers[horse-equus-caballus][horse-name]\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-019",
+      "statement": "Chicken identification is by flock: the page asks 'Enter details for Gallus domesticus', says 'Enter at least one identifier.', and offers Flock ID, Classification (a select), Description, Identification details and Hatching date (day-old chicks only); the journey fills only Flock ID.",
+      "kind": "data",
+      "ref": "trace poultry-rail action 48",
+      "quote": "Enter details for Gallus domesticus\n\nEnter at least one identifier.\n\nFlock ID\nClassification\nSelect a classification\nBroilers\nGrandparent\nLaying pullets\nParents\nPure line\nOthers\nDescription\nIdentification details\nHatching date\nDay-old chicks only. For example, 27/03/2026\nChoose date",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-020",
+      "statement": "Every trace's hub, after the journey is complete, still shows the status tag 'Draft' and the caption 'Live animals - <reference>'.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air action 148; trace horse-sea action 136; trace poultry-rail action 153",
+      "quote": "Draft\nLive animals - GBN-AG-26-0T6VD7\nOverview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-021",
+      "statement": "A notification reference takes the form GBN-AG-26- followed by six characters, is shown from the origin page onward, and stays the same through the hub, review, declaration, submitted page and the submitted view.",
+      "kind": "data",
+      "ref": "trace cattle-air actions 15, 148, 172, 221, 238",
+      "quote": "GBN-AG-26-0T6VD7",
+      "confidence": "verbatim",
+      "note": "The three traces got GBN-AG-26-0T6VD7, GBN-AG-26-0UZV93 and GBN-AG-26-0965DB."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-022",
+      "statement": "The hub's 'Your commodities' shows the total number of animals entered (2 cattle, 1 horse, 400 chickens) and 0 packages/boxes for each live-animal journey.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air action 148; trace horse-sea action 136; trace poultry-rail action 153",
+      "quote": "Your commodities\n\n2\n\nAnimals\n\nTotal number of animals in this consignment\n\n0\n\nPackages/boxes\n\nTotal number of packages in this consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-023",
+      "statement": "When every task is done, the live-animal hub lists ten task rows in five numbered sections, each marked 'Complete'.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air action 148; trace horse-sea action 136",
+      "quote": "1. About the consignment\nWhere is this consignment coming from?\nComplete\nWhat are you importing?\nComplete\nMain import reason\nComplete\n2. Description of the goods\nCommodity details\nComplete\nIdentification details\nComplete\nAdditional details\nComplete\n3. Transport and arrival\nArrival details\nComplete\nTransport details\nComplete\n4. Documents\nUpload documents\nComplete\n5. Addresses\nConsignment addresses\n\nConsignor or Exporter, Consignee, Importer and Place of Destination\n\nComplete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-024",
+      "statement": "For the poultry transit journey the hub adds an eleventh task row, 'Transit countries', between 'Arrival details' and 'Transport details', marked Complete.",
+      "kind": "rule",
+      "ref": "trace poultry-rail actions 153, 161",
+      "quote": "Arrival details\nComplete\nTransit countries\nComplete\nTransport details\nComplete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-025",
+      "statement": "Each hub task link opens its page with ?from=hub; 'Review and submit' goes to /review-notification and 'Return to dashboard' to the prototype root.",
+      "kind": "behaviour",
+      "ref": "trace poultry-rail action 153",
+      "quote": "Where is this consignment coming from?->/design-release-2.1/origin-of-the-import?from=hub\n...\nTransit countries->/design-release-2.1/transit-countries?from=hub\nTransport details->/design-release-2.1/transporter?from=hub\nUpload documents->/design-release-2.1/upload-documents?from=hub\nConsignment addresses->/design-release-2.1/roles-and-addresses?from=hub\nReview and submit->/design-release-2.1/review-notification\nReturn to dashboard->/design-release-2.1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-026",
+      "statement": "The review page is titled 'Review your notification - Import notification service - GOV.UK', has the heading 'Review your notification' under a 'Draft' tag and the 'Live animals - <reference>' caption, a Back link to the hub, and no error summary when every task is complete.",
+      "kind": "copy",
+      "ref": "trace cattle-air actions 168-172",
+      "quote": "Draft\nLive animals - GBN-AG-26-0T6VD7\nReview your notification",
+      "confidence": "verbatim",
+      "note": "Back link: <a href=\"/design-release-2.1/notification-hub\" class=\"govuk-back-link\">Back</a>. Error summary count 0."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-027",
+      "statement": "The review page has five numbered sections: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Uploaded documents' and '5. Addresses'.",
+      "kind": "copy",
+      "ref": "trace cattle-air action 171",
+      "quote": "1. About the consignment ... 2. Description of the goods ... 3. Transport and arrival ... 4. Uploaded documents ... 5. Addresses",
+      "confidence": "verbatim",
+      "note": "The hub calls section 4 '4. Documents'; the review calls it '4. Uploaded documents'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-028",
+      "statement": "Each review card has a Change link to the page it summarises: origin, what are you importing, reason, commodity details (on the commodity card and the species row), identification details, arrival details, transit countries (when present), transporter, upload documents (with ?from=review) and consignment addresses.",
+      "kind": "behaviour",
+      "ref": "trace poultry-rail action 178; trace cattle-air action 172",
+      "quote": "Change->/design-release-2.1/origin-of-the-import\nChange->/design-release-2.1/what-are-you-importing\nChange->/design-release-2.1/reason-for-import\nChange->/design-release-2.1/consignment-details\nChange->/design-release-2.1/consignment-details\nChange->/design-release-2.1/animal-identification-details\nChange->/design-release-2.1/arrival-details\nChange->/design-release-2.1/transit-countries\nChange->/design-release-2.1/transporter\nChange->/design-release-2.1/upload-documents?from=review\nChange->/design-release-2.1/roles-and-addresses",
+      "confidence": "verbatim",
+      "note": "Only the upload documents Change link carries ?from=review; the others carry no return marker."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-029",
+      "statement": "The review's 'Origin of import' card shows Country of origin, Region of origin code and Internal reference number, with 'Not applicable' for a region or reference not given.",
+      "kind": "behaviour",
+      "ref": "trace horse-sea action 160; trace poultry-rail action 178",
+      "quote": "Origin of import\nChange\nCountry of origin\nRepublic of Ireland\nRegion of origin code\nNot applicable\nInternal reference number\nNot applicable",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-030",
+      "statement": "A region of origin code entered as 75 for France is shown on the review as 'FR-75'.",
+      "kind": "rule",
+      "ref": "trace cattle-air actions 21-22, 172",
+      "quote": "Region of origin code\nFR-75",
+      "confidence": "verbatim",
+      "note": "mechanism: the user types only the suffix '75' into #region-of-origin-code-suffix; the review prefixes the country code 'FR-'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-031",
+      "statement": "The internal reference 'CATTLE-2026-01' entered on the origin page is shown on the review as the Internal reference number.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air actions 23, 172",
+      "quote": "Internal reference number\nCATTLE-2026-01",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-032",
+      "statement": "The review's 'What are you importing?' card shows the commodity code with its name in brackets and the species: '0102 (Cattle)' with 'Domestic cattle (Bos taurus)', '0101 (Horse)' with 'Equus cabalus', and '010511 (Chicken)' with 'Gallus domesticus'.",
+      "kind": "copy",
+      "ref": "trace cattle-air action 172; trace horse-sea action 160; trace poultry-rail action 178",
+      "quote": "Commodity code\n0102 (Cattle)\nSpecies\nDomestic cattle (Bos taurus)",
+      "confidence": "verbatim",
+      "note": "The horse species label reads 'Equus cabalus' (one 'l'), while its id is horse-equus-caballus. Cattle get a common name with the Latin in brackets; horse and chicken get the Latin only."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-033",
+      "statement": "For an internal market import, the review's 'Main import reason' card shows 'Main import reason' and 'Purpose in the market'.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air action 172",
+      "quote": "Main import reason\nChange\nMain import reason\nInternal market\nPurpose in the market\nBreeding",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-034",
+      "statement": "For temporary admission of horses, the review shows the main import reason, an 'Exit date' and a 'Port of exit'.",
+      "kind": "behaviour",
+      "ref": "trace horse-sea actions 36-39, 160",
+      "quote": "Main import reason\nTemporary admission horses\nExit date\n26/1/2027\nPort of exit\nHolyhead POE - GBHLY",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-035",
+      "statement": "The temporary admission exit date is shown on the review exactly as typed, '26/1/2027', not reformatted.",
+      "kind": "rule",
+      "ref": "trace horse-sea actions 37, 160",
+      "quote": "Exit date\n26/1/2027",
+      "confidence": "verbatim",
+      "note": "mechanism: entered '26/1/2027' into #temporary-admission-exit-date and shown as '26/1/2027', where other dates on the page show two-digit days and months (11/12/2026) and the submitted view shows '8 March 2026'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-036",
+      "statement": "The temporary admission 'Port of exit' select and the transit 'Exit border control post' select offer the same ten border points after 'Select one'.",
+      "kind": "data",
+      "ref": "trace horse-sea action 40; trace poultry-rail action 39",
+      "quote": "=Select one | Edinburgh Airport (animals) - GBEDI4 | Gatwick Airport (animals) - GBLGW4 | Glasgow Airport (animals) - GBGLA002 | Heathrow Airport - HARC (animals) - GBLHR4A | Heathrow Airport – Airpets Limited (animals) – GBLHR022 - GBLHR022 | Heathrow Airport – Animal Aircare Ltd (animals) - GBLHR067 | Holyhead POE - GBHLY | Manchester Airport (animals) - GBMNC4 | Prestwick Airport (animals) - GBPIK4 | Stansted Airport (animals) - GBSTN4A",
+      "confidence": "verbatim",
+      "note": "Reference data. Two Heathrow labels repeat their code ('– GBLHR022 - GBLHR022')."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-037",
+      "statement": "For a transit import, the review shows the main import reason 'Transit', an 'Exit border control post' and a 'Destination country'.",
+      "kind": "behaviour",
+      "ref": "trace poultry-rail actions 36-38, 178",
+      "quote": "Main import reason\nTransit\nExit border control post\nHolyhead POE - GBHLY\nDestination country\nRepublic of Ireland",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-038",
+      "statement": "The transit 'Destination country' select lists 41 countries and territories after 'Select one', starting with Austria, Azores (Portugal), Belgium and including Republic of Ireland; the reason page also holds a transhipment destination country select with the same list.",
+      "kind": "data",
+      "ref": "trace poultry-rail action 39",
+      "quote": "transit-destination-country :: 42 :: =Select one | Austria=Austria | Azores (Portugal)=Azores (Portugal) | Belgium=Belgium | Bulgaria=Bulgaria | Canary Islands (Spain)=Canary Islands (Spain)",
+      "confidence": "verbatim",
+      "note": "Reference data; the eval showed the first 40 of 42 options. The transhipment select (#transhipment-destination-country) belongs to a reason these traces did not choose."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-039",
+      "statement": "The review's description of the goods card is headed by commodity and code, for example 'Cattle (0102)', with a species subheading and its 'Number of animals'.",
+      "kind": "copy",
+      "ref": "trace cattle-air action 172",
+      "quote": "Cattle (0102)\nChange\nDomestic cattle (Bos taurus)\nNumber of animals\n2\nChange",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-040",
+      "statement": "The review shows 'Number of packages (when required)' as 'Not applicable' for cattle and for a horse, and shows no packages row at all for chicken.",
+      "kind": "rule",
+      "ref": "trace cattle-air action 172; trace horse-sea action 160; trace poultry-rail action 178",
+      "quote": "Number of packages (when required)\nNot applicable",
+      "confidence": "verbatim",
+      "note": "Poultry section 2 reads 'Gallus domesticus\\nNumber of animals\\n400\\nChange\\nIdentification details'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-041",
+      "statement": "The review's cattle identification table has columns Animal, Passport and Ear tag, one row per animal numbered after the species.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air action 172",
+      "quote": "Identification details\nAnimal\nPassport\nEar tag\nChange\nDomestic cattle (Bos taurus) 1\nPASSPORT-1\nEAR-TAG-1\nDomestic cattle (Bos taurus) 2\nPASSPORT-2\nEAR-TAG-2",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-042",
+      "statement": "Cattle identifiers are entered ear tag first and passport second, but the review and the identification page list Passport before Ear tag, while the submitted view lists Ear tag before Passport.",
+      "kind": "rule",
+      "ref": "trace cattle-air actions 49-50, 57, 172, 239",
+      "quote": "Animal\nPassport\nEar tag",
+      "confidence": "verbatim",
+      "note": "mechanism: entry order ear-tag, passport; review order Passport, Ear tag; submitted view order 'Animal / Ear tag / Passport'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-043",
+      "statement": "The review's horse identification table has columns Animal, Passport, Microchip/transponder and Equine name.",
+      "kind": "behaviour",
+      "ref": "trace horse-sea action 160",
+      "quote": "Identification details\nAnimal\nPassport\nMicrochip/transponder\nEquine name\nChange\nEquus cabalus 1\nPASSPORT-1\nMICROCHIP-1\nHORSE-NAME-1",
+      "confidence": "verbatim",
+      "note": "mechanism: entered microchip, passport, horse name; shown Passport, Microchip/transponder, Equine name."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-044",
+      "statement": "The review's chicken identification table has columns Animal and Flock ID, and its one row is labelled with the species alone, with no number.",
+      "kind": "behaviour",
+      "ref": "trace poultry-rail action 178",
+      "quote": "Identification details\nAnimal\nFlock ID\nChange\nGallus domesticus\nFLOCK-ID-1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-045",
+      "statement": "Identifiers left blank are left out of the review: the chicken review shows only a Flock ID column, though the page also offered Classification, Description, Identification details and Hatching date.",
+      "kind": "rule",
+      "ref": "trace poultry-rail actions 48, 178",
+      "quote": "Animal\nFlock ID",
+      "confidence": "inferred",
+      "note": "Inferred by comparing the identification page fields with the review columns."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-046",
+      "statement": "The review's 'Arrival details' card shows Port of entry, Arrival date at destination, Means of transport to the port of entry, Transport identification and Transport document reference.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air action 172",
+      "quote": "Arrival details\nChange\nPort of entry\nLondon Heathrow - LHR\nArrival date at destination\n11/12/2026\nMeans of transport to the port of entry\nAir\nTransport identification\nBA0123\nTransport document reference\nAWB-123",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-047",
+      "statement": "A port of entry picked by typing 'Heathrow', 'Holyhead' or 'Dover' is shown on the review as its full name and code: 'London Heathrow - LHR', 'Holyhead - GBHLY', 'Dover - GBDVR'.",
+      "kind": "rule",
+      "ref": "trace cattle-air action 172; trace horse-sea action 160; trace poultry-rail action 178",
+      "quote": "Port of entry\nDover - GBDVR",
+      "confidence": "verbatim",
+      "note": "mechanism: typed search text 'Heathrow' becomes 'London Heathrow - LHR'. Heathrow's code is 'LHR' while the others take a 'GB' prefix."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-048",
+      "statement": "The means of transport chosen in each journey (Air, Sea, Rail) is shown on the review with the transport identification entered (BA0123, STENA ADVENTURER, EU-RAIL-77).",
+      "kind": "behaviour",
+      "ref": "trace horse-sea action 160; trace poultry-rail action 178",
+      "quote": "Means of transport to the port of entry\nSea\nTransport identification\nSTENA ADVENTURER",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-049",
+      "statement": "For the transit journey, the review's section 3 has a 'Transit countries' card between Arrival details and Transport details, reading 'Countries that the consignment will travel through' and the countries joined by commas, with a Change link to /transit-countries.",
+      "kind": "behaviour",
+      "ref": "trace poultry-rail action 178",
+      "quote": "Transit countries\nCountries that the consignment will travel through\nBelgium, France\nChange",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-050",
+      "statement": "The transit countries page, filled with Belgium then France, is captioned 'Movement', asks 'Which countries will the consignment travel through?', and lists each added country under 'Country' with a Remove link.",
+      "kind": "copy",
+      "ref": "trace poultry-rail action 82",
+      "quote": "Movement\n\nWhich countries will the consignment travel through?\n\nCountries the consignment will travel through are countries between the country of origin and the destination country.\n\nThis does not include the United Kingdom.\n\nEnter a country\nEnter each country that the consignment will travel through\nAdded France\nSearch\nCountry\nBelgium\nRemove\nFrance\nRemove",
+      "confidence": "verbatim",
+      "note": "'Added France' is the announcement after the last country was added."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-051",
+      "statement": "The review's 'Transport details' card shows the chosen transporter's Name, Address, Country, Approval number and Type.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air action 172",
+      "quote": "Transport details\nChange\nName\nAberdeen Livestock Ltd\nAddress\n\n15 Union Street\n\nAberdeen\n\nAB11 5BN\n\nCountry\nUnited Kingdom\nApproval number\nUK/ABERDEEN/T1/00092001\nType\nPrivate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-052",
+      "statement": "The three journeys' transporters are Aberdeen Livestock Ltd (Private), Roadtrain Ltd (Commercial, IE/DUBLIN/T1/00092011) and Danish Meat Export ApS (Commercial, DK/COPENHAGEN/T1/00081002).",
+      "kind": "data",
+      "ref": "trace horse-sea action 160; trace poultry-rail action 178",
+      "quote": "Name\nDanish Meat Export ApS\nAddress\n\nVesterbrogade 12\n\n1620 Copenhagen\n\nCountry\nDenmark\nApproval number\nDK/COPENHAGEN/T1/00081002\nType\nCommercial",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-053",
+      "statement": "Roadtrain Ltd's country appears twice on the review: as the last address line and again in the Country row.",
+      "kind": "rule",
+      "ref": "trace horse-sea action 160",
+      "quote": "Address\n\nThe Roadtrain Complex\n\nBluebell Industrial Estate\n\nDublin 12\n\nD12 P046\n\nRepublic of Ireland\n\nCountry\nRepublic of Ireland",
+      "confidence": "verbatim",
+      "note": "mechanism: the other transporters' addresses end at the postcode or town, with the country only in the Country row."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-054",
+      "statement": "The review's '4. Uploaded documents' section shows each document as 'Document 1' with Document reference, Document type, Date of issue and Attachment.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air action 172",
+      "quote": "Document 1\nChange\nDocument reference\nCATTLE-AIR-ITAHC\nDocument type\nIntra Trade Animal Health Certificate (ITAHC)\nDate of issue\n25/11/2026\nAttachment\nitahc.pdf",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-055",
+      "statement": "The review's '5. Addresses' section has one 'Consignment addresses' card listing Place of origin, Consignor, Consignee, Importer and Place of destination, each as name and address lines, then the CPH number when one was given.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air action 172; trace horse-sea action 160",
+      "quote": "Consignment addresses\nChange\nPlace of origin\n\nGreen Valley Livestock Farm\n\n14 Meadow Lane\n\nLower Hartham\n\nUtrecht, 3511 AA, Netherlands\n\nConsignor\n\nNordic Livestock Export AB",
+      "confidence": "verbatim",
+      "note": "The horse review ends the card at Place of destination with no CPH row."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-056",
+      "statement": "The review's address lines put town, postcode and country on one line separated by commas.",
+      "kind": "rule",
+      "ref": "trace cattle-air action 172",
+      "quote": "Riverside Holding Facility\n\nEast Farm Road\n\nLeeds, LS25 3EB, United Kingdom",
+      "confidence": "verbatim",
+      "note": "mechanism: address-book town, postcode and country are joined onto one line with commas; the transporter address keeps them on separate lines."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-057",
+      "statement": "The review page ends with a 'Continue' button that posts the review form, and a red 'Delete' button that links to /notifications/delete?reference=<reference>.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air action 172",
+      "quote": "FORM|app-review-notification-page__form|/design-release-2.1/review-notification|Continue / Delete\nBUTTON|govuk-button||Continue\nA|govuk-button govuk-button--warning|/design-release-2.1/notifications/delete?reference=GBN-AG-26-0T6VD7|Delete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-058",
+      "statement": "Continue on a complete review goes to the declaration page.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air actions 186-188; cattle-air POST request 1177",
+      "quote": "POST     302      review-notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-059",
+      "statement": "The declaration page is titled 'Declaration - Import notification service - GOV.UK', headed 'Declaration', with a Back link to the review page.",
+      "kind": "copy",
+      "ref": "trace cattle-air actions 189-196, 206",
+      "quote": "<a href=\"/design-release-2.1/review-notification\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-060",
+      "statement": "The declaration opens with the statements 'I am the contact for the authorities and located in the UK.' (as a heading) and 'I am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.'",
+      "kind": "copy",
+      "ref": "trace cattle-air action 191",
+      "quote": "I am the contact for the authorities and located in the UK.\n\nI am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-061",
+      "statement": "The declaration's responsibility section reads as quoted, with two bullets.",
+      "kind": "copy",
+      "ref": "trace cattle-air action 191",
+      "quote": "I confirm I am responsible for this consignment.\n\nI am responsible from the submission of this notification to when it enters Great Britain. And I am responsible until it has either:\n\ncleared official checks at the border\nreached the Place of Destination as stated on the health certificate or notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-062",
+      "statement": "The declaration's accountability section lists four costs and arrangements as bullets.",
+      "kind": "copy",
+      "ref": "trace cattle-air action 191",
+      "quote": "I confirm that I am accountable for:\nany payment for the official controls at the border\nany arrangements to re-dispatch the consignment\nany costs needed for quarantine or isolation of consignments\nany costs needed for destruction and disposal of consignments, when instructed by the authorities",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-063",
+      "statement": "The declaration ends its statements with two paragraphs about acting for a third party.",
+      "kind": "copy",
+      "ref": "trace cattle-air action 191",
+      "quote": "I am authorised as being accountable for these things if raising notifications on behalf of a third party.\n\nI can legally act on behalf of a third party in relation to the conditions of this declaration.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-064",
+      "statement": "The user must tick one small checkbox to confirm the declaration; its fieldset legend 'Declaration confirmation' is visually hidden.",
+      "kind": "data",
+      "ref": "trace cattle-air actions 194, 206",
+      "quote": "I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.",
+      "confidence": "verbatim",
+      "note": "Classes: govuk-fieldset__legend govuk-visually-hidden; govuk-checkboxes govuk-checkboxes--small; input name declarationConfirmed, id declaration-confirmed."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-065",
+      "statement": "The declaration shows today's date as the date of declaration, then a Continue button.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air action 191",
+      "quote": "Date of declaration: 27 November 2026\n\nContinue",
+      "confidence": "verbatim",
+      "note": "The traces were recorded on 27 November 2026."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-066",
+      "statement": "Continuing without ticking the declaration re-shows the page with an error summary 'There is a problem' and the message 'Confirm that you have reviewed and comply with this declaration', linking to the checkbox, and the same message inline above the checkbox.",
+      "kind": "rule",
+      "ref": "trace cattle-air actions 203-207, snapshot 206; cattle-air POST request 1218",
+      "quote": "There is a problem\nConfirm that you have reviewed and comply with this declaration",
+      "confidence": "verbatim",
+      "note": "Summary link href #declaration-confirmed; inline 'Error: Confirm that you have reviewed and comply with this declaration'; the refused POST /declaration returns 200 with the page, not a redirect."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-067",
+      "statement": "Ticking the declaration and continuing submits the notification and goes to /notification-submitted.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air actions 214-218; cattle-air POST request 1258",
+      "quote": "POST     302      declaration",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-068",
+      "statement": "The submitted page is titled 'Import notification submitted - Import notification service - GOV.UK' and opens with a green confirmation panel 'Import notification submitted' showing 'Your reference number' and the reference.",
+      "kind": "copy",
+      "ref": "trace cattle-air action 221",
+      "quote": "Import notification submitted\nYour reference number\nGBN-AG-26-0T6VD7",
+      "confidence": "verbatim",
+      "note": "Component: govuk-panel govuk-panel--confirmation."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-069",
+      "statement": "The submitted page's 'Transporting the consignment' section tells the user what to tell the transporter and how long inspected animals must stay at the place of destination.",
+      "kind": "copy",
+      "ref": "trace cattle-air action 221",
+      "quote": "Transporting the consignment\n\nTell the transporter that this consignment must go directly to the place of destination on entry to Great Britain.\n\nThe animals or consignment may need to be inspected.\n\nIf so, the animals must stay at the place of destination for either:\n\nthe time stated on the health certificate\n48 hours if no time is specified",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-070",
+      "statement": "The two inspection-stay bullets appear on the submitted page for cattle, a horse and chicken alike.",
+      "kind": "rule",
+      "ref": "trace cattle-air action 225; trace horse-sea action 206; trace poultry-rail action 225",
+      "quote": "the time stated on the health certificate\n48 hours if no time is specified",
+      "confidence": "verbatim",
+      "note": "The spec expects no bullets for germinal products; that journey is not in this part."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-071",
+      "statement": "The submitted page's 'How to view or amend this notification' section links 'Return to your dashboard' to the prototype root and 'Create a new notification' to /create-notification.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air action 221",
+      "quote": "How to view or amend this notification\n\nYou can view or change this notification from your dashboard.\n\nReturn to your dashboard\n\nCreate a new notification",
+      "confidence": "verbatim",
+      "note": "Hrefs /design-release-2.1 and /design-release-2.1/create-notification."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-072",
+      "statement": "The submitted page's 'Getting help' section gives the APHA imports email, the APHA service desk phone, email and hours, and links to HMRC customs help and call charges.",
+      "kind": "copy",
+      "ref": "trace cattle-air action 221",
+      "quote": "Getting help\n\nTo get help with import notifications for live animals or germinal products, email importsriskmanagement@apha.gov.uk.\n\nContact the Animal and Plant Health Agency (APHA) if you need technical help with this service:\n\nTelephone: 0330 041 6999\nEmail: APHAServiceDesk@apha.gov.uk\n\nMonday to Friday, 8:30am to 5pm, except bank holidays\n\nIf you need help with your customs declaration, contact HMRC.\n\nFind out about call charges",
+      "confidence": "verbatim",
+      "note": "Links: mailto:importsriskmanagement@apha.gov.uk, mailto:APHAServiceDesk@apha.gov.uk, https://www.gov.uk/government/organisations/hm-revenue-customs/contact/customs-international-trade-and-excise-enquiries, https://www.gov.uk/call-charges."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-073",
+      "statement": "Opening /review-notification?reference=<reference> after submission shows the notification as submitted: the reference as the page heading, a 'Submitted' tag, an 'Actions' menu and 'Date submitted' with today's date, and a Back link to the dashboard.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air actions 238-240",
+      "quote": "GBN-AG-26-0T6VD7\nSubmitted\nActions\n\nDate submitted: 27 November 2026",
+      "confidence": "verbatim",
+      "note": "Back link href /design-release-2.1."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-074",
+      "statement": "The submitted view's browser title is 'Import notification service - GOV.UK', with no page name before the service name.",
+      "kind": "copy",
+      "ref": "trace cattle-air action 239; trace horse-sea action 220",
+      "quote": "Import notification service - GOV.UK",
+      "confidence": "verbatim",
+      "note": "Every other page in these journeys puts its page name first, for example 'Review your notification - Import notification service - GOV.UK'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-075",
+      "statement": "The submitted view's Actions menu offers Amend, Make template, Copy as new and Delete, each a link carrying the reference.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air action 239",
+      "quote": "A|moj-button-menu__item|/design-release-2.1/notifications/amend?reference=GBN-AG-26-0T6VD7| /   Amend",
+      "confidence": "verbatim",
+      "note": "Other hrefs: /notifications/make-template?reference=, /notifications/copy-as-new?reference=, /notifications/delete?reference=."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-076",
+      "statement": "The submitted view has an 'Import reference numbers' section with a warning and two values to copy: the notification reference and the customs document code C640, each with a 'Copy' button.",
+      "kind": "copy",
+      "ref": "trace cattle-air action 239",
+      "quote": "Import reference numbers\n!\nWarning\nYou must use the correct reference and code on the customs declaration or your consignment will be delayed.\n\nNotification reference\n\nGBN-AG-26-0T6VD7\n\nCopy\n\nCustoms document code\n\nC640\n\nCopy",
+      "confidence": "verbatim",
+      "note": "Copy buttons are type=button with data-copy-text holding the value."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-077",
+      "statement": "The submitted view shows the five review sections with no Change links.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air action 239",
+      "quote": "1. About the consignment\nOrigin of import\nCountry of origin",
+      "confidence": "verbatim",
+      "note": "No change link appears in the submitted view's element list, where the draft review has one per card."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-078",
+      "statement": "In all three journeys the submitted view shows the new reference but fixed sample content, not the answers the user just submitted: France, LIV-2026-0142, 0102 (Cattle), Bison Bison, 5 animals, Transfer of ownership - Sale/gift, London Heathrow, 8 March 2026, HC-2026-0198, importer Northern Livestock Imports Ltd and CPH 12/345/6789.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air action 239; trace horse-sea action 220; trace poultry-rail action 239",
+      "quote": "Internal reference number\nLIV-2026-0142\nWhat are you importing?\nCommodity code\n0102 (Cattle)\nSpecies\nBison Bison",
+      "confidence": "inferred",
+      "note": "Identical body in all three traces, though the horse journey submitted a horse from Republic of Ireland with no CPH and the poultry journey 400 chickens from Germany. The test only checks the reference and 'Submitted'. Reads as prototype seed data shown for any submitted reference."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-079",
+      "statement": "The review and submitted-view cards are custom app-dr2-review-card components (header, rows, change links, identification table) rather than the GOV.UK summary card or summary list; a GOV.UK summary card with a table for identification would replace them.",
+      "kind": "constraint",
+      "ref": "trace cattle-air actions 172, 239",
+      "quote": "SECTION|app-dr2-review-card||Origin of import ... DL|app-dr2-review-card__rows ... DIV|app-dr2-review-row ... DL|app-dr2-review-identification-table",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-080",
+      "statement": "The submitted view's Actions control is the MOJ button menu, outside the GOV.UK Design System.",
+      "kind": "constraint",
+      "ref": "trace cattle-air action 239",
+      "quote": "BUTTON|govuk-button moj-button-menu__toggle-button ||Actions",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-081",
+      "statement": "The submitted view's reference header, import reference section and status tag are custom app-dr2-* blocks built on govuk-tag, govuk-warning-text and secondary govuk-button.",
+      "kind": "constraint",
+      "ref": "trace cattle-air action 239",
+      "quote": "DIV|app-dr2-review-page-header ... STRONG|govuk-tag app-dr2-review-status__tag app-dr2-review-status__tag--submitted ... SECTION|app-dr2-import-reference-section ... DIV|govuk-warning-text app-dr2-import-reference-section__warning",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-082",
+      "statement": "The declaration page lays its statements out with custom app-declaration-page section headings and text rather than plain govuk-body paragraphs.",
+      "kind": "constraint",
+      "ref": "trace cattle-air action 206",
+      "quote": "H2|app-declaration-page__section-heading||I am the contact for the authorities and located in the UK.\nP|app-declaration-page__section-text||I am complying with the requirements of Regulation (EU) 2017",
+      "confidence": "verbatim",
+      "note": "The bullets use govuk-list govuk-list--bullet; the checkbox, error summary and error message are standard GOV.UK components."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-083",
+      "statement": "The submitted page is GOV.UK components throughout (confirmation panel, govuk-body, bullet lists, govuk-link) inside a custom app-notification-submitted-page wrapper.",
+      "kind": "constraint",
+      "ref": "trace cattle-air action 221",
+      "quote": "DIV|govuk-panel govuk-panel--confirmation app-notification-submitted-page__panel",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-084",
+      "statement": "Every page in the journey saves by a form POST that redirects (302) to the next page; no call to any other system was seen, so the submission itself is held inside the prototype.",
+      "kind": "integration",
+      "ref": "trace cattle-air requests --method POST (requests 42-1258); trace horse-sea requests --method POST",
+      "quote": "POST     302      notification-type ... POST     302      origin-of-the-import ... POST     302      declaration",
+      "confidence": "inferred",
+      "note": "The only other POSTs go to localhost:3011?EIO=4&transport=polling, the prototype kit's live-reload socket, which is test-harness noise."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-085",
+      "statement": "No outbound call to a notification API, a reference-data service or an address book service was seen at submission or on any page; a real service's submit-to-backend call is not shown by these traces.",
+      "kind": "integration",
+      "ref": "trace cattle-air requests --method POST",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-086",
+      "statement": "The cattle journey's origin answers are France, region of origin required 'Yes' with code 75, and internal reference CATTLE-2026-01; the horse journey's are Republic of Ireland with no region; the poultry journey's are Germany with no region.",
+      "kind": "data",
+      "ref": "trace cattle-air actions 18-23; trace horse-sea actions 18-21; trace poultry-rail actions 18-21",
+      "quote": "locator('input[name=\"regionOfOriginRequired\"][value=\"Yes\"]') ... Fill \"75\" ... Fill \"CATTLE-2026-01\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-087",
+      "statement": "Each journey uploads one document (an ITAHC with reference <JOURNEY>-ITAHC, issued 25/11/2026, file itahc.pdf) with 'add another', sees one row in the documents table, then continues.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air actions 86-96",
+      "quote": "Fill \"CATTLE-AIR-ITAHC\" ... locator('button[name=\"action\"][value=\"add-another\"]').first() ... Expect \"toHaveCount\" locator('table.app-upload-documents-table tbody tr')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-088",
+      "statement": "Each journey fills the five consignment addresses by opening each picker from the consignment addresses page and choosing an address-book entry: Green Valley Livestock Farm, Nordic Livestock Export AB, Northern Livestock Imports Ltd, Britannia Trade & Livestock Ltd and Riverside Holding Facility.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air actions 99-127",
+      "quote": "input[name=\"placeOfOriginAddressId\"][value=\"green-valley-livestock-farm\"] ... input[name=\"consignorAddressId\"][value=\"nordic-livestock-export\"] ... input[name=\"consigneeAddressId\"][value=\"northern-livestock-imports-consignee\"] ... input[name=\"importerAddressId\"][value=\"britannia-trade-livestock\"] ... input[name=\"placeOfDestinationAddressId\"][value=\"riverside-holding-facility\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-089",
+      "statement": "None of these journeys uses 'Save and return to overview', a second species, or an answer change from the review, so how those return to the review or hub is not shown here.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air, horse-sea, poultry-rail full action lists",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p13-090",
+      "statement": "No journey here shows the submitted view of a horse or chicken notification with its own answers, nor what Amend, Make template, Copy as new or Delete do from it.",
+      "kind": "behaviour",
+      "ref": "trace cattle-air action 239",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Owned by the manage notifications and templates parts."
+    }
+  ]
+}

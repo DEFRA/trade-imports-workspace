@@ -1,0 +1,1210 @@
+{
+  "source": "repo:insbackend",
+  "structure": "Part 1, read model ingest and storage, read on the main branch of repos/trade-imports-ins-backend. In refs, `main/` stands for src/main/java/uk/gov/defra/trade/imports/ins/backend/ and `test/` for src/test/java/uk/gov/defra/trade/imports/ins/backend/. Read in full: the notification package's ingest side (NotificationSqsListener, NotificationUpsertService, OutboxEventType, NotificationErrorHandler, SqsRetryableException, SqsNonRetryableException, AggregatedNotification, AggregatedNotificationIndexMaintenance); configuration MongoConfig, NotificationSqsConfig and LocalDateStringConverters; src/main/resources/application.yml; ten test files (NotificationSqsListenerTest, NotificationUpsertServiceTest, OutboxEventTypeTest, NotificationErrorHandlerTest, AggregatedNotificationIndexMaintenanceTest, NotificationSqsListenerIT, AggregatedNotificationIndexMaintenanceIT, MongoConfigIT, NotificationSqsConfigTest, LocalDateStringConvertersTest) plus the NotificationEventEnvelope test helper; docs/architecture.md (only its notification sections are in scope; the address lookup, proxy, TLS and error-response sections are out of scope), README.md, AGENTS.md, compose/mongo/10-init.js (a template placeholder with no seed data), and the workspace page docs/repos/trade-imports-ins-backend.md. Covered: the SQS listener's message checks and its eight recognised event types (all handled by the same upsert, none special-cased); how each of the 10 document fields is taken from the GBN-AG event body; the version-guarded single upsert, partial-field and clearing rules; the retryable versus non-retryable classification and what happens to the message; the notifications collection, its compound index organisation_status_sort_fields and the referenceNumber index; start-up index maintenance and the deletion of documents with no organisationId; date storage; SQS and Mongo config values; and one claim per test in the ten test files. Status is stored as the event's notificationStatusCode verbatim and never derived; the slice names only DRAFT and SUBMITTED in tests, and DELETED in the workspace page. The query API (GET /notifications) is part 2.",
+  "claims": [
+    {
+      "id": "repo-insbackend-p1-001",
+      "statement": "The service keeps one summary document per notification in a MongoDB collection named notifications.",
+      "kind": "data",
+      "ref": "main/notification/AggregatedNotification.java:13",
+      "quote": "@Document(collection = \"notifications\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-002",
+      "statement": "The notifications collection lives in the MongoDB database named by MONGO_DATABASE, default trade-imports-ins-backend.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:33",
+      "quote": "database: ${MONGO_DATABASE:trade-imports-ins-backend}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-003",
+      "statement": "The document's id is aggregateId, a string, taken from the event body's aggregateId and set only when the document is first inserted.",
+      "kind": "data",
+      "ref": "main/notification/AggregatedNotification.java:25-27; main/notification/NotificationUpsertService.java:28,79",
+      "quote": "@Id\n    private String aggregateId; ... .setOnInsert(\"_id\", aggregateId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-004",
+      "statement": "aggregateVersion is a whole number (long) taken from the event body's aggregateVersion and set on every applied event.",
+      "kind": "data",
+      "ref": "main/notification/AggregatedNotification.java:29; main/notification/NotificationUpsertService.java:29,80",
+      "quote": "private long aggregateVersion; ... .set(AGGREGATE_VERSION, incomingVersion)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-005",
+      "statement": "referenceNumber is a string taken from data.exchangedDocument.identifier in the event, such as GBN-AG-26-001.",
+      "kind": "data",
+      "ref": "main/notification/NotificationUpsertService.java:48,84; main/notification/AggregatedNotification.java:31-32",
+      "quote": "String referenceNumber = text(exchangedDocument.path(\"identifier\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-006",
+      "statement": "organisationId is a string taken from the top-level organisationId of the event body, and it is set on every applied event.",
+      "kind": "data",
+      "ref": "main/notification/NotificationUpsertService.java:38,83; main/notification/AggregatedNotification.java:34",
+      "quote": "String organisationId = text(body.path(ORGANISATION_ID)); ... update.set(ORGANISATION_ID, organisationId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-007",
+      "statement": "status is a free string copied as-is from data.exchangedDocument.notificationStatusCode. The read model does not derive, map or validate the status value.",
+      "kind": "data",
+      "ref": "main/notification/NotificationUpsertService.java:49,85; main/notification/AggregatedNotification.java:35",
+      "quote": "String status = text(exchangedDocument.path(\"notificationStatusCode\"));",
+      "confidence": "verbatim",
+      "note": "The type is String, not an enum, so any value the publisher sends is stored."
+    },
+    {
+      "id": "repo-insbackend-p1-008",
+      "statement": "The status values the slice shows are DRAFT and SUBMITTED, which the tests send as notificationStatusCode and read back from the stored document.",
+      "kind": "data",
+      "ref": "test/integration/NotificationSqsListenerIT.java:44,168,217",
+      "quote": "assertThat(doc.get().getStatus()).isEqualTo(\"DRAFT\"); ... .hasValue(\"SUBMITTED\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-009",
+      "statement": "The slice holds no list of the status values the read model accepts or expects: no enum, schema or doc enumerates them, and the event schema is not defined in this repo.",
+      "kind": "data",
+      "ref": "main/notification/AggregatedNotification.java:35; docs/repos/trade-imports-ins-backend.md (Integrations)",
+      "quote": "the schema itself is not defined in this repo.",
+      "confidence": "gap",
+      "note": "Looked in AggregatedNotification, NotificationUpsertService, OutboxEventType, README, AGENTS.md, docs/architecture.md and the workspace page."
+    },
+    {
+      "id": "repo-insbackend-p1-010",
+      "statement": "The workspace repo page says notifications with status DELETED are excluded from what the read API returns, so DELETED is a status value the model expects to hold.",
+      "kind": "rule",
+      "ref": "docs/repos/trade-imports-ins-backend.md (Responsibilities, Owns)",
+      "quote": "Notifications with status `DELETED` are excluded.",
+      "confidence": "verbatim",
+      "note": "The exclusion itself is in the query API, part 2. Nothing on the ingest side sets DELETED: it would arrive as notificationStatusCode."
+    },
+    {
+      "id": "repo-insbackend-p1-011",
+      "statement": "originCountry is a string code taken from data.specifiedConsignment.originCountry.code.value, such as GB or ES.",
+      "kind": "data",
+      "ref": "main/notification/NotificationUpsertService.java:52-53,86",
+      "quote": "String originCountry = text(originCountryNode.path(\"code\").path(\"value\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-012",
+      "statement": "originCountrySubdivisionCode is the identifier of the origin country's sub-division whose functionTypeCode content is 106, the UNCL3227 'Region of origin' function, such as ES-CN.",
+      "kind": "data",
+      "ref": "main/notification/NotificationUpsertService.java:24,55-56,125-132; docs/architecture.md (Notification upserts)",
+      "quote": "private static final String LOCATION_FUNCTION_SUBDIVISION_OF_ORIGIN = \"106\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-013",
+      "statement": "The subdivision is picked by its function code 106, not by its position in the sub-division list, so a country carrying other sub-divisions first still stores the function-106 one.",
+      "kind": "rule",
+      "ref": "docs/architecture.md (Notification upserts); main/notification/NotificationUpsertService.java:125-132",
+      "quote": "A country can carry other sub-divisions too, so the code is picked by its function, not its position.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-014",
+      "statement": "The read model does not store the event's regionOfOriginCode.",
+      "kind": "rule",
+      "ref": "docs/architecture.md (Notification upserts; Aggregated notification upsert)",
+      "quote": "INS uses it for the country subdivision the goods came from, and does not store a region of origin code.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-015",
+      "statement": "An event that carries an origin country but no function-106 subdivision clears any stored originCountrySubdivisionCode.",
+      "kind": "rule",
+      "ref": "main/notification/NotificationUpsertService.java:116-123; docs/architecture.md (Notification upserts)",
+      "quote": "An event that carries an origin with no subdivision, such as an amendment from the Canary Islands to mainland France, clears it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-016",
+      "statement": "An event with no origin country, such as a lifecycle event, leaves the stored originCountrySubdivisionCode alone.",
+      "kind": "rule",
+      "ref": "main/notification/NotificationUpsertService.java:116-123; docs/architecture.md (Notification upserts)",
+      "quote": "An event with no origin at all, such as a lifecycle event, leaves it alone.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-017",
+      "statement": "commodity is a string taken from the first trade line of the first consignment item: its first description entry.",
+      "kind": "data",
+      "ref": "main/notification/NotificationUpsertService.java:64-67,100-104",
+      "quote": "String commodity = text(firstTradeLine.path(\"description\").path(0));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-018",
+      "statement": "When the first trade line has no description, commodity falls back to that trade line's commonName, and the service logs the aggregate id and version when it does.",
+      "kind": "rule",
+      "ref": "main/notification/NotificationUpsertService.java:106-113; docs/architecture.md (Aggregated notification upsert)",
+      "quote": "The dashboard `commodity` field is the first trade line's `description`, or `commonName` when description is absent. A log line records aggregate id and version when the commonName fallback is used.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-019",
+      "statement": "Only the first trade line is read for commodity, so a notification with several commodity lines shows one commodity in the read model.",
+      "kind": "constraint",
+      "ref": "main/notification/NotificationUpsertService.java:64-66",
+      "quote": ".path(\"includedConsignmentItem\").path(0)\n            .path(\"includedTradeLineItem\").path(0);",
+      "confidence": "inferred",
+      "note": "mechanism: reduces the event's trade lines to one commodity string. Inferred from index 0 being the only element read."
+    },
+    {
+      "id": "repo-insbackend-p1-020",
+      "statement": "arrivalDate is a calendar date taken from the first transport movement's first arrival event's scheduledOccurrenceDateTime, an instant, reduced to its calendar day in UTC.",
+      "kind": "data",
+      "ref": "main/notification/NotificationUpsertService.java:58-62,73-76",
+      "quote": ".atZone(ZoneOffset.UTC).toLocalDate()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-021",
+      "statement": "The arrival day is taken back in UTC whatever the server's time zone, because the animals backend writes the arrival at the start of the chosen day in UTC and PIMS needs an instant.",
+      "kind": "constraint",
+      "ref": "docs/architecture.md (Notification dates)",
+      "quote": "The GBN-AG event carries the arrival as an instant, `scheduledOccurrenceDateTime`, because PIMS needs one. The animals backend writes it at the start of the chosen day in UTC, so `NotificationUpsertService` takes the day back in UTC, whatever the JVM's zone.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-022",
+      "statement": "arrivalDate is stored in Mongo as a YYYY-MM-DD string, not a BSON date, and read back as a calendar date.",
+      "kind": "data",
+      "ref": "main/configuration/LocalDateStringConverters.java:13-29; main/configuration/MongoConfig.java:65-70; docs/architecture.md (Notification dates)",
+      "quote": "`arrivalDate` is a calendar date: a `LocalDate` on the document and in the API, `YYYY-MM-DD` on the wire, and a string in Mongo.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-023",
+      "statement": "arrivalDate is stored as a string so the stored day does not depend on where the service runs, and because YYYY-MM-DD strings sort in date order the arrivalDate sort and the compound index work on the string.",
+      "kind": "constraint",
+      "ref": "docs/architecture.md (Notification dates)",
+      "quote": "Without them Spring Data writes a BSON date at midnight in the JVM's zone, and the stored day then depends on where the service runs. `YYYY-MM-DD` strings sort in date order, so the `arrivalDate` sort and the `organisation_status_sort_fields` index work on the string.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-024",
+      "statement": "lastUpdated is a moment in time taken from data.exchangedDocument.issueDateTime and stored as a BSON date.",
+      "kind": "data",
+      "ref": "main/notification/NotificationUpsertService.java:50,69-71,81; docs/architecture.md (Notification dates)",
+      "quote": "`lastUpdated` is a moment: an `Instant`, RFC 3339 with a `Z` on the wire, and a BSON date in Mongo.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-025",
+      "statement": "When an event has no issueDateTime, lastUpdated is set to the time the service processes the event.",
+      "kind": "rule",
+      "ref": "main/notification/NotificationUpsertService.java:69-71",
+      "quote": "Instant lastUpdated = lastUpdatedStr != null\n            ? parseInstant(lastUpdatedStr, \"issueDateTime\", aggregateId)\n            : Instant.now();",
+      "confidence": "verbatim",
+      "note": "mechanism: lastUpdated falls back to processing time."
+    },
+    {
+      "id": "repo-insbackend-p1-026",
+      "statement": "The document has exactly 10 fields: aggregateId, aggregateVersion, referenceNumber, organisationId, status, originCountry, originCountrySubdivisionCode, commodity, arrivalDate and lastUpdated. It holds no notification category, no journey or set, no port, no consignor or importer, and no commodity code.",
+      "kind": "data",
+      "ref": "main/notification/AggregatedNotification.java:25-40",
+      "quote": "private String organisationId;\n    private String status;\n    private String originCountry;\n    private String originCountrySubdivisionCode;\n    private String commodity;\n    private LocalDate arrivalDate;\n    private Instant lastUpdated;",
+      "confidence": "inferred",
+      "note": "The absence of other fields is read from the class having only these. The commodity classCode the test events carry (01059900) is not stored."
+    },
+    {
+      "id": "repo-insbackend-p1-027",
+      "statement": "A field the event does not carry, or carries blank or not as text, is left as it is stored rather than cleared; only aggregateVersion, lastUpdated and organisationId are written on every applied event.",
+      "kind": "rule",
+      "ref": "main/notification/NotificationUpsertService.java:78-89,143-145",
+      "quote": "if (referenceNumber != null) update.set(\"referenceNumber\", referenceNumber);\n        if (status != null) update.set(\"status\", status);",
+      "confidence": "verbatim",
+      "note": "mechanism: partial update of the stored summary. originCountrySubdivisionCode is the exception, cleared when an origin arrives without one."
+    },
+    {
+      "id": "repo-insbackend-p1-028",
+      "statement": "Each event is applied in one atomic Mongo upsert whose query matches the document's id and a stored aggregateVersion lower than the incoming one, so concurrent and out-of-order events converge on the highest version with no read-then-write race.",
+      "kind": "rule",
+      "ref": "main/notification/NotificationUpsertService.java:91-95; docs/architecture.md (Notification upserts)",
+      "quote": "`NotificationUpsertService` writes each event in one Mongo upsert whose query matches only a stored `aggregateVersion` lower than the incoming one. Concurrent events for the same notification and out-of-order redelivery both converge on the highest version, with no read-then-write race.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-029",
+      "statement": "An event for a notification not yet stored inserts a new document.",
+      "kind": "behaviour",
+      "ref": "main/notification/NotificationUpsertService.java:78-95",
+      "quote": "mongoTemplate.upsert(query, update, AggregatedNotification.class);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-030",
+      "statement": "An event whose aggregateVersion is equal to or lower than the stored one changes nothing: the service does not skip it itself but leaves it to the version filter.",
+      "kind": "rule",
+      "ref": "main/notification/NotificationUpsertService.java:91-93; test/notification/NotificationUpsertServiceTest.java:148",
+      "quote": "upsert_shouldLeaveStaleEventsToTheVersionFilter_ratherThanSkippingThemItself",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-031",
+      "statement": "A stale or duplicate event for an existing document misses the version filter, so the upsert tries to insert a second document with the same id; that failure is unclassified, so the message is treated as non-retryable and deleted.",
+      "kind": "behaviour",
+      "ref": "main/notification/NotificationUpsertService.java:79,91-95; main/notification/NotificationErrorHandler.java:42-44,47-55",
+      "quote": "Criteria.where(\"_id\").is(aggregateId)\n                .and(AGGREGATE_VERSION).lt(incomingVersion));",
+      "confidence": "inferred",
+      "note": "mechanism: Mongo upsert semantics. Inferred from an upsert whose query misses while _id is fixed by setOnInsert; the duplicate-key error is caught by the error handler as unclassified. The tests prove only the outcome (document unchanged, queue drained), and each such message is counted as discarded and logged at error."
+    },
+    {
+      "id": "repo-insbackend-p1-032",
+      "statement": "An event body with a missing or blank aggregateId is rejected as non-retryable.",
+      "kind": "rule",
+      "ref": "main/notification/NotificationUpsertService.java:31-33",
+      "quote": "throw new SqsNonRetryableException(\"Missing aggregateId in event body\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-033",
+      "statement": "An event body with a missing or negative aggregateVersion is rejected as non-retryable.",
+      "kind": "rule",
+      "ref": "main/notification/NotificationUpsertService.java:34-36",
+      "quote": "throw new SqsNonRetryableException(\"Missing or negative aggregateVersion in event body for aggregateId=\" + aggregateId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-034",
+      "statement": "An event body with a missing or blank organisationId is rejected as non-retryable, so every stored notification belongs to an organisation.",
+      "kind": "rule",
+      "ref": "main/notification/NotificationUpsertService.java:38-42",
+      "quote": "throw new SqsNonRetryableException(\n                \"Missing \" + ORGANISATION_ID + \" in event body for aggregateId=\" + aggregateId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-035",
+      "statement": "An issueDateTime that is not an ISO instant is rejected as non-retryable.",
+      "kind": "rule",
+      "ref": "main/notification/NotificationUpsertService.java:134-141",
+      "quote": "throw new SqsNonRetryableException(\n                \"Invalid \" + fieldName + \" for aggregateId=\" + aggregateId, e);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-036",
+      "statement": "A scheduledOccurrenceDateTime that is not a full instant, such as a bare date 2026-07-21, is rejected as non-retryable.",
+      "kind": "rule",
+      "ref": "main/notification/NotificationUpsertService.java:73-76,134-141; test/notification/NotificationUpsertServiceTest.java:138",
+      "quote": "upsert_shouldRejectAsNonRetryable_whenScheduledOccurrenceDateTimeHasNoTime",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-037",
+      "statement": "A lifecycle event with no data payload still updates aggregateVersion, lastUpdated and organisationId, and leaves every other stored field as it was.",
+      "kind": "behaviour",
+      "ref": "main/notification/NotificationUpsertService.java:78-89; test/notification/NotificationUpsertServiceTest.java:160",
+      "quote": "upsert_shouldSetVersionLastUpdatedAndOrganisation_whenLifecycleEventHasNoData",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-038",
+      "statement": "The service reads notification events from an SQS FIFO queue whose URL is set by NOTIFICATION_SQS_QUEUE_URL.",
+      "kind": "integration",
+      "ref": "main/notification/NotificationSqsListener.java:34; src/main/resources/application.yml:69",
+      "quote": "@SqsListener(\"${aws.sqs.notification.queue-url}\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-039",
+      "statement": "The queue is trade_imports_animals_eu_notifications_ins_backend.fifo, subscribed with raw message delivery to the SNS FIFO topic trade_imports_animals_eu_notifications.fifo, to which trade-imports-animals-backend publishes its outbox events.",
+      "kind": "integration",
+      "ref": "docs/repos/trade-imports-ins-backend.md (Integrations)",
+      "quote": "SNS FIFO topic `trade_imports_animals_eu_notifications.fifo`, subscribed to the queue with raw message delivery | SNS to SQS | Fan-out. trade-imports-animals-backend publishes its outbox events to this topic",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-040",
+      "statement": "Only the animals backend publishes to the read model's queue today, so the read model holds animals notifications only; no plants source feeds it.",
+      "kind": "constraint",
+      "ref": "docs/repos/trade-imports-ins-backend.md (Integrations); README.md (Running)",
+      "quote": "trade-imports-animals-backend publishes its outbox events to this topic",
+      "confidence": "inferred",
+      "note": "Inferred from the only named publisher and queue name (animals_eu_notifications). The slice names no plants topic or queue."
+    },
+    {
+      "id": "repo-insbackend-p1-041",
+      "statement": "The event body is a GBN-AG structure with exchangedDocument and specifiedConsignment under data; its schema is not defined in this repo.",
+      "kind": "integration",
+      "ref": "docs/repos/trade-imports-ins-backend.md (Integrations); main/notification/NotificationUpsertService.java:44-46",
+      "quote": "The message body uses an `exchangedDocument` / `specifiedConsignment` structure (fields such as `notificationStatusCode`, `issueDateTime`, `originCountry`); the schema itself is not defined in this repo.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-042",
+      "statement": "A message with a missing or blank FIFO message group id is rejected as non-retryable; the message group id is the notification's aggregate id.",
+      "kind": "rule",
+      "ref": "main/notification/NotificationSqsListener.java:37,44-46",
+      "quote": "throw new SqsNonRetryableException(\"Missing or blank MESSAGE_GROUP_ID: \" + aggregateId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-043",
+      "statement": "The listener does not check that the message group id matches the aggregateId in the body: the stored document's id comes from the body.",
+      "kind": "behaviour",
+      "ref": "main/notification/NotificationSqsListener.java:44-69; main/notification/NotificationUpsertService.java:28",
+      "quote": "String aggregateId = body.path(\"aggregateId\").asText(null);",
+      "confidence": "inferred",
+      "note": "Inferred from the listener passing only the parsed body to the upsert."
+    },
+    {
+      "id": "repo-insbackend-p1-044",
+      "statement": "A message with an empty or missing body is rejected as non-retryable.",
+      "kind": "rule",
+      "ref": "main/notification/NotificationSqsListener.java:48-50",
+      "quote": "throw new SqsNonRetryableException(\"Empty message body for aggregateId=\" + aggregateId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-045",
+      "statement": "A message body that is not valid JSON is rejected as non-retryable.",
+      "kind": "rule",
+      "ref": "main/notification/NotificationSqsListener.java:52-57",
+      "quote": "throw new SqsNonRetryableException(\"Message body is not valid JSON for aggregateId=\" + aggregateId, e);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-046",
+      "statement": "A message whose eventType is not one of the recognised event types is logged at error and rejected as non-retryable rather than silently acknowledged.",
+      "kind": "rule",
+      "ref": "main/notification/NotificationSqsListener.java:59-66",
+      "quote": "log.error(\"Unrecognised eventType={} aggregateId={} — dead-lettering\", eventType, aggregateId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-047",
+      "statement": "The recognised event types are eight wire values under uk.gov.defra.imports.notification: NotificationEdited, NotificationSubmitted, NotificationSubmissionAmended, NotificationCreated, NotificationAmendmentRequested, NotificationAmendmentCancelled, NotificationDeleted and NotificationSubmissionDeleted.",
+      "kind": "integration",
+      "ref": "main/notification/OutboxEventType.java:7-14",
+      "quote": "NOTIFICATION_EDITED(\"uk.gov.defra.imports.notification.NotificationEdited\"),\n    NOTIFICATION_SUBMITTED(\"uk.gov.defra.imports.notification.NotificationSubmitted\"),\n    NOTIFICATION_SUBMISSION_AMENDED(\"uk.gov.defra.imports.notification.NotificationSubmissionAmended\"),\n    NOTIFICATION_CREATED(\"uk.gov.defra.imports.notification.NotificationCreated\"),\n    NOTIFICATION_AMENDMENT_REQUESTED(\"uk.gov.defra.imports.notification.NotificationAmendmentRequested\"),\n    NOTIFICATION_AMENDMENT_CANCELLED(\"uk.gov.defra.imports.notification.NotificationAmendmentCancelled\"),\n    NOTIFICATION_DELETED(\"uk.gov.defra.imports.notification.NotificationDeleted\"),\n    NOTIFICATION_SUBMISSION_DELETED(\"uk.gov.defra.imports.notification.NotificationSubmissionDeleted\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-048",
+      "statement": "Every recognised event type does the same thing to the read model: the whole body goes through the one upsert. No event type is special-cased.",
+      "kind": "behaviour",
+      "ref": "main/notification/NotificationSqsListener.java:68-70",
+      "quote": "log.debug(\"Processing eventType={} aggregateId={}\", resolved, aggregateId);\n        upsertService.upsert(parsedBody);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-049",
+      "statement": "NotificationDeleted and NotificationSubmissionDeleted events do not remove the document from the read model; the document stays and takes whatever status and fields the event carries.",
+      "kind": "behaviour",
+      "ref": "main/notification/NotificationSqsListener.java:69; main/notification/NotificationUpsertService.java:78-95",
+      "quote": "upsertService.upsert(parsedBody);",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any remove for these event types; the only remove is the start-up clean-up of documents without organisationId."
+    },
+    {
+      "id": "repo-insbackend-p1-050",
+      "statement": "Each processed and upserted message increments the metric notification.ins.sqs.messages with outcome processed.",
+      "kind": "non-functional",
+      "ref": "main/notification/NotificationSqsListener.java:28-31,70",
+      "quote": "Counter.builder(\"notification.ins.sqs.messages\")\n            .tag(\"outcome\", \"processed\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-051",
+      "statement": "Every received message is logged at info with its aggregate id, receive count and body length, not its body.",
+      "kind": "non-functional",
+      "ref": "main/notification/NotificationSqsListener.java:41-42",
+      "quote": "log.info(\"Received notification event: aggregateId={}, receiveCount={}, bodyLength={}\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-052",
+      "statement": "An error classified as retryable leaves the message on the queue for SQS to redeliver, increments notification.ins.sqs.errors with action retry and logs at warn with the aggregate id and message id.",
+      "kind": "behaviour",
+      "ref": "main/notification/NotificationErrorHandler.java:20-23,35-40",
+      "quote": "log.warn(\"Retryable error, message left for retry: aggregateId={}, messageId={}\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-053",
+      "statement": "An error classified as non-retryable deletes the message, increments notification.ins.sqs.errors with action discarded and logs at error with the aggregate id, message id and the error.",
+      "kind": "behaviour",
+      "ref": "main/notification/NotificationErrorHandler.java:24-27,42-44",
+      "quote": "log.error(\"Non-retryable error, message will be deleted: aggregateId={}, messageId={}\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-054",
+      "statement": "The error handler classifies an error by the first retryable or non-retryable error it finds down the cause chain, and treats any error with neither as non-retryable, so the message is deleted.",
+      "kind": "rule",
+      "ref": "main/notification/NotificationErrorHandler.java:47-56",
+      "quote": "if (current instanceof SqsRetryableException || current instanceof SqsNonRetryableException) {\n                return current;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-055",
+      "statement": "Nothing on the ingest path raises a retryable error, so a transient failure such as Mongo being unavailable is treated as non-retryable and the event is deleted rather than retried.",
+      "kind": "non-functional",
+      "ref": "main/notification/NotificationErrorHandler.java:42-44; main/notification/NotificationUpsertService.java; main/notification/NotificationSqsListener.java",
+      "quote": "discardedCounter.increment();\n        log.error(\"Non-retryable error, message will be deleted: aggregateId={}, messageId={}\",",
+      "confidence": "inferred",
+      "note": "Inferred: SqsRetryableException is defined but no file in the slice throws it. A lost event leaves the read model behind its source until a later event for the same notification arrives."
+    },
+    {
+      "id": "repo-insbackend-p1-056",
+      "statement": "A rejected message is deleted, not moved to a dead-letter queue: no dead-letter queue is configured in this slice, although the log and the workspace page call it dead-lettering.",
+      "kind": "behaviour",
+      "ref": "main/notification/NotificationErrorHandler.java:42-44; main/notification/NotificationSqsListener.java:63; docs/repos/trade-imports-ins-backend.md (Responsibilities)",
+      "quote": "Retry versus dead-letter classification of bad messages (`SqsRetryableException`, `SqsNonRetryableException`).",
+      "confidence": "inferred",
+      "note": "The queue's own redrive policy, if any, would be in floci/setup-ins-backend-pipeline.sh or CDP config, neither in this slice."
+    },
+    {
+      "id": "repo-insbackend-p1-057",
+      "statement": "The SQS long-poll wait time is set by SQS_WAIT_TIME_SECONDS, default 10, and must be between 0 and 20 seconds.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:70; main/configuration/NotificationSqsConfig.java:13",
+      "quote": "@Min(0) @Max(20) int waitTimeSeconds,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-058",
+      "statement": "The maximum number of SQS messages is set by SQS_MAX_MESSAGES, default 10, and must be between 1 and 10.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:71; main/configuration/NotificationSqsConfig.java:14",
+      "quote": "@Min(1) @Max(10) int maxMessages) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-059",
+      "statement": "The notification queue URL must not be blank.",
+      "kind": "constraint",
+      "ref": "main/configuration/NotificationSqsConfig.java:12",
+      "quote": "@NotBlank String queueUrl,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-060",
+      "statement": "The notifications collection has a compound index named organisation_status_sort_fields on organisationId ascending, status ascending, arrivalDate descending and lastUpdated descending.",
+      "kind": "data",
+      "ref": "main/notification/AggregatedNotification.java:14-16,23",
+      "quote": "def = \"{'organisationId': 1, 'status': 1, 'arrivalDate': -1, 'lastUpdated': -1}\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-061",
+      "statement": "The notifications collection has a single-field index on referenceNumber.",
+      "kind": "data",
+      "ref": "main/notification/AggregatedNotification.java:31-32",
+      "quote": "@Indexed\n    private String referenceNumber;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-062",
+      "statement": "Indexes are created automatically when the service starts.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:34",
+      "quote": "auto-index-creation: true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-063",
+      "statement": "No index covers originCountry, commodity or originCountrySubdivisionCode.",
+      "kind": "constraint",
+      "ref": "main/notification/AggregatedNotification.java:13-40",
+      "quote": "@CompoundIndex(\n    name = AggregatedNotification.ORGANISATION_STATUS_SORT_INDEX,",
+      "confidence": "inferred",
+      "note": "Inferred from the only two index declarations on the class. Filtering or sorting by these fields would need a new index."
+    },
+    {
+      "id": "repo-insbackend-p1-064",
+      "statement": "At start-up the service drops the legacy status_sort_fields index if it exists, so existing databases take the new index without a manual step, and carries on starting if there is none to drop.",
+      "kind": "behaviour",
+      "ref": "main/notification/AggregatedNotificationIndexMaintenance.java:22,30-37; README.md (MongoDB)",
+      "quote": "drops the legacy `status_sort_fields` index when it is there, so existing databases can take the\n  new index without a manual step",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-065",
+      "statement": "At start-up the service deletes every stored notification whose organisationId is missing, null or empty, and logs how many it removed when it removed any.",
+      "kind": "behaviour",
+      "ref": "main/notification/AggregatedNotificationIndexMaintenance.java:39-60",
+      "quote": "\"Removed {} aggregated notifications with no {} at startup\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-066",
+      "statement": "The start-up deletion of notifications without an organisation is on by default and is turned off by setting notification.delete-missing-organisation-id-at-startup to false; application.yml does not set it.",
+      "kind": "constraint",
+      "ref": "main/notification/AggregatedNotificationIndexMaintenance.java:26-27; README.md (MongoDB); docs/repos/trade-imports-ins-backend.md (Responsibilities)",
+      "quote": "@Value(\"${notification.delete-missing-organisation-id-at-startup:true}\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-067",
+      "statement": "MongoDB reads go to a secondary by default (MONGO_READ_PREFERENCE) and writes use majority write concern by default (MONGO_WRITE_CONCERN).",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:35-36; main/configuration/MongoConfig.java:44-53",
+      "quote": "read-preference: ${MONGO_READ_PREFERENCE:secondary}\n      write-concern: ${MONGO_WRITE_CONCERN:majority}",
+      "confidence": "verbatim",
+      "note": "Reading from a secondary means a notification just written may not appear in a list read straight after."
+    },
+    {
+      "id": "repo-insbackend-p1-068",
+      "statement": "The Mongo connection pool is 10 to 100 connections, waits up to 2000 ms for a connection and closes idle connections after 60000 ms, each overridable by environment variable.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:37-41; main/configuration/MongoConfig.java:24-38",
+      "quote": "min-size: ${MONGO_POOL_MIN_SIZE:10}\n        max-size: ${MONGO_POOL_MAX_SIZE:100}\n        max-wait-time-ms: ${MONGO_POOL_MAX_WAIT_TIME_MS:2000}\n        max-connection-idle-time-ms: ${MONGO_POOL_MAX_IDLE_TIME_MS:60000}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-069",
+      "statement": "The Mongo connection uses TLS by default, with the CDP trust store.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:42-43; main/configuration/MongoConfig.java:55-59",
+      "quote": "ssl:\n        enabled: true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-070",
+      "statement": "The Mongo connection string is set by MONGO_URI, default mongodb://localhost:27017/, and CDP supplies Mongo credentials as environment variables.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:32; README.md (MongoDB)",
+      "quote": "uri: ${MONGO_URI:mongodb://localhost:27017/}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-071",
+      "statement": "A page of the notification list holds NOTIFICATION_LIST_PAGE_SIZE notifications, default 25.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:150-153",
+      "quote": "page-size: ${NOTIFICATION_LIST_PAGE_SIZE:25}",
+      "confidence": "verbatim",
+      "note": "The value is in application.yml; how the query uses it is part 2."
+    },
+    {
+      "id": "repo-insbackend-p1-072",
+      "statement": "The read model is derived and read-only: the service owns no notification source of truth and has no write API for notifications.",
+      "kind": "constraint",
+      "ref": "docs/repos/trade-imports-ins-backend.md (Does not own)",
+      "quote": "The notification source of truth or its event publication. Events originate elsewhere (see Integrations); this service only reads them, and its data is derived and read-only.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-073",
+      "statement": "The service is described as a cross-journey read model for the Import Notification Service, used by the INS dashboard.",
+      "kind": "integration",
+      "ref": "README.md:3-6; docs/repos/trade-imports-ins-backend.md (Purpose)",
+      "quote": "Aggregates notification events into a cross-journey read model for the Import Notification\nService (INS).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-074",
+      "statement": "The service has no inbound authentication; it relies on the organisation header and network policy.",
+      "kind": "constraint",
+      "ref": "docs/repos/trade-imports-ins-backend.md (Does not own)",
+      "quote": "Web security is switched off (`spring.autoconfigure.exclude`, guarded by `NoWebSecurityIT`), so the service relies on the organisation header and network policy.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-075",
+      "statement": "The local Mongo init script seeds no notifications: it is a template placeholder.",
+      "kind": "constraint",
+      "ref": "compose/mongo/10-init.js:1-6",
+      "quote": "// This can be used for inserting local test data when mongo starts up",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-076",
+      "statement": "No category, journey or notification-set field is stored or indexed, so the read model cannot tell live-animals from germinal-products notifications.",
+      "kind": "data",
+      "ref": "main/notification/AggregatedNotification.java:20-41; main/notification/NotificationUpsertService.java:44-89",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The programme splits GBN-AG into live-animals and germinal-products sets with their own lists. Looked in the document class, the upsert and every doc in the slice; none mentions a category or set."
+    },
+    {
+      "id": "repo-insbackend-p1-077",
+      "statement": "Test: a recognised NotificationEdited message is passed to the upsert and counted as processed.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationSqsListenerTest.java:33",
+      "quote": "receive_delegatesToUpsertService_forKnownEventType",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-078",
+      "statement": "Test: an unknown event type is rejected as non-retryable with 'Unrecognised eventType' and nothing is upserted.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationSqsListenerTest.java:40",
+      "quote": "receive_throwsNonRetryable_forUnknownEventType",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-079",
+      "statement": "Test: a blank message body is rejected as non-retryable and nothing is upserted.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationSqsListenerTest.java:51",
+      "quote": "receive_throwsNonRetryable_forBlankBody",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-080",
+      "statement": "Test: a null message body is rejected as non-retryable and nothing is upserted.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationSqsListenerTest.java:59",
+      "quote": "receive_throwsNonRetryable_forNullBody",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-081",
+      "statement": "Test: a body that is not valid JSON is rejected as non-retryable and nothing is upserted.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationSqsListenerTest.java:67",
+      "quote": "receive_throwsNonRetryable_forInvalidJson",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-082",
+      "statement": "Test: a blank message group id is rejected as non-retryable and nothing is upserted.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationSqsListenerTest.java:75",
+      "quote": "receive_throwsNonRetryable_forBlankAggregateId",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-083",
+      "statement": "Test: a missing message group id is rejected as non-retryable and nothing is upserted.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationSqsListenerTest.java:83",
+      "quote": "receive_throwsNonRetryable_forNullAggregateId",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-084",
+      "statement": "Test: a NotificationCreated message is passed to the upsert.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationSqsListenerTest.java:91",
+      "quote": "receive_delegatesToUpsertService_forNotificationCreated",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-085",
+      "statement": "Test: a NotificationAmendmentRequested message is passed to the upsert.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationSqsListenerTest.java:97",
+      "quote": "receive_delegatesToUpsertService_forNotificationAmendmentRequested",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-086",
+      "statement": "Test: a NotificationAmendmentCancelled message is passed to the upsert.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationSqsListenerTest.java:103",
+      "quote": "receive_delegatesToUpsertService_forNotificationAmendmentCancelled",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-087",
+      "statement": "Test: a NotificationDeleted message is passed to the upsert, like any other event.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationSqsListenerTest.java:109",
+      "quote": "receive_delegatesToUpsertService_forNotificationDeleted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-088",
+      "statement": "Test: a NotificationSubmissionDeleted message is passed to the upsert, like any other event.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationSqsListenerTest.java:115",
+      "quote": "receive_delegatesToUpsertService_forNotificationSubmissionDeleted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-089",
+      "statement": "No listener test sends NotificationSubmitted or NotificationSubmissionAmended specifically; they are covered only by the event-type mapping tests and, for Submitted, the integration test.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationSqsListenerTest.java",
+      "quote": "",
+      "confidence": "gap",
+      "note": "NotificationSubmissionAmended has no test beyond OutboxEventTypeTest's wire-value mapping."
+    },
+    {
+      "id": "repo-insbackend-p1-090",
+      "statement": "Test: an event is upserted with a query matching its id and a stored version below the incoming one, inserting the id only on insert, and sets referenceNumber, status, originCountry and organisationId.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationUpsertServiceTest.java:50",
+      "quote": "upsert_shouldUpsertTheSnapshot_onlyOverAnOlderStoredVersion",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-091",
+      "statement": "Test: an event with no aggregateId is rejected as non-retryable.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationUpsertServiceTest.java:74",
+      "quote": "upsert_shouldRejectAsNonRetryable_whenAggregateIdIsMissing",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-092",
+      "statement": "Test: an event with no aggregateVersion is rejected as non-retryable.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationUpsertServiceTest.java:84",
+      "quote": "upsert_shouldRejectAsNonRetryable_whenAggregateVersionIsMissing",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-093",
+      "statement": "Test: an event with no organisationId is rejected as non-retryable, naming organisationId and the aggregate id.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationUpsertServiceTest.java:94",
+      "quote": "upsert_shouldRejectAsNonRetryable_whenOrganisationIdIsMissing",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-094",
+      "statement": "Test: an issueDateTime that is not a date is rejected as non-retryable, naming the field and the aggregate id.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationUpsertServiceTest.java:105",
+      "quote": "upsert_shouldRejectAsNonRetryable_whenIssueDateTimeIsNotADate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-095",
+      "statement": "Test: a scheduled arrival of 2026-07-21T00:00:00Z is stored as arrivalDate 2026-07-21 whether the server's zone is west or east of UTC.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationUpsertServiceTest.java:127",
+      "quote": "upsert_shouldSetTheUtcCalendarDayOfTheScheduledArrival_whateverTheJvmDefaultZone",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-096",
+      "statement": "Test: a scheduledOccurrenceDateTime with no time part is rejected as non-retryable, naming the field and the aggregate id.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationUpsertServiceTest.java:138",
+      "quote": "upsert_shouldRejectAsNonRetryable_whenScheduledOccurrenceDateTimeHasNoTime",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-097",
+      "statement": "Test: a version-1 event is still sent to Mongo with a version filter below 1, so staleness is decided by the filter rather than by the service.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationUpsertServiceTest.java:148",
+      "quote": "upsert_shouldLeaveStaleEventsToTheVersionFilter_ratherThanSkippingThemItself",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-098",
+      "statement": "Test: a lifecycle event with no data sets only aggregateVersion, lastUpdated and organisationId, and unsets nothing.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationUpsertServiceTest.java:160",
+      "quote": "upsert_shouldSetVersionLastUpdatedAndOrganisation_whenLifecycleEventHasNoData",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-099",
+      "statement": "Test: an origin of ES whose function-106 subdivision ES-CN is listed after another sub-division stores ES-CN, and does not store the regionOfOriginCode ES-12345.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationUpsertServiceTest.java:172",
+      "quote": "upsert_shouldStoreOriginCountrySubdivisionCode_whenFunctionIs106",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-100",
+      "statement": "Test: commodity is stored from the trade line's description ('Live bovine animals') even when a commonName is also present.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationUpsertServiceTest.java:184",
+      "quote": "upsert_shouldStoreCommodityFromTradeLineDescription",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-101",
+      "statement": "Test: commodity is stored from commonName ('Domestic cattle') when the trade line has no description.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationUpsertServiceTest.java:209",
+      "quote": "upsert_shouldStoreCommodityFromCommonName_whenDescriptionMissing",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-102",
+      "statement": "Test: an event whose origin is a whole country (GB) unsets any stored subdivision code.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationUpsertServiceTest.java:233",
+      "quote": "upsert_shouldClearSubdivisionCode_whenOriginIsAWholeCountry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-103",
+      "statement": "Test: the NotificationEdited wire value maps to its event type.",
+      "kind": "behaviour",
+      "ref": "test/notification/OutboxEventTypeTest.java:10",
+      "quote": "fromWireValue_returnsNotificationEdited_forCorrectWireValue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-104",
+      "statement": "Test: the NotificationSubmitted wire value maps to its event type.",
+      "kind": "behaviour",
+      "ref": "test/notification/OutboxEventTypeTest.java:16",
+      "quote": "fromWireValue_returnsNotificationSubmitted_forCorrectWireValue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-105",
+      "statement": "Test: the NotificationSubmissionAmended wire value maps to its event type.",
+      "kind": "behaviour",
+      "ref": "test/notification/OutboxEventTypeTest.java:22",
+      "quote": "fromWireValue_returnsNotificationSubmissionAmended_forCorrectWireValue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-106",
+      "statement": "Test: the NotificationCreated wire value maps to its event type.",
+      "kind": "behaviour",
+      "ref": "test/notification/OutboxEventTypeTest.java:28",
+      "quote": "fromWireValue_returnsNotificationCreated_forCorrectWireValue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-107",
+      "statement": "Test: the NotificationAmendmentRequested wire value maps to its event type.",
+      "kind": "behaviour",
+      "ref": "test/notification/OutboxEventTypeTest.java:34",
+      "quote": "fromWireValue_returnsNotificationAmendmentRequested_forCorrectWireValue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-108",
+      "statement": "Test: the NotificationAmendmentCancelled wire value maps to its event type.",
+      "kind": "behaviour",
+      "ref": "test/notification/OutboxEventTypeTest.java:40",
+      "quote": "fromWireValue_returnsNotificationAmendmentCancelled_forCorrectWireValue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-109",
+      "statement": "Test: the NotificationDeleted wire value maps to its event type.",
+      "kind": "behaviour",
+      "ref": "test/notification/OutboxEventTypeTest.java:46",
+      "quote": "fromWireValue_returnsNotificationDeleted_forCorrectWireValue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-110",
+      "statement": "Test: the NotificationSubmissionDeleted wire value maps to its event type.",
+      "kind": "behaviour",
+      "ref": "test/notification/OutboxEventTypeTest.java:52",
+      "quote": "fromWireValue_returnsNotificationSubmissionDeleted_forCorrectWireValue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-111",
+      "statement": "Test: an unknown wire value maps to no event type.",
+      "kind": "behaviour",
+      "ref": "test/notification/OutboxEventTypeTest.java:58",
+      "quote": "fromWireValue_returnsEmpty_forUnknownWireValue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-112",
+      "statement": "Test: a missing wire value maps to no event type.",
+      "kind": "behaviour",
+      "ref": "test/notification/OutboxEventTypeTest.java:64",
+      "quote": "fromWireValue_returnsEmpty_forNull",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-113",
+      "statement": "Test: every event type's wire value starts with uk.gov.defra.imports.notification.",
+      "kind": "rule",
+      "ref": "test/notification/OutboxEventTypeTest.java:69",
+      "quote": "allEventTypes_haveCorrectNamespacePrefix",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-114",
+      "statement": "Test: a non-retryable error is logged once with the aggregate id, message id and the error itself.",
+      "kind": "non-functional",
+      "ref": "test/notification/NotificationErrorHandlerTest.java:25",
+      "quote": "handle_logsAggregateIdMessageIdAndThrowable_whenNonRetryable",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-115",
+      "statement": "Test: a retryable error is rethrown, so the message is left for retry, and counted as retry, not discarded.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationErrorHandlerTest.java:57",
+      "quote": "handle_rethrows_whenRetryable",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-116",
+      "statement": "Test: a non-retryable error is not rethrown, so the message is deleted, and counted as discarded, not retry.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationErrorHandlerTest.java:69",
+      "quote": "handle_returns_whenNonRetryable",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-117",
+      "statement": "Test: a retryable error wrapped two levels deep is still found and treated as retryable.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationErrorHandlerTest.java:80",
+      "quote": "handle_walksNestedCause_toFindClassifiedCause",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-118",
+      "statement": "Test: an unclassified error is treated as non-retryable and counted as discarded.",
+      "kind": "behaviour",
+      "ref": "test/notification/NotificationErrorHandlerTest.java:92",
+      "quote": "handle_treatsUnclassifiedAsNonRetryable",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-119",
+      "statement": "Test: start-up drops the legacy status_sort_fields index and, with the clean-up off, removes nothing.",
+      "kind": "behaviour",
+      "ref": "test/notification/AggregatedNotificationIndexMaintenanceTest.java:39",
+      "quote": "afterPropertiesSet_shouldDropLegacyIndex_whenStartupRuns",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-120",
+      "statement": "Test: start-up carries on when dropping the legacy index fails.",
+      "kind": "behaviour",
+      "ref": "test/notification/AggregatedNotificationIndexMaintenanceTest.java:49",
+      "quote": "afterPropertiesSet_shouldContinue_whenLegacyIndexDropFails",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-121",
+      "statement": "Test: with the clean-up setting off, start-up removes no notifications.",
+      "kind": "behaviour",
+      "ref": "test/notification/AggregatedNotificationIndexMaintenanceTest.java:61",
+      "quote": "afterPropertiesSet_shouldSkipOrganisationCleanup_whenDisabled",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-122",
+      "statement": "Test: with the clean-up setting on, start-up removes notifications without an organisation id.",
+      "kind": "behaviour",
+      "ref": "test/notification/AggregatedNotificationIndexMaintenanceTest.java:70",
+      "quote": "afterPropertiesSet_shouldRemoveNotificationsWithoutOrganisationId_whenEnabled",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-123",
+      "statement": "Test: start-up runs the clean-up even when there is nothing to delete.",
+      "kind": "behaviour",
+      "ref": "test/notification/AggregatedNotificationIndexMaintenanceTest.java:81",
+      "quote": "afterPropertiesSet_shouldNotLogRemoval_whenNothingDeleted",
+      "confidence": "verbatim",
+      "note": "The title says it proves no removal log line, but its only assertion is that remove was called; the log is not asserted."
+    },
+    {
+      "id": "repo-insbackend-p1-124",
+      "statement": "Integration test: a NotificationEdited event sent through SQS creates a document with referenceNumber GBN-AG-26-001, status DRAFT, originCountry GB, commodity Dog (from commonName), aggregateVersion 1, the organisation id and arrivalDate 2026-08-20.",
+      "kind": "behaviour",
+      "ref": "test/integration/NotificationSqsListenerIT.java:37",
+      "quote": "notificationEdited_createsDocumentInMongo",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-125",
+      "statement": "Integration test: the stored arrivalDate is the string 2026-08-20 and lastUpdated is a date equal to the event's issueDateTime 2026-08-19T10:00:00Z.",
+      "kind": "behaviour",
+      "ref": "test/integration/NotificationSqsListenerIT.java:54",
+      "quote": "notificationEdited_storesTheArrivalDateAsAnIsoDateString_andLastUpdatedAsADate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-126",
+      "statement": "Integration test: a NotificationSubmitted event from the Canary Islands stores originCountry ES and subdivision ES-CN.",
+      "kind": "behaviour",
+      "ref": "test/integration/NotificationSqsListenerIT.java:67",
+      "quote": "notificationFromACountrySubdivision_storesTheSubdivisionCode",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-127",
+      "statement": "Integration test: a later event whose origin is the whole of GB clears the stored ES-CN subdivision.",
+      "kind": "behaviour",
+      "ref": "test/integration/NotificationSqsListenerIT.java:86",
+      "quote": "amendmentToAWholeCountryOrigin_clearsTheSubdivisionCode",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-128",
+      "statement": "Integration test: delivering the same event twice, even one with no issueDateTime, leaves the stored document exactly as the first delivery left it.",
+      "kind": "behaviour",
+      "ref": "test/integration/NotificationSqsListenerIT.java:119",
+      "quote": "deliveringSameEventTwice_leavesTheStoredDocumentUnchanged",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-129",
+      "statement": "Integration test: after version 5 is stored, a version 3 event is ignored and the document keeps version 5.",
+      "kind": "behaviour",
+      "ref": "test/integration/NotificationSqsListenerIT.java:145",
+      "quote": "lowerAggregateVersion_isIgnored_documentKeepsHigherVersion",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-130",
+      "statement": "Integration test: a NotificationSubmitted event with no trade line moves the status from DRAFT to SUBMITTED and keeps the stored commodity Dog.",
+      "kind": "behaviour",
+      "ref": "test/integration/NotificationSqsListenerIT.java:158",
+      "quote": "notificationSubmitted_updatesStatus_andKeepsTheStoredCommodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-131",
+      "statement": "Integration test: an unknown event type is deleted from the queue and nothing is stored.",
+      "kind": "behaviour",
+      "ref": "test/integration/NotificationSqsListenerIT.java:174",
+      "quote": "unknownEventType_isDeletedWithoutBeingStored",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-132",
+      "statement": "Integration test: an invalid JSON message is deleted from the queue and nothing is stored.",
+      "kind": "behaviour",
+      "ref": "test/integration/NotificationSqsListenerIT.java:185",
+      "quote": "invalidJson_isDeletedWithoutBeingStored",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-133",
+      "statement": "Integration test: start-up drops a legacy status_sort_fields index that exists in Mongo.",
+      "kind": "behaviour",
+      "ref": "test/integration/AggregatedNotificationIndexMaintenanceIT.java:34",
+      "quote": "startup_shouldDropLegacyStatusSortIndex_whenItExists",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-134",
+      "statement": "Integration test: the declared indexes include organisation_status_sort_fields on organisationId, status, arrivalDate and lastUpdated, ascending, ascending, descending, descending.",
+      "kind": "behaviour",
+      "ref": "test/integration/AggregatedNotificationIndexMaintenanceIT.java:51",
+      "quote": "declaredIndexes_shouldIncludeOrganisationStatusSortIndexOnItsFourFields",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-135",
+      "statement": "Integration test: start-up deletes notifications with a missing or empty organisation id and keeps the one with an organisation id.",
+      "kind": "behaviour",
+      "ref": "test/integration/AggregatedNotificationIndexMaintenanceIT.java:71",
+      "quote": "startup_shouldDeleteNotificationsWithoutOrganisationId",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-136",
+      "statement": "Integration test: the service connects to the database named trade-imports-ins-backend.",
+      "kind": "behaviour",
+      "ref": "test/integration/MongoConfigIT.java:26",
+      "quote": "mongoTemplate_shouldBeConfigured",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-137",
+      "statement": "Integration test: the Mongo client connects and sees at least one server.",
+      "kind": "behaviour",
+      "ref": "test/integration/MongoConfigIT.java:33",
+      "quote": "mongoClient_shouldBeConnected",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-138",
+      "statement": "Integration test: the Mongo client has a read preference, but the test does not prove it is secondary.",
+      "kind": "behaviour",
+      "ref": "test/integration/MongoConfigIT.java:43",
+      "quote": "mongoClient_shouldHaveCorrectReadPreference",
+      "confidence": "verbatim",
+      "note": "Its only assertion is isNotNull."
+    },
+    {
+      "id": "repo-insbackend-p1-139",
+      "statement": "Integration test: the Mongo client writes with majority write concern.",
+      "kind": "behaviour",
+      "ref": "test/integration/MongoConfigIT.java:51",
+      "quote": "mongoClient_shouldHaveCorrectWriteConcern",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-140",
+      "statement": "Integration test: the configured Mongo template can insert and find a document.",
+      "kind": "behaviour",
+      "ref": "test/integration/MongoConfigIT.java:59",
+      "quote": "mongoTemplate_shouldPerformBasicOperations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-141",
+      "statement": "Test: a queue config with a URL, wait time 10 and 10 messages is valid.",
+      "kind": "constraint",
+      "ref": "test/configuration/NotificationSqsConfigTest.java:23",
+      "quote": "notificationSqsConfig_shouldHaveNoViolations_whenAllFieldsValid",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-142",
+      "statement": "Test: a blank queue URL is flagged.",
+      "kind": "constraint",
+      "ref": "test/configuration/NotificationSqsConfigTest.java:28",
+      "quote": "notificationSqsConfig_shouldFlagQueueUrl_whenBlank",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-143",
+      "statement": "Test: a negative wait time is flagged.",
+      "kind": "constraint",
+      "ref": "test/configuration/NotificationSqsConfigTest.java:38",
+      "quote": "notificationSqsConfig_shouldFlagWaitTimeSeconds_whenNegative",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-144",
+      "statement": "Test: a wait time above 20 seconds is flagged.",
+      "kind": "constraint",
+      "ref": "test/configuration/NotificationSqsConfigTest.java:48",
+      "quote": "notificationSqsConfig_shouldFlagWaitTimeSeconds_whenAboveMax",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-145",
+      "statement": "Test: a maximum of zero messages is flagged.",
+      "kind": "constraint",
+      "ref": "test/configuration/NotificationSqsConfigTest.java:58",
+      "quote": "notificationSqsConfig_shouldFlagMaxMessages_whenZero",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-146",
+      "statement": "Test: a maximum above 10 messages is flagged.",
+      "kind": "constraint",
+      "ref": "test/configuration/NotificationSqsConfigTest.java:68",
+      "quote": "notificationSqsConfig_shouldFlagMaxMessages_whenAboveMax",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-147",
+      "statement": "Test: a calendar date is written as its ISO YYYY-MM-DD string whatever the server's time zone.",
+      "kind": "behaviour",
+      "ref": "test/configuration/LocalDateStringConvertersTest.java:25",
+      "quote": "convertToString_shouldReturnTheIsoDateString_whateverTheJvmDefaultZone",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-148",
+      "statement": "Test: an ISO YYYY-MM-DD string is read back as the same calendar date whatever the server's time zone.",
+      "kind": "behaviour",
+      "ref": "test/configuration/LocalDateStringConvertersTest.java:33",
+      "quote": "convertToLocalDate_shouldParseTheIsoDateStringToTheSameCalendarDate_whateverTheJvmDefaultZone",
+      "confidence": "verbatim"
+    }
+  ]
+}

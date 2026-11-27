@@ -1,32 +1,33 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 13, the private and commercial transporter details forms, read seven things in the animals frontend's live-animals set, all under src/server/app/sets/live-animals/journeys/linear/features/transport/: (1) private-transporter-details/ (private-transporter-details.controller.js, 221 lines, and private-transporter-details.njk, 103 lines; its co-located .controller.test.js left unread, as the part says); (2) commercial-transporter-details/ (commercial-transporter-details.controller.js, 209 lines, and commercial-transporter-details.njk, 131 lines; .controller.test.js left unread); (3) transporter-details-save.js (118 lines), the shared POST handler both forms hand their save, cancel, refusal and recoverable-failure behaviour to; (4) fit/commercial-transporter-details.fit.spec.js (366 lines, 6 describe blocks: opening the form, required validations, format validations, accessibility); (5) fit/transporters.fit.spec.js (1,509 lines), of which only the describes about these two forms are claimed here — 'adding a transporter that is not on the list' (the private form's heading, caption and blank-form behaviour), 'private transporter rendering', 'private transporter required validations', 'private transporter format validations', 'private transporter persistence', 'saving an added transporter', 'cancelling an add form', 'a refused private add form remembers what was entered', 'saving and cancelling the private form without JavaScript', and the private-form accessibility test; the list, search, type-question and row-action describes are part 12's; (6) and (7) copy/copy.en.js and copy/copy.cy.js, of which only the privateTransporterDetails and commercialTransporterDetails keys are claimed, with one parity claim for the Welsh file. Four files outside the part's read list were opened for provenance only, and claims that rest on them say so: page.js (the two pages' ids, slugs and maturity), own-transporter-type.js (the entry guard both forms call), transporter-add-session.js (the flow-only keys the save and cancel write) and shared/paths.js (how a slug becomes a URL), plus services/transporters/commercial-country.js and services/countries/index.js for the two country values. Covered: both pages' routes and entry guard, headings, captions, browser titles, back links, every field with its label, width, autocomplete and whether it is required, the private country list and the commercial fixed country, the commercial authorisation guidance banner, every required and over-length validation message verbatim in both languages' English half, what each save writes to the notification and to the address book, the success banner, cancel, the recoverable-failure path, the no-JavaScript proof and the accessibility proofs. Not covered here and left to part 12: the transporter list, its search, its rows and View details links, the type question itself, and the transporter records the service ships.",
+  "structure": "Part 13 read in full: private-transporter-details/ (controller.js 220 lines, .njk 103 lines), commercial-transporter-details/ (controller.js 208 lines, .njk 131 lines), transporter-details-save.js (118 lines), fit/commercial-transporter-details.fit.spec.js (365 lines, every test), fit/transporters.fit.spec.js (1508 lines, read in full; only its tests about the two details forms are claimed, the list, search and type-question tests are part 12's), and copy/copy.en.js and copy.cy.js (only the privateTransporterDetails and commercialTransporterDetails keys, plus the transporters.guidance keys the commercial form shows). The *.test.js unit tests were left out as the partition says. page.js, own-transporter-type.js, transporter-add-session.js, services/countries/index.js, services/transporters/commercial-country.js and shared/kit.js were opened for provenance only. It covers two pages: the private form at transporters/add/private (name, two address lines, town, county, postcode, a country select of the United Kingdom plus every reference-data country, email, phone) and the commercial form at transporters/add/commercial (authorisation number first, the same address and contact fields, a disabled country fixed to Northern Ireland, and an Important banner of authorisation guidance); every required and length rule with its message; the entry guard; what a save writes to the notification and the address book and where it lands; cancel; the recoverable-error path; remembering a refused attempt; Welsh parity; and what the two fit specs prove, accessibility included.",
   "claims": [
     {
-      "id": "repo-frontend-p13-001",
-      "statement": "The private transporter details form is served at /notifications/<journeyId>/transporters/add/private within the live-animals set.",
+      "id": "repo-frontend-p13-118",
+      "statement": "The private transporter details form is reached by answering Private on the transporter type question, and is served at /notifications/<journeyId>/transporters/add/private, carrying the trail the trader arrived with.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/page.js:31-35 with src/server/app/shared/paths.js:11-12",
-      "quote": "export const privateTransporterDetailsPage = {\n  id: 'private-transporter-details',\n  slug: 'transporters/add/private',\n  maturity: 'agreed'\n}",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js:1002-1007 with private-transporter-details/private-transporter-details.controller.js:220",
+      "quote": "await expect(page).toHaveURL(/\\/transporters\\/add\\/private\\?from=overview$/)",
       "confidence": "verbatim",
-      "note": "page.js and paths.js are outside this part's read list and were opened for provenance only; the slug-to-URL join is paths.js:11-12, `${setBase()}/notifications/${journeyId}/${slug}`."
+      "note": "The slug 'transporters/add/private' is set in page.js:31-35, outside this part's read list, opened for provenance; the controller registers its GET and POST through kit.pageRoutes(page, { get, post })."
     },
     {
-      "id": "repo-frontend-p13-002",
-      "statement": "The commercial transporter details form is served at /notifications/<journeyId>/transporters/add/commercial within the live-animals set.",
+      "id": "repo-frontend-p13-119",
+      "statement": "The commercial transporter details form is reached by answering Commercial on the transporter type question, and is served at /notifications/<journeyId>/transporters/add/commercial, carrying the trail the trader arrived with.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/page.js:25-29 with src/server/app/shared/paths.js:11-12",
-      "quote": "export const commercialTransporterDetailsPage = {\n  id: 'commercial-transporter-details',\n  slug: 'transporters/add/commercial',\n  maturity: 'agreed'\n}",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js:80-87 with commercial-transporter-details/commercial-transporter-details.controller.js:208",
+      "quote": "await expect(page).toHaveURL(\n      /\\/transporters\\/add\\/commercial\\?from=overview$/\n    )",
+      "confidence": "verbatim",
+      "note": "The slug 'transporters/add/commercial' is set in page.js:25-29, outside this part's read list, opened for provenance."
     },
     {
-      "id": "repo-frontend-p13-003",
+      "id": "repo-frontend-p13-120",
       "statement": "Both transporter details pages are marked as agreed behaviour, the maturity level that makes a page signed off.",
       "kind": "constraint",
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/page.js:28 and :34",
       "quote": "maturity: 'agreed'",
       "confidence": "verbatim",
-      "note": "Both page definitions carry the same level, so a change to either page's behaviour trips the signed-off check."
+      "note": "page.js is outside this part's read list and was opened for provenance only. A change to either page's behaviour trips the build loop's signed-off check."
     },
     {
       "id": "repo-frontend-p13-004",
@@ -42,23 +43,6 @@
       "kind": "rule",
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:142-150",
       "quote": "const get = async (request, h) => {\n  const redirect = await redirectUnlessOwnTransporterType(\n    request,\n    h,\n    COMMERCIAL\n  )",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p13-006",
-      "statement": "The type the guard compares against is the type chosen on this visit if there is one, and otherwise the type already saved on the notification.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/own-transporter-type.js:15-18",
-      "quote": "const intendedTransporterType =\n    chosenTransporterType(flowOnlyAnswers) ?? answers.transporterType\n  if (intendedTransporterType === transporterType) {\n    return undefined\n  }",
-      "confidence": "verbatim",
-      "note": "mechanism: works on the flow-only transporterTypeChosen value and the saved transporterType answer. own-transporter-type.js is outside this part's read list, opened for provenance."
-    },
-    {
-      "id": "repo-frontend-p13-007",
-      "statement": "A redirect away from a details form because the stored type does not match is logged once at info with the journey id, the route and the stored type.",
-      "kind": "non-functional",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/own-transporter-type.js:7-30",
-      "quote": "export const OWN_TRANSPORTER_TYPE_REDIRECT_MESSAGE =\n  'Redirected to the transporter type question: the stored transporter type does not match'",
       "confidence": "verbatim"
     },
     {
@@ -958,15 +942,6 @@
       "note": "The private copy's fields key holds nine labels and no approvalNumber, and the controller's field order matches."
     },
     {
-      "id": "repo-frontend-p13-116",
-      "statement": "The test data the suite adds transporters with is a Northern Ireland commercial haulier with a UK/BELF authorisation number and a French private transporter, so both forms are exercised with a within-UK and an outside-UK address.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/test-support.js:63-101",
-      "quote": "export const validCommercialTransporter = {\n  approvalNumber: 'UK/BELF/T2/00104115',\n  nameOrOrganisationName: 'Lough Neagh Livestock Ltd',",
-      "confidence": "verbatim",
-      "note": "The private sample sets country to France, which the private form accepts and the commercial form would refuse."
-    },
-    {
       "id": "repo-frontend-p13-117",
       "statement": "Adding a transporter does not take the trader on to the next journey page: the save always returns to the transporter list, where the transporter must still be saved onto the notification.",
       "kind": "behaviour",
@@ -974,6 +949,81 @@
       "quote": "pagePath(request.params.journeyId, transportersPage.slug)",
       "confidence": "inferred",
       "note": "It follows because the only successful exit from either form is the redirect to the transporters slug, and the fit tests then click the list's own save control to reach the overview."
+    },
+    {
+      "id": "repo-frontend-p13-121",
+      "statement": "Submitting either details form also runs the entry guard: a post made when the stored transporter type does not match the form is sent to the type question instead of being saved.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-details-save.js:66-73",
+      "quote": "const redirect = await redirectUnlessOwnTransporterType(\n      request,\n      h,\n      transporterType\n    )\n    if (redirect) {\n      return redirect\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-122",
+      "statement": "The commercial form's authorisation number field carries no browser autofill hint.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.njk:33-39",
+      "quote": "id: \"approvalNumber\", name: \"approvalNumber\",\n      label: { text: copy.fields.approvalNumber },\n      classes: \"govuk-!-width-two-thirds\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-123",
+      "statement": "The single option in the commercial form's fixed country select reads \"Northern Ireland\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:191 with commercial-transporter-details/commercial-transporter-details.njk:96",
+      "quote": "country: 'Northern Ireland',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-124",
+      "statement": "A commercial transporter the trader adds is on the list and checked, saving the list returns to the overview, and reopening the commercial form shows its authorisation number.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js:248-272",
+      "quote": "test('a transporter the trader added is on the list, checked, and saving the list again leaves it alone', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-125",
+      "statement": "A private transporter the trader adds is on the list and checked, saving the list reaches the overview with no error, and reopening the private form shows the name entered.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js:444-470",
+      "quote": "test('a transporter the trader added is on the list, checked, and saving the list again leaves it alone', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-126",
+      "statement": "A save writes the transporter onto the notification before it creates the address book record, so when the address book save fails the notification can already hold the new transporter while the form shows the recoverable error.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-details-save.js:85-107",
+      "quote": "await state.commit(request, h, {\n          transporterType,\n          ...(await record(values)),",
+      "confidence": "inferred",
+      "note": "mechanism: orders the notification commit and the address book write inside one recoverable save. It follows because state.commit runs before saveTransporterToAddressBook, and the failure branch only clears the just-added name; it does not undo the commit. No fit test exercises this."
+    },
+    {
+      "id": "repo-frontend-p13-127",
+      "statement": "Saving one type of transporter writes only that type's record and the type itself, leaving any record of the other type already on the notification in place.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js:200-202 and commercial-transporter-details/commercial-transporter-details.controller.js:188-190",
+      "quote": "const privateTransporterRecord = async (values) => ({\n  privateTransporter: await privateTransporter(values)\n})",
+      "confidence": "inferred",
+      "note": "mechanism: works on the privateTransporter and commercialTransporter answers. It follows because each form's record patch names only its own key; transporterType says which one applies."
+    },
+    {
+      "id": "repo-frontend-p13-128",
+      "statement": "The commercial form makes no check on opening that a saved country is still available, unlike the private form, because its country is always Northern Ireland.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:142-156",
+      "quote": "const values =\n    storedEnteredTransporter(flowOnlyAnswers, COMMERCIAL) ??\n    valuesOfSavedCommercialTransporter(answers.commercialTransporter)\n  return render(request, h, journey, values)",
+      "confidence": "inferred",
+      "note": "It follows because the commercial GET renders with no errors, and its copy holds no countryNoLongerAvailable message."
+    },
+    {
+      "id": "repo-frontend-p13-129",
+      "statement": "In Welsh the private form refuses a blank country with \"Dewiswch wlad\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js:3 with copy.cy.js countryRequired under privateTransporterDetails.errors",
+      "quote": "const SELECT_A_COUNTRY = 'Dewiswch wlad'",
+      "confidence": "verbatim"
     }
   ]
 }

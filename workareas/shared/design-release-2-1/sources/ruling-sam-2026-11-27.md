@@ -39,6 +39,11 @@ The open questions are the seven in the 26 November report whose rows include ge
    notifications theme lands, because that theme is in flight on its own branch. Where the prototype's changes since
    5 October reach manage notifications, they go to that theme's branch to catch up, not into germinal products.
    New.
+10. No germinal products row waits on an animals dashboard row. The germinal start, its notification list, its
+    cards, its delete message, its amend, cancel amendment, copy as new and delete, and its end-to-end proof all
+    build on the live animals list as it is on main today. Taking the reframed list into the germinal copy is not
+    germinal products work: it waits with the animals dashboard theme. Answers "Does the germinal list take the
+    reframe?" (c-496): not for now.
 
 Orchestrator's call applying it, flagged to Sam afterwards:
 

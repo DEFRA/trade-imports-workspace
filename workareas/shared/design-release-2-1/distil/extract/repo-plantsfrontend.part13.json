@@ -1,6 +1,6 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 13 read every one of the 23 files in src/server/app/shared/ in full (2,828 lines): the page chrome (layout.njk, layout.test.js), the shared view-model kit (kit.js, kit.test.js), the save controls every collecting page ends with (save-actions.njk, save-actions.test.js), the caption macro (section-caption.njk, section-caption.test.js), the error page and error summary partials (error.njk, error-summary.njk), the Back-link trail (trail.js, trail.test.js), the set registry and its per-set seams (set-context.js, set-context.test.js), the URL shapes (paths.js), the paging helpers (paging.js), the macro loader (render-macro.js, render-macro.test.js) and the shared copy pair with its locale resolver and leaf convention (copy.js, copy.en.js, copy.cy.js, copy.test.js, copy-leaves.js). It covers the chrome shown on every page of the high-risk plants set (header, service navigation, Alpha phase banner, Back link, journey status strip, recoverable-error and stale-action banners, content column width, footer, page title), every control save-actions.njk offers a collecting page, the error-summary and error-page partials and their copy, every key of shared/copy.en.js and shared/copy.cy.js verbatim with the chrome each feeds, the URL shapes paths.js defines, the paging rules paging.js defines, and the Back-link trail and return marker. trail.js, set-context.js, render-macro.js, copy-leaves.js, readDate and inDashboardSection are claimed as mechanism. Two things the part's covers expected are not in the slice and are recorded as gaps: kit.js holds no Nunjucks macros (the shared macros live in save-actions.njk and section-caption.njk, and kit.js is a JavaScript view-model and route-option module), and paging.js defines no page size. The slice stops at the set's own pages, which parts 1 to 11 claim.",
+  "structure": "Part 13 read every file in src/server/app/shared/ in full (23 files, 2,913 lines): the page layout layout.njk and its test; kit.js (a JavaScript module of route options, chrome builders base/serverWideBase/chromeFor, the status strip, error summary and field error view models, the save-and-continue target, refusal, recoverable-save and stale-save handling, and the Ministry of Justice date field) and kit.test.js; the two Nunjucks macros saveActions (save-actions.njk) and sectionCaption (section-caption.njk) with their tests; the partials error.njk and error-summary.njk; trail.js (the from/return query markers and Back link) and its test; set-context.js (set mounts and per-set configuration) and its test; paths.js and paging.js; render-macro.js and its test; copy.js, copy.en.js, copy.cy.js, copy-leaves.js and copy.test.js. It covers the browser title, header, service navigation, phase banner, maturity banner, Back link, recoverable-error and stale-notification banners, status strip, content width and footer; every save control and where each goes; the error summary, field errors and error pages; the section caption; every English and Welsh shared copy key including the default validation messages; the URL shapes and paging rules (no page size is set here); and mechanism claims for the trail, the set context, macro rendering and copy-leaf checking, with what each test file holds them to. Claims 001-095 are kept from the earlier extract except 063, replaced by 096 to say the refusal log is only for refusals that are not the trader's own input.",
   "claims": [
     {
       "id": "repo-plantsfrontend-p13-001",
@@ -531,15 +531,6 @@
       "note": "kit.test.js:137 holds the redirect to `/notifications/journey-1/origin?from=notification-view&staleAction=1` and the single info log naming the notification id and the token posted."
     },
     {
-      "id": "repo-plantsfrontend-p13-063",
-      "statement": "A refused save is logged once with the notification id, the route and the keys of the fields in error, never the messages the trader is shown.",
-      "kind": "non-functional",
-      "ref": "src/server/app/shared/kit.js:156",
-      "quote": "errorCodes: Object.keys(fieldErrors)",
-      "confidence": "verbatim",
-      "note": "kit.test.js:256 holds that the field keys are logged and the messages are not, and that a refusal with no field errors logs its named reason instead."
-    },
-    {
       "id": "repo-plantsfrontend-p13-064",
       "statement": "When the backend is briefly unavailable the page's own fallback is shown and the failure is logged once as a warning with the notification id and the error, and the page keeps working.",
       "kind": "behaviour",
@@ -824,6 +815,222 @@
       "quote": "{% from \"govuk/components/back-link/macro.njk\" import govukBackLink %}\n{% from \"govuk/components/notification-banner/macro.njk\" import govukNotificationBanner %}\n{% from \"govuk/components/phase-banner/macro.njk\" import govukPhaseBanner %}\n{% from \"govuk/components/service-navigation/macro.njk\" import govukServiceNavigation %}\n{% from \"govuk/components/tag/macro.njk\" import govukTag %}",
       "confidence": "verbatim",
       "note": "The only non-GOV.UK classes in the shared chrome are the house classes app-header, app-journey-strip and app-date-picker."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-096",
+      "statement": "When a page refuses something that is not the trader's own correctable input (a state refusal, a tampered post, another service refusing), it logs one info line with the notification id, the route, the keys of any fields in error and any named reason or ids it turned on, never the messages the trader is shown.",
+      "kind": "non-functional",
+      "ref": "src/server/app/shared/kit.js:152-172",
+      "quote": "Only for a refusal that is not the user's own\n * input (a state refusal, a tampered post, another service refusing), never\n * for errors the user can correct on the form.",
+      "confidence": "verbatim",
+      "note": "Log message is 'Answer refused, page shown again'. kit.test.js:332-376 holds the field keys logged as errorCodes, extra ids such as addressId carried, and a named reason with empty errorCodes when the page shows no errors."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-097",
+      "statement": "The Save and return to overview button submits a field named exit with the value hub, and only that value sends the save to the notification's overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/save-actions.njk:22-27, src/server/app/shared/kit.js:174",
+      "quote": "name: \"exit\",\n        value: \"hub\"",
+      "confidence": "verbatim",
+      "note": "save-actions.test.js:46 holds the name and value on the secondary button; kit.test.js:378-388 holds that hubExitTarget is the overview only for exit=hub and null for any other or no payload."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-098",
+      "statement": "When saving opens the page that asks for a missing earlier answer instead of the next page, that detour is logged once at info with the notification id, the route, the page saved, the page opened and the ids of the missing answers.",
+      "kind": "non-functional",
+      "ref": "src/server/app/shared/kit.js:183-194",
+      "quote": "'Save and continue opened the page that asks for a missing earlier answer'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-099",
+      "statement": "A save refused because the notification changed since the page was shown is logged once at info with the notification id and the concurrency token the page posted, and the trader is redirected back to the same page with staleAction=1 added to whatever query string the URL already carried.",
+      "kind": "non-functional",
+      "ref": "src/server/app/shared/kit.js:330-348",
+      "quote": "'Save refused: the notification changed since the page was shown'",
+      "confidence": "verbatim",
+      "note": "kit.test.js:146-169 holds the redirect '/notifications/journey-1/origin?from=notification-view&staleAction=1' and the single log entry. Every page's POST route is wrapped this way by pageRoutes."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-100",
+      "statement": "A save that fails because the notification is stale is not answered with the recoverable-error fallback: it is passed on to the stale-action handling, and any failure that is neither stale nor a recoverable backend error is passed on unlogged.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:308-327",
+      "quote": "if (isStaleConcurrencyRefusal(error)) {\n      throw error\n    }",
+      "confidence": "verbatim",
+      "note": "mechanism: classifies the error a save throws. kit.test.js:299-329 holds both rethrows with no log line; kit.test.js:191-230 holds that the fallback warning carries the error only when it was not already logged where it was raised, plus any ids the page passes."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-101",
+      "statement": "Inside a page's content column the recoverable-error banner comes first, then the stale-notification banner, then the status strip, and the page's own content follows below them.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:71-97",
+      "quote": "{% if recoverableError %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-102",
+      "statement": "The sign-in failure page's browser title reads \"Sorry, we are unable to sign you in\" without a full stop, while its heading carries one.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:25-30",
+      "quote": "title: 'Sorry, we are unable to sign you in',\n    heading: 'Sorry, we are unable to sign you in.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-103",
+      "statement": "The Welsh copy words the sign-in failure page \"Mae'n ddrwg gennym, ni allwn eich mewngofnodi.\" with \"Rhowch\" and the link \"gynnig arall arni\", the error pages \"Heb ddod o hyd i’r dudalen\", \"Gwaharddedig\", \"Mae angen i chi fewngofnodi i weld y dudalen hon\", \"Mae problem gyda’ch cais\" and \"Aeth rhywbeth o’i le\", the stale-notification banner \"Mae’r hysbysiad wedi cael ei ddiweddaru\", and the notification actions \"Copïo fel un newydd\" and \"Dileu\".",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:26-61",
+      "quote": "heading: \"Mae'n ddrwg gennym, ni allwn eich mewngofnodi.\",\n    bodyPrefix: 'Rhowch',\n    signInLinkText: 'gynnig arall arni'",
+      "confidence": "verbatim",
+      "note": "Machine-draft Welsh (copy.cy.js:1); no page resolves it today."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-104",
+      "statement": "The Welsh default validation messages read \"Dewiswch opsiwn dilys\", \"Rhowch god post dilys\", \"Rhowch rif cofrestru dilys\", \"Rhowch rif ffôn dilys yn y DU\", \"Rhowch ddyddiad dilys\", \"Rhowch amser go iawn, fel 14:30\", \"Rhowch rif cyfan\", \"Rhowch <n> nod neu lai\" and \"Rhowch rif rhwng <min> a <max>\".",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:76-86",
+      "quote": "oneOf: 'Dewiswch opsiwn dilys',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-105",
+      "statement": "The default validation messages are kept apart from the rest of the shared copy so that the length and range messages can take the limits as parameters, and each language supplies its own set.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/copy.en.js:75-92",
+      "quote": "Default validator messages — the fallbacks `lib/validate` composers use\n * when a call site passes no feature message.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-106",
+      "statement": "The error summary lists its entries in the order the page gives its field errors.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:134-141",
+      "quote": "errorList: entries.map(([field, text]) => ({ text, href: href(field) }))",
+      "confidence": "inferred",
+      "note": "Follows from Object.entries over the field-error map; no test pins the order."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-107",
+      "statement": "A field shows an error message only when the page has a message for that field.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/kit.js:145-146",
+      "quote": "fieldErrors?.[field] ? { text: fieldErrors[field] } : undefined",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-108",
+      "statement": "A date field shows the answer back as day/month/year text, leaving out any part that is blank, shows the error message only when there is one, and keeps a typed answer that did not parse exactly as the trader wrote it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:378-384, src/server/app/shared/kit.js:426-427",
+      "quote": ".filter(Boolean)\n        .join('/')",
+      "confidence": "verbatim",
+      "note": "mechanism: joins the stored day, month and year of a date answer for the date picker's text box. kit.test.js:55-73 holds the value '3/1/2027' and the min and max bounds passed as d/m/yyyy text, undefined when none are given."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-109",
+      "statement": "A page outside every notification set is shown at the form width, with no status strip, no notification version token and no recoverable-error banner.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:221-230",
+      "quote": "journeyStrip: null,\n  concurrencyToken: null,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-110",
+      "statement": "A page that leaves its status strip off still carries the notification's version token.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:279-282",
+      "quote": "concurrencyToken: journey?.concurrencyToken ?? null,",
+      "confidence": "verbatim",
+      "note": "kit.test.js:126-134 holds journeyStrip null with concurrencyToken 7."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-111",
+      "statement": "The places a trail may name are the notification overview, the notification list, the Import Notification Service type question and the slug of any page in the journey's sections; a trail with any other entry, an empty trail or a trail given more than once in the URL is dropped whole.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/trail.js:18-37",
+      "quote": "entries.length > 0 && entries.every((entry) => recognised.has(entry))",
+      "confidence": "verbatim",
+      "note": "mechanism: reads the comma-separated 'from' query value and checks every entry against the journey's page slugs and the three start places. trail.test.js:146-180 holds an unknown place, an absolute URL, an unknown place beneath a known one, an empty trail and a repeated parameter all falling back."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-112",
+      "statement": "Going Back to a page on the trail carries the rest of the trail beneath it, so the trader can keep stepping back through the places they came from.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/trail.js:175-184",
+      "quote": ": withTrail(pagePath(journeyId, entry), trailBeneath)",
+      "confidence": "verbatim",
+      "note": "trail.test.js:66-72 holds Back from overview,scalars,items going to items?from=overview%2Cscalars. A trail of overview goes to the overview, dashboard to the notification list and ins to /ins-question/<id> (trail.test.js:121-131)."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-113",
+      "statement": "A return marker added to a link is URL-encoded, so a page slug containing a slash travels as %2F, and it joins any query string the link already has.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/trail.js:79-84",
+      "quote": "`${href}${href.includes('?') ? '&' : '?'}${name}=${encodeURIComponent(value)}`",
+      "confidence": "verbatim",
+      "note": "mechanism: adds the 'return' or 'from' parameter to an href. trail.test.js:184-200 holds the encoding and the join."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-114",
+      "statement": "A request is placed in the notification set its path falls under before routing; paths such as /health and /auth/sign-out fall under no set, and a path whose first segment only begins with a set's name, such as /high-risk-plants-archive, is not under that set.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/set-context.js:29-41, src/server/app/shared/set-context.js:88-97",
+      "quote": "const under = path === prefix || path.startsWith(`${prefix}/`)",
+      "confidence": "verbatim",
+      "note": "mechanism: matches the request path against the registered set mount prefixes. set-context.test.js:106-176 holds each case."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-115",
+      "statement": "When several notification sets are mounted and none is active, anything that needs the current set fails with an error naming how many sets are mounted and which.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/set-context.js:53-65",
+      "quote": "`${mounts.size} sets are mounted (${mountedSetIds().join(', ')})`",
+      "confidence": "verbatim",
+      "note": "mechanism: resolves the current set id. set-context.test.js:64-72 holds the message."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-116",
+      "statement": "Each piece of per-set configuration answers with the value the active set configured, and asking for one the active set never configured fails with an error naming the configuration and the set.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/set-context.js:161-178",
+      "quote": "throw new Error(`${label} not configured for set \"${setId}\"`)",
+      "confidence": "verbatim",
+      "note": "mechanism: a per-set store of one configuration seam keyed by set id. set-context.test.js:343-382 holds it."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-117",
+      "statement": "A copy value counts as filled in when it is a string with some non-space text, or a function that builds the string from parameters; the shared copy check walks every leaf of both language modules against that rule.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/copy-leaves.js:8-19",
+      "quote": "typeof value === 'function' ||\n  (typeof value === 'string' && value.trim().length > 0)",
+      "confidence": "verbatim",
+      "note": "mechanism: walks a copy module's object tree into dotted-path leaves and tests each leaf."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-118",
+      "statement": "A section caption with no text renders nothing at all, and the tests hold the default large caption and a page asking for the extra-large size.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/section-caption.njk:1-3, src/server/app/shared/section-caption.test.js:15-28",
+      "quote": "{%- if text %}<span class=\"{{ classes }}\">{{ text }}</span>{% endif -%}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-119",
+      "statement": "The service's chrome copy tests hold the English status strip, phase banner, navigation, error page and save control wording exactly, the Welsh save controls and status strip words exactly, GOV.UK as the closing brand word in both languages, and the same keys in Welsh as in English.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/copy.test.js:25-124",
+      "quote": "it('Should close every page title with the GOV.UK brand word in both locales', () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-120",
+      "statement": "A page's Back link, or Save and continue, that carries no trail leaves the link unchanged, with no empty from parameter added.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/trail.js:122-131",
+      "quote": "if (entries.length === 0) {\n    return href\n  }",
+      "confidence": "verbatim",
+      "note": "trail.test.js:82-84 and 108-111 hold it."
     }
   ]
 }

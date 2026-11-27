@@ -1,0 +1,348 @@
+{
+  "source": "repo:stub",
+  "structure": "Part 2, the MDM countries endpoint and shared MDM plumbing. Read in full: stubs/mdm/countries/CountriesController.java (52 lines: one GET /mdm/geo/countries handler, the subscription-key header, the system and blocks parameters, the block filter), stubs/mdm/MdmStubResponses.java (14 lines: the header name and the trace header every MDM answer carries), utils/FileUtils.java (30 lines: loads a saved JSON response from the classpath), the tests CountriesControllerTest (7 tests, one parameterised over two blank values), FileUtilsTest (5 tests, two of them about the ports file, claimed here only as what this test class proves), and the helpers MdmStubWebMvcTest, MdmStubRequests and MdmStubResponseMatchers; application.yml's stub-latency block (the mdm and trade-token integrations); README.md's latency-profiles integrations table and its MDM countries and border control posts section. Covered: the countries route and its inputs, the blocks filter rules, the trace header, file loading and its failure, every test as what it proves, and the MDM integration's paths, interface name, owner and latency defaults. Not covered here: the country records' content beyond what the tests assert (parts 3 to 5) and the ports endpoint (part 6).",
+  "claims": [
+    {
+      "id": "repo-stub-p2-001",
+      "statement": "The stub answers GET /mdm/geo/countries, standing in for MDM's countries endpoint through APIM.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/countries/CountriesController.java:29",
+      "quote": "@GetMapping(value = \"/mdm/geo/countries\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-002",
+      "statement": "The countries endpoint requires an Ocp-Apim-Subscription-Key request header.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/countries/CountriesController.java:31; MdmStubResponses.java:7",
+      "quote": "@RequestHeader(OCP_APIM_SUBSCRIPTION_KEY) String ocpApimSubscriptionKey",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-003",
+      "statement": "Any value of the subscription-key header is accepted: the stub never checks it.",
+      "kind": "behaviour",
+      "ref": "CountriesController.java:30-38; src/test/java/uk/gov/defra/trade/imports/stubs/mdm/MdmStubRequests.java:15",
+      "quote": "headers.add(OCP_APIM_SUBSCRIPTION_KEY, \"any-value-at-all\");",
+      "confidence": "inferred",
+      "note": "The handler never reads ocpApimSubscriptionKey, and the tests send an arbitrary value and get 200."
+    },
+    {
+      "id": "repo-stub-p2-004",
+      "statement": "A call to the countries endpoint without the subscription-key header is refused with 400 Bad Request.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/stubs/mdm/countries/CountriesControllerTest.java:86-90",
+      "quote": "getCountries_shouldRefuseTheCall_whenTheSubscriptionKeyHeaderIsMissing() ... .andExpect(status().isBadRequest());",
+      "confidence": "verbatim",
+      "note": "The 400 is Spring's own answer for a missing required header; the README says GlobalExceptionHandler answers only application exceptions."
+    },
+    {
+      "id": "repo-stub-p2-005",
+      "statement": "The countries endpoint accepts an optional system query parameter and ignores it: the answer is the same whatever system is given.",
+      "kind": "behaviour",
+      "ref": "CountriesController.java:32,35",
+      "quote": "@RequestParam(value = \"system\", required = false) String system",
+      "confidence": "inferred",
+      "note": "system is bound but never used in the handler body."
+    },
+    {
+      "id": "repo-stub-p2-006",
+      "statement": "The countries endpoint accepts an optional blocks query parameter.",
+      "kind": "data",
+      "ref": "CountriesController.java:33",
+      "quote": "@RequestParam(value = \"blocks\", required = false) String blocks",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-007",
+      "statement": "When blocks is absent or blank, the countries endpoint answers the whole saved country list.",
+      "kind": "behaviour",
+      "ref": "CountriesController.java:35",
+      "quote": "JsonNode body = blocks == null || blocks.isBlank() ? countries : inBlock(countries, blocks);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-008",
+      "statement": "When blocks names a block, the countries endpoint answers only the country records that carry a block entry whose name equals it exactly.",
+      "kind": "rule",
+      "ref": "CountriesController.java:40-51",
+      "quote": "return StreamSupport.stream(country.path(\"blocks\").spliterator(), false)\n        .anyMatch((entry) -> block.equals(entry.path(\"name\").asText()));",
+      "confidence": "verbatim",
+      "note": "Only the record's top-level blocks array is read; a subdivision's blocs are not consulted. The match is case-sensitive and blocks is a single name, not a list."
+    },
+    {
+      "id": "repo-stub-p2-009",
+      "statement": "A filtered countries answer keeps the saved file's order.",
+      "kind": "behaviour",
+      "ref": "CountriesController.java:40-46",
+      "quote": "StreamSupport.stream(allCountries.spliterator(), false)\n        .filter((country) -> carriesBlock(country, block))\n        .forEach(kept::add);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-010",
+      "statement": "The blocks filter keeps a record carrying the block whatever that block entry's includeCountry says, as MDM does.",
+      "kind": "rule",
+      "ref": "README.md:84; CountriesController.java:48-51",
+      "quote": "`blocks` keeps the records that carry that block whatever `includeCountry` says, as MDM does.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-011",
+      "statement": "The saved country records hold membership of the GBNAG_SPS_EX block only, so any other block answers an empty list.",
+      "kind": "constraint",
+      "ref": "README.md:84",
+      "quote": "The saved records hold the membership of `GBNAG_SPS_EX` only, so any other block answers an empty list.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-012",
+      "statement": "The countries endpoint answers 200 with a JSON array as its body, both whole and filtered.",
+      "kind": "behaviour",
+      "ref": "CountriesController.java:37,41",
+      "quote": "return withTraceHeader(ResponseEntity.ok()).body(body);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-013",
+      "statement": "The countries endpoint serves the country records saved from MDM in responses/countriesResponse.json.",
+      "kind": "data",
+      "ref": "CountriesController.java:21; README.md:84",
+      "quote": "`GET /mdm/geo/countries` answers the country records saved from MDM in `src/main/resources/responses/countriesResponse.json`, whole.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-014",
+      "statement": "The saved country list is read once, when the stub starts, and every call answers from that copy.",
+      "kind": "behaviour",
+      "ref": "CountriesController.java:23-27",
+      "quote": "public CountriesController(FileUtils fileUtils) {\n    this.countries = fileUtils.getObjectFromFile(COUNTRIES_FIXTURE, JsonNode.class);\n  }",
+      "confidence": "inferred",
+      "note": "Read in the controller's constructor, so a change to the file needs a restart. If the file cannot be read, the controller cannot be built and the stub fails to start."
+    },
+    {
+      "id": "repo-stub-p2-015",
+      "statement": "Every MDM stub answer carries the header x-ms-middleware-request-id with the value stub-trace-id.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/MdmStubResponses.java:11-13",
+      "quote": "return response.header(\"x-ms-middleware-request-id\", \"stub-trace-id\");",
+      "confidence": "verbatim",
+      "note": "Shared helper; the countries endpoint uses it, and the test matcher carriesTheStubTraceHeader asserts it."
+    },
+    {
+      "id": "repo-stub-p2-016",
+      "statement": "The stub loads a saved response by its classpath resource name and parses it as JSON.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/utils/FileUtils.java:15-24",
+      "quote": "var inputStream = getClass().getClassLoader()\n          .getResourceAsStream(fileName);",
+      "confidence": "verbatim",
+      "note": "mechanism: reads the saved MDM response files from src/main/resources/responses."
+    },
+    {
+      "id": "repo-stub-p2-017",
+      "statement": "When a saved response file is missing, loading it fails with an error naming the file.",
+      "kind": "behaviour",
+      "ref": "FileUtils.java:20-22,27",
+      "quote": "throw new IllegalArgumentException(\"File not found: \" + fileName);",
+      "confidence": "verbatim",
+      "note": "mechanism: the not-found error is wrapped in the general read failure below."
+    },
+    {
+      "id": "repo-stub-p2-018",
+      "statement": "When a saved response file is missing or unreadable, the stub logs an error naming the file and throws \"Failed to read from json file: <file>\".",
+      "kind": "behaviour",
+      "ref": "FileUtils.java:25-28",
+      "quote": "log.error(\"Failed to read from JSON file: {}\", fileName, e);\n      throw new RuntimeException(\"Failed to read from json file: \" + fileName, e);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-019",
+      "statement": "A test proves the countries endpoint, with no block asked, answers 200 with all 250 MDM countries in MDM order, the first being AW, and carries the stub trace header.",
+      "kind": "behaviour",
+      "ref": "CountriesControllerTest.java:25-34 getCountries_shouldAnswerAllTwoHundredAndFiftyMdmCountriesInMdmOrder_whenNoBlockIsAsked",
+      "quote": ".andExpect(carriesTheStubTraceHeader())\n        .andExpect(jsonPath(\"$.length()\").value(250))\n        .andExpect(jsonPath(\"$[0].alpha2.value\").value(\"AW\"))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-020",
+      "statement": "A test proves that system=GBNAG with blocks=GBNAG_SPS_EX answers exactly 32 countries, in this order by alpha2: HU, LV, CY, GR, CZ, DK, MT, CH, SK, PL, DE, NO, FR, PT, IT, NL, FI, IS, IE, BE, LU, EE, HR, RO, LT, BG, LI, GB, ES, SE, SI, AT.",
+      "kind": "data",
+      "ref": "CountriesControllerTest.java:36-48 getCountries_shouldAnswerTheThirtyTwoCountriesInTheBlock_whenGbnagSpsExIsAsked",
+      "quote": "\"HU\", \"LV\", \"CY\", \"GR\", \"CZ\", \"DK\", \"MT\", \"CH\", \"SK\", \"PL\", \"DE\", \"NO\", \"FR\", \"PT\",\n            \"IT\", \"NL\", \"FI\", \"IS\", \"IE\", \"BE\", \"LU\", \"EE\", \"HR\", \"RO\", \"LT\", \"BG\", \"LI\", \"GB\",\n            \"ES\", \"SE\", \"SI\", \"AT\"",
+      "confidence": "verbatim",
+      "note": "The order is the saved file's MDM order, not alphabetical."
+    },
+    {
+      "id": "repo-stub-p2-021",
+      "statement": "A test proves GB is in the GBNAG_SPS_EX answer even though GB's GBNAG_SPS_EX block entry has includeCountry false.",
+      "kind": "rule",
+      "ref": "CountriesControllerTest.java:50-58 getCountries_shouldIncludeACountryWhoseBlockEntryExcludesIt",
+      "quote": ".andExpect(jsonPath(\"$[*].alpha2.value\").value(hasItem(\"GB\")))\n        .andExpect(jsonPath(\"$[?(@.alpha2.value=='GB')].blocks[?(@.name=='GBNAG_SPS_EX')].includeCountry\")\n            .value(contains(false)));",
+      "confidence": "verbatim",
+      "note": "A consumer that wants only included countries has to read includeCountry itself; the stub (like MDM, per the README) does not drop them."
+    },
+    {
+      "id": "repo-stub-p2-022",
+      "statement": "A test proves an empty or whitespace-only blocks parameter answers all 250 countries.",
+      "kind": "behaviour",
+      "ref": "CountriesControllerTest.java:60-68 getCountries_shouldAnswerAllTwoHundredAndFiftyCountries_whenTheBlocksParameterIsBlank",
+      "quote": "@ValueSource(strings = {\"\", \" \"})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-023",
+      "statement": "A test proves an unknown block answers 200 with an empty list.",
+      "kind": "behaviour",
+      "ref": "CountriesControllerTest.java:70-76 getCountries_shouldAnswerNoCountries_whenTheBlockIsUnknown",
+      "quote": ".param(\"blocks\", \"PERF_TEST_NO_SUCH_BLOCK\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$\").value(hasSize(0)));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-024",
+      "statement": "A test proves the countries answer uses MDM's own field shapes, such as countryUUID.content and ISONumeric.value, not a stub model's names.",
+      "kind": "data",
+      "ref": "CountriesControllerTest.java:78-84 getCountries_shouldServeFieldsNoStubModelNames",
+      "quote": ".andExpect(jsonPath(\"$[0].countryUUID.content\").exists())\n        .andExpect(jsonPath(\"$[0].ISONumeric.value\").exists());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-025",
+      "statement": "Each country record's alpha2 is an object holding the code in its value field.",
+      "kind": "data",
+      "ref": "CountriesControllerTest.java:32,44",
+      "quote": "jsonPath(\"$[0].alpha2.value\").value(\"AW\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-026",
+      "statement": "The MDM controller tests run against the stub's real latency, fault and exception-handling set-up and the real file loader.",
+      "kind": "constraint",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/stubs/mdm/MdmStubWebMvcTest.java:18-20",
+      "quote": "@Import({LatencyConfig.class, StubLatencies.class, StubFaults.class, GlobalExceptionHandler.class,\n    FileUtils.class})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-027",
+      "statement": "A test proves the saved countries file loads as an array of 250 countries in MDM order, the first being Aruba (alpha2 AW, effectiveAlias Aruba).",
+      "kind": "data",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/utils/FileUtilsTest.java:25-36 getObjectFromFile_readsAllTwoHundredAndFiftyMdmCountriesInMdmOrder",
+      "quote": "assertThat(countries).hasSize(250);\n    assertThat(countries.get(0).path(\"alpha2\").path(\"value\").asText()).isEqualTo(\"AW\");\n    assertThat(countries.get(0).path(\"effectiveAlias\").asText()).isEqualTo(\"Aruba\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-028",
+      "statement": "A test proves Spain (effectiveAlpha2 ES) has exactly one subdivision, Canary Islands, code ES-CN, in the blocs OMR and GBNAG_SPS_EX in that order.",
+      "kind": "data",
+      "ref": "FileUtilsTest.java:38-57 getObjectFromFile_keepsSpainsCanaryIslandsSubdivision",
+      "quote": "assertThat(canaryIslands.path(\"code\").path(\"value\").asText()).isEqualTo(\"ES-CN\");\n    assertThat(canaryIslands.path(\"name\").asText()).isEqualTo(\"Canary Islands\");\n    assertThat(canaryIslands.path(\"blocs\")).extracting(JsonNode::asText)\n        .containsExactly(\"OMR\", \"GBNAG_SPS_EX\");",
+      "confidence": "verbatim",
+      "note": "A subdivision's block membership is a list of names under blocs, unlike the country's blocks entries with name and includeCountry."
+    },
+    {
+      "id": "repo-stub-p2-029",
+      "statement": "A test proves neither the saved countries file nor the saved ports file holds a masked value (******) anywhere.",
+      "kind": "constraint",
+      "ref": "FileUtilsTest.java:59-70 getObjectFromFile_fillsInNoMaskedValue",
+      "quote": "assertThat(leafTexts(countries)).noneMatch((text) -> text.contains(\"******\"));\n    assertThat(leafTexts(ports)).noneMatch((text) -> text.contains(\"******\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-030",
+      "statement": "A test proves the saved ports file loads as a result list of 78 ports, the first being GB DYC Aberdeen Airport with traffic Airport, including GB EMA, GB EDI and GB DVR, and every port's traffic is Airport, Port or Rail.",
+      "kind": "data",
+      "ref": "FileUtilsTest.java:72-88 getObjectFromFile_readsTheSeventyEightMdmPortsWithTheirTraffic",
+      "quote": "assertThat(ports).hasSize(78);\n    assertThat(ports.get(0).path(\"code\").asText()).isEqualTo(\"GB DYC\");\n    assertThat(ports.get(0).path(\"name\").asText()).isEqualTo(\"Aberdeen Airport\");",
+      "confidence": "verbatim",
+      "note": "Ports belong to part 6; claimed here only as what FileUtilsTest proves."
+    },
+    {
+      "id": "repo-stub-p2-031",
+      "statement": "A test proves loading a missing file throws a RuntimeException whose message contains \"Failed to read from json file\".",
+      "kind": "behaviour",
+      "ref": "FileUtilsTest.java:90-96 getObjectFromFile_throwsRuntimeException_whenFileNotFound",
+      "quote": ".isInstanceOf(RuntimeException.class)\n        .hasMessageContaining(\"Failed to read from json file\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-032",
+      "statement": "No test proves what happens when a saved file exists but is not valid JSON.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/utils/FileUtilsTest.java",
+      "quote": "",
+      "confidence": "gap",
+      "note": "FileUtils.java:25 catches every exception the same way, so the code would answer as for a missing file; only the missing-file case is tested."
+    },
+    {
+      "id": "repo-stub-p2-033",
+      "statement": "No test proves the blocks filter is case-sensitive or what a block given in another case answers.",
+      "kind": "rule",
+      "ref": "CountriesControllerTest.java",
+      "quote": "",
+      "confidence": "gap",
+      "note": "CountriesController.java:50 uses String.equals, so gbnag_sps_ex would answer an empty list."
+    },
+    {
+      "id": "repo-stub-p2-034",
+      "statement": "The README lists the stub as standing in for two integrations trade-imports-reference-data calls: trade-token, the Trade Platform OAuth token endpoint called before MDM, at POST /tenant/oauth2/v2.0/token; and mdm, MDM reference data through APIM.",
+      "kind": "integration",
+      "ref": "README.md:11-16 (latency profiles integrations table)",
+      "quote": "| `trade-token` | The Trade Platform OAuth token endpoint, called before MDM | `POST /tenant/oauth2/v2.0/token` |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-035",
+      "statement": "The mdm integration covers the paths GET /mdm/geo/countries, GET /mdm/trade/bcp/poes, GET /mdm/trade/product/search, GET /mdm/trade/product/commodities and GET /mdm/trade/product/commodities/{code}/species.",
+      "kind": "integration",
+      "ref": "README.md:16; src/main/resources/application.yml:128-133",
+      "quote": "| `mdm` | MDM reference data through APIM | `GET /mdm/geo/countries`, `GET /mdm/trade/bcp/poes`, `GET /mdm/trade/product/search`, `GET /mdm/trade/product/commodities`, `GET /mdm/trade/product/commodities/{code}/species` |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-036",
+      "statement": "The mdm integration's interface name is \"MDM reference data through APIM: countries, border control posts and products\".",
+      "kind": "copy",
+      "ref": "src/main/resources/application.yml:122",
+      "quote": "interface-name: \"MDM reference data through APIM: countries, border control posts and products\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-037",
+      "statement": "The mdm integration's owner is recorded as the MDM / data platform team.",
+      "kind": "data",
+      "ref": "application.yml:123",
+      "quote": "owner: MDM / data platform team",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-038",
+      "statement": "The mdm integration's service level is an interim default, not agreed by default, because the volumetrics page's section 9.5 MDM through APIM latency is still to be confirmed.",
+      "kind": "non-functional",
+      "ref": "application.yml:124-125",
+      "quote": "service-level-source: \"Interim default: §9.5 MDM through APIM latency is TBC\"\n      agreed: ${STUB_LATENCY_MDM_AGREED:false}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-039",
+      "statement": "The mdm integration's latency profile is STUB_LATENCY_MDM_PROFILE, else STUB_LATENCY_PROFILE, else zero-delay.",
+      "kind": "non-functional",
+      "ref": "application.yml:127",
+      "quote": "profile: ${STUB_LATENCY_MDM_PROFILE:${STUB_LATENCY_PROFILE:zero-delay}}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-040",
+      "statement": "The mdm integration's SLA targets default to p50 100 ms, p95 400 ms and p99 1,000 ms, each overridable by STUB_LATENCY_MDM_P50_MS, _P95_MS and _P99_MS.",
+      "kind": "non-functional",
+      "ref": "application.yml:134-137",
+      "quote": "p50-ms: ${STUB_LATENCY_MDM_P50_MS:100}\n        p95-ms: ${STUB_LATENCY_MDM_P95_MS:400}\n        p99-ms: ${STUB_LATENCY_MDM_P99_MS:1000}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p2-041",
+      "statement": "The mdm integration's last-conformed date is empty unless STUB_LATENCY_MDM_LAST_CONFORMED sets it.",
+      "kind": "non-functional",
+      "ref": "application.yml:126",
+      "quote": "last-conformed: ${STUB_LATENCY_MDM_LAST_CONFORMED:}",
+      "confidence": "verbatim"
+    }
+  ]
+}

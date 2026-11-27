@@ -1,6 +1,6 @@
 {
   "source": "repo:tests",
-  "structure": "Part 16 of 16: the tests repo's own shared configuration, scripts and prose, which say what is run where and what the suite claims to prove. Read in full: README.md (666 lines, with the run-command, per-domain script, domain/front-end, PROFILE and CDP-domain-profile tables and the prose sections on test configuration, address-book records made by a test, resetting the shared e2e address book, commodity lines, DLQ specs, authenticated session reuse, asserting which journey page is open, domains/suites/projects, local testing, visual regression, security testing, GitHub Actions and the CDP Portal), AGENTS.md (the layout table and the writing-specs, journey-answers and code-quality rules; CLAUDE.md is a one-line include of AGENTS.md), docs/animals-journey.md, docs/a11y.md, docs/security.md, docs/cross-browser.md, tests/animals/cross-browser/README.md, tests/ins/cross-browser/README.md, playwright.config.ts, playwright.docker-compose.config.ts, package.json, config/ (service-base-urls.ts, service-tags.ts, timeouts.ts, file-upload-timeouts.ts, users.ts, cdp-proxy.ts, dynamics.ts, dataverse.ts, zap.ts), .env.example (read with git show HEAD:.env.example, the Read tool and cat being refused by this session's permissions), Dockerfile, entrypoint.sh, browserstack.yml, bin/lint-suite-tags.ts, bin/assert-stack.sh, bin/cdp-session-probe.ts, bin/publish-tests.sh, bin/run-browserstack.ts, eslint.config.mjs, eslint-rules/code-quality.js and all six files under .github/workflows (check-pull-request.yml, workspace-e2e-tests.yml, scheduled-security-scan.yml, cleanup-e2e-reports.yml, publish.yml, publish-branch.yml). Read as supporting context, because the two configs only make sense with it: utils/playwright/shared-config.ts, utils/playwright/domain-base-urls.ts and utils/playwright/cdp-service-url.ts, plus .nvmrc. Covered: every domain and test type the suite can run with its npm script, config and target; every CDP PROFILE and its domain-scoped form; every type tag and service tag and the rule each selects by, including what bin/lint-suite-tags.ts enforces; the single default chromium project, the retries, workers, timeouts, reporters and per-service base URLs of each target; the identities the suite signs in as, with no credential values; the rules and decisions the four docs and the two cross-browser READMEs state; what the repo's own lint rules hold a test to; and the absence of any rulings or decisions ledger. No tests/animals or tests/ins spec is claimed here.",
+  "structure": "Part 16 read the suite's own configuration, scripts and prose at main c433e6b, in full: README.md (the Running Tests, per-domain, Playwright parameters, Test Configuration and CDP PROFILE tables and every prose section), AGENTS.md, CLAUDE.md (which only includes AGENTS.md), docs/animals-journey.md, docs/a11y.md, docs/security.md, docs/cross-browser.md, both cross-browser READMEs (tests/animals and tests/ins), playwright.config.ts, playwright.docker-compose.config.ts, package.json, config/{service-base-urls,service-tags,timeouts,file-upload-timeouts,users,cdp-proxy,dynamics,dataverse,zap}.ts, Dockerfile, entrypoint.sh, browserstack.yml, bin/{lint-suite-tags.ts,assert-stack.sh,cdp-session-probe.ts,publish-tests.sh,run-browserstack.ts}, eslint.config.mjs, eslint-rules/code-quality.js, the six workflows under .github/workflows, fixtures/{browserstack,index}.ts and utils/playwright/{shared-config,domain-base-urls,environment,global-setup,stack-owner-guard}.ts. .env.example could not be opened (the session's permission settings deny it); git shows it unchanged since the 26 November extract, so its claim is carried over unread.\n\nCovered: every npm script by domain, test type, config and target; every CDP PROFILE and its domain-scoped form; every type tag (@compose, @a11y, @visual, @cross-browser, @ios, @active, @dynamics) and service tag, with the lint that holds specs to them; the chromium project and five opt-in cross-browser projects, retries, workers, timeouts and reporters; base URLs per service per target; the two Defra ID stub identities (no credential values); the docs' rules and decisions (journey order, accessibility exclusions, ZAP policy and gates, browser set and review triggers); the house lint rules; CI workflows; the image build and CDP entrypoint; and the gap that the repo holds no rulings ledger.\n\nWhat moved since the last extract: BrowserStack gained Edge on Windows 11 and the @ios tag, which real iPhones run alone through a skip fixture (fixtures/browserstack.ts), with one-context rules for @ios tests and a way to run BrowserStack against CDP from a laptop with RUN_ID; sessions are now shared across platforms; BrowserStack's own accessibility check is off; the animals-admin cross-browser scripts and README are gone; docs/a11y.md adds the file upload button exclusion; the README now agrees with package.json on Node 26.13.1 and the four tags the CDP end-to-end run leaves out.",
   "claims": [
     {
       "id": "repo-tests-p16-001",
@@ -20,12 +20,12 @@
     },
     {
       "id": "repo-tests-p16-003",
-      "statement": "The CDP end-to-end run leaves out four tags, not the two the README's table names: @compose, @a11y, @active and @dynamics.",
+      "statement": "The CDP end-to-end run leaves out four tags: @compose, @a11y, @active and @dynamics.",
       "kind": "behaviour",
-      "ref": "package.json:32",
+      "ref": "README.md:83 (Running Tests table); package.json:32",
       "quote": "\"test\": \"npm run _clean_and_test -- --grep-invert '@compose|@a11y|@active|@dynamics'\",",
       "confidence": "verbatim",
-      "note": "Ambiguity recorded, not resolved: README.md:83 says `npm test` excludes `@compose` and `@a11y` only, while the script also excludes @active and @dynamics."
+      "note": "The README table now names the same four tags: \"E2E suite, excluding `@compose`, `@a11y`, `@active` and `@dynamics`\"."
     },
     {
       "id": "repo-tests-p16-004",
@@ -49,14 +49,6 @@
       "kind": "behaviour",
       "ref": "package.json:35",
       "quote": "\"test:cross-browser\": \"npm run _clean_and_test -- --grep '@cross-browser' --grep-invert '@compose' --project=chrome --project=firefox --project=webkit --project=mobile-webkit --project=mobile-chromium\",",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p16-007",
-      "statement": "`npm run test:browserstack` runs the @cross-browser suite on BrowserStack against CDP.",
-      "kind": "behaviour",
-      "ref": "README.md:87; package.json:41",
-      "quote": "\"test:browserstack\": \"npm run _browserstack_clean_and_test -- --grep '@cross-browser'\",",
       "confidence": "verbatim"
     },
     {
@@ -232,9 +224,10 @@
       "id": "repo-tests-p16-029",
       "statement": "The animals journey accessibility scans leave out govuk-frontend's two conditional-reveal radio groups, because govuk-frontend sets aria-expanded on each radio that opens a reveal and axe's aria-allowed-attr rule rejects it — a disagreement between govuk-frontend and axe rather than a service defect.",
       "kind": "rule",
-      "ref": "README.md:158-163",
-      "quote": "The animals journey scans leave out govuk-frontend's conditional-reveal radios\n(`govukConditionalRevealRadioOnOrigin` and\n`govukConditionalRevealRadiosOnReason` in `fixtures/a11y.ts`). govuk-frontend sets `aria-expanded` on\neach radio that opens a conditional reveal (`radios.mjs`), and axe's\n`aria-allowed-attr` rule rejects it. That is a disagreement between\ngovuk-frontend and axe, not a service defect.",
-      "confidence": "verbatim"
+      "ref": "README.md:158-163; docs/a11y.md:3-12",
+      "quote": "The animals journey scans leave out govuk-frontend's conditional-reveal radios\n(`govukConditionalRevealRadioOnOrigin` and\n`govukConditionalRevealRadiosOnReason` in `utils/a11y-exclusions.ts`). govuk-frontend sets `aria-expanded` on\neach radio that opens a conditional reveal (`radios.mjs`), and axe's\n`aria-allowed-attr` rule rejects it. That is a disagreement between\ngovuk-frontend and axe, not a service defect.",
+      "confidence": "verbatim",
+      "note": "docs/a11y.md names the pages: the origin of import page's region of origin code requirement radio, and four of the five import reasons on the import reason page."
     },
     {
       "id": "repo-tests-p16-030",
@@ -1345,14 +1338,6 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-tests-p16-168",
-      "statement": "Cross-browser tests are existing end-to-end specs selected by the @cross-browser tag and run in branded Chrome, Playwright's Firefox and WebKit builds, an emulated iPhone 17, an emulated Pixel 10 and on BrowserStack.",
-      "kind": "non-functional",
-      "ref": "README.md:455; docs/cross-browser.md:3-6",
-      "quote": "Tests tagged `@cross-browser` run in branded Chrome, Playwright's browsers (Firefox, WebKit, an emulated iPhone 17 and an emulated Pixel 10) and on BrowserStack.",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-tests-p16-169",
       "statement": "The animals cross-browser folder holds no specs of its own.",
       "kind": "non-functional",
@@ -1378,97 +1363,49 @@
     },
     {
       "id": "repo-tests-p16-172",
-      "statement": "A cross-browser test is chosen so that, together, the set renders as many pages as possible in each engine: tests that also run on CDP, leaving out validation and back-end checks, visual, accessibility and security specs, preferring a journey walk then one test for each page the walks do not reach.",
+      "statement": "A cross-browser test is chosen so that, together, the set renders as many pages as possible in each engine: tests that run on CDP, preferring a journey walk then one test for each page the walks do not reach, and leaving out validation and back-end checks and visual, accessibility and security specs.",
       "kind": "rule",
-      "ref": "docs/cross-browser.md:12-18",
-      "quote": "Tag existing e2e tests so that, together, they render as many pages as possible in each engine.\n\n- Choose tests that also run on CDP.\n- Leave out validation and backend checks, which do not vary by browser.\n- Leave out `@visual`, `@a11y` and security specs: snapshots are per engine, and axe and ZAP results barely change by browser.\n- Prefer a journey walk, then one test for each page the walks do not reach.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p16-173",
-      "statement": "A cross-browser tagged test still runs in the default Chromium end-to-end run, and is tagged only if it runs on CDP and renders a page the set does not already cover.",
-      "kind": "rule",
-      "ref": "docs/cross-browser.md:27",
-      "quote": "It still runs in the Chromium e2e run. Tag it only if it runs on CDP and renders a page the set does not already cover.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p16-174",
-      "statement": "BrowserStack runs the cross-browser tests on three platforms: Playwright's WebKit on macOS 27 Golden Gate, Safari on an iPhone 18 Pro running iOS 27, and Safari on an iPhone 17 running iOS 26, each on the latest stable browser BrowserStack offers for it.",
-      "kind": "non-functional",
-      "ref": "docs/cross-browser.md:44-50; browserstack.yml:20-30",
-      "quote": "| macOS 27 Golden Gate | Desktop       | Playwright's WebKit build |\n| iOS 27               | iPhone 18 Pro | Safari                    |\n| iOS 26               | iPhone 17     | Safari                    |",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p16-175",
-      "statement": "The browser set was last reviewed in November 2026 and is revisited when GDS updates its list, around February each year, or when Apple releases a new iOS or macOS.",
-      "kind": "rule",
-      "ref": "docs/cross-browser.md:54",
-      "quote": "Last reviewed: November 2026. Revisit them when GDS updates its list (yearly, around February) or Apple releases a new iOS or macOS.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p16-176",
-      "statement": "Edge has no project of its own because it shares Chrome's engine and differs only in a thin branded layer, so Chromium and branded Chrome cover it.",
-      "kind": "rule",
-      "ref": "docs/cross-browser.md:59",
-      "quote": "- **Chrome.** `chrome` runs the released branded Chrome. Close enough to trust for desktop Chrome and Edge: what differs on Windows and macOS is font rendering and branded features. Edge has no project of its own: it shares Chrome's engine and differs only in a thin branded layer, so `chromium` and `chrome` cover it.",
+      "ref": "docs/cross-browser.md:59-66 (Tagging a test)",
+      "quote": "Tag existing e2e tests so that, together, they render as many pages as possible in each engine:\n\n- Choose tests that run on CDP.\n- Prefer a journey walk, then one test for each page the walks don't reach.\n- Leave out validation and backend checks, which don't vary by browser.\n- Leave out `@visual`, `@a11y` and security specs: snapshots are per engine, and axe and ZAP results barely change by browser.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p16-177",
       "statement": "Real iOS Safari on a real iPhone is the biggest gap Playwright's builds leave, and in the UK every iPhone browser uses Safari's engine, so testing it covers Chrome and Edge on iOS too.",
       "kind": "rule",
-      "ref": "docs/cross-browser.md:66",
-      "quote": "- **iOS Safari on a real iPhone.** The biggest gap: Playwright's WebKit and emulated iPhone miss Safari's platform layer, cookie rules, touch, the on-screen keyboard and the real viewport. In the UK every iPhone browser uses Safari's engine, so this covers Chrome and Edge on iOS too.",
+      "ref": "docs/cross-browser.md:47 (Why these browsers)",
+      "quote": "- **Safari on real iPhones.** The biggest gap: WebKit and the emulated iPhone miss Safari's platform layer, cookie rules, touch, the on-screen keyboard and the real viewport. Every iPhone browser in the UK uses Safari's engine, so this covers Chrome and Edge on iOS too.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p16-178",
-      "statement": "Only the two current iOS versions are tested, because older versions get updates mainly for iPhones that cannot run the newer release and those devices are not supported.",
+      "statement": "Only the two current iOS versions are tested, because older versions mainly serve iPhones that cannot run the newer release and those devices are not supported.",
       "kind": "rule",
-      "ref": "docs/cross-browser.md:67",
-      "quote": "- **iOS 27 and 26 only.** Each iOS version ships its own Safari. iOS 27 is the current release and iOS 26 still gets security updates. Older versions (iOS 18 and earlier) get updates mainly for older iPhones that can't run iOS 26, and we don't support those devices. See [endoflife.date](https://endoflife.date/ios).",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p16-179",
-      "statement": "Four things are deliberately not covered: real Android browsers, real Firefox, real macOS Safari, and Chrome or Edge on Windows.",
-      "kind": "constraint",
-      "ref": "docs/cross-browser.md:71-76",
-      "quote": "- **Real Android** (Chrome, Samsung Internet, Firefox). BrowserStack supports it only up to Playwright 1.62. `mobile-chromium` covers Chrome and Samsung Internet's engine at phone size; `firefox` covers Android Firefox's engine. Add real Android Chrome once BrowserStack supports our Playwright version.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p16-180",
-      "statement": "Real Android is the only GDS platform no automated run covers, and is checked by hand on BrowserStack Live before a release.",
-      "kind": "constraint",
-      "ref": "docs/cross-browser.md:78",
-      "quote": "Optional: before a release, check Samsung Internet, Android Chrome and Android Firefox by hand on BrowserStack Live. Real Android is the only GDS platform no automated run covers.",
+      "ref": "docs/cross-browser.md:48 (Why these browsers)",
+      "quote": "- **iOS 27 and 26.** Each iOS version ships its own Safari. iOS 27 is current and iOS 26 still gets security updates. Older versions mainly serve iPhones that can't run iOS 26, which we don't support. See [endoflife.date](https://endoflife.date/ios).",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p16-181",
-      "statement": "A cross-browser command names its project explicitly and adds the tag filter, because without the filter a named engine would run every test.",
+      "statement": "A cross-browser command names its project explicitly and adds the tag filter, because without the filter a named project would run every test.",
       "kind": "rule",
-      "ref": "docs/cross-browser.md:96-99",
-      "quote": "- The commands add `--grep '@cross-browser'`. Without it a named engine runs every test.",
+      "ref": "docs/cross-browser.md:76-78 (Running the Playwright projects)",
+      "quote": "- Every project except `chromium` has `default: false`, so it runs only when `--project` names it.\n- The commands add `--grep '@cross-browser'`. Without it, a named project runs every test.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p16-182",
       "statement": "Branded Chrome is installed in the amd64 test image only, because Google publishes no Linux Arm64 build, and is installed from Google locally rather than through Playwright, whose install would replace the browser already there.",
       "kind": "constraint",
-      "ref": "docs/cross-browser.md:98; README.md:63-64; Dockerfile:43-46",
-      "quote": "- `chrome` launches the installed Google Chrome. The amd64 test image installs it (Google publishes no Linux Arm64 build); locally, install it from Google. Do not run `npx playwright install chrome` on your own machine: it replaces the browser you already have.",
+      "ref": "docs/cross-browser.md:79; README.md:63-64; Dockerfile:41-44",
+      "quote": "- `chrome` launches the installed Google Chrome. The amd64 test image installs it (Google publishes no Linux Arm64 build). Locally, install it from Google: `npx playwright install chrome` would replace the browser you already have.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p16-183",
       "statement": "On an iPhone user agent the accessible autocomplete adds a hidden position counter to each suggestion, so the type-ahead helper accepts an optional position suffix, and a spec must not assume a fixed viewport.",
       "kind": "behaviour",
-      "ref": "docs/cross-browser.md:104-107",
+      "ref": "docs/cross-browser.md:82-85",
       "quote": "- On an iPhone user agent, `accessible-autocomplete` adds a hidden \"1 of 7\" to each suggestion, so `TypeAhead.option()` accepts an optional position suffix.\n- Specs must not assume a fixed viewport.",
       "confidence": "verbatim"
     },
@@ -1476,63 +1413,31 @@
       "id": "repo-tests-p16-184",
       "statement": "The BrowserStack run uses the team's service account credentials from the environment, never from the config file.",
       "kind": "constraint",
-      "ref": "docs/cross-browser.md:113; browserstack.yml:5-8; bin/run-browserstack.ts:10, :17-23",
+      "ref": "docs/cross-browser.md:89; browserstack.yml:5-8; bin/run-browserstack.ts:10, :21-27",
       "quote": "# Never write credentials here: the SDK reads them from BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY (.env locally, CDP secrets on CDP).",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p16-185",
-      "statement": "BrowserStack Local is always on, carrying the docker-compose stack's localhost URLs and CDP's internal hostnames to the remote browser, but Safari, WebKit and Android browsers cannot open localhost through it, so the iOS and macOS platforms run only against CDP.",
-      "kind": "constraint",
-      "ref": "docs/cross-browser.md:116-117; bin/run-browserstack.ts:36-49",
-      "quote": "- BrowserStack Local is always on. It carries the docker-compose stack's `localhost` URLs, and CDP's hostnames, which resolve only inside the platform, to the remote browser.\n- Safari, WebKit and Android browsers cannot open `localhost` through BrowserStack Local, so the iOS and macOS platforms run only on CDP.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p16-186",
-      "statement": "Session reuse is off on BrowserStack so every test signs in for itself, because real iPhones allow only one browser context.",
-      "kind": "constraint",
-      "ref": "docs/cross-browser.md:119; bin/run-browserstack.ts:85",
-      "quote": "- Session reuse is off (`E2E_SESSION_REUSE=off`), so every test signs in for itself: real iPhones allow only one browser context.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p16-187",
-      "statement": "Each BrowserStack platform runs half the machine's processors in parallel, up to the team-wide limit of 13 sessions, and that number can be overridden by a setting that must be a positive whole number.",
-      "kind": "non-functional",
-      "ref": "docs/cross-browser.md:121; bin/run-browserstack.ts:14-15, :51-64",
-      "quote": "- Each platform runs half your CPUs in parallel, up to the team-wide limit of 13 sessions. Set `BROWSERSTACK_PARALLELS_PER_PLATFORM` to change it.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p16-188",
       "statement": "A BrowserStack build is named local, github or cdp with the environment, identified by the run id or a UTC time, under the project trade-imports-ins-tests, and each run prints its results link.",
       "kind": "non-functional",
-      "ref": "docs/cross-browser.md:120-122; bin/run-browserstack.ts:36-49, :66-70, :94",
-      "quote": "- Builds are named `local`, `github` or `cdp-<ENVIRONMENT>`, with a UTC time or the run id as the identifier, under the project `trade-imports-ins-tests`.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p16-189",
-      "statement": "A BrowserStack run from a laptop or GitHub targets the docker-compose stack, while a CDP run targets the CDP environment, each with its own Playwright config.",
-      "kind": "behaviour",
-      "ref": "bin/run-browserstack.ts:36-49",
-      "quote": "  return identifier\n    ? { name: 'github', identifier, usesLocalTunnel: true, playwrightConfig: DOCKER_COMPOSE_CONFIG }\n    : { name: 'local', identifier: utcTimestamp(), usesLocalTunnel: true, playwrightConfig: DOCKER_COMPOSE_CONFIG };",
+      "ref": "docs/cross-browser.md:100; bin/run-browserstack.ts:40-53, :102",
+      "quote": "- **Results.** Each run prints its link, under https://automate.browserstack.com/projects/trade-imports-ins-tests. Builds are named `local`, `github` or `cdp-<ENVIRONMENT>`, with a UTC time or the run id as the identifier. A run from your machine against CDP is named `cdp-<ENVIRONMENT>`, with your `RUN_ID` as the identifier.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p16-190",
       "statement": "GitHub Actions does not run the BrowserStack suite.",
       "kind": "constraint",
-      "ref": "docs/cross-browser.md:111",
-      "quote": "The BrowserStack run uses the platforms in [Browsers](#browsers). It runs on CDP, against a CDP environment, and from your machine against the docker-compose stack. GitHub Actions doesn't run it.",
+      "ref": "docs/cross-browser.md:89",
+      "quote": "GitHub Actions doesn't run BrowserStack.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p16-191",
       "statement": "BrowserStack network logs are off because they keep every request's headers, sign-in cookies included, on BrowserStack for 30 days; video, interactive debugging, error-level console logs, Playwright logs and test observability are on.",
       "kind": "non-functional",
-      "ref": "browserstack.yml:40-51",
+      "ref": "browserstack.yml:44-55",
       "quote": "debug: false\n# Off: network logs keep every request's headers, sign-in cookies included, on BrowserStack for 30 days.\nnetworkLogs: false\nnetworkLogsOptions: false\nvideo: true\ninteractiveDebugging: true\nconsoleLogs: errors\nplaywrightLogs: true",
       "confidence": "verbatim"
     },
@@ -1540,15 +1445,15 @@
       "id": "repo-tests-p16-192",
       "statement": "When a proxy is set, as on CDP, the BrowserStack SDK writes a CommonJS require into its generated config, which fails in this ES module project, so the run preloads a file defining a global require into the SDK and its workers.",
       "kind": "constraint",
-      "ref": "docs/cross-browser.md:118; bin/run-browserstack.ts:13, :76-87",
-      "quote": "- When a proxy is set (`HTTP_PROXY`, as on CDP), the SDK writes `require(\"global-agent\")` into its generated Playwright config, which fails in an ES module project. `bin/browserstack-global-require.mjs` defines a global `require` for it, and `bin/run-browserstack.ts` preloads that file into the SDK and its workers.",
+      "ref": "docs/cross-browser.md:101; bin/run-browserstack.ts:13, :83-87",
+      "quote": "- **The proxy.** On CDP, `HTTP_PROXY` makes the SDK write `require(\"global-agent\")` into its generated config, which fails in an ES module project. `bin/browserstack-global-require.mjs` defines a global `require`, and `bin/run-browserstack.ts` preloads it.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p16-193",
       "statement": "A BrowserStack run stops before starting if either credential is missing, naming both.",
       "kind": "behaviour",
-      "ref": "bin/run-browserstack.ts:17-23",
+      "ref": "bin/run-browserstack.ts:21-27",
       "quote": "    console.error(`Set ${missing.join(' and ')} in .env to run on BrowserStack.`);\n    process.exit(1);",
       "confidence": "verbatim"
     },
@@ -2127,10 +2032,10 @@
       "id": "repo-tests-p16-265",
       "statement": "The suite runs on Node 26.13.1, as its version file and its engines range both state.",
       "kind": "constraint",
-      "ref": "package.json:6-8; .nvmrc",
-      "quote": "  \"engines\": {\n    \"node\": \">=26.13.1\"\n  },",
+      "ref": "package.json:6-8; README.md:24",
+      "quote": "- Node.js 26.13.1, the version in `.nvmrc`",
       "confidence": "verbatim",
-      "note": "Ambiguity recorded, not resolved: README.md:24 states \"Node.js v24\" as the prerequisite, which neither .nvmrc (v26.13.1) nor the engines range agrees with."
+      "note": "package.json engines reads \">=26.13.1\". The README now agrees with it."
     },
     {
       "id": "repo-tests-p16-266",
@@ -2191,12 +2096,12 @@
     },
     {
       "id": "repo-tests-p16-273",
-      "statement": "The accessibility documentation names no conformance standard, so the suite's prose does not say which level of WCAG, or which axe rule set and version, its scans hold a page to.",
+      "statement": "The accessibility documentation names no conformance standard for the suite as a whole, so its prose does not say which level of WCAG, or which axe rule set, its scans hold a page to.",
       "kind": "non-functional",
-      "ref": "docs/a11y.md (whole file: only the excluded conditional-reveal radios are documented)",
+      "ref": "docs/a11y.md (whole file: only the excluded conditional-reveal radios and the excluded file upload button are documented)",
       "quote": "",
       "confidence": "gap",
-      "note": "docs/a11y.md documents only the two excluded selectors and why. README.md:155-163 adds the timeout and the same exclusion. Neither states a standard; @axe-core/playwright 4.14.0 in package.json is the only version evidence in this part."
+      "note": "docs/a11y.md cites WCAG 2.5.3 Label in Name only to argue the file upload button passes, and names axe 4.14 and axe-core 4.14.1 only for that exclusion. package.json pins @axe-core/playwright 4.14.0."
     },
     {
       "id": "repo-tests-p16-274",
@@ -2206,6 +2111,217 @@
       "quote": "",
       "confidence": "gap",
       "note": "README.md:111 says only \"A dash means the domain has no specs of that test type yet\"; docs/security.md:35 says \"Plants has no security specs yet\". Neither says what is planned."
+    },
+    {
+      "id": "repo-tests-p16-275",
+      "statement": "`npm run test:browserstack` runs the @cross-browser and @ios tests on BrowserStack against CDP, from a developer's machine when RUN_ID is set.",
+      "kind": "behaviour",
+      "ref": "README.md:87; package.json:41",
+      "quote": "\"test:browserstack\": \"npm run _browserstack_clean_and_test -- --grep '@cross-browser|@ios'\",",
+      "confidence": "verbatim",
+      "note": "README table row: \"`@cross-browser` and `@ios` suites on BrowserStack | CDP (from your machine, set `RUN_ID`)\"."
+    },
+    {
+      "id": "repo-tests-p16-276",
+      "statement": "`npm run test:docker-compose:browserstack` runs the @cross-browser and @ios tests on BrowserStack against the docker-compose stack.",
+      "kind": "behaviour",
+      "ref": "README.md:92; package.json:46",
+      "quote": "\"test:docker-compose:browserstack\": \"npm run _browserstack_clean_and_test -- --grep '@cross-browser|@ios'\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-277",
+      "statement": "Cross-browser tests are existing end-to-end specs tagged @cross-browser, run in real Chrome, Playwright's Firefox and WebKit, an emulated iPhone 17 and an emulated Pixel 10, and on BrowserStack in Edge on Windows 11 and WebKit on macOS, with @ios tests on real iPhones.",
+      "kind": "behaviour",
+      "ref": "README.md:455; docs/cross-browser.md:3-6",
+      "quote": "Tests tagged `@cross-browser` run in real Chrome, Playwright's browsers (Firefox, WebKit, an emulated iPhone 17 and an emulated Pixel 10), and on BrowserStack (Edge on Windows 11, WebKit on macOS, and `@ios` tests on real iPhones).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-278",
+      "statement": "Cross-browser commands are documented for the animals and ins domains only; the animals-admin domain has no cross-browser or BrowserStack script.",
+      "kind": "behaviour",
+      "ref": "README.md:455-457; package.json:53-54, :57-60, :62-63",
+      "quote": "Commands for each domain:\n[animals](tests/animals/cross-browser/README.md) and\n[ins](tests/ins/cross-browser/README.md).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-279",
+      "statement": "The Playwright cross-browser projects run on Linux in the test image on CDP, or on the developer's own machine.",
+      "kind": "constraint",
+      "ref": "docs/cross-browser.md:12",
+      "quote": "**Playwright run** (`cross-browser` profile): Playwright launches these projects, from `utils/playwright/shared-config.ts`, on Linux in our test image on CDP, or on your own machine.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-280",
+      "statement": "A @cross-browser tagged test still runs in the default Chromium end-to-end run, and the real iPhones run only tests tagged @ios.",
+      "kind": "rule",
+      "ref": "docs/cross-browser.md:72",
+      "quote": "A tagged test still runs in the Chromium e2e run. The iPhones run only tests tagged `@ios`: see [Real iPhones](#real-iphones).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-281",
+      "statement": "BrowserStack runs the tests on four platforms, each on the newest browser it offers for the platform: real Edge on Windows 11 and Playwright's WebKit on macOS 27 Golden Gate for @cross-browser tests, and real Safari on an iPhone 18 Pro on iOS 27 and an iPhone 17 on iOS 26 for @ios tests.",
+      "kind": "behaviour",
+      "ref": "docs/cross-browser.md:23-30; browserstack.yml:20-34",
+      "quote": "| Windows 11           | Desktop       | Real Edge                      | `@cross-browser` |\n| macOS 27 Golden Gate | Desktop       | Playwright's WebKit (Mac port) | `@cross-browser` |\n| iOS 27               | iPhone 18 Pro | Real Safari                    | `@ios`           |\n| iOS 26               | iPhone 17     | Real Safari                    | `@ios`           |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-282",
+      "statement": "The browser set comes from the GDS browser guidance and was last reviewed in November 2026; it is checked when GDS updates its list in February, when Apple releases a new iOS or macOS, when Windows 11 reaches end of support, when Playwright is upgraded, when BrowserStack adds iOS commands and when Playwright documents its real-Firefox channel.",
+      "kind": "rule",
+      "ref": "docs/cross-browser.md:34; docs/cross-browser.md:121-131 (Reviewing the browsers)",
+      "quote": "Last reviewed: November 2026. The list comes from the [GDS browser guidance](https://www.gov.uk/service-manual/technology/designing-for-different-browsers-and-devices).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-283",
+      "statement": "Edge on Windows 11 runs on BrowserStack because Windows is on the GDS list, Edge ships with it, managed Windows machines often come with Edge alone and traders may use them, and the chrome project covers Edge's engine but not its enterprise policies, tracking prevention, Windows form controls, fonts or high contrast mode; Windows 10 is not tested because it is out of support.",
+      "kind": "rule",
+      "ref": "docs/cross-browser.md:46",
+      "quote": "- **Edge on Windows 11.** Windows is on the GDS list, and Edge ships with it. Managed Windows machines often come with Edge alone, and traders may use them. The `chrome` project covers Edge's engine but not Edge itself: its enterprise policies, tracking prevention, and Windows form controls, fonts and high contrast mode. It runs on BrowserStack, so the test image doesn't have to download Edge. Windows 10 is out of [support](https://endoflife.date/windows).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-284",
+      "statement": "Four things are deliberately not covered: real Android browsers, real Firefox, real macOS Safari, and Chrome on Windows and macOS.",
+      "kind": "rule",
+      "ref": "docs/cross-browser.md:52-57 (Not covered)",
+      "quote": "- **Real Android** (Chrome, Samsung Internet, Firefox). BrowserStack supports it only up to Playwright 1.62. The emulated Pixel 10 covers Chrome's and Samsung Internet's engine at phone size, and `firefox` covers Android Firefox's. Before a release, you can check them by hand on BrowserStack Live.\n- **Real Firefox.** Playwright reliably drives only its own build. Its `moz-firefox` channels are experimental and undocumented.\n- **Real macOS Safari.** Not available through Playwright.\n- **Chrome on Windows and macOS.** `chrome` runs on Linux; the operating system mostly changes font rendering.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-285",
+      "statement": "Real Android is not run because BrowserStack supports it only up to Playwright 1.62; the emulated Pixel 10 and the Firefox project cover its engines, and its browsers can be checked by hand on BrowserStack Live before a release.",
+      "kind": "rule",
+      "ref": "docs/cross-browser.md:54",
+      "quote": "BrowserStack supports it only up to Playwright 1.62. The emulated Pixel 10 covers Chrome's and Samsung Internet's engine at phone size, and `firefox` covers Android Firefox's. Before a release, you can check them by hand on BrowserStack Live.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-286",
+      "statement": "BrowserStack can be run against a CDP environment from CDP through the browserstack profile or from a developer's machine with RUN_ID set, on every platform, or against the docker-compose stack from a developer's machine, where only the Windows platform passes.",
+      "kind": "behaviour",
+      "ref": "docs/cross-browser.md:91-95; tests/animals/cross-browser/README.md:29-43; tests/ins/cross-browser/README.md:29-43",
+      "quote": "| The docker-compose stack | Your machine | `npm run test:docker-compose:browserstack` (or `test:docker-compose:<domain>:browserstack`)                                                              | All; only Windows passes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-287",
+      "statement": "BrowserStack Local is always on, carrying the docker-compose stack's localhost URLs and CDP's hostnames to the remote browser, but Safari and WebKit cannot open localhost through it, so against the docker-compose stack the macOS and iPhone platforms fail and must be run against CDP.",
+      "kind": "constraint",
+      "ref": "docs/cross-browser.md:97; bin/run-browserstack.ts:40-53",
+      "quote": "- **The tunnel.** BrowserStack Local is always on. It carries the docker-compose stack's `localhost` URLs, and CDP's hostnames, to the remote browser. Safari and WebKit can't open `localhost` through it, so against the docker-compose stack the macOS and iPhone platforms fail. Use a CDP environment for them.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-288",
+      "statement": "A BrowserStack run with RUN_ID set targets the CDP environment with the CDP config, while a run without it, from GitHub or a laptop, targets the docker-compose stack.",
+      "kind": "behaviour",
+      "ref": "bin/run-browserstack.ts:40-53",
+      "quote": "  if (process.env.RUN_ID) {\n    return {\n      name: `cdp-${getEnvironment() ?? 'unknown'}`,\n      identifier: process.env.RUN_ID,\n      usesLocalTunnel: true,\n      playwrightConfig: CDP_CONFIG,\n    };\n  }",
+      "confidence": "verbatim",
+      "note": "mechanism: picks the BrowserStack build name and Playwright config from RUN_ID and GITHUB_RUN_ID."
+    },
+    {
+      "id": "repo-tests-p16-289",
+      "statement": "Session reuse is off on BrowserStack, so every test signs in for itself, because BrowserStack allows one browser context per session and does not restore cookies from saved storage state on iOS.",
+      "kind": "constraint",
+      "ref": "docs/cross-browser.md:99, :115; bin/run-browserstack.ts:92",
+      "quote": "This is why session reuse is off: BrowserStack allows one context per session, and doesn't restore cookies from `storageState` on iOS.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-290",
+      "statement": "A BrowserStack run uses one session per processor, shared across the platforms, at most the team-wide limit of 13 in all and at least one per platform; a per-platform override must be a positive whole number, and the limit of 13 does not apply to it.",
+      "kind": "non-functional",
+      "ref": "docs/cross-browser.md:98; bin/run-browserstack.ts:14, :55-68; browserstack.yml:41",
+      "quote": "- **Sessions.** A run uses one session per CPU, shared across the platforms, up to the team-wide limit of 13 in all, and at least 1 per platform. With four platforms, 4 CPUs run 4 sessions and 8 CPUs run 8. Set `BROWSERSTACK_PARALLELS_PER_PLATFORM` to choose the sessions per platform yourself; the limit of 13 then doesn't apply.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-291",
+      "statement": "A BrowserStack run stops before starting if browserstack.yml lists no platform.",
+      "kind": "behaviour",
+      "ref": "bin/run-browserstack.ts:70-78",
+      "quote": "    console.error('browserstack.yml must list at least one platform under platforms.');\n    process.exit(1);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-292",
+      "statement": "BrowserStack's own accessibility checking is off, because the @a11y suite checks accessibility with axe in Chromium.",
+      "kind": "non-functional",
+      "ref": "browserstack.yml:57-59",
+      "quote": "# Off: the @a11y suite checks accessibility with axe, in Chromium.\naccessibility: false",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-293",
+      "statement": "On a BrowserStack run, a test without its platform's tag is skipped with a message naming the tag: the iPhone platforms run only @ios tests and the desktop platforms only @cross-browser tests.",
+      "kind": "behaviour",
+      "ref": "fixtures/browserstack.ts:3-18; fixtures/index.ts:7-9; docs/cross-browser.md:109",
+      "quote": "      const requiredTag = BROWSERSTACK_IOS_PROJECT.test(testInfo.project.name) ? '@ios' : '@cross-browser';\n      testInfo.skip(\n        !testInfo.tags.includes(requiredTag),\n        `BrowserStack runs only tests tagged ${requiredTag} on this platform. See docs/cross-browser.md.`,\n      );",
+      "confidence": "verbatim",
+      "note": "The skip fixture is merged in only when BROWSERSTACK_BUILD_IDENTIFIER is set, which bin/run-browserstack.ts sets for every BrowserStack run."
+    },
+    {
+      "id": "repo-tests-p16-294",
+      "statement": "On a real iPhone BrowserStack translates Playwright commands to Safari and supports only the commands on its supported iOS commands list, and the suite does not change idiomatic Playwright code to work around BrowserStack.",
+      "kind": "constraint",
+      "ref": "docs/cross-browser.md:105, :109",
+      "quote": "Don't change idiomatic Playwright code to work around BrowserStack.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-295",
+      "statement": "The real iPhones run short flows only, because BrowserStack's iOS support is not reliable over long journeys; Playwright's WebKit, the emulated iPhone 17 and macOS run the journeys instead.",
+      "kind": "rule",
+      "ref": "docs/cross-browser.md:107",
+      "quote": "The iPhones run short flows only, because BrowserStack's iOS support isn't reliable over long journeys. Playwright's WebKit, the emulated iPhone 17 and macOS run the journeys instead.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-296",
+      "statement": "A test can carry @ios only if it uses one browser context and one page, so it cannot sign in a second user, open a second tab, turn JavaScript off, or seed through the frontend forms or the seeded animals journey, whose seed session opens a second context.",
+      "kind": "rule",
+      "ref": "docs/cross-browser.md:115",
+      "quote": "A test can take `@ios` only if it uses one browser context and one page. So it can't sign in a second user, open a second tab, turn JavaScript off, or seed through `frontendForms` or `animalsSeededJourney`, whose seed session opens a second context.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-297",
+      "statement": "A test is tried on the iPhones by tagging it @ios on a branch and running the CDP browserstack profile, and keeps the tag only if it passes on both iPhones.",
+      "kind": "rule",
+      "ref": "docs/cross-browser.md:117",
+      "quote": "To try a test on the iPhones, tag it `@ios` on a branch and run the CDP `browserstack` profile. Keep the tag only if the test passes on both iPhones; otherwise remove it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-298",
+      "statement": "Console logs and Playwright logs are not available on the iOS platforms, and still apply to the desktop platforms.",
+      "kind": "non-functional",
+      "ref": "docs/cross-browser.md:119",
+      "quote": "`consoleLogs` and Playwright logs aren't available on iOS. Both still apply to the desktop platforms.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-299",
+      "statement": "The accompanying documents page's accessibility scans leave out govuk-frontend's file upload button, because axe 4.14's label-content-name-mismatch rule joins the button's status text and its \"Choose file\" text without a space and fails to find that in the accessible name, while the browser's accessible name does contain the visible text and so meets WCAG 2.5.3 Label in Name.",
+      "kind": "rule",
+      "ref": "docs/a11y.md:14-20",
+      "quote": "The browser's accessible name is \"Attachment , No file chosen Choose file or drop file\". That contains the visible text, so the button meets WCAG 2.5.3 Label in Name. This is a fault in axe's text extraction on component code the service does not own, not a defect in the service. It appears in govuk-frontend 6.5.1 and 6.6.0, with axe-core 4.14.1.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-300",
+      "statement": "The file upload button exclusion is to be deleted once a release of axe or govuk-frontend no longer reports the fault.",
+      "kind": "rule",
+      "ref": "docs/a11y.md:20",
+      "quote": "The scans of the accompanying documents page exclude the button through `govukFileUploadButtonOnDocuments` in `utils/a11y-exclusions.ts`. Delete the exclusion once a release of axe or govuk-frontend no longer reports it.",
+      "confidence": "verbatim"
     }
   ]
 }

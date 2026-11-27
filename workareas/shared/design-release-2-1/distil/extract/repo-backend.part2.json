@@ -1,0 +1,1105 @@
+{
+  "source": "repo:backend",
+  "structure": "Part 2, notification lifecycle and API, read on main. Every ref below is relative to src/main/java/uk/gov/defra/trade/imports/animals/ unless it starts with src/main/resources/. Read in full: notification/NotificationController.java (311 lines, 12 endpoints under /notifications), notification/NotificationService.java (551 lines: create, replace, copy, submit, amend, cancel amend, soft delete, hard delete, listing, fulfilments view, reference numbers, expiry stamping, outbox lock), NotificationRepository.java (40), NotificationCopyMapper.java (75), ReferenceNumberGenerator.java (38), NotificationSort.java (42), NotificationExpiry.java (7), NotificationExpiryIndex.java (40), NotificationExpiryStampingLog.java (36), configuration/NotificationTtlConfig.java (37), filter/TraderOrganisationHeaderFilter.java, filter/AdminSecretFilter.java, filter/AdminNotificationRoutes.java, audit/ Action, Audit, AuditRepository and Result, src/main/resources/application.yml (167) and application-local.yml (57). To confirm status codes and the replay audit, also read the exception-to-status mapping lines of exceptions/GlobalExceptionHandler.java and outbox/OutboxReplayService.java (68 lines). Covered: every endpoint with its method, path, parameters, headers and status codes; every lifecycle operation with its status checks, refusal messages, status transitions, stored dates and flags, and the outbox event type each writes (not the event content, which is part 4); copy as new field by field; listing filters, search, sort and paging; reference number format and generation; draft expiry; organisation scoping and the admin routes and secret (weaknesses in general terms only); both audit actions and results; a template search (none found); and the notification settings in both config files. Field definitions of the record (part 1), document endpoints (part 3) and outbox content (part 4) are left out.",
+  "claims": [
+    {
+      "id": "repo-backend-p2-001",
+      "statement": "The notification API is served under the base path /notifications.",
+      "kind": "integration",
+      "ref": "notification/NotificationController.java:36",
+      "quote": "@RequestMapping(\"/notifications\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-002",
+      "statement": "POST /notifications saves a notification: it creates a new one when the body's reference number is blank and updates the existing one when a reference number is given.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationController.java:49-62; notification/NotificationService.java:91-100",
+      "quote": "@Operation(summary = \"Save notification\", description = \"Creates or updates a notification\") ... if (StringUtils.isBlank(notificationDto.getReferenceNumber())) { return createNotification(...); } else { return replaceContent(...); }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-003",
+      "statement": "The save body wraps the notification content and an optional actor (SaveNotificationDto with notification and actor), and the body is validated before it is saved.",
+      "kind": "data",
+      "ref": "notification/NotificationController.java:52-57",
+      "quote": "@Valid @RequestBody SaveNotificationDto saveNotificationDto, ... NotificationDto notificationDto = saveNotificationDto.getNotification(); Actor actor = resolveActor(saveNotificationDto.getActor(), organisationId);",
+      "confidence": "verbatim",
+      "note": "The DTO's field definitions and validation are part 1's."
+    },
+    {
+      "id": "repo-backend-p2-004",
+      "statement": "Every save and lifecycle endpoint responds 200 with the whole stored notification record (NotificationAggregate).",
+      "kind": "integration",
+      "ref": "notification/NotificationController.java:52,72,92,125,149,169,266",
+      "quote": "public ResponseEntity<NotificationAggregate> post(",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-005",
+      "statement": "Every trader endpoint reads an optional trace id header, defaulting to an empty string, and passes it on as the correlation id of the change.",
+      "kind": "integration",
+      "ref": "notification/NotificationController.java:54",
+      "quote": "@RequestHeader(value = RequestTracingFilter.TRACE_ID_HEADER_PROPERTY, required = false, defaultValue = \"\") String traceId",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-006",
+      "statement": "The actor recorded for a change is the actor the caller sends (id, source, user type, display name, on-behalf-of organisation), with its organisation always set from the organisation header rather than from the body; with no actor sent, no actor is recorded.",
+      "kind": "rule",
+      "ref": "notification/NotificationController.java:278-291",
+      "quote": "if (actorRequest == null) { return null; } ... .organisationId(organisationId) .onBehalfOfOrganisationId(actor.getOnBehalfOfOrganisationId())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-007",
+      "statement": "PUT /notifications/{referenceNumber} replaces a notification's content (its notification fields and the opaque fulfilments payload) at that reference.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationController.java:64-82",
+      "quote": "Replaces the notification content (notification-shape fields + opaque fulfilments payload) at the given reference. Requires DRAFT or AMEND status. Emits a NotificationEdited outbox event on every save.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-008",
+      "statement": "Every endpoint with a reference number in its path refuses one that does not match GBN-AG-, two digits, a hyphen and six Crockford base32 characters.",
+      "kind": "rule",
+      "ref": "notification/NotificationController.java:73; notification/ReferenceNumberGenerator.java:20",
+      "quote": "REFERENCE_NUMBER_PATTERN = \"^GBN-AG-\\\\d{2}-[0-9A-HJ-KM-NP-TV-Z]{6}$\"",
+      "confidence": "verbatim",
+      "note": "A pattern violation is a ConstraintViolationException, which GlobalExceptionHandler maps to 400."
+    },
+    {
+      "id": "repo-backend-p2-009",
+      "statement": "Content can be replaced only while the notification is DRAFT or AMEND; any other status is refused with 400.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:113-117",
+      "quote": "throw new BadRequestException(\"Cannot replace notification content with status: \" + notificationAggregate.getStatus());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-010",
+      "statement": "Replacing content requires the caller to send the concurrency token it last read; without one the save is refused with 400.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:118-120",
+      "quote": "throw new BadRequestException(\"concurrencyToken is required to replace a notification\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-011",
+      "statement": "A content save is made at the concurrency token the caller sent, so a save from a stale read is refused as a conflict (409) rather than overwriting a newer save.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:121; exceptions/GlobalExceptionHandler.java:243-261",
+      "quote": "notificationAggregate.setConcurrencyToken(dto.getConcurrencyToken());",
+      "confidence": "inferred",
+      "note": "Inferred: the token is set on the record before save, and an optimistic locking failure maps to 409. The PUT endpoint's own API docs do not list 409."
+    },
+    {
+      "id": "repo-backend-p2-012",
+      "statement": "A content save replaces every notification field the service stores: origin, commodities, reason for import, additional details, place of origin, consignor, consignee, importer, destination, CPH number, transport, purpose in internal market, destination country, port of exit, exit date, and the fulfilments payload.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationService.java:482-502",
+      "quote": "notification.setOrigin(dto.getOrigin()); notification.setCommodities(commoditiesFromDto(dto.getCommodities())); ... notification.setExitDate(dto.getExitDate()); notificationAggregate.setFulfilments(dto.getFulfilments());",
+      "confidence": "verbatim",
+      "note": "A field left out of the body is saved as empty: the save replaces, it does not merge."
+    },
+    {
+      "id": "repo-backend-p2-013",
+      "statement": "When commodities are missing or empty, an empty commodity list is stored; a commodity with no species is stored with an empty species list.",
+      "kind": "data",
+      "ref": "notification/NotificationService.java:520-529",
+      "quote": "if (fromDto == null || fromDto.isEmpty()) { return new ArrayList<>(); } ... entry.getSpecies() != null ? entry : entry.toBuilder().species(new ArrayList<>()).build()",
+      "confidence": "verbatim",
+      "note": "mechanism: normalises the commodities list and each commodity's species list on save."
+    },
+    {
+      "id": "repo-backend-p2-014",
+      "statement": "Each content save during an amendment works out whether the answers now differ from the submitted version, and stores that as the answers-differ flag.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationService.java:503-518",
+      "quote": "if (notificationAggregate.getStatus() == NotificationStatus.AMEND) { notificationAggregate.setAnswersDifferFromSubmitted(answersDifferFromSubmitted(notificationAggregate)); }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-015",
+      "statement": "The answers-differ comparison covers the notification fields only, not the fulfilments payload.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:516-517",
+      "quote": "return !notificationContentMapper.deepClone(submittedNotification).equals(notificationContentMapper.deepClone(notificationAggregate.getNotification()));",
+      "confidence": "inferred",
+      "note": "Inferred: only getNotification() and the pre-amend notification are compared; preAmendFulfilments is not read here."
+    },
+    {
+      "id": "repo-backend-p2-016",
+      "statement": "An amendment with no stored submitted version reports its answers as not differing.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:510-515",
+      "quote": "log.warn(\"Amendment {} has no submitted snapshot, answers reported as not differing\", notificationAggregate.getReferenceNumber()); return false;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-017",
+      "statement": "Every content save keeps the notification's status and writes a NotificationEdited outbox event.",
+      "kind": "integration",
+      "ref": "notification/NotificationService.java:124-125",
+      "quote": "return saveWithStatusAndOutboxEvent(notificationAggregate, referenceNumber, correlationId, notificationAggregate.getStatus(), OutboxEventType.NOTIFICATION_EDITED, actor);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-018",
+      "statement": "Every save and lifecycle change stamps the notification's updated time with the current time.",
+      "kind": "data",
+      "ref": "notification/NotificationService.java:305",
+      "quote": "notification.setUpdated(clock.instant());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-019",
+      "statement": "Every save and lifecycle change writes the record and its outbox event together, under a per-notification lock; when the lock stays busy after two retries the request fails with 500.",
+      "kind": "non-functional",
+      "ref": "notification/NotificationService.java:291-363; exceptions/GlobalExceptionHandler.java:269-287",
+      "quote": "String lockName = \"outbox-write:\" + aggregateId; ... throw new OutboxWriteException(\"Could not acquire outbox lock for \" + operationLabel, aggregateId, null, correlationId);",
+      "confidence": "verbatim",
+      "note": "mechanism: serialises writes to one notification's outbox. MAX_LOCK_RETRIES = 2, waiting notification.submit.lock-at-least-for between tries."
+    },
+    {
+      "id": "repo-backend-p2-020",
+      "statement": "Creating a notification stamps its created time, sets its organisation from the organisation header, gives it a new reference number and saves it as DRAFT.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationService.java:451-469",
+      "quote": "notificationAggregate.setCreated(clock.instant()); notificationAggregate.setOrganisationId(organisationId); stampExpiry(notificationAggregate); ... NotificationStatus.DRAFT, OutboxEventType.NOTIFICATION_CREATED,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-021",
+      "statement": "Creating a notification writes a NotificationCreated outbox event.",
+      "kind": "integration",
+      "ref": "notification/NotificationService.java:467-468",
+      "quote": "OutboxEventType.NOTIFICATION_CREATED,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-022",
+      "statement": "When a new reference number collides with an existing one, creation tries a fresh number up to three times in all, and then fails.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:458-479",
+      "quote": "int maxAttempts = 3; ... \"Failed to generate a unique reference number after \" + maxAttempts + \" attempts\"",
+      "confidence": "verbatim",
+      "note": "The final failure is an IllegalStateException, which the generic RuntimeException handler maps to 500."
+    },
+    {
+      "id": "repo-backend-p2-023",
+      "statement": "Reference numbers have the format GBN-AG-{YY}-{XXXXXX}: YY is the last two digits of the current year and XXXXXX is six random Crockford base32 characters (digits and letters, excluding I, L, O and U).",
+      "kind": "data",
+      "ref": "notification/ReferenceNumberGenerator.java:7-12,16-28",
+      "quote": "Generates notification reference numbers in the format {@code GBN-AG-{YY}-{XXXXXX}}. <p>{@code XXXXXX} is a 6-character Crockford base32 random body (digits 0–9 and letters A–Z excluding I, L, O, U), drawn from {@link SecureRandom}.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-024",
+      "statement": "The random part of a reference number comes from a cryptographically secure random source.",
+      "kind": "non-functional",
+      "ref": "notification/ReferenceNumberGenerator.java:19",
+      "quote": "private static final SecureRandom SECURE_RANDOM = new SecureRandom();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-025",
+      "statement": "Every notification reference number starts GBN-AG, whatever the notification's commodities; the backend has no other prefix, such as one for germinal products.",
+      "kind": "rule",
+      "ref": "notification/ReferenceNumberGenerator.java:27",
+      "quote": "return String.format(\"GBN-AG-%s-%s\", yy, randomBase32());",
+      "confidence": "inferred",
+      "note": "Inferred from the single fixed format; the generator takes no input."
+    },
+    {
+      "id": "repo-backend-p2-026",
+      "statement": "POST /notifications/{referenceNumber}/copy creates a new DRAFT notification copied from an existing one, and needs the source's concurrency token as a query parameter.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationController.java:84-103",
+      "quote": "@Operation(summary = \"Copy notification\", description = \"Creates a new DRAFT notification copied from an existing one\") ... @RequestParam Long concurrencyToken,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-027",
+      "statement": "Copy as new is allowed from a DRAFT, SUBMITTED or AMEND notification; any other status is refused with 400.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:133-137",
+      "quote": "throw new BadRequestException(\"Cannot copy notification with status: \" + source.getStatus());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-028",
+      "statement": "Copy as new is refused with 409 when the source notification has moved on from the concurrency token the caller sent.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:144-148; notification/NotificationController.java:90",
+      "quote": "@ApiResponse(responseCode = \"409\", description = \"concurrencyToken does not match the current source notification\", content = @Content)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-029",
+      "statement": "Copy as new fails with a server error, not a client error, when the source record has no concurrency token.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationService.java:138-143",
+      "quote": "throw new IllegalStateException(\"Cannot check copy source concurrencyToken for \" + referenceNumber",
+      "confidence": "inferred",
+      "note": "Inferred: IllegalStateException falls to the generic RuntimeException handler (500). A missing query parameter is refused earlier with 400 by MissingServletRequestParameterException."
+    },
+    {
+      "id": "repo-backend-p2-030",
+      "statement": "The copy is created as a brand-new notification: new reference number, DRAFT status, its own created time and expiry, the caller's organisation, and a NotificationCreated outbox event.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationService.java:150,451-469",
+      "quote": "return createNotification(notificationCopyMapper.toCopyDto(source), correlationId, actor, organisationId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-031",
+      "statement": "Copy as new carries over the origin's country code, country subdivision code, requires-region-code flag and region of origin code.",
+      "kind": "rule",
+      "ref": "notification/NotificationCopyMapper.java:45-55",
+      "quote": ".countryCode(source.getCountryCode()) .countrySubdivisionCode(source.getCountrySubdivisionCode()) .requiresRegionCode(source.getRequiresRegionCode()) .regionOfOriginCode(source.getRegionOfOriginCode())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-032",
+      "statement": "Copy as new carries over each commodity's name, commodity code and description only; species and every other commodity detail are cleared.",
+      "kind": "rule",
+      "ref": "notification/NotificationCopyMapper.java:57-65",
+      "quote": ".map(entry -> Commodity.builder() .name(entry.getName()) .commodityCode(entry.getCommodityCode()) .description(entry.getDescription()) .build())",
+      "confidence": "verbatim",
+      "note": "The cleared commodity fields are whatever part 1 lists on Commodity beyond these three. Species are then stored as an empty list on save (repo-backend-p2-013)."
+    },
+    {
+      "id": "repo-backend-p2-033",
+      "statement": "Copy as new carries over the reason for import.",
+      "kind": "rule",
+      "ref": "notification/NotificationCopyMapper.java:18",
+      "quote": ".reasonForImport(source.getReasonForImport())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-034",
+      "statement": "Copy as new carries over only the certified-for answer of the additional details.",
+      "kind": "rule",
+      "ref": "notification/NotificationCopyMapper.java:67-74",
+      "quote": "return AdditionalDetails.builder() .certifiedFor(source.getCertifiedFor()) .build();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-035",
+      "statement": "Copy as new carries over the place of origin, consignor, consignee, importer and destination, each with only its name, email, phone and address.",
+      "kind": "rule",
+      "ref": "notification/NotificationCopyMapper.java:20-24,33-43",
+      "quote": "return ConsignmentParty.builder() .name(source.getName()) .email(source.getEmail()) .phone(source.getPhone()) .address(source.getAddress()) .build();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-036",
+      "statement": "Copy as new carries over the CPH number, the purpose in the internal market, the destination country and the port of exit.",
+      "kind": "rule",
+      "ref": "notification/NotificationCopyMapper.java:25-28",
+      "quote": ".cphNumber(source.getCphNumber()) .purposeInInternalMarket(source.getPurposeInInternalMarket()) .destinationCountry(source.getDestinationCountry()) .portOfExit(source.getPortOfExit())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-037",
+      "statement": "Copy as new carries over the fulfilments payload as it is.",
+      "kind": "rule",
+      "ref": "notification/NotificationCopyMapper.java:29",
+      "quote": ".fulfilments(notificationAggregate.getFulfilments() == null ? null : new ArrayList<>(notificationAggregate.getFulfilments()))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-038",
+      "statement": "Copy as new clears the transport details and the exit date.",
+      "kind": "rule",
+      "ref": "notification/NotificationCopyMapper.java:13-31; notification/NotificationService.java:497,501",
+      "quote": ".portOfExit(source.getPortOfExit()) .fulfilments(",
+      "confidence": "inferred",
+      "note": "Inferred: the copy builder sets no transport and no exitDate, and the save then stores both as empty."
+    },
+    {
+      "id": "repo-backend-p2-039",
+      "statement": "Copy as new does not carry over the submitted date, the amendment snapshot, the answers-differ flag or the status: the copy starts as a fresh draft.",
+      "kind": "rule",
+      "ref": "notification/NotificationCopyMapper.java:13-31; notification/NotificationService.java:451-457",
+      "quote": "NotificationAggregate notificationAggregate = new NotificationAggregate();",
+      "confidence": "inferred",
+      "note": "Inferred: the copy is built from a NotificationDto into a new aggregate."
+    },
+    {
+      "id": "repo-backend-p2-040",
+      "statement": "Copy as new needs the source to hold notification content; a source with none cannot be copied.",
+      "kind": "rule",
+      "ref": "notification/NotificationCopyMapper.java:14",
+      "quote": "Notification source = notificationAggregate.requireNotification();",
+      "confidence": "inferred",
+      "note": "mechanism: requireNotification is defined in part 1's NotificationAggregate. A source whose commodities list is null would also fail, since the mapper streams it without a null check."
+    },
+    {
+      "id": "repo-backend-p2-041",
+      "statement": "POST /notifications/{referenceNumber}/submit moves a notification to SUBMITTED from DRAFT or AMEND, only if it is still at the concurrency token the caller sends, so the submitted content is exactly what the caller last read.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationController.java:105-137",
+      "quote": "Transitions notification status to SUBMITTED. Accepts DRAFT or AMEND as the source state. Submits only if the notification is still at concurrencyToken, so the submitted content is exactly what the caller last read.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-042",
+      "statement": "Submitting a notification in any status other than DRAFT or AMEND is refused with 400.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:205-209",
+      "quote": "throw new BadRequestException(\"Cannot submit notification with status: \" + notificationAggregate.getStatus());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-043",
+      "statement": "Submitting with a concurrency token that does not match the current notification is refused with 409 as a problem+json response.",
+      "kind": "rule",
+      "ref": "notification/NotificationController.java:119-122; notification/NotificationService.java:213",
+      "quote": "@ApiResponse(responseCode = \"409\", description = \"concurrencyToken does not match the current notification\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-044",
+      "statement": "Submit documents 200, 400 (not submittable, or token missing), 401, 404, 409 and 500 responses.",
+      "kind": "integration",
+      "ref": "notification/NotificationController.java:110-123",
+      "quote": "@ApiResponse(responseCode = \"400\", description = \"Notification not in a submittable state, or concurrencyToken missing\", ... @ApiResponse(responseCode = \"500\", description = \"Submission failed\", content = @Content)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-045",
+      "statement": "Submitting stamps the submitted date with the current time, on a first submission and on each resubmission of an amendment.",
+      "kind": "data",
+      "ref": "notification/NotificationService.java:300-302,316-323",
+      "quote": "notification.setSubmittedAt(clock.instant());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-046",
+      "statement": "Submitting an amendment clears the stored submitted version (notification and fulfilments) and resets the answers-differ flag to false.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationService.java:316-321",
+      "quote": "if (notification.getStatus() == NotificationStatus.AMEND) { notification.setPreAmendFulfilments(null); notification.setPreAmendNotification(null); notification.setAnswersDifferFromSubmitted(false); }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-047",
+      "statement": "A first submission from DRAFT writes a NotificationSubmitted outbox event; a resubmission from AMEND writes a NotificationSubmissionAmended event.",
+      "kind": "integration",
+      "ref": "notification/NotificationService.java:215-217",
+      "quote": "OutboxEventType eventType = notificationAggregate.getStatus() == NotificationStatus.AMEND ? OutboxEventType.NOTIFICATION_SUBMISSION_AMENDED : OutboxEventType.NOTIFICATION_SUBMITTED;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-048",
+      "statement": "The backend makes no completeness check on submit: it does not check that mandatory answers are present before moving a notification to SUBMITTED.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:198-226",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in submitNotification and saveWithStatusAndOutboxEvent: the only checks are status and concurrency token. Whatever decides a notification is ready to submit lives elsewhere (probably the frontend)."
+    },
+    {
+      "id": "repo-backend-p2-049",
+      "statement": "POST /notifications/{referenceNumber}/amend moves a notification from SUBMITTED to AMEND.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationController.java:139-158",
+      "quote": "Transitions notification status from SUBMITTED to AMEND. Emits an outbox event.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-050",
+      "statement": "Amending a notification that is not SUBMITTED is refused with 400.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:235-238",
+      "quote": "throw new BadRequestException(\"Cannot amend notification with status: \" + notificationAggregate.getStatus());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-051",
+      "statement": "Amend takes no concurrency token.",
+      "kind": "rule",
+      "ref": "notification/NotificationController.java:149-153",
+      "quote": "public ResponseEntity<NotificationAggregate> amend( @Pattern(regexp = ReferenceNumberGenerator.REFERENCE_NUMBER_PATTERN) @PathVariable String referenceNumber, @RequestHeader(...) String traceId, @RequestBody(required = false) ActorRequest actorRequest,",
+      "confidence": "inferred",
+      "note": "Inferred from the parameter list; submit and copy take one, amend and cancel amend do not."
+    },
+    {
+      "id": "repo-backend-p2-052",
+      "statement": "Opening an amendment stores a copy of the submitted notification content and of its fulfilments payload, so the submitted version can be restored or compared against.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationService.java:240-247",
+      "quote": "notificationAggregate.setPreAmendNotification(notificationContentMapper.deepClone(notificationAggregate.getNotification())); ... notificationAggregate.setPreAmendFulfilments(deepCopyFulfilments(currentFulfilments));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-053",
+      "statement": "Opening an amendment fails with a server error when the submitted notification has no fulfilments payload.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationService.java:242-246",
+      "quote": "throw new IllegalStateException(\"Cannot amend notification: fulfilments payload is missing\");",
+      "confidence": "verbatim",
+      "note": "IllegalStateException maps to 500 through the generic RuntimeException handler."
+    },
+    {
+      "id": "repo-backend-p2-054",
+      "statement": "Opening an amendment writes a NotificationAmendmentRequested outbox event.",
+      "kind": "integration",
+      "ref": "notification/NotificationService.java:249-255",
+      "quote": "NotificationStatus.AMEND, OutboxEventType.NOTIFICATION_AMENDMENT_REQUESTED,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-055",
+      "statement": "POST /notifications/{referenceNumber}/cancel-amend restores the submitted notification content and moves the status from AMEND back to SUBMITTED.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationController.java:160-179",
+      "quote": "Restores the submitted notification content and transitions status from AMEND back to SUBMITTED.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-056",
+      "statement": "Cancelling an amendment on a notification that is not AMEND is refused with 400.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:265-268",
+      "quote": "throw new BadRequestException(\"Cannot cancel amendment for notification with status: \" + notificationAggregate.getStatus());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-057",
+      "statement": "Cancelling an amendment with no stored submitted version is refused with 400.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:269-272",
+      "quote": "throw new BadRequestException(\"Cannot cancel amendment: no pre-amend snapshot stored for notification\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-058",
+      "statement": "Cancelling an amendment puts back the submitted notification content and fulfilments, clears the stored submitted version and resets the answers-differ flag to false.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationService.java:274-281",
+      "quote": "notificationAggregate.setNotification(notificationContentMapper.deepClone(notificationAggregate.getPreAmendNotification())); ... notificationAggregate.setPreAmendFulfilments(null); notificationAggregate.setPreAmendNotification(null); notificationAggregate.setAnswersDifferFromSubmitted(false);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-059",
+      "statement": "Cancelling an amendment keeps the original submitted date, since it does not count as a submission.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:282-288,300-302",
+      "quote": "if (OutboxEventType.SUBMISSION_EVENTS.contains(eventType)) { applySubmission(notification); }",
+      "confidence": "inferred",
+      "note": "Inferred on the assumption that SUBMISSION_EVENTS (outbox package, part 4) holds only the two submit events; cancelAmendNotification sets no submittedAt itself."
+    },
+    {
+      "id": "repo-backend-p2-060",
+      "statement": "Cancelling an amendment writes a NotificationAmendmentCancelled outbox event.",
+      "kind": "integration",
+      "ref": "notification/NotificationService.java:282-288",
+      "quote": "NotificationStatus.SUBMITTED, OutboxEventType.NOTIFICATION_AMENDMENT_CANCELLED,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-061",
+      "statement": "POST /notifications/{referenceNumber}/soft-delete moves a notification to DELETED; only DRAFT, SUBMITTED and AMEND notifications can be deleted.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationController.java:257-276",
+      "quote": "Transitions notification status to DELETED (soft delete). Only DRAFT, SUBMITTED and AMEND notifications can be deleted.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-062",
+      "statement": "Soft-deleting a notification that is already DELETED changes nothing and returns it with 200.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationService.java:371-374",
+      "quote": "log.info(\"Notification {} is already DELETED, nothing changed\", referenceNumber); return notificationAggregate;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-063",
+      "statement": "Soft-deleting a notification in any status other than DRAFT, SUBMITTED, AMEND or DELETED is refused with 400.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:375-380",
+      "quote": "throw new BadRequestException(\"Cannot delete notification with status: \" + notificationAggregate.getStatus());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-064",
+      "statement": "Soft-deleting a DRAFT writes a NotificationDeleted outbox event; soft-deleting a SUBMITTED or AMEND notification writes a NotificationSubmissionDeleted event.",
+      "kind": "integration",
+      "ref": "notification/NotificationService.java:381-383",
+      "quote": "OutboxEventType eventType = notificationAggregate.getStatus() == NotificationStatus.DRAFT ? OutboxEventType.NOTIFICATION_DELETED : OutboxEventType.NOTIFICATION_SUBMISSION_DELETED;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-065",
+      "statement": "Soft delete takes no concurrency token and keeps the notification's content and documents.",
+      "kind": "rule",
+      "ref": "notification/NotificationController.java:266-270; notification/NotificationService.java:367-391",
+      "quote": "return saveWithStatusAndOutboxEvent(notificationAggregate, referenceNumber, correlationId, NotificationStatus.DELETED, eventType, actor);",
+      "confidence": "inferred",
+      "note": "Inferred: only the status and updated time change; nothing is removed."
+    },
+    {
+      "id": "repo-backend-p2-066",
+      "statement": "GET /notifications returns one page of the caller organisation's notifications for the notification list.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationController.java:181-196; notification/NotificationService.java:169-196",
+      "quote": "Returns a paginated list of import notifications.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-067",
+      "statement": "The notification list shows only DRAFT, SUBMITTED and AMEND notifications; DELETED notifications are left out.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:172-173",
+      "quote": "List<NotificationStatus> dashboardStatuses = List.of(NotificationStatus.DRAFT, NotificationStatus.SUBMITTED, NotificationStatus.AMEND);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-068",
+      "statement": "The list's page parameter starts at 1 and defaults to 1; a page below 1 is refused with 400.",
+      "kind": "rule",
+      "ref": "notification/NotificationController.java:190; notification/NotificationService.java:174",
+      "quote": "@RequestParam(defaultValue = \"1\") @Min(1) int page,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-069",
+      "statement": "The notification list returns 25 notifications a page, a fixed size the caller cannot change.",
+      "kind": "rule",
+      "ref": "src/main/resources/application.yml:128-129; notification/NotificationService.java:174",
+      "quote": "list:\n    page-size: 25",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-070",
+      "statement": "The list can be sorted by arrival date or by created date, ascending or descending, with the sort parameter arrivalDate,desc, arrivalDate,asc, createdAt,desc or createdAt,asc.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationController.java:184; notification/NotificationSort.java:31-35",
+      "quote": "Optional sort: arrivalDate,desc (default), arrivalDate,asc, createdAt,desc, createdAt,asc.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-071",
+      "statement": "The list's default order is arrival date, newest first; a missing, malformed or unknown sort falls back to it.",
+      "kind": "rule",
+      "ref": "notification/NotificationSort.java:18-41",
+      "quote": "if (sortParam == null || sortParam.isBlank()) { return defaultSort(); } ... default -> defaultSort(); ... return Sort.by(Sort.Direction.DESC, ARRIVAL_DATE_FIELD);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-072",
+      "statement": "A sort direction other than asc (in any case) is treated as descending.",
+      "kind": "rule",
+      "ref": "notification/NotificationSort.java:28-30",
+      "quote": "Sort.Direction sortDirection = \"asc\".equalsIgnoreCase(parts[1].trim()) ? Sort.Direction.ASC : Sort.Direction.DESC;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-073",
+      "statement": "Sorting by arrival date uses the transport's arrival date; sorting by created date uses the notification's created time.",
+      "kind": "data",
+      "ref": "notification/NotificationSort.java:11-12",
+      "quote": "private static final String ARRIVAL_DATE_FIELD = \"notification.transport.arrivalDate\"; private static final String CREATED_AT_FIELD = \"created\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-074",
+      "statement": "The list offers no sort by status, reference number, updated time or submitted date.",
+      "kind": "rule",
+      "ref": "notification/NotificationSort.java:32-36",
+      "quote": "case \"arrivalDate\" -> Sort.by(sortDirection, ARRIVAL_DATE_FIELD); case \"createdAt\" -> Sort.by(sortDirection, CREATED_AT_FIELD); default -> defaultSort();",
+      "confidence": "inferred",
+      "note": "Inferred: only two sort fields are recognised."
+    },
+    {
+      "id": "repo-backend-p2-075",
+      "statement": "The list can be searched by reference number: the referenceNumber parameter, trimmed, is an exact match against a complete reference number, and returns that one notification or an empty page.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationController.java:185,192; notification/NotificationService.java:176-188",
+      "quote": "Optional referenceNumber: exact match against a complete notification reference number.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-076",
+      "statement": "A reference number search still applies the organisation and the DRAFT, SUBMITTED and AMEND status filter, so it never finds a deleted notification or another organisation's.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:179-181",
+      "quote": ".findViewByReferenceNumberAndStatusInAndOrganisationId(trimmedReferenceNumber, dashboardStatuses, organisationId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-077",
+      "statement": "The list offers no partial or free-text search and no filter by status, date, commodity or category: reference number is the only filter.",
+      "kind": "rule",
+      "ref": "notification/NotificationController.java:189-193",
+      "quote": "@RequestParam(defaultValue = \"1\") @Min(1) int page, @RequestParam(required = false) String sort, @RequestParam(required = false) String referenceNumber,",
+      "confidence": "inferred",
+      "note": "Inferred from the endpoint's three query parameters."
+    },
+    {
+      "id": "repo-backend-p2-078",
+      "statement": "List entries are a projection of the notification (NotificationView) inside a paged response (NotificationPageResponse), not the whole record.",
+      "kind": "data",
+      "ref": "notification/NotificationRepository.java:28-32; notification/NotificationService.java:187,195",
+      "quote": "Page<NotificationView> findAllViewByStatusInAndOrganisationId(List<NotificationStatus> statuses, String organisationId, Pageable pageable);",
+      "confidence": "verbatim",
+      "note": "The view's fields and the page response's shape are part 1's wire types."
+    },
+    {
+      "id": "repo-backend-p2-079",
+      "statement": "There is no endpoint that returns one whole notification by reference number to a trader; the read endpoint is the fulfilments view.",
+      "kind": "integration",
+      "ref": "notification/NotificationController.java:181-236",
+      "quote": "@GetMapping(\"/{referenceNumber}/fulfilments\")",
+      "confidence": "inferred",
+      "note": "Inferred: the controller's GET mappings are the list, /{referenceNumber}/fulfilments, /reference-numbers and /{referenceNumber}/outbox-events."
+    },
+    {
+      "id": "repo-backend-p2-080",
+      "statement": "GET /notifications/{referenceNumber}/fulfilments returns the notification's reference number, concurrency token, status, created and submitted dates, the opaque fulfilments payload, and whether an open amendment's answers differ from the submitted version.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationController.java:198-211; notification/NotificationRepository.java:21-26",
+      "quote": "Returns the fulfilment-view projection (referenceNumber, concurrencyToken, status, created and submitted dates, opaque fulfilments payload, and whether an open amendment's answers differ from the submitted version) of the notification at the given reference.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-081",
+      "statement": "The fulfilments view answers 404 for a reference number that does not exist and 403 for one that belongs to another organisation.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:154-167; notification/NotificationController.java:203-204",
+      "quote": "@ApiResponse(responseCode = \"404\", description = \"Notification not found\", content = @Content) @ApiResponse(responseCode = \"403\", description = \"Notification belongs to another organisation\", content = @Content)",
+      "confidence": "verbatim",
+      "note": "Security, in general terms: this read tells a caller whether a reference exists in another organisation, where every other trader endpoint answers 404 alike."
+    },
+    {
+      "id": "repo-backend-p2-082",
+      "statement": "The fulfilments view returns a deleted notification too: it does not filter by status.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationRepository.java:21-26",
+      "quote": "value = \"{ 'referenceNumber': ?0, 'organisationId': ?1 }\",",
+      "confidence": "inferred",
+      "note": "Inferred from the query, which has no status condition."
+    },
+    {
+      "id": "repo-backend-p2-083",
+      "statement": "Every trader save, lifecycle and read operation is scoped to the organisation in the organisation header: a notification belonging to another organisation is treated as not found (404).",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:442-449",
+      "quote": "notificationRepository.findByReferenceNumberAndOrganisationId(referenceNumber, organisationId); if (scoped.isPresent()) { return scoped.get(); } throw new NotFoundException(CANNOT_FIND_NOTIFICATION_WITH_REFERENCE_NUMBER + referenceNumber);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-084",
+      "statement": "A not-found notification is reported with the message \"Cannot find notification with reference number: \" and the reference.",
+      "kind": "copy",
+      "ref": "notification/NotificationService.java:44",
+      "quote": "private static final String CANNOT_FIND_NOTIFICATION_WITH_REFERENCE_NUMBER = \"Cannot find notification with reference number: \";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-085",
+      "statement": "The trader organisation header is named Trade-Imports-Organisation-Id.",
+      "kind": "integration",
+      "ref": "filter/TraderOrganisationHeaderFilter.java:34",
+      "quote": "public static final String ORGANISATION_ID_HEADER = \"Trade-Imports-Organisation-Id\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-086",
+      "statement": "Every /notifications route except the admin routes, and every /document-uploads route except scan-result callbacks, refuses a request without a non-blank organisation header with 400 and the problem detail \"Missing required header Trade-Imports-Organisation-Id\".",
+      "kind": "rule",
+      "ref": "filter/TraderOrganisationHeaderFilter.java:41-75",
+      "quote": "String detail = \"Missing required header \" + ORGANISATION_ID_HEADER;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-087",
+      "statement": "The backend takes the organisation header on trust: it does not check that the caller belongs to that organisation.",
+      "kind": "constraint",
+      "ref": "filter/TraderOrganisationHeaderFilter.java:57-70",
+      "quote": "String organisationId = request.getHeader(ORGANISATION_ID_HEADER); if (organisationId == null || organisationId.isBlank()) { rejectMissingHeader(response); return; }",
+      "confidence": "inferred",
+      "note": "Security, in general terms: scoping relies on the calling service to send the right organisation. Inferred: the filter checks only that the header is present."
+    },
+    {
+      "id": "repo-backend-p2-088",
+      "statement": "A new notification belongs to the organisation in the header at creation, and organisation scoping is by that stored organisation.",
+      "kind": "data",
+      "ref": "notification/NotificationService.java:455",
+      "quote": "notificationAggregate.setOrganisationId(organisationId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-089",
+      "statement": "There are four admin notification routes: DELETE /notifications, GET /notifications/reference-numbers, GET /notifications/{ref}/outbox-events and POST /notifications/{ref}/replay; none needs the organisation header.",
+      "kind": "rule",
+      "ref": "filter/AdminNotificationRoutes.java:10-25; filter/TraderOrganisationHeaderFilter.java:42-44",
+      "quote": "if (\"DELETE\".equalsIgnoreCase(method) && \"/notifications\".equals(path)) { return true; } if (\"GET\".equalsIgnoreCase(method) && \"/notifications/reference-numbers\".equals(path)) { return true; }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-090",
+      "statement": "DELETE /notifications and POST /notifications/{ref}/replay require the shared admin secret in the Trade-Imports-Animals-Admin-Secret header, and answer 401 when it is missing or wrong.",
+      "kind": "rule",
+      "ref": "filter/AdminSecretFilter.java:24-58",
+      "quote": "private static final String HEADER_NAME = \"Trade-Imports-Animals-Admin-Secret\"; ... response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-091",
+      "statement": "When no admin secret is configured, every admin secret check fails, so the guarded routes are closed rather than open.",
+      "kind": "rule",
+      "ref": "filter/AdminSecretFilter.java:35-42",
+      "quote": "if (tradeImportsAnimalsAdminSecret.isBlank() || providedSecret == null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-092",
+      "statement": "The admin secret is compared in constant time.",
+      "kind": "non-functional",
+      "ref": "filter/AdminSecretFilter.java:37-39",
+      "quote": "!MessageDigest.isEqual(tradeImportsAnimalsAdminSecret.getBytes(StandardCharsets.UTF_8), providedSecret.getBytes(StandardCharsets.UTF_8))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-093",
+      "statement": "Two admin read routes, the reference-number list and a notification's outbox events, are protected by neither the organisation header nor the admin secret.",
+      "kind": "constraint",
+      "ref": "filter/AdminSecretFilter.java:47-57; filter/AdminNotificationRoutes.java:16-21",
+      "quote": "boolean isDeleteNotifications = \"DELETE\".equalsIgnoreCase(method) && uri.startsWith(\"/notifications\"); boolean isReplayEndpoint = \"POST\".equalsIgnoreCase(method) && uri.matches(\"/notifications/[^/]+/replay\"); return !isDeleteNotifications && !isReplayEndpoint;",
+      "confidence": "inferred",
+      "note": "Security, in general terms only. Inferred: the admin route list has four routes, the secret filter guards two. The endpoints' API docs list a 401 they cannot return from these filters."
+    },
+    {
+      "id": "repo-backend-p2-094",
+      "statement": "The admin secret is read from the TRADE_IMPORTS_ANIMALS_ADMIN_SECRET environment variable, with a built-in local fallback when it is unset.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:116-118",
+      "quote": "admin:\n  secret: ${TRADE_IMPORTS_ANIMALS_ADMIN_SECRET:[REDACTED]}",
+      "confidence": "verbatim",
+      "note": "The fallback value is redacted. Security, in general terms: the fallback sits in the shared application.yml, not only in the local profile."
+    },
+    {
+      "id": "repo-backend-p2-095",
+      "statement": "DELETE /notifications permanently deletes the notifications named in a JSON array of reference numbers in the body, with their documents, and answers 204.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationController.java:297-310; notification/NotificationService.java:403-430",
+      "quote": "@Operation(summary = \"Delete notifications\", description = \"Deletes notifications by reference numbers\") ... return ResponseEntity.noContent().build();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-096",
+      "statement": "DELETE /notifications requires the trace id and User-Id headers, and answers 400 for an empty list of reference numbers.",
+      "kind": "rule",
+      "ref": "notification/NotificationController.java:300-305",
+      "quote": "@RequestHeader(value = RequestTracingFilter.TRACE_ID_HEADER_PROPERTY, required = true) String traceId, @RequestHeader(value = NotificationController.HEADER_USER_ID, required = true) String userId) { if (referenceNumbers == null || referenceNumbers.isEmpty()) { return ResponseEntity.badRequest().build(); }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-097",
+      "statement": "When any named reference number is not found, the hard delete deletes nothing and answers 404 listing the missing ones.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:409-421",
+      "quote": "throw new NotFoundException(\"Cannot find notifications with reference numbers: \" + String.join(\", \", missing));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-098",
+      "statement": "The hard delete is not scoped to an organisation: it deletes by reference number across every organisation.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:409-410,427-430",
+      "quote": "notificationRepository.deleteAllByReferenceNumberIn(referenceNumbers); documentService.deleteForNotificationReferenceNumbers(referenceNumbers);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-099",
+      "statement": "The hard delete writes no outbox event.",
+      "kind": "integration",
+      "ref": "notification/NotificationService.java:403-430",
+      "quote": "deleteNotificationsAndDocuments(referenceNumbers); createNotificationAuditRecord(referenceNumbers, auditContext, Result.SUCCESS);",
+      "confidence": "inferred",
+      "note": "Inferred: deleteByReferenceNumbers calls no OutboxService method."
+    },
+    {
+      "id": "repo-backend-p2-100",
+      "statement": "Every hard delete writes an audit record, with result SUCCESS when it deletes and FAILURE when a reference number is missing.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationService.java:417-424",
+      "quote": "createNotificationAuditRecord(referenceNumbers, auditContext, Result.FAILURE); ... createNotificationAuditRecord(referenceNumbers, auditContext, Result.SUCCESS);",
+      "confidence": "verbatim",
+      "note": "The method is noRollbackFor NotFoundException, so the FAILURE record is kept."
+    },
+    {
+      "id": "repo-backend-p2-101",
+      "statement": "A hard delete's audit record holds the action DELETE_NOTIFICATIONS, the result, the reference numbers, how many there were, the trace id, the user id and the time.",
+      "kind": "data",
+      "ref": "notification/NotificationService.java:531-544",
+      "quote": ".action(Action.DELETE_NOTIFICATIONS) .result(result) .notificationReferenceNumbers(referenceNumbers) .numberOfNotifications(referenceNumbers.size()) .traceId(auditContext.traceId()) .userId(auditContext.userId()) .timestamp(clock.instant())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-102",
+      "statement": "Audit records are stored in the audit collection, with fields id, action, result, timestamp, number of notifications, number of events, notification reference numbers, trace id and user id.",
+      "kind": "data",
+      "ref": "audit/Audit.java:13-37",
+      "quote": "@Document(collection = \"audit\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-103",
+      "statement": "There are two audit actions, DELETE_NOTIFICATIONS and REPLAY_EVENTS, and two results, SUCCESS and FAILURE.",
+      "kind": "data",
+      "ref": "audit/Action.java:3-7; audit/Result.java:3-6",
+      "quote": "DELETE_NOTIFICATIONS, REPLAY_EVENTS ... SUCCESS, FAILURE",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-104",
+      "statement": "Trader lifecycle changes (create, save, copy, submit, amend, cancel amend, soft delete) write no audit record; only admin hard deletes and replays are audited.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:531-544; outbox/OutboxReplayService.java:56-67",
+      "quote": ".action(Action.DELETE_NOTIFICATIONS)",
+      "confidence": "inferred",
+      "note": "Inferred: the audit repository is written only from createNotificationAuditRecord and OutboxReplayService. Trader changes leave their trail in the outbox events instead."
+    },
+    {
+      "id": "repo-backend-p2-105",
+      "statement": "GET /notifications/reference-numbers returns a page of reference numbers across every organisation, newest created first, without loading whole notifications.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationController.java:213-224; notification/NotificationService.java:393-401",
+      "quote": "Returns a paginated list of notification reference numbers without loading full documents ... PageRequest.of(page, adminPageSize, Sort.by(Direction.DESC, \"created\"))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-106",
+      "statement": "The reference-number list's page parameter starts at 0 and defaults to 0, a page below 0 is refused, and each page holds 50.",
+      "kind": "rule",
+      "ref": "notification/NotificationController.java:221; src/main/resources/application.yml:126-127",
+      "quote": "@RequestParam(defaultValue = \"0\") @Min(0) int page) ... admin:\n    page-size: 50",
+      "confidence": "verbatim",
+      "note": "The trader list counts pages from 1 and the admin list from 0."
+    },
+    {
+      "id": "repo-backend-p2-107",
+      "statement": "The reference-number list includes deleted notifications: it applies no status filter.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationRepository.java:36",
+      "quote": "Page<NotificationReferenceOnly> findAllReferencesBy(Pageable pageable);",
+      "confidence": "inferred",
+      "note": "Inferred from the unfiltered query."
+    },
+    {
+      "id": "repo-backend-p2-108",
+      "statement": "GET /notifications/{referenceNumber}/outbox-events returns every outbox event for a notification in the order written (aggregate version ascending).",
+      "kind": "integration",
+      "ref": "notification/NotificationController.java:226-236",
+      "quote": "Returns all outbox events for a notification reference number in chronological write order (aggregateVersion ascending)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-109",
+      "statement": "POST /notifications/{referenceNumber}/replay re-publishes every outbox event for a notification, in aggregate version order, with the same message group and deduplication ids as the original publish, and changes no data.",
+      "kind": "integration",
+      "ref": "notification/NotificationController.java:238-255",
+      "quote": "Re-publishes all outbox events for a notification to SNS FIFO in aggregate version order. The outbox is read-only — no data is mutated. Each event is re-published with the same MessageGroupId (aggregateId) and MessageDeduplicationId (eventId) as the original publish.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-110",
+      "statement": "Replay requires the User-Id header, answers 200 with the number of events replayed, and 404 when the notification has no outbox events.",
+      "kind": "rule",
+      "ref": "notification/NotificationController.java:243-254; outbox/OutboxReplayService.java:30-33",
+      "quote": "@RequestHeader(value = HEADER_USER_ID, required = true) String userId) ... return ResponseEntity.ok(new ReplayResponse(count)); ... throw new NotFoundException(\"No outbox events found for: \" + referenceNumber);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-111",
+      "statement": "Each replay writes an audit record with action REPLAY_EVENTS, the one reference number, the number of events, the trace id and user id, and result FAILURE when an event cannot be serialised, otherwise SUCCESS.",
+      "kind": "behaviour",
+      "ref": "outbox/OutboxReplayService.java:36-67",
+      "quote": ".action(Action.REPLAY_EVENTS) .result(result) .notificationReferenceNumbers(List.of(referenceNumber)) .numberOfNotifications(1) .numberOfEvents(count)",
+      "confidence": "verbatim",
+      "note": "A failed replay stops at the bad event but still answers 200 with the total event count."
+    },
+    {
+      "id": "repo-backend-p2-112",
+      "statement": "Draft expiry: when expiry days are set and the environment is not prod, each new notification gets an expiry time of its created time plus that many days.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:432-435; configuration/NotificationTtlConfig.java:33-38",
+      "quote": "ttlConfig.daysToStamp().ifPresent(days -> notificationAggregate.setExpireAt(notificationAggregate.getCreated().plus(days, ChronoUnit.DAYS)));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-113",
+      "statement": "The expiry is stamped once, at creation, whatever the status: a notification keeps the same expiry after it is submitted, and saving does not extend it.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:451-457",
+      "quote": "notificationAggregate.setCreated(clock.instant()); notificationAggregate.setOrganisationId(organisationId); stampExpiry(notificationAggregate);",
+      "confidence": "inferred",
+      "note": "Inferred: stampExpiry is called only from createNotification, and no lifecycle step clears expireAt. So expiry applies to every notification created in that environment, not only drafts."
+    },
+    {
+      "id": "repo-backend-p2-114",
+      "statement": "Expired notifications and accompanying documents are removed by the database at their expiry time, through expiry indexes the backend creates at start-up when expiry is enabled.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationExpiryIndex.java:19-39",
+      "quote": "createTtlIndex(AccompanyingDocument.class, \"accompanying_document_expire_at_ttl\"); createTtlIndex(NotificationAggregate.class, \"notification_expire_at_ttl\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-115",
+      "statement": "Notifications never expire in prod: no expiry is stamped there, and the backend refuses to create the expiry indexes there even when expiry is enabled.",
+      "kind": "rule",
+      "ref": "notification/NotificationExpiryIndex.java:27-30; configuration/NotificationTtlConfig.java:22-38",
+      "quote": "log.warn(\"Notification expiry is enabled in prod; refusing to create the TTL indexes\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-116",
+      "statement": "The expiry days come from NOTIFICATION_TTL_DAYS, must be positive when set, and are unset by default; removal is switched on by NOTIFICATION_TTL_EXPIRY_ENABLED, false by default; the environment name comes from ENVIRONMENT, local by default.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:132-138; configuration/NotificationTtlConfig.java:20",
+      "quote": "# Prod-safe defaults: nothing is stamped or expired. Non-prod opts in by setting\n  # NOTIFICATION_TTL_DAYS and NOTIFICATION_TTL_EXPIRY_ENABLED=true.\n  ttl:\n    days: ${NOTIFICATION_TTL_DAYS:}\n    environment: ${ENVIRONMENT:local}\n    expiry:\n      enabled: ${NOTIFICATION_TTL_EXPIRY_ENABLED:false}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-117",
+      "statement": "The prod check matches the environment name prod in any letter case.",
+      "kind": "rule",
+      "ref": "configuration/NotificationTtlConfig.java:22-25",
+      "quote": "return \"prod\".equalsIgnoreCase(environment);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-118",
+      "statement": "At start-up the backend logs whether new notifications get an expiry and, when they do not, why (prod, or no days set).",
+      "kind": "non-functional",
+      "ref": "notification/NotificationExpiryStampingLog.java:24-35",
+      "quote": "log.info(\"Notification expiry stamping is on: {} days in environment {}\", daysToStamp.get(), environment);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-119",
+      "statement": "No expiry days value is set in the repo for any environment; the time to live comes from each deployment's environment.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:135; src/main/resources/application-local.yml",
+      "quote": "days: ${NOTIFICATION_TTL_DAYS:}",
+      "confidence": "gap",
+      "note": "Looked in application.yml and application-local.yml: neither sets a number of days. The real value lives in CDP app config, outside this repo."
+    },
+    {
+      "id": "repo-backend-p2-120",
+      "statement": "Between retries for a busy per-notification write lock, the backend waits 50 milliseconds.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:130-131",
+      "quote": "submit:\n    lock-at-least-for: 50ms",
+      "confidence": "verbatim",
+      "note": "mechanism: the lock-at-least-for setting, used for every lifecycle write, not only submit."
+    },
+    {
+      "id": "repo-backend-p2-121",
+      "statement": "Outbox events are relayed to the notification topic every 2 seconds, 10 at a time, up to 500 a run by default.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:150-160",
+      "quote": "poller:\n    interval-ms: 2000\n    batch-size: 10\n    max-events-per-run: ${OUTBOX_POLLER_MAX_EVENTS_PER_RUN:500}",
+      "confidence": "verbatim",
+      "note": "What the relay publishes is part 4's."
+    },
+    {
+      "id": "repo-backend-p2-122",
+      "statement": "Locally the outbox publishes to the trade_imports_animals_eu_notifications FIFO topic.",
+      "kind": "integration",
+      "ref": "src/main/resources/application-local.yml:55-57",
+      "quote": "topic-arn: ${OUTBOX_SNS_TOPIC_ARN:arn:aws:sns:eu-west-2:000000000000:trade_imports_animals_eu_notifications.fifo}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-123",
+      "statement": "The backend has no notification templates: no endpoint, status, field or setting saves, lists or starts from a template.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationController.java; notification/NotificationService.java; notification/NotificationRepository.java",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked with grep -rli template across src/main/java: the only hits are MongoTemplate and other infrastructure (transaction manager, TLS, trace interceptor, expiry index). Statuses used are DRAFT, SUBMITTED, AMEND and DELETED only. Copy as new is the nearest behaviour."
+    },
+    {
+      "id": "repo-backend-p2-124",
+      "statement": "The backend stores no notification category (live animals or germinal products) and has no lifecycle, listing or filter by one.",
+      "kind": "data",
+      "ref": "notification/NotificationService.java:169-196,482-502; notification/NotificationCopyMapper.java:13-31",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the save, list and copy code of this slice: no category is set, filtered on or copied. The partition's structure records that the ruling's category is not on main yet."
+    },
+    {
+      "id": "repo-backend-p2-125",
+      "statement": "Notifications are only ever moved between four statuses: DRAFT on create, SUBMITTED on submit or cancel amend, AMEND on amend, DELETED on soft delete.",
+      "kind": "behaviour",
+      "ref": "notification/NotificationService.java:219-226,249-255,282-288,384-390,463-469",
+      "quote": "NotificationStatus.DRAFT, ... NotificationStatus.SUBMITTED, ... NotificationStatus.AMEND, ... NotificationStatus.DELETED,",
+      "confidence": "inferred",
+      "note": "Inferred from every saveWithStatusAndOutboxEvent call. The soft-delete refusal implies NotificationStatus may define other values (part 1)."
+    },
+    {
+      "id": "repo-backend-p2-126",
+      "statement": "A DELETED notification cannot be saved, submitted, amended or copied.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:113-117,133-137,205-209,235-238",
+      "quote": "throw new BadRequestException(\"Cannot copy notification with status: \" + source.getStatus());",
+      "confidence": "inferred",
+      "note": "Inferred from each operation's allowed-status list, none of which includes DELETED."
+    },
+    {
+      "id": "repo-backend-p2-127",
+      "statement": "A SUBMITTED notification cannot have its content saved until it is moved to AMEND.",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:113-117",
+      "quote": "if (notificationAggregate.getStatus() != NotificationStatus.DRAFT && notificationAggregate.getStatus() != NotificationStatus.AMEND) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-128",
+      "statement": "Amend, cancel amend and soft delete document 200, 400, 401 and 404 responses, and amend also 500.",
+      "kind": "integration",
+      "ref": "notification/NotificationController.java:142-147,163-167,260-264",
+      "quote": "@ApiResponse(responseCode = \"400\", description = \"Notification not in AMEND status or baseline missing\", content = @Content)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-129",
+      "statement": "Copy, submit, amend, cancel amend and soft delete take an optional actor in the request body.",
+      "kind": "integration",
+      "ref": "notification/NotificationController.java:96,129,152,172,269",
+      "quote": "@RequestBody(required = false) ActorRequest actorRequest,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-130",
+      "statement": "The admin hard delete and replay identify the person by a User-Id header, while trader operations identify them by an actor in the body.",
+      "kind": "constraint",
+      "ref": "notification/NotificationController.java:43,251,302",
+      "quote": "public static final String HEADER_USER_ID = \"User-Id\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-131",
+      "statement": "POST /notifications with a reference number updates under the same rules as PUT (DRAFT or AMEND only, concurrency token required, NotificationEdited event).",
+      "kind": "rule",
+      "ref": "notification/NotificationService.java:96-99,109-126",
+      "quote": "return replaceContent(notificationDto.getReferenceNumber(), notificationDto, correlationId, actor, organisationId);",
+      "confidence": "verbatim",
+      "note": "mechanism: POST's save path is not marked @Transactional where PUT's is; the outbox lock still couples the record and event writes."
+    },
+    {
+      "id": "repo-backend-p2-132",
+      "statement": "Swagger UI is switched off in deployed environments and on in the local profile.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:120-123; src/main/resources/application-local.yml:37-40",
+      "quote": "# SpringDoc / Swagger UI — disabled in deployed environments\nspringdoc:\n  swagger-ui:\n    enabled: false",
+      "confidence": "verbatim"
+    }
+  ]
+}

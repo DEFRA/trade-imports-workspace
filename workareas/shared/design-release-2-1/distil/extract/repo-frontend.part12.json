@@ -1,7 +1,15 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 12, the transporter list and choosing a transporter. Read in full, from repos/trade-imports-animals-frontend (HEAD on main): the transport feature's page.js (6 page records, of which transportersPage and transporterAddPage are this part's); transporters/ in full apart from its *.test.js unit tests (transporters.controller.js, transporters.njk, _cells.njk, rows.js, validate.js, transporter-record.js); transporter-add/ in full apart from its unit test (transporter-add.controller.js, transporter-add.njk); the feature-level transporter-add-session.js, own-transporter-type.js and test-support.js; transport/copy/copy.en.js in full, with the transporters and transporterAdd branches claimed string by string and copy.cy.js read for key parity over those same branches; fit/transporters.fit.spec.js (1,508 lines, 11 describes) with only the tests about the list, the type question and the add choice claimed, the two details forms left to part 13; and the client-side src/client/javascripts/components/transporter-filter.js. Covered: two pages — the transporter list at /notifications/{journeyId}/transporters (H1 'Transporter details', intro, DAERA/APHA authorisation guidance with its three conditions and GOV.UK link, an H2 'Select a transporter', a server-and-client search with an Add a transporter button beside it, and a seven-column radio table of the organisation's transporters with status tags and a View details link into the INS address book) and the transporter type question at /notifications/{journeyId}/transporters/add (H1 'Choose a transporter type', a duplicate-check warning, two radios Private and Commercial, Continue, branching to transporters/add/private or transporters/add/commercial). Also covered: every validation message on both pages verbatim, the added-transporter success banner, the flow-only session keys that carry an in-progress add, the redirect that keeps a details form to its own type, and what the fit spec proves about all of this with JavaScript on and off. Not covered here: the two details forms themselves (part 13), the port-of-entry and transit-countries pages in the same feature and copy file (other parts), and the Welsh strings themselves.",
+  "structure": "Part 12, the transporter list and choosing a transporter. Read in full: transport/page.js (page ids, slugs and maturity), transporters/ (transporters.controller.js, rows.js, transporters.njk, _cells.njk, validate.js, transporter-record.js; *.test.js unit tests skipped as the partition says), transporter-add/ (transporter-add.controller.js, transporter-add.njk), transporter-add-session.js (flow-only keys transporterTypeChosen, transporterAddInProgress, justAddedTransporterName, transporterTypeRestart), own-transporter-type.js (the details-form guard that redirects to the type question), test-support.js (shared unit-test helpers for the guard, cancel, refused-save memory and Change-link trail), copy/copy.en.js and copy/copy.cy.js (transporters and transporterAdd keys only), fit/transporters.fit.spec.js (all 1508 lines; details-form tests left to part 13) and src/client/javascripts/components/transporter-filter.js (the in-page filter). Pages covered: the transporter list at /notifications/{journeyId}/transporters (H1 'Transporter details', intro, authorisation guidance, 'Select a transporter' heading, search box, Add a transporter button, seven-column table with radio, name, address, approval number, type, status tag and View details link to the INS address book, count announcer, no-matches line, success banner after an add, Save and continue with return controls, two validation messages) and the transporter type question at /notifications/{journeyId}/transporters/add (H1 'Choose a transporter type', caption 'Add a new transporter', duplicate warning, Private and Commercial radios, one validation message, Continue only, routes to the private and commercial details forms). There is no separate add-transporter choice page: the Add a transporter button goes straight to the type question, recorded as an inferred claim. The list has no paging and no change or remove controls, recorded as inferred claims. The source matches the earlier extract line for line, so every kept id still holds; new claims 094-104 add the restart flag, out-of-list refusals, the clearing of the chosen type on save, the no-JS search keeping a pick, the filter's on-load and guard behaviour, the Back link and the radio style.",
   "claims": [
+    {
+      "id": "repo-frontend-p1-041",
+      "statement": "The transporters page collects three answers: the transporter type and the two mutually exclusive transporter records, commercial and private.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js:32-36",
+      "quote": "export const meta = {\n  ...page,\n  collects: ['transporterType', 'commercialTransporter', 'privateTransporter'],\n  validation\n}",
+      "confidence": "verbatim"
+    },
     {
       "id": "repo-frontend-p12-001",
       "statement": "The transporter list is a journey page at /notifications/{journeyId}/transporters, and its behaviour is marked agreed.",
@@ -783,6 +791,115 @@
       "quote": "expect(result.response).toEqual({\n        redirect: withTrail(pagePath(result.journeyId, 'transporters'), [\n          CYA_SLUG\n        ])\n      })",
       "confidence": "verbatim",
       "note": "The shared check is applied to both details forms, which belong to part 13; the destination it names is this part's list page."
+    },
+    {
+      "id": "repo-frontend-p13-006",
+      "statement": "The type the guard compares against is the type chosen on this visit if there is one, and otherwise the type already saved on the notification.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/own-transporter-type.js:15-18",
+      "quote": "const intendedTransporterType =\n    chosenTransporterType(flowOnlyAnswers) ?? answers.transporterType\n  if (intendedTransporterType === transporterType) {\n    return undefined\n  }",
+      "confidence": "verbatim",
+      "note": "mechanism: works on the flow-only transporterTypeChosen value and the saved transporterType answer. own-transporter-type.js is outside this part's read list, opened for provenance."
+    },
+    {
+      "id": "repo-frontend-p13-007",
+      "statement": "A redirect away from a details form because the stored type does not match is logged once at info with the journey id, the route and the stored type.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/own-transporter-type.js:7-30",
+      "quote": "export const OWN_TRANSPORTER_TYPE_REDIRECT_MESSAGE =\n  'Redirected to the transporter type question: the stored transporter type does not match'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-094",
+      "statement": "When the list has flagged the type question to restart, the next visit to the type question shows neither type chosen and clears the flag, so only that one visit opens blank.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.js:57-69, transporter-add-session.js:92-103",
+      "quote": "const restarted = await takeTransporterTypeRestartFlag(\n    request,\n    h,\n    flowOnlyAnswers\n  )\n...\n    transporterType: restarted ? '' : storedTransporterType",
+      "confidence": "verbatim",
+      "note": "mechanism: consumes the flow-only transporterTypeRestart flag on the type question's GET."
+    },
+    {
+      "id": "repo-frontend-p12-095",
+      "statement": "A transporter type value that is not one of the offered types is refused with the same 'Select a transporter type' message, and the summary link focuses the first option with nothing checked.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.js:32-38, fit/transporters.fit.spec.js:954-978",
+      "quote": "test('transporter type validation: out-of-list value links to and focuses the cleared group'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-096",
+      "statement": "A transporter pick that is not one of the organisation's listed transporters is refused with 'Select a transporter from the list', and the summary link focuses the first radio with nothing checked.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/validate.js:33-42, fit/transporters.fit.spec.js:472-479",
+      "quote": "test('transporter validation: out-of-list value links to and focuses the cleared group'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-097",
+      "statement": "Saving a transporter record clears both what was typed for that type and the type chosen on the way in, so the next add starts from the type question with no type held.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add-session.js:39-48",
+      "quote": "[TRANSPORTER_ADD_IN_PROGRESS]: enteredTransportersOfOtherTypes(\n    flowOnlyAnswers,\n    transporterType\n  ),\n  [TRANSPORTER_TYPE_CHOSEN]: null",
+      "confidence": "verbatim",
+      "note": "mechanism: flow-only keys transporterAddInProgress and transporterTypeChosen. Its caller is in the details forms (part 13)."
+    },
+    {
+      "id": "repo-frontend-p12-098",
+      "statement": "A search without JavaScript keeps the transporter the trader had ticked, or failing that the one already saved, still ticked on the narrowed list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js:174-184, transporters/transporters.njk:34-36",
+      "quote": "selectedId:\n        payload.transporter ||\n        payload.selected ||\n        (await selectedIdFor(request, current.answers))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-099",
+      "statement": "When the list page loads with a term already in the search box, the browser script narrows the rows and emboldens the matches straight away, without waiting for the trader to type.",
+      "kind": "behaviour",
+      "ref": "src/client/javascripts/components/transporter-filter.js:71-73",
+      "quote": "if (searchBox.value) {\n      filter()\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-100",
+      "statement": "The emboldening of matched letters applies to every visible cell of a row except the radio and the View details link, and inside the status column it is applied to the tag's text.",
+      "kind": "behaviour",
+      "ref": "src/client/javascripts/components/transporter-filter.js:6-27, transporters/rows.js:73-80",
+      "quote": "const wordsTargetOf = (cell) => cell.querySelector('.govuk-tag') ?? cell",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-101",
+      "statement": "The list page's Back link follows the journey trail the list was opened with.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js:63-64",
+      "quote": "backLink: kit.trailBackLink(request),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-102",
+      "statement": "Each row's pick control is a small GOV.UK radio, all rows sharing one radio group named transporter inside the 'Select a transporter' fieldset.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/_cells.njk:4-15, transporters/transporters.njk:89-98",
+      "quote": "name: \"transporter\",\n    classes: \"govuk-radios--small\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-103",
+      "statement": "The browser filter only switches on when the page holds the search box, the search button, the table, the no-matches line and the status region; otherwise the list works as without JavaScript.",
+      "kind": "behaviour",
+      "ref": "src/client/javascripts/components/transporter-filter.js:41-50",
+      "quote": "if (!searchBox || !searchButton || !table || !noMatches || !liveRegion) {\n      return\n    }",
+      "confidence": "verbatim",
+      "note": "mechanism: progressive enhancement guard on the transporter list's DOM."
+    },
+    {
+      "id": "repo-frontend-p12-104",
+      "statement": "A just-added transporter's banner name is lower-cased after its first letter, so a name such as 'Jean Dupont' is announced as 'Jean dupont transporter added'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add-session.js:66-67",
+      "quote": "name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()",
+      "confidence": "inferred",
+      "note": "The example follows from the code; the source gives no example. Proper nouns after the first word lose their capitals, which a designer may not intend."
     }
   ]
 }

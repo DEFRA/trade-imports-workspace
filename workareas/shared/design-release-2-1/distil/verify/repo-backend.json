@@ -1,0 +1,2673 @@
+{
+  "source": "repo:backend",
+  "extractHash": "e5ff3262bd79a13f6a61decbf71e1287199849e704fa7f1b21910918dc522e62",
+  "verdicts": [
+    {
+      "id": "repo-backend-p1-001",
+      "holds": true,
+      "reason": "NotificationAggregate.java:23 has the @Document(collection = \"notification\") annotation verbatim."
+    },
+    {
+      "id": "repo-backend-p1-002",
+      "holds": true,
+      "reason": "Class doc comment at NotificationAggregate.java:19-21 says this verbatim; fields notification and fulfilments (List<Document>) at lines 60-62."
+    },
+    {
+      "id": "repo-backend-p1-003",
+      "holds": true,
+      "reason": "NotificationAggregate.java:38-39, @Id private String id."
+    },
+    {
+      "id": "repo-backend-p1-004",
+      "holds": true,
+      "reason": "NotificationAggregate.java:41-42, @Indexed(unique = true, sparse = true) on referenceNumber; sparse lets records without one coexist."
+    },
+    {
+      "id": "repo-backend-p1-005",
+      "holds": true,
+      "reason": "NotificationAggregate.java:44, private String organisationId."
+    },
+    {
+      "id": "repo-backend-p1-006",
+      "holds": true,
+      "reason": "@Version on concurrencyToken at NotificationAggregate.java:46-47; design-notes.md:25 says @Version refuses a save at a stale token atomically."
+    },
+    {
+      "id": "repo-backend-p1-007",
+      "holds": true,
+      "reason": "NotificationAggregate.java:49, private NotificationStatus status."
+    },
+    {
+      "id": "repo-backend-p1-008",
+      "holds": true,
+      "reason": "NotificationStatus.java:4 lists exactly DRAFT, SUBMITTED, AMEND, DELETED."
+    },
+    {
+      "id": "repo-backend-p1-009",
+      "holds": true,
+      "reason": "Instant created and updated at NotificationAggregate.java:51-53; design-notes.md:7 lists them as moments; NotificationDto.java:15 calls them server-stamped."
+    },
+    {
+      "id": "repo-backend-p1-010",
+      "holds": true,
+      "reason": "NotificationDto.java class doc comment (lines 11-17) says this verbatim, and the DTO has no created/updated fields."
+    },
+    {
+      "id": "repo-backend-p1-011",
+      "holds": true,
+      "reason": "submittedAt field at NotificationAggregate.java:55; quote verbatim at design-notes.md:29."
+    },
+    {
+      "id": "repo-backend-p1-012",
+      "holds": true,
+      "reason": "NotificationAggregate.java:57-58, @JsonIgnore on expireAt, so Jackson never writes it into a response."
+    },
+    {
+      "id": "repo-backend-p1-013",
+      "holds": true,
+      "reason": "Quote verbatim at design-notes.md:40; 'expireAt counts from created, so later edits do not extend it' at design-notes.md:45."
+    },
+    {
+      "id": "repo-backend-p1-014",
+      "holds": true,
+      "reason": "NotificationAggregate.java:64-68, preAmendNotification and preAmendFulfilments both @JsonIgnore."
+    },
+    {
+      "id": "repo-backend-p1-015",
+      "holds": true,
+      "reason": "Primitive boolean at NotificationAggregate.java:70; design-notes.md:32 says always yes or no, stored on write, false on a new notification, and a record stored without it reads false."
+    },
+    {
+      "id": "repo-backend-p1-016",
+      "holds": true,
+      "reason": "Quote verbatim at design-notes.md:33."
+    },
+    {
+      "id": "repo-backend-p1-017",
+      "holds": true,
+      "reason": "Quote verbatim at design-notes.md:30; NotificationDto.java:31 says 'persisted byte-faithfully'."
+    },
+    {
+      "id": "repo-backend-p1-018",
+      "holds": true,
+      "reason": "CompoundIndex organisationId_status_created at NotificationAggregate.java:25-27 with created descending."
+    },
+    {
+      "id": "repo-backend-p1-019",
+      "holds": true,
+      "reason": "CompoundIndex organisationId_status_arrivalDate at NotificationAggregate.java:28-30 on notification.transport.arrivalDate descending."
+    },
+    {
+      "id": "repo-backend-p1-020",
+      "holds": true,
+      "reason": "NotificationBase.java:17, private Origin origin."
+    },
+    {
+      "id": "repo-backend-p1-021",
+      "holds": true,
+      "reason": "Origin.java:14-18 holds the five String fields verbatim; the note on requiresRegionCode being a String is right."
+    },
+    {
+      "id": "repo-backend-p1-022",
+      "holds": true,
+      "reason": "NotificationBase.java:19-20, @Builder.Default commodities = new ArrayList<>(). The empty default applies to the builder and the no-args constructor."
+    },
+    {
+      "id": "repo-backend-p1-023",
+      "holds": true,
+      "reason": "Commodity.java:16-20, name, commodityCode, description as String."
+    },
+    {
+      "id": "repo-backend-p1-024",
+      "holds": true,
+      "reason": "Commodity.java:22-23, Integer totalNoOfAnimals and totalNoOfPackages."
+    },
+    {
+      "id": "repo-backend-p1-025",
+      "holds": true,
+      "reason": "Commodity.java:24-25, @Builder.Default species = new ArrayList<>()."
+    },
+    {
+      "id": "repo-backend-p1-026",
+      "holds": true,
+      "reason": "Species.java:15-17, value, text, commonName as String."
+    },
+    {
+      "id": "repo-backend-p1-027",
+      "holds": true,
+      "reason": "Species.java:18-19, Integer noOfAnimals and noOfPackages."
+    },
+    {
+      "id": "repo-backend-p1-028",
+      "holds": true,
+      "reason": "Species.java:20-22, earTag, passport, microchip as String beside animalIdentifiers. The note is right that the source does not say which is current."
+    },
+    {
+      "id": "repo-backend-p1-029",
+      "holds": true,
+      "reason": "Species.java:23, List<AnimalIdentifier> animalIdentifiers. It has no default, so unlike commodities and species it can be null."
+    },
+    {
+      "id": "repo-backend-p1-030",
+      "holds": true,
+      "reason": "AnimalIdentifier.java:15-19, the five String fields verbatim."
+    },
+    {
+      "id": "repo-backend-p1-031",
+      "holds": true,
+      "reason": "AnimalIdentifier.java:20-21, identificationDetails and description as String. 'Free-text' is fair: there is no constraint or enum."
+    },
+    {
+      "id": "repo-backend-p1-032",
+      "holds": true,
+      "reason": "AnimalIdentifier.java:22, ConsignmentParty permanentAddress; the ConsignmentParty doc comment (lines 8-10) names 'the permanent address of an animal', and its fields are name, email, phone and address."
+    },
+    {
+      "id": "repo-backend-p1-033",
+      "holds": true,
+      "reason": "NotificationBase.java:22, private String reasonForImport."
+    },
+    {
+      "id": "repo-backend-p1-034",
+      "holds": true,
+      "reason": "AdditionalDetails at NotificationBase.java:24; certifiedFor and unweanedAnimals as String at AdditionalDetails.java:14-15."
+    },
+    {
+      "id": "repo-backend-p1-035",
+      "holds": true,
+      "reason": "NotificationBase.java:26-34, the five ConsignmentParty fields verbatim."
+    },
+    {
+      "id": "repo-backend-p1-036",
+      "holds": true,
+      "reason": "ConsignmentParty.java:21-24, name, email, phone, address."
+    },
+    {
+      "id": "repo-backend-p1-037",
+      "holds": true,
+      "reason": "Doc comment at ConsignmentParty.java:12-13, verbatim."
+    },
+    {
+      "id": "repo-backend-p1-038",
+      "holds": true,
+      "reason": "Address.java holds the six String fields at lines 17-22 and calls itself a Standard Address Block at line 9. The ref range 8-22 is loose but covers it."
+    },
+    {
+      "id": "repo-backend-p1-039",
+      "holds": true,
+      "reason": "Address.java:9 doc comment, verbatim. The note is right: there is no validation annotation."
+    },
+    {
+      "id": "repo-backend-p1-040",
+      "holds": true,
+      "reason": "NotificationBase.java:36, private String cphNumber."
+    },
+    {
+      "id": "repo-backend-p1-041",
+      "holds": true,
+      "reason": "NotificationBase.java:38, private Transport transport."
+    },
+    {
+      "id": "repo-backend-p1-042",
+      "holds": true,
+      "reason": "Transport.java:16, private String portOfEntry."
+    },
+    {
+      "id": "repo-backend-p1-043",
+      "holds": true,
+      "reason": "Transport.java:17-18, LocalDate arrivalDate with the doc comment quoted verbatim."
+    },
+    {
+      "id": "repo-backend-p1-044",
+      "holds": true,
+      "reason": "Transport.java:19, private MeansOfTransport meansOfTransport."
+    },
+    {
+      "id": "repo-backend-p1-045",
+      "holds": true,
+      "reason": "MeansOfTransport.java:5-16 has the four constants with those @Schema descriptions verbatim. The refusal half is inferred, as the note says: GlobalExceptionHandler.java:89-102 answers HttpMessageNotReadableException with 400 'Malformed Request'. The statement mixes a verbatim enum with an inferred refusal, but the note makes it clear."
+    },
+    {
+      "id": "repo-backend-p1-046",
+      "holds": true,
+      "reason": "Transport.java:20-21, transportIdentification and transportDocumentReference as String."
+    },
+    {
+      "id": "repo-backend-p1-047",
+      "holds": true,
+      "reason": "Transport.java:22, List<String> transitedCountries."
+    },
+    {
+      "id": "repo-backend-p1-048",
+      "holds": true,
+      "reason": "Transporter field at Transport.java:23; Transporter.java:14-17 has name, Address address, approvalNumber, type (String). Note right that type is free text."
+    },
+    {
+      "id": "repo-backend-p1-049",
+      "holds": true,
+      "reason": "NotificationBase.java:40, private String purposeInInternalMarket."
+    },
+    {
+      "id": "repo-backend-p1-050",
+      "holds": true,
+      "reason": "NotificationBase.java:42-44, destinationCountry and portOfExit as String."
+    },
+    {
+      "id": "repo-backend-p1-051",
+      "holds": true,
+      "reason": "NotificationBase.java:46-47, LocalDate exitDate with doc comment 'as YYYY-MM-DD on the wire'."
+    },
+    {
+      "id": "repo-backend-p1-052",
+      "holds": true,
+      "reason": "SaveNotificationDto.java:14-18, @Valid @NotNull NotificationDto notification and an unannotated ActorRequest actor."
+    },
+    {
+      "id": "repo-backend-p1-053",
+      "holds": true,
+      "reason": "NotificationDto.java extends NotificationBase and adds referenceNumber, status, concurrencyToken and fulfilments. The quote is at lines 25-32, not 23-32: a loose ref."
+    },
+    {
+      "id": "repo-backend-p1-054",
+      "holds": true,
+      "reason": "Inference is sound: grep for jakarta.validation across the notification package finds it only in SaveNotificationDto (the @Valid @NotNull) and NotificationController (parameter constraints). None of the content classes I read (NotificationBase, Origin, Commodity, Species, AnimalIdentifier, AdditionalDetails, ConsignmentParty, Address, Transport, Transporter) carries an annotation."
+    },
+    {
+      "id": "repo-backend-p1-055",
+      "holds": true,
+      "reason": "ActorRequest.java:13-18, six String fields verbatim."
+    },
+    {
+      "id": "repo-backend-p1-056",
+      "holds": true,
+      "reason": "AuditContext.java:10-11 doc comment names the x-cdp-request-id and User-Id headers; lines 15-16 requireNonNull both, so both must be present to build the context."
+    },
+    {
+      "id": "repo-backend-p1-057",
+      "holds": true,
+      "reason": "Quote verbatim at design-notes.md:19; StrictLocalDateModule.java:9-17 explains it and line 41 sets leniency false for LocalDate."
+    },
+    {
+      "id": "repo-backend-p1-058",
+      "holds": true,
+      "reason": "StrictLocalDateModule.java:19-20, quote verbatim; the override is per type (line 41)."
+    },
+    {
+      "id": "repo-backend-p1-059",
+      "holds": true,
+      "reason": "Quote verbatim at design-notes.md:8; LocalDateStringConverters.java:8-10 says stored as ISO-8601 string and read back as the same date in any JVM zone."
+    },
+    {
+      "id": "repo-backend-p1-060",
+      "holds": true,
+      "reason": "Quote verbatim at design-notes.md:9."
+    },
+    {
+      "id": "repo-backend-p1-061",
+      "holds": true,
+      "reason": "Quote is docs/design-notes.md:10 verbatim; the statement restates it."
+    },
+    {
+      "id": "repo-backend-p1-062",
+      "holds": true,
+      "reason": "Line 7 lists the moments and says an Instant decodes without a zone; line 11 says BSON dates hold milliseconds, so sub-millisecond digits are dropped. Statement follows from both lines."
+    },
+    {
+      "id": "repo-backend-p1-063",
+      "holds": true,
+      "reason": "docs/design-notes.md:12 pins write-dates-as-timestamps to false and says enabling it would emit epoch numbers and [y,m,d] arrays instead of ISO-8601 strings."
+    },
+    {
+      "id": "repo-backend-p1-064",
+      "holds": true,
+      "reason": "docs/design-notes.md:15 verbatim."
+    },
+    {
+      "id": "repo-backend-p1-065",
+      "holds": true,
+      "reason": "NotificationView.java:23-44 declares referenceNumber, concurrencyToken, status, created, then origin, commodities, consignor, consignee, transport unwrapped from notification.*; NotificationViewData.java:16-24 has the same flat fields. The note is right: no importer, place of origin, destination, submittedAt or updated."
+    },
+    {
+      "id": "repo-backend-p1-066",
+      "holds": true,
+      "reason": "NotificationView.java:12-15 says the open projection loads the full aggregate including fulfilments per row, with the quoted accepted trade-off."
+    },
+    {
+      "id": "repo-backend-p1-067",
+      "holds": true,
+      "reason": "NotificationPageResponse.java:13-29 has those six fields and passes getNumber() + 1 as page."
+    },
+    {
+      "id": "repo-backend-p1-068",
+      "holds": true,
+      "reason": "ReferenceNumberPageResponse.java:6-23 maps to plain strings and passes getNumber() with no + 1. The inference is sound, and NotificationController.java:221 confirms it: the reference-numbers page defaults to 0 with @Min(0), where the list defaults to 1."
+    },
+    {
+      "id": "repo-backend-p1-069",
+      "holds": true,
+      "reason": "NotificationFulfilmentsView.java:13-25 has exactly those seven fields; docs/design-notes.md:31 says it leaves out preAmendNotification, preAmendFulfilments and expireAt."
+    },
+    {
+      "id": "repo-backend-p1-070",
+      "holds": true,
+      "reason": "NotificationDto.java:13-15 Javadoc verbatim. It is loose: replay returns ReplayResponse, outbox-events returns outbox events and DELETE returns no body. The load-bearing part, that the inbound shape is never a response, is true."
+    },
+    {
+      "id": "repo-backend-p1-071",
+      "holds": true,
+      "reason": "ReplayResponse.java:3 verbatim."
+    },
+    {
+      "id": "repo-backend-p1-072",
+      "holds": true,
+      "reason": "NotificationContentMapper.java:18-23 returns a new empty list for a null or empty source. The note starts mechanism: as it should."
+    },
+    {
+      "id": "repo-backend-p1-073",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:29-31 Javadoc verbatim. Every handler sets APPLICATION_PROBLEM_JSON and adds traceId when MDC holds one, as does ProblemDetailsFactory.java:17-27. 'Every' covers this handler's responses only: Spring framework errors are outside it (p1-087)."
+    },
+    {
+      "id": "repo-backend-p1-074",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:38-41 has the constants. Lines 57-83 give 400, type .../problems/validation-error, and errors mapping each field to a list of default messages."
+    },
+    {
+      "id": "repo-backend-p1-075",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:89-111: HttpMessageNotReadableException gives 400, type malformed-request, title \"Malformed Request\" and the quoted detail verbatim."
+    },
+    {
+      "id": "repo-backend-p1-076",
+      "holds": true,
+      "reason": "docs/design-notes.md:20 verbatim. GlobalExceptionHandler.java:86-87 says the same, and line 92 logs the exception."
+    },
+    {
+      "id": "repo-backend-p1-077",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:116-147 handles ConstraintViolationException with the validation title and detail. The quoted key is the last segment of the property path."
+    },
+    {
+      "id": "repo-backend-p1-078",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:149-154 verbatim. requestParameterProblem (163-182) gives 400 with the validation title and detail."
+    },
+    {
+      "id": "repo-backend-p1-079",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:156-161 verbatim, through the same requestParameterProblem."
+    },
+    {
+      "id": "repo-backend-p1-080",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:187-193 verbatim. BadRequestException.java:3-7 names the callback-metadata example."
+    },
+    {
+      "id": "repo-backend-p1-081",
+      "holds": false,
+      "reason": "Overreaches. The handler does map ForbiddenException to 403, type forbidden, title \"Forbidden\" (GlobalExceptionHandler.java:195-199), and the Javadoc quote is verbatim. But in the notification code the only place that throws ForbiddenException is the fulfilments read (NotificationService.java:162). Every other trader notification route goes through requireTraderNotification (NotificationService.java:442-449), which answers 404 for another organisation's notification. So, as a general rule, a request for another organisation's resource does not get 403. The mapping is kept as p1-081-m1."
+    },
+    {
+      "id": "repo-backend-p1-082",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:204-209 verbatim."
+    },
+    {
+      "id": "repo-backend-p1-083",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:214-220 verbatim, and ConflictException.java:3-6 gives the duplicate-key example. On main, though, ConflictException is thrown only in DocumentService.java:208 (a session already registered). A raw DuplicateKeyException is not mapped here."
+    },
+    {
+      "id": "repo-backend-p1-084",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:243-264: OptimisticLockingFailureException gives 409, title \"Stale Concurrency Token\", property code STALE_CONCURRENCY_TOKEN and the quoted detail. Its type is .../problems/stale-concurrency-token."
+    },
+    {
+      "id": "repo-backend-p1-085",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:269-290 verbatim. OutboxWriteException also covers a busy or interrupted outbox lock (NotificationService.java:339, 360)."
+    },
+    {
+      "id": "repo-backend-p1-086",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:295-315 verbatim."
+    },
+    {
+      "id": "repo-backend-p1-087",
+      "holds": true,
+      "reason": "docs/design-notes.md:21 verbatim."
+    },
+    {
+      "id": "repo-backend-p1-088",
+      "holds": true,
+      "reason": "README.md:3-5 says it listens on port 8085. Lines 60-62 hold the quoted transaction and replica-set sentence. The ref's line numbers are close, not exact."
+    },
+    {
+      "id": "repo-backend-p1-089",
+      "holds": true,
+      "reason": "docs/repos/trade-imports-animals-backend.md:15 in the workspace, verbatim."
+    },
+    {
+      "id": "repo-backend-p1-090",
+      "holds": true,
+      "reason": "grep -rniE germinal over the notification package, docs/, README.md and AGENTS.md finds nothing. The gap is real."
+    },
+    {
+      "id": "repo-backend-p1-091",
+      "holds": true,
+      "reason": "grep -rniE category over the notification package finds nothing. The gap is real."
+    },
+    {
+      "id": "repo-backend-p1-092",
+      "holds": true,
+      "reason": "grep -rniE typeCode over the notification package finds nothing. The only typeCode in docs is design-notes.md:140, carrier.partyTypeCode on the event, not a trade line. The gap holds."
+    },
+    {
+      "id": "repo-backend-p1-093",
+      "holds": true,
+      "reason": "The repo has no decisions or rulings file. AGENTS.md:14 mentions ruling ids only to ban them from code. The design notes give reasons. The gap holds."
+    },
+    {
+      "id": "repo-backend-p2-001",
+      "holds": true,
+      "reason": "NotificationController.java:36 verbatim."
+    },
+    {
+      "id": "repo-backend-p2-002",
+      "holds": true,
+      "reason": "NotificationController.java:49-62 has the operation summary. NotificationService.java:91-100 creates when the reference number is blank and otherwise calls replaceContent."
+    },
+    {
+      "id": "repo-backend-p2-003",
+      "holds": true,
+      "reason": "NotificationController.java:53-57: @Valid @RequestBody SaveNotificationDto, then getNotification() and resolveActor(getActor()). resolveActor returns null for a missing actor, so the actor is optional."
+    },
+    {
+      "id": "repo-backend-p2-004",
+      "holds": true,
+      "reason": "post, replace, copy, submit, amend, cancelAmend and softDelete all return ResponseEntity<NotificationAggregate> through ResponseEntity.ok (controller lines 52, 72, 92, 125, 149, 169, 266)."
+    },
+    {
+      "id": "repo-backend-p2-005",
+      "holds": false,
+      "reason": "Overreaches. The optional trace id header with a default of \"\" (NotificationController.java:54) is on post, replace, copy, submit, amend, cancel-amend, soft-delete and replay. But GET /notifications (189-193) and GET /{ref}/fulfilments (206-208) are trader endpoints that read no trace id header, and DELETE /notifications requires it (line 301). So not every trader endpoint reads it."
+    },
+    {
+      "id": "repo-backend-p2-006",
+      "holds": true,
+      "reason": "NotificationController.java:278-291 copies id, source, userType, displayName and onBehalfOfOrganisationId, sets organisationId from the header, and returns null when no actor is sent."
+    },
+    {
+      "id": "repo-backend-p2-007",
+      "holds": true,
+      "reason": "NotificationController.java:64-66, the operation description verbatim."
+    },
+    {
+      "id": "repo-backend-p2-008",
+      "holds": true,
+      "reason": "ReferenceNumberGenerator.java:20 has the pattern. @Pattern sits on every {referenceNumber} path variable: replace, copy, submit, amend, cancel-amend, fulfilments, outbox-events, replay and soft-delete. The character class excludes I, L, O and U, which is Crockford base32."
+    },
+    {
+      "id": "repo-backend-p2-009",
+      "holds": true,
+      "reason": "NotificationService.java:113-117 verbatim. BadRequestException maps to 400."
+    },
+    {
+      "id": "repo-backend-p2-010",
+      "holds": true,
+      "reason": "NotificationService.java:118-120 verbatim."
+    },
+    {
+      "id": "repo-backend-p2-011",
+      "holds": true,
+      "reason": "Sound inference. NotificationService.java:121 sets the caller's token before save, and OptimisticLockingFailureException maps to 409 (GlobalExceptionHandler.java:243). The PUT ApiResponses (controller 67-70) indeed list no 409."
+    },
+    {
+      "id": "repo-backend-p2-012",
+      "holds": true,
+      "reason": "NotificationService.java:482-502 sets every listed field from the DTO, plus fulfilments. A missing field is set to null: the save replaces, it does not merge."
+    },
+    {
+      "id": "repo-backend-p2-013",
+      "holds": true,
+      "reason": "NotificationService.java:520-529 verbatim. The note starts mechanism:."
+    },
+    {
+      "id": "repo-backend-p2-014",
+      "holds": true,
+      "reason": "NotificationService.java:503-506 verbatim."
+    },
+    {
+      "id": "repo-backend-p2-015",
+      "holds": true,
+      "reason": "Sound inference: lines 516-517 compare only the notification sub-object. docs/design-notes.md:33 states it outright."
+    },
+    {
+      "id": "repo-backend-p2-016",
+      "holds": true,
+      "reason": "NotificationService.java:510-515 verbatim."
+    },
+    {
+      "id": "repo-backend-p2-017",
+      "holds": true,
+      "reason": "NotificationService.java:124-125 passes the current status as the target status, with NOTIFICATION_EDITED."
+    },
+    {
+      "id": "repo-backend-p2-018",
+      "holds": true,
+      "reason": "NotificationService.java:305, inside saveWithStatusAndOutboxEvent, which every save and lifecycle change goes through. A soft delete of an already DELETED notification returns early (371-374) and stamps nothing, but that is not a change."
+    },
+    {
+      "id": "repo-backend-p2-019",
+      "holds": true,
+      "reason": "NotificationService.java:325-363: the lock name is outbox-write:<aggregateId>, the loop runs attempts 0 to MAX_LOCK_RETRIES=2 with a lockAtLeastFor sleep between them, then throws OutboxWriteException, which maps to 500. The callers are @Transactional. The note starts mechanism:."
+    },
+    {
+      "id": "repo-backend-p2-020",
+      "holds": true,
+      "reason": "NotificationService.java:451-469 sets created and organisationId, stamps expiry, generates a reference and saves with DRAFT."
+    },
+    {
+      "id": "repo-backend-p2-021",
+      "holds": true,
+      "reason": "NotificationService.java:468 verbatim."
+    },
+    {
+      "id": "repo-backend-p2-022",
+      "holds": true,
+      "reason": "NotificationService.java:458-479: three attempts on DuplicateKeyException, then an IllegalStateException with the quoted message. It is a RuntimeException, so 500."
+    },
+    {
+      "id": "repo-backend-p2-023",
+      "holds": true,
+      "reason": "ReferenceNumberGenerator.java:7-12 Javadoc verbatim. Lines 26-28 take YY from LocalDate.now().getYear() % 100, zero-padded."
+    },
+    {
+      "id": "repo-backend-p2-024",
+      "holds": true,
+      "reason": "ReferenceNumberGenerator.java:19 verbatim."
+    },
+    {
+      "id": "repo-backend-p2-025",
+      "holds": true,
+      "reason": "Sound inference: generate() takes no input and has one fixed format. The quote is at line 28, not 27, so the ref is loose."
+    },
+    {
+      "id": "repo-backend-p2-026",
+      "holds": true,
+      "reason": "NotificationController.java:84-103: the operation description is verbatim, with @RequestParam Long concurrencyToken (required by default)."
+    },
+    {
+      "id": "repo-backend-p2-027",
+      "holds": true,
+      "reason": "NotificationService.java:133-137 verbatim."
+    },
+    {
+      "id": "repo-backend-p2-028",
+      "holds": true,
+      "reason": "Quote at NotificationController.java:90; NotificationService.java:144-148 throws OptimisticLockingFailureException, which GlobalExceptionHandler.java:243-264 maps to 409 problem+json."
+    },
+    {
+      "id": "repo-backend-p2-029",
+      "holds": true,
+      "reason": "NotificationService.java:138-143 throws IllegalStateException when either token is null; GlobalExceptionHandler.java:295 maps any other RuntimeException to 500. The controller's required @RequestParam makes a missing query token a 400 first, as the note says."
+    },
+    {
+      "id": "repo-backend-p2-030",
+      "holds": true,
+      "reason": "NotificationService.java:150 calls createNotification, which at 451-469 sets created, organisation, stamps expiry, new reference, DRAFT and NOTIFICATION_CREATED. The expiry is only stamped when expiry days are configured (stampExpiry, 432-435)."
+    },
+    {
+      "id": "repo-backend-p2-031",
+      "holds": true,
+      "reason": "NotificationCopyMapper.java:45-55 builds Origin with exactly these four fields."
+    },
+    {
+      "id": "repo-backend-p2-032",
+      "holds": true,
+      "reason": "NotificationCopyMapper.java:57-65 copies name, commodityCode and description only; totalNoOfAnimals, totalNoOfPackages and species are left unset, and commoditiesFromDto (NotificationService.java:520-529) stores species as an empty list."
+    },
+    {
+      "id": "repo-backend-p2-033",
+      "holds": true,
+      "reason": "NotificationCopyMapper.java:18 copies reasonForImport."
+    },
+    {
+      "id": "repo-backend-p2-034",
+      "holds": true,
+      "reason": "NotificationCopyMapper.java:67-74 copies certifiedFor only; unweanedAnimals is dropped."
+    },
+    {
+      "id": "repo-backend-p2-035",
+      "holds": true,
+      "reason": "NotificationCopyMapper.java:20-24 maps the five parties through mapConsignmentParty (33-43), which copies name, email, phone and address; ConsignmentParty has only those four fields, so 'only' is accurate."
+    },
+    {
+      "id": "repo-backend-p2-036",
+      "holds": true,
+      "reason": "NotificationCopyMapper.java:25-28, quote verbatim."
+    },
+    {
+      "id": "repo-backend-p2-037",
+      "holds": true,
+      "reason": "NotificationCopyMapper.java:29 copies the fulfilments list into a new ArrayList (same documents), stored on the copy by setNotificationDetails:502."
+    },
+    {
+      "id": "repo-backend-p2-038",
+      "holds": true,
+      "reason": "Sound inference: the builder at NotificationCopyMapper.java:15-30 sets no transport or exitDate, and setNotificationDetails (NotificationService.java:497,501) stores the DTO's null values."
+    },
+    {
+      "id": "repo-backend-p2-039",
+      "holds": true,
+      "reason": "Sound inference: createNotification builds a new NotificationAggregate (NotificationService.java:453) and saves it as DRAFT, so submittedAt, the pre-amend snapshots and the answers-differ flag start unset."
+    },
+    {
+      "id": "repo-backend-p2-040",
+      "holds": true,
+      "reason": "NotificationCopyMapper.java:14 calls requireNotification, which is requireNonNull (NotificationAggregate.java:73-75), so a source with no content fails (NullPointerException, a 500). The note already starts mechanism:."
+    },
+    {
+      "id": "repo-backend-p2-041",
+      "holds": true,
+      "reason": "Quote verbatim at NotificationController.java:106-109."
+    },
+    {
+      "id": "repo-backend-p2-042",
+      "holds": true,
+      "reason": "NotificationService.java:205-209, quote verbatim; BadRequestException maps to 400 (GlobalExceptionHandler.java:187-193)."
+    },
+    {
+      "id": "repo-backend-p2-043",
+      "holds": true,
+      "reason": "NotificationController.java:119-122 documents 409 problem+json; the service sets the caller's token (NotificationService.java:213) so a stale save raises OptimisticLockingFailureException, mapped to 409 problem+json."
+    },
+    {
+      "id": "repo-backend-p2-044",
+      "holds": true,
+      "reason": "NotificationController.java:110-123 lists 200, 400, 401, 404, 409 and 500 with those descriptions."
+    },
+    {
+      "id": "repo-backend-p2-045",
+      "holds": true,
+      "reason": "applySubmission (NotificationService.java:316-323) sets submittedAt to clock.instant() and runs for both SUBMISSION_EVENTS (300-302), which OutboxEventType.java:43-45 defines as NOTIFICATION_SUBMITTED and NOTIFICATION_SUBMISSION_AMENDED."
+    },
+    {
+      "id": "repo-backend-p2-046",
+      "holds": true,
+      "reason": "NotificationService.java:317-321, quote verbatim."
+    },
+    {
+      "id": "repo-backend-p2-047",
+      "holds": true,
+      "reason": "NotificationService.java:215-217, quote verbatim."
+    },
+    {
+      "id": "repo-backend-p2-048",
+      "holds": true,
+      "reason": "Gap confirmed: submitNotification (198-226) checks only status and token presence, and saveWithStatusAndOutboxEvent does no content check."
+    },
+    {
+      "id": "repo-backend-p2-049",
+      "holds": true,
+      "reason": "Quote verbatim at NotificationController.java:141; service enforces SUBMITTED and sets AMEND (NotificationService.java:235-255)."
+    },
+    {
+      "id": "repo-backend-p2-050",
+      "holds": true,
+      "reason": "NotificationService.java:235-238, quote verbatim."
+    },
+    {
+      "id": "repo-backend-p2-051",
+      "holds": true,
+      "reason": "NotificationController.java:149-153 parameters are referenceNumber, traceId, actorRequest and organisationId only; amendNotification takes no token."
+    },
+    {
+      "id": "repo-backend-p2-052",
+      "holds": true,
+      "reason": "NotificationService.java:240-247 deep-clones the notification into preAmendNotification and deep-copies fulfilments into preAmendFulfilments."
+    },
+    {
+      "id": "repo-backend-p2-053",
+      "holds": true,
+      "reason": "NotificationService.java:243-246 throws IllegalStateException, which falls to the RuntimeException handler (500)."
+    },
+    {
+      "id": "repo-backend-p2-054",
+      "holds": true,
+      "reason": "NotificationService.java:249-255 passes NOTIFICATION_AMENDMENT_REQUESTED."
+    },
+    {
+      "id": "repo-backend-p2-055",
+      "holds": true,
+      "reason": "Quote verbatim at NotificationController.java:162; service at NotificationService.java:274-288 restores content and saves as SUBMITTED."
+    },
+    {
+      "id": "repo-backend-p2-056",
+      "holds": true,
+      "reason": "NotificationService.java:265-268, quote verbatim."
+    },
+    {
+      "id": "repo-backend-p2-057",
+      "holds": true,
+      "reason": "NotificationService.java:269-272, quote verbatim. Only a missing notification snapshot is refused; missing pre-amend fulfilments restore as null (276-278)."
+    },
+    {
+      "id": "repo-backend-p2-058",
+      "holds": true,
+      "reason": "NotificationService.java:274-281: content restored by deep clone, fulfilments restored (or null), both snapshots cleared, flag false."
+    },
+    {
+      "id": "repo-backend-p2-059",
+      "holds": true,
+      "reason": "The assumption checks out: OutboxEventType.java:43-45 SUBMISSION_EVENTS holds only NOTIFICATION_SUBMITTED and NOTIFICATION_SUBMISSION_AMENDED, so NOTIFICATION_AMENDMENT_CANCELLED does not restamp submittedAt."
+    },
+    {
+      "id": "repo-backend-p2-060",
+      "holds": true,
+      "reason": "NotificationService.java:282-288 passes NOTIFICATION_AMENDMENT_CANCELLED."
+    },
+    {
+      "id": "repo-backend-p2-061",
+      "holds": true,
+      "reason": "Quote verbatim at NotificationController.java:259."
+    },
+    {
+      "id": "repo-backend-p2-062",
+      "holds": true,
+      "reason": "NotificationService.java:371-374 returns the unchanged aggregate; the controller wraps it in 200 (274-275)."
+    },
+    {
+      "id": "repo-backend-p2-063",
+      "holds": true,
+      "reason": "NotificationService.java:375-380, quote verbatim. With only four statuses this branch is unreachable today, which the statement does not deny."
+    },
+    {
+      "id": "repo-backend-p2-064",
+      "holds": true,
+      "reason": "NotificationService.java:381-383, quote verbatim."
+    },
+    {
+      "id": "repo-backend-p2-065",
+      "holds": true,
+      "reason": "Sound inference: softDelete takes no token (NotificationController.java:266-270) and softDeleteNotification only changes status and updated time via saveWithStatusAndOutboxEvent; it calls no document deletion."
+    },
+    {
+      "id": "repo-backend-p2-066",
+      "holds": true,
+      "reason": "Quote at NotificationController.java:183; findDashboardPage (NotificationService.java:169-196) queries by organisationId with paging."
+    },
+    {
+      "id": "repo-backend-p2-067",
+      "holds": true,
+      "reason": "NotificationService.java:172-173, quote verbatim."
+    },
+    {
+      "id": "repo-backend-p2-068",
+      "holds": true,
+      "reason": "NotificationController.java:190 @RequestParam(defaultValue = \"1\") @Min(1); the class is @Validated, and ConstraintViolationException maps to 400 (GlobalExceptionHandler.java:116-147). Service converts to zero-based at NotificationService.java:174."
+    },
+    {
+      "id": "repo-backend-p2-069",
+      "holds": true,
+      "reason": "application.yml:128-129 list.page-size: 25, injected as listPageSize; the endpoint has no size parameter, and application-local.yml does not override it."
+    },
+    {
+      "id": "repo-backend-p2-070",
+      "holds": true,
+      "reason": "Quote verbatim at NotificationController.java:184; NotificationSort.java:32-36 recognises arrivalDate and createdAt with either direction."
+    },
+    {
+      "id": "repo-backend-p2-071",
+      "holds": true,
+      "reason": "NotificationSort.java:18-25 (blank or not two parts), 35 (unknown field) and 39-41 (DESC on arrival date)."
+    },
+    {
+      "id": "repo-backend-p2-072",
+      "holds": true,
+      "reason": "NotificationSort.java:28-30, quote verbatim."
+    },
+    {
+      "id": "repo-backend-p2-073",
+      "holds": true,
+      "reason": "NotificationSort.java:11-12, quote verbatim."
+    },
+    {
+      "id": "repo-backend-p2-074",
+      "holds": true,
+      "reason": "Sound inference: the switch at NotificationSort.java:32-36 knows only arrivalDate and createdAt."
+    },
+    {
+      "id": "repo-backend-p2-075",
+      "holds": true,
+      "reason": "Quote at NotificationController.java:185; NotificationService.java:176-188 trims to null and returns a one-element page or Page.empty."
+    },
+    {
+      "id": "repo-backend-p2-076",
+      "holds": true,
+      "reason": "NotificationService.java:179-181, quote verbatim; repository method at NotificationRepository.java:28-29."
+    },
+    {
+      "id": "repo-backend-p2-077",
+      "holds": true,
+      "reason": "Sound inference: NotificationController.java:189-193 takes only page, sort and referenceNumber."
+    },
+    {
+      "id": "repo-backend-p2-078",
+      "holds": true,
+      "reason": "NotificationRepository.java:31-32 returns Page<NotificationView>; NotificationService.java:187,195 wrap it in NotificationPageResponse."
+    },
+    {
+      "id": "repo-backend-p2-079",
+      "holds": true,
+      "reason": "Sound inference: the controller's GET mappings are the list (181), /{ref}/fulfilments (198), /reference-numbers (213) and /{ref}/outbox-events (226). Save and lifecycle POSTs do return the whole aggregate, but none is a read."
+    },
+    {
+      "id": "repo-backend-p2-080",
+      "holds": true,
+      "reason": "Quote verbatim at NotificationController.java:200; projection fields at NotificationRepository.java:23-24 match."
+    },
+    {
+      "id": "repo-backend-p2-081",
+      "holds": true,
+      "reason": "NotificationController.java:203-204 documents both; NotificationService.java:161-166 throws ForbiddenException (403) when the reference exists elsewhere, else NotFoundException (404)."
+    },
+    {
+      "id": "repo-backend-p2-082",
+      "holds": true,
+      "reason": "Sound inference: the @Query at NotificationRepository.java:22 filters only referenceNumber and organisationId."
+    },
+    {
+      "id": "repo-backend-p2-083",
+      "holds": false,
+      "reason": "Overreaches. requireTraderNotification (NotificationService.java:442-449) does give 404 for save, copy, submit, amend, cancel amend and soft delete, but the trader read endpoint GET /{ref}/fulfilments answers 403 for another organisation's notification (NotificationService.java:161-165), as claim p2-081 says. 'Every ... read operation ... treated as not found' is false for that read."
+    },
+    {
+      "id": "repo-backend-p2-084",
+      "holds": true,
+      "reason": "NotificationService.java:44, quote verbatim; used at 166 and 448 and returned as the NotFound problem detail."
+    },
+    {
+      "id": "repo-backend-p2-085",
+      "holds": true,
+      "reason": "TraderOrganisationHeaderFilter.java:33 (ref says 34, a line off), quote verbatim."
+    },
+    {
+      "id": "repo-backend-p2-086",
+      "holds": true,
+      "reason": "TraderOrganisationHeaderFilter.java:41-53 (shouldNotFilter: admin routes skipped, /notifications filtered, /document-uploads filtered unless ending /scan-results) and 60-82 (400 problem+json, detail verbatim at 75)."
+    },
+    {
+      "id": "repo-backend-p2-087",
+      "holds": true,
+      "reason": "Sound inference: doFilterInternal (TraderOrganisationHeaderFilter.java:60-71) only checks the header is present and non-blank, then passes it on. Stated in general terms as the brief requires."
+    },
+    {
+      "id": "repo-backend-p2-088",
+      "holds": true,
+      "reason": "NotificationService.java:455 sets organisationId in createNotification; requireTraderNotification (442-449) scopes every trader lookup by findByReferenceNumberAndOrganisationId."
+    },
+    {
+      "id": "repo-backend-p2-089",
+      "holds": true,
+      "reason": "AdminNotificationRoutes.java:13-24 lists exactly these four method/path pairs; TraderOrganisationHeaderFilter.java:42-44 skips the header check for them."
+    },
+    {
+      "id": "repo-backend-p2-090",
+      "holds": true,
+      "reason": "AdminSecretFilter.java:24 header name, 35-41 sets 401 on missing or mismatched secret; shouldNotFilter (47-58) applies it to DELETE /notifications* and POST /notifications/{ref}/replay."
+    },
+    {
+      "id": "repo-backend-p2-091",
+      "holds": true,
+      "reason": "AdminSecretFilter.java:35 rejects when the configured secret is blank, so guarded routes answer 401."
+    },
+    {
+      "id": "repo-backend-p2-092",
+      "holds": true,
+      "reason": "AdminSecretFilter.java:37-39 uses MessageDigest.isEqual, a constant-time comparison."
+    },
+    {
+      "id": "repo-backend-p2-093",
+      "holds": true,
+      "reason": "Sound inference: AdminNotificationRoutes exempts GET reference-numbers and GET outbox-events from the organisation filter, and AdminSecretFilter.shouldNotFilter (52-57) only guards DELETE and replay. The controller's @ApiResponse 401 on those two (218, 230) cannot come from these filters. Stated in general terms."
+    },
+    {
+      "id": "repo-backend-p2-094",
+      "holds": true,
+      "reason": "application.yml:116-118 reads TRADE_IMPORTS_ANIMALS_ADMIN_SECRET with a literal fallback in the shared file; the extract redacted the value, which is right."
+    },
+    {
+      "id": "repo-backend-p2-095",
+      "holds": true,
+      "reason": "NotificationController.java:297-310 takes a List<String> body and returns noContent (204); NotificationService.java:427-430 deletes the notifications and their documents."
+    },
+    {
+      "id": "repo-backend-p2-096",
+      "holds": true,
+      "reason": "NotificationController.java:301-305: trace id and User-Id headers required=true, badRequest for a null or empty list."
+    },
+    {
+      "id": "repo-backend-p2-097",
+      "holds": true,
+      "reason": "NotificationService.java:409-421 checks every reference first and throws NotFoundException (mapped to 404 in GlobalExceptionHandler:204-208) listing the missing ones before any delete."
+    },
+    {
+      "id": "repo-backend-p2-098",
+      "holds": true,
+      "reason": "findAllReferencesByReferenceNumberIn and deleteAllByReferenceNumberIn (NotificationRepository.java:19,38) take no organisation; the controller reads no organisation header."
+    },
+    {
+      "id": "repo-backend-p2-099",
+      "holds": true,
+      "reason": "Sound inference: deleteByReferenceNumbers (403-425) and deleteNotificationsAndDocuments call no OutboxService method, and DocumentService.deleteForNotificationReferenceNumbers (129-137) only deletes documents and sessions."
+    },
+    {
+      "id": "repo-backend-p2-100",
+      "holds": true,
+      "reason": "NotificationService.java:418 FAILURE before the 404, 424 SUCCESS after the delete; @Transactional(noRollbackFor = NotFoundException.class) at 403 keeps the FAILURE record."
+    },
+    {
+      "id": "repo-backend-p2-101",
+      "holds": true,
+      "reason": "NotificationService.java:533-541 builder sets exactly these fields."
+    },
+    {
+      "id": "repo-backend-p2-102",
+      "holds": true,
+      "reason": "audit/Audit.java:12-36: @Document(collection = \"audit\") with id, action, result, timestamp, numberOfNotifications, numberOfEvents, notificationReferenceNumbers, traceId, userId."
+    },
+    {
+      "id": "repo-backend-p2-103",
+      "holds": true,
+      "reason": "audit/Action.java:5-6 and audit/Result.java:5."
+    },
+    {
+      "id": "repo-backend-p2-104",
+      "holds": true,
+      "reason": "Sound inference: AuditRepository is referenced only in NotificationService (createNotificationAuditRecord, called only from deleteByReferenceNumbers) and OutboxReplayService."
+    },
+    {
+      "id": "repo-backend-p2-105",
+      "holds": true,
+      "reason": "NotificationController.java:213-224 description quoted; NotificationService.java:396-397 PageRequest sorted by created DESC with a projection, no organisation filter."
+    },
+    {
+      "id": "repo-backend-p2-106",
+      "holds": true,
+      "reason": "NotificationController.java:221 defaultValue 0 with @Min(0); application.yml:126-127 admin page-size 50."
+    },
+    {
+      "id": "repo-backend-p2-107",
+      "holds": true,
+      "reason": "Sound inference: NotificationRepository.java:36 findAllReferencesBy has no status criterion, so DELETED records are listed."
+    },
+    {
+      "id": "repo-backend-p2-108",
+      "holds": true,
+      "reason": "NotificationController.java:228 operation description quoted verbatim; ordering itself is in OutboxService (part 4)."
+    },
+    {
+      "id": "repo-backend-p2-109",
+      "holds": true,
+      "reason": "NotificationController.java:240-242 description quoted verbatim."
+    },
+    {
+      "id": "repo-backend-p2-110",
+      "holds": true,
+      "reason": "NotificationController.java:251 User-Id required, 254 ok(new ReplayResponse(count)); OutboxReplayService.java:31-33 NotFoundException when no events."
+    },
+    {
+      "id": "repo-backend-p2-111",
+      "holds": true,
+      "reason": "OutboxReplayService.java:36-67: FAILURE on JsonProcessingException with a break, audit fields as stated; returns events.size() so the note's total-count point is right too."
+    },
+    {
+      "id": "repo-backend-p2-112",
+      "holds": true,
+      "reason": "NotificationService.java:432-435 stampExpiry; NotificationTtlConfig.java:31-36 daysToStamp empty in prod or when days unset."
+    },
+    {
+      "id": "repo-backend-p2-113",
+      "holds": true,
+      "reason": "Sound inference: stampExpiry is called only at NotificationService.java:456 in createNotification, and no method sets expireAt otherwise. A copy, being created through createNotification, gets its own fresh expiry."
+    },
+    {
+      "id": "repo-backend-p2-114",
+      "holds": true,
+      "reason": "NotificationExpiryIndex.java:19-39: conditional on notification.ttl.expiry.enabled=true, on ApplicationReadyEvent creates expireAt indexes with expire(Duration.ZERO) on both collections."
+    },
+    {
+      "id": "repo-backend-p2-115",
+      "holds": true,
+      "reason": "NotificationExpiryIndex.java:27-30 refuses in prod with the quoted warning; NotificationTtlConfig.java:31-35 stamps nothing in prod."
+    },
+    {
+      "id": "repo-backend-p2-116",
+      "holds": true,
+      "reason": "application.yml:132-138 quoted verbatim; NotificationTtlConfig.java:19 @Nullable @Positive Integer days."
+    },
+    {
+      "id": "repo-backend-p2-117",
+      "holds": true,
+      "reason": "NotificationTtlConfig.java:23 equalsIgnoreCase."
+    },
+    {
+      "id": "repo-backend-p2-118",
+      "holds": true,
+      "reason": "NotificationExpiryStampingLog.java:24-35 logs on, off-prod and off-no-days lines."
+    },
+    {
+      "id": "repo-backend-p2-119",
+      "holds": true,
+      "reason": "Gap holds: application.yml:135 has an empty default and application-local.yml sets no notification.ttl at all."
+    },
+    {
+      "id": "repo-backend-p2-120",
+      "holds": true,
+      "reason": "application.yml:130-131 50ms; NotificationService.java:336 sleeps lockAtLeastFor between retries, and 344-345 uses it as the lock's minimum hold. Note rightly marks it a mechanism."
+    },
+    {
+      "id": "repo-backend-p2-121",
+      "holds": true,
+      "reason": "application.yml:151-155 quoted verbatim; how the poller uses them is part 4's."
+    },
+    {
+      "id": "repo-backend-p2-122",
+      "holds": true,
+      "reason": "application-local.yml:55-57 quoted verbatim."
+    },
+    {
+      "id": "repo-backend-p2-123",
+      "holds": true,
+      "reason": "Gap holds: grep -rli template over src/main/java finds only infrastructure files (transaction manager, retry interceptor, TLS, trace interceptor, NotificationExpiryIndex MongoTemplate); NotificationStatus.java has only DRAFT, SUBMITTED, AMEND, DELETED."
+    },
+    {
+      "id": "repo-backend-p2-124",
+      "holds": true,
+      "reason": "Gap holds: setNotificationDetails (482-502), findDashboardPage (169-196) and the repository set or filter no category; grep for category/germinal in src/main/java finds only a GBN-AG purpose code mapping in outbox/gbnag/Clause.java (part 4), not a stored category."
+    },
+    {
+      "id": "repo-backend-p2-125",
+      "holds": true,
+      "reason": "Every saveWithStatusAndOutboxEvent call uses DRAFT (467), SUBMITTED (223, 286), AMEND (253) or DELETED (388). The note's speculation about other values is wrong: NotificationStatus.java:4 defines only these four, but the statement stands."
+    },
+    {
+      "id": "repo-backend-p2-126",
+      "holds": true,
+      "reason": "Allowed-status checks at 113-114 (replace), 133-135 (copy), 205-206 (submit) and 235 (amend) exclude DELETED, so each throws BadRequestException (400)."
+    },
+    {
+      "id": "repo-backend-p2-127",
+      "holds": true,
+      "reason": "NotificationService.java:113-117 allows only DRAFT or AMEND."
+    },
+    {
+      "id": "repo-backend-p2-128",
+      "holds": true,
+      "reason": "NotificationController.java:142-147 (amend: 200, 400, 401, 404, 500), 163-167 (cancel amend: 200, 400, 401, 404), 260-264 (soft delete: 200, 400, 401, 404)."
+    },
+    {
+      "id": "repo-backend-p2-129",
+      "holds": true,
+      "reason": "@RequestBody(required = false) ActorRequest at NotificationController.java:96, 129, 152, 172, 269."
+    },
+    {
+      "id": "repo-backend-p2-130",
+      "holds": true,
+      "reason": "NotificationController.java:43 constant, used at 251 and 302; trader routes resolve the actor from the body (resolveActor, 278-291)."
+    },
+    {
+      "id": "repo-backend-p2-131",
+      "holds": true,
+      "reason": "NotificationService.java:94-99 routes a POST with a reference number to replaceContent, the same method PUT uses (104-107); saveNotification lacks @Transactional, so the mechanism note is right."
+    },
+    {
+      "id": "repo-backend-p2-132",
+      "holds": true,
+      "reason": "application.yml:120-123 enabled false; application-local.yml:37-40 enabled true."
+    },
+    {
+      "id": "repo-backend-p3-001",
+      "holds": true,
+      "reason": "DocumentType.java:6-45 lists exactly these 13 constants with only @Schema descriptions."
+    },
+    {
+      "id": "repo-backend-p3-002",
+      "holds": true,
+      "reason": "DocumentType.java:7-8 verbatim."
+    },
+    {
+      "id": "repo-backend-p3-003",
+      "holds": true,
+      "reason": "DocumentType.java:10-11 verbatim."
+    },
+    {
+      "id": "repo-backend-p3-004",
+      "holds": true,
+      "reason": "DocumentType.java:13-14 verbatim."
+    },
+    {
+      "id": "repo-backend-p3-005",
+      "holds": true,
+      "reason": "DocumentType.java:16-17 verbatim."
+    },
+    {
+      "id": "repo-backend-p3-006",
+      "holds": true,
+      "reason": "DocumentType.java:19-20 verbatim."
+    },
+    {
+      "id": "repo-backend-p3-007",
+      "holds": true,
+      "reason": "DocumentType.java:22-23 verbatim."
+    },
+    {
+      "id": "repo-backend-p3-008",
+      "holds": true,
+      "reason": "DocumentType.java:25-26 verbatim."
+    },
+    {
+      "id": "repo-backend-p3-009",
+      "holds": true,
+      "reason": "DocumentType.java:28-29 verbatim."
+    },
+    {
+      "id": "repo-backend-p3-010",
+      "holds": true,
+      "reason": "DocumentType.java:31-32 verbatim."
+    },
+    {
+      "id": "repo-backend-p3-011",
+      "holds": true,
+      "reason": "DocumentType.java:34-35 verbatim."
+    },
+    {
+      "id": "repo-backend-p3-012",
+      "holds": true,
+      "reason": "DocumentType.java:37-38 verbatim."
+    },
+    {
+      "id": "repo-backend-p3-013",
+      "holds": true,
+      "reason": "DocumentType.java:40-41 verbatim."
+    },
+    {
+      "id": "repo-backend-p3-014",
+      "holds": true,
+      "reason": "DocumentType.java:43-44 verbatim."
+    },
+    {
+      "id": "repo-backend-p3-015",
+      "holds": true,
+      "reason": "Sound inference: DocumentService.claimUpload (63-79) sets request.documentType() without reading the notification, and ClaimUploadRequest.java:19-23 only requires it @NotNull."
+    },
+    {
+      "id": "repo-backend-p3-016",
+      "holds": true,
+      "reason": "AccompanyingDocument.java:26 @Document(collection = \"accompanying_documents\") and :41-42 @Indexed notificationReferenceNumber, as quoted."
+    },
+    {
+      "id": "repo-backend-p3-017",
+      "holds": true,
+      "reason": "AccompanyingDocument.java:36-70 declares exactly these fields: id, version, notificationReferenceNumber, uploadId, correlationId, documentType, documentReference, dateOfIssue, scanStatus, claimed, files, created, updated, expireAt."
+    },
+    {
+      "id": "repo-backend-p3-018",
+      "holds": true,
+      "reason": "AccompanyingDocument.java:44-48 both fields carry @Indexed(unique = true)."
+    },
+    {
+      "id": "repo-backend-p3-019",
+      "holds": true,
+      "reason": "AccompanyingDocument.java:38-39 @Version, :64-68 @CreatedDate created and @LastModifiedDate updated."
+    },
+    {
+      "id": "repo-backend-p3-020",
+      "holds": true,
+      "reason": "AccompanyingDocument.java:58-62 claimed defaults false and files to an empty list; AccompanyingDocumentDto.java's claimed description ('Whether the trader's document details have been supplied') supports the 'until details supplied' part."
+    },
+    {
+      "id": "repo-backend-p3-021",
+      "holds": true,
+      "reason": "AccompanyingDocument.java:54 LocalDate dateOfIssue; design-notes.md:8 states the YYYY-MM-DD string storage, as the note says."
+    },
+    {
+      "id": "repo-backend-p3-022",
+      "holds": true,
+      "reason": "ClaimUploadRequest.java:19-37 @NotNull documentType, @NotBlank documentReference, @NotNull dateOfIssue, each requiredMode REQUIRED."
+    },
+    {
+      "id": "repo-backend-p3-023",
+      "holds": true,
+      "reason": "ClaimUploadRequest.java:25 @NotBlank on documentReference."
+    },
+    {
+      "id": "repo-backend-p3-024",
+      "holds": true,
+      "reason": "ClaimUploadRequest.java:26 @Size(max = REFERENCE_MAX_LENGTH) and :47 REFERENCE_MAX_LENGTH = 58."
+    },
+    {
+      "id": "repo-backend-p3-025",
+      "holds": true,
+      "reason": "ClaimUploadRequest.java:45 REFERENCE_PATTERN = \"^[A-Za-z0-9 ./-]*$\": letters, digits, space, full stop, slash, hyphen. Javadoc examples at :40-43 match the note."
+    },
+    {
+      "id": "repo-backend-p3-026",
+      "holds": true,
+      "reason": "Sound inference: ClaimUploadRequest.java:33-37 carries only @NotNull on dateOfIssue, no @Past/@PastOrPresent/@Future, and the service writes it unchecked (DocumentService.java:71)."
+    },
+    {
+      "id": "repo-backend-p3-027",
+      "holds": true,
+      "reason": "Sound inference: none of the constraints in ClaimUploadRequest.java:19-37 sets a message attribute, so Bean Validation defaults apply."
+    },
+    {
+      "id": "repo-backend-p3-028",
+      "holds": true,
+      "reason": "UploadSession.java:22 collection document_upload_sessions, fields notificationReferenceNumber, uploadId, correlationId, created (plus an id), as quoted."
+    },
+    {
+      "id": "repo-backend-p3-029",
+      "holds": true,
+      "reason": "UploadSession.java:41-50 both uploadId and correlationId carry @Indexed(unique = true)."
+    },
+    {
+      "id": "repo-backend-p3-030",
+      "holds": true,
+      "reason": "UploadSession.java:30 SESSION_RETENTION_PERIOD = \"24h\" and :52-54 @CreatedDate @Indexed(expireAfter = ...) created: a TTL index regardless of uploads. design-notes.md:65 confirms. Line ref is off by one (30, not 31)."
+    },
+    {
+      "id": "repo-backend-p3-031",
+      "holds": true,
+      "reason": "RegisterUploadRequest.java:13-19 @NotBlank, @Pattern(\"^[A-Za-z0-9._-]+$\"), @Size(max = 100) on uploadId."
+    },
+    {
+      "id": "repo-backend-p3-032",
+      "holds": true,
+      "reason": "RegisterUploadRequest.java:21-28 same three constraints on correlationId."
+    },
+    {
+      "id": "repo-backend-p3-033",
+      "holds": true,
+      "reason": "RegisterUploadRequest.java:9 Javadoc and :24-25 schema description quoted verbatim; design-notes.md:64 agrees."
+    },
+    {
+      "id": "repo-backend-p3-034",
+      "holds": true,
+      "reason": "DocumentController.java:75 @PostMapping, :102 ResponseEntity.created(location).body(UploadSessionDto.from(session)), :321-327 baseUrl (trailing slash stripped) + \"/document-uploads/\" + uploadId; UploadSessionDto carries the three fields."
+    },
+    {
+      "id": "repo-backend-p3-035",
+      "holds": false,
+      "reason": "The 403 is only the OpenAPI annotation at DocumentController.java:82. The code calls notificationService.requireTraderAccess (:98), which (NotificationService.java:438-448) looks the notification up by reference and organisation together and throws NotFoundException when either misses, so another organisation's notification answers 404, never 403. The 400, 404 and 409 parts hold. See missed claim repo-backend-p3-039-m1."
+    },
+    {
+      "id": "repo-backend-p3-036",
+      "holds": true,
+      "reason": "DocumentService.java:202-210 catches DuplicateKeyException and throws ConflictException with exactly that message."
+    },
+    {
+      "id": "repo-backend-p3-037",
+      "holds": true,
+      "reason": "DocumentService.java:39-49 registerUpload builds and saves only an UploadSession; documents are created only in existingOrNewDocumentFor (:169-180), called from claimUpload and handleScanResult. design-notes.md:62 gives the reason."
+    },
+    {
+      "id": "repo-backend-p3-038",
+      "holds": true,
+      "reason": "Sound inference: UploadSession.java:37 notificationReferenceNumber is a plain @Indexed (non-unique); design-notes.md:63 states it."
+    },
+    {
+      "id": "repo-backend-p3-039",
+      "holds": true,
+      "reason": "Every handler except scanResult takes @RequestHeader(ORGANISATION_ID_HEADER) and calls requireTraderAccess before its service call (DocumentController.java:98,135,168,198,229,256,308); TraderOrganisationHeaderFilter excludes /scan-results paths."
+    },
+    {
+      "id": "repo-backend-p3-040",
+      "holds": true,
+      "reason": "Claim, get, delete and download all call documentService.notificationReferenceNumberForUploadId (DocumentController.java:169,230,257,309), which throws NotFoundException 'No upload session found with uploadId: ' (DocumentService.java:146-152)."
+    },
+    {
+      "id": "repo-backend-p3-041",
+      "holds": true,
+      "reason": "Sound inference from the 24h TTL on sessions (UploadSession.java:30,52-54) and the session lookup before every uploadId endpoint (DocumentService.java:146-152); the list endpoint goes by notification and is unaffected, as the note says."
+    },
+    {
+      "id": "repo-backend-p3-042",
+      "holds": true,
+      "reason": "DocumentController.java:113-138 @GetMapping path, description quoted, 200 with UploadSessionDto. 'browser's return to the upload page' is from design-notes.md:60,66."
+    },
+    {
+      "id": "repo-backend-p3-043",
+      "holds": true,
+      "reason": "DocumentService.java:51-59 findByNotificationReferenceNumberAndCorrelationId with that NotFoundException message; design-notes.md:66 gives the cross-notification point."
+    },
+    {
+      "id": "repo-backend-p3-044",
+      "holds": false,
+      "reason": "403 is only the annotation at DocumentController.java:120. requireTraderAccess (:135; NotificationService.java:438-448) throws NotFoundException for a notification of another organisation, so the code answers 404, not 403. 400 and 404 parts hold."
+    },
+    {
+      "id": "repo-backend-p3-045",
+      "holds": true,
+      "reason": "DocumentController.java:49 UPLOAD_SESSION_IDENTIFIER_PATTERN, :89 and :125 @Pattern REFERENCE_NUMBER_PATTERN on referenceNumber, :127-128 the pattern on correlationId. Loosely worded: only get-session has a correlationId path value; register takes it in the body."
+    },
+    {
+      "id": "repo-backend-p3-046",
+      "holds": true,
+      "reason": "DocumentController.java:148-173 and DocumentService.java:61-79 set type, reference, date of issue and claimed = true, answering 200 with AccompanyingDocumentDto."
+    },
+    {
+      "id": "repo-backend-p3-047",
+      "holds": false,
+      "reason": "403 is only the annotation at DocumentController.java:155. requireTraderAccess (:168-169; NotificationService.java:438-448) throws NotFoundException for another organisation's notification, so that case is 404. The 400, 404 and uploadId pattern (:160-161) parts hold."
+    },
+    {
+      "id": "repo-backend-p3-048",
+      "holds": true,
+      "reason": "DocumentService.java:67-74 reuses existingOrNewDocumentFor, which finds by correlationId (:169-171), and overwrites the three details; design-notes.md:69 says it."
+    },
+    {
+      "id": "repo-backend-p3-049",
+      "holds": true,
+      "reason": "DocumentService.java:172-179 orElseGet builds a document with scanStatus PENDING and an empty files list."
+    },
+    {
+      "id": "repo-backend-p3-050",
+      "holds": true,
+      "reason": "Sound inference: claimUpload (DocumentService.java:61-79) never reads scanStatus."
+    },
+    {
+      "id": "repo-backend-p3-051",
+      "holds": true,
+      "reason": "Sound inference: requireTraderAccess (NotificationService.java:438-448) only looks up by reference and organisation; claimUpload reads no notification status."
+    },
+    {
+      "id": "repo-backend-p3-052",
+      "holds": true,
+      "reason": "DocumentController.java:269-283 @PostMapping, description quoted, returns noContent()."
+    },
+    {
+      "id": "repo-backend-p3-053",
+      "holds": true,
+      "reason": "DocumentController.java:276-281 uses pathSegment only in a log line; DocumentService.java:84-85 finds the session by payload.correlationId(), which is metadata.get(\"correlationId\") (CdpScanResultPayload.java:31-33)."
+    },
+    {
+      "id": "repo-backend-p3-054",
+      "holds": true,
+      "reason": "DocumentService.java:214-221 throws BadRequestException with that message when correlationId is null or blank."
+    },
+    {
+      "id": "repo-backend-p3-055",
+      "holds": true,
+      "reason": "DocumentService.java:85-87 throws NotFoundException with that message before anything is saved."
+    },
+    {
+      "id": "repo-backend-p3-056",
+      "holds": true,
+      "reason": "DocumentService.java:88-94 setFiles(mapUploadedFiles(payload)) replaces the list and setScanStatus; existingOrNewDocumentFor creates when absent."
+    },
+    {
+      "id": "repo-backend-p3-057",
+      "holds": true,
+      "reason": "The builder at DocumentService.java:172-179 sets no type, reference, date or claimed (default false); the DTO description at AccompanyingDocumentDto.java:27-29 is quoted, design-notes.md:68 agrees."
+    },
+    {
+      "id": "repo-backend-p3-058",
+      "holds": true,
+      "reason": "DocumentService.java:233-238 quoted verbatim; CdpScanResultPayload.java:13-14 Javadoc and design-notes.md:74 agree."
+    },
+    {
+      "id": "repo-backend-p3-059",
+      "holds": true,
+      "reason": "ScanStatus.java:8-15 three values with those schema descriptions."
+    },
+    {
+      "id": "repo-backend-p3-060",
+      "holds": true,
+      "reason": "Sound inference: the only setScanStatus is DocumentService.java:92 in handleScanResult; the PENDING default is set at :176; nothing stops a repeat callback overwriting it."
+    },
+    {
+      "id": "repo-backend-p3-061",
+      "holds": true,
+      "reason": "CdpScanResultForm.java:55-72 quoted verbatim; a non-object value without fileId is silently skipped. Note carries 'mechanism:'."
+    },
+    {
+      "id": "repo-backend-p3-062",
+      "holds": true,
+      "reason": "CdpScanResultPayload.java:16-20 four components and CdpScanResultFile.java:27-40 twelve fields with @JsonIgnoreProperties(ignoreUnknown = true); uploadStatus is only logged at DocumentController.java:279-280."
+    },
+    {
+      "id": "repo-backend-p3-063",
+      "holds": true,
+      "reason": "design-notes.md:72 quoted verbatim; the filter excludes /scan-results and the handler takes no auth input (DocumentController.java:275-277). Stated in general terms."
+    },
+    {
+      "id": "repo-backend-p3-064",
+      "holds": true,
+      "reason": "UploadedFile.java:20-53 eleven components and from() at :61-75 copies each from CdpScanResultFile."
+    },
+    {
+      "id": "repo-backend-p3-065",
+      "holds": true,
+      "reason": "FileStatus.java:13-19 two values with @JsonAlias(\"complete\") and @JsonAlias(\"rejected\") and those descriptions."
+    },
+    {
+      "id": "repo-backend-p3-066",
+      "holds": true,
+      "reason": "Sound inference: UploadedFile is an immutable record built only by from(CdpScanResultFile) (UploadedFile.java:61-75); nothing else writes fileStatus."
+    },
+    {
+      "id": "repo-backend-p3-067",
+      "holds": true,
+      "reason": "UploadedFile.java:48-52 schema descriptions quoted verbatim."
+    },
+    {
+      "id": "repo-backend-p3-068",
+      "holds": true,
+      "reason": "UploadedFile.java:14-15 Javadoc quoted verbatim."
+    },
+    {
+      "id": "repo-backend-p3-069",
+      "holds": true,
+      "reason": "UploadedFileDto.java:9-10 Javadoc quoted, and the record (:14-42) carries exactly the nine listed fields."
+    },
+    {
+      "id": "repo-backend-p3-070",
+      "holds": true,
+      "reason": "UploadedFileDto.java:50-52 compact constructor quoted; note carries 'mechanism:'."
+    },
+    {
+      "id": "repo-backend-p3-071",
+      "holds": true,
+      "reason": "AccompanyingDocumentDto.java:15-33 twelve components as listed; neither version nor expireAt is mapped in from()."
+    },
+    {
+      "id": "repo-backend-p3-072",
+      "holds": true,
+      "reason": "DocumentController.java:182-204 and DocumentService.java:113-118 findAllByNotificationReferenceNumber with no filter; DocumentListResponse has one items field."
+    },
+    {
+      "id": "repo-backend-p3-073",
+      "holds": false,
+      "reason": "403 is only the annotation at DocumentController.java:189. requireTraderAccess (:198) throws NotFoundException for another organisation's notification, so that case is 404. The absence of a path pattern (:194) holds; with no validated input, the 400 can come only from the missing-header filter."
+    },
+    {
+      "id": "repo-backend-p3-074",
+      "holds": false,
+      "reason": "403 is only the annotation at DocumentController.java:219; requireTraderAccess (:229-230) answers 404 for another organisation's notification. The 200 and the 'No accompanying document found with uploadId: ' 404 (DocumentService.java:139-144) hold."
+    },
+    {
+      "id": "repo-backend-p3-075",
+      "holds": false,
+      "reason": "403 is only the annotation at DocumentController.java:248; requireTraderAccess (:256-257) answers 404 for another organisation's notification. The 204 and the 404 for a missing upload hold (deleteByUploadId, DocumentService.java:104-111, also removes the session)."
+    },
+    {
+      "id": "repo-backend-p3-076",
+      "holds": true,
+      "reason": "DocumentService.java:104-111 deletes the document then the session by uploadId, as quoted; design-notes.md:70 gives the reason that a later scan result cannot bring the document back."
+    },
+    {
+      "id": "repo-backend-p3-077",
+      "holds": true,
+      "reason": "Sound inference: deleteByUploadId only deletes Mongo records, and S3DocumentService has only streamToOutput (getObject); nothing in src/main deletes an S3 object."
+    },
+    {
+      "id": "repo-backend-p3-078",
+      "holds": true,
+      "reason": "DocumentController.java:292-319 maps GET /document-uploads/{uploadId}/file, streams from S3 via StreamingResponseBody, returns ResponseEntity.ok; buildDownloadHeaders (353-359) sets an attachment disposition with the filename in UTF-8."
+    },
+    {
+      "id": "repo-backend-p3-079",
+      "holds": true,
+      "reason": "resolveContentType (DocumentController.java:343-351) parses the declared contentType and falls back to APPLICATION_OCTET_STREAM on InvalidMediaTypeException, with a warn log."
+    },
+    {
+      "id": "repo-backend-p3-080",
+      "holds": true,
+      "reason": "findFile (DocumentService.java:154-161) takes files().stream().findFirst(); design-notes.md:71 confirms one file per session is not enforced."
+    },
+    {
+      "id": "repo-backend-p3-081",
+      "holds": true,
+      "reason": "Both NotFoundException messages are verbatim at DocumentService.java:160-164; the rejected case is detected by a null s3Key on the first file."
+    },
+    {
+      "id": "repo-backend-p3-082",
+      "holds": true,
+      "reason": "The 404 'File not found' and 403 'Notification belongs to another organisation' ApiResponse annotations are at DocumentController.java:298-300; the 403 comes from requireTraderAccess at 308-309. A missing upload session also gives 404."
+    },
+    {
+      "id": "repo-backend-p3-083",
+      "holds": true,
+      "reason": "Quote is verbatim at docs/design-notes.md, first line of 'Accompanying documents and cdp-uploader'; no upload endpoint takes file bytes in DocumentController."
+    },
+    {
+      "id": "repo-backend-p3-084",
+      "holds": true,
+      "reason": "S3DocumentService.java:46-48 uses cdpConfig.s3().documentsBucket(); application.yml:45 has documents-bucket: ${CDP_DOCUMENTS_BUCKET:trade-imports-animals-documents}. The note is right that the file's recorded s3Bucket is not used."
+    },
+    {
+      "id": "repo-backend-p3-085",
+      "holds": true,
+      "reason": "The Javadoc at S3DocumentService.java:33-36 says the duration is S3 wait time only; ClientStoppedReadingException is logged at info (line 83) and recorded with recordSuccess (line 62)."
+    },
+    {
+      "id": "repo-backend-p3-086",
+      "holds": true,
+      "reason": "Gap confirmed: no file in accompanyingdocument/, cdp/uploader/ or s3/ checks contentLength, contentType or a per-notification document count."
+    },
+    {
+      "id": "repo-backend-p3-087",
+      "holds": true,
+      "reason": "NotificationService deleteNotificationsAndDocuments calls deleteAllByReferenceNumberIn then documentService.deleteForNotificationReferenceNumbers, which deletes documents and sessions (DocumentService.java:128-137). This is the admin hard delete only; soft delete keeps the documents (p2-065), so 'deleted' means hard deleted."
+    },
+    {
+      "id": "repo-backend-p3-088",
+      "holds": true,
+      "reason": "existingOrNewDocumentFor sets expireAt from notificationExpireAt (DocumentService.java:178, 182-191), which logs the quoted warning and returns null when the notification is missing; NotificationExpiryIndex.java:31 creates the TTL index on accompanying documents."
+    },
+    {
+      "id": "repo-backend-p3-089",
+      "holds": true,
+      "reason": "Quote verbatim at DocumentService.java:123-125 and the repository method at AccompanyingDocumentRepository; OutboxService.java:83-84 passes these documents to the GBN-AG mapper."
+    },
+    {
+      "id": "repo-backend-p3-090",
+      "holds": true,
+      "reason": "Gap confirmed: grep of src/main for DocumentService or AccompanyingDocument finds no use in NotificationCopyMapper or the copy path; only NotificationService (delete), NotificationExpiryIndex, OutboxService and the gbnag mapper use them."
+    },
+    {
+      "id": "repo-backend-p3-091",
+      "holds": true,
+      "reason": "Quote is verbatim in docs/design-notes.md lifecycle section ('Only the `notification` content sub-object is compared...'); line number is approximate."
+    },
+    {
+      "id": "repo-backend-p4-001",
+      "holds": true,
+      "reason": "OutboxEventType.java:17-40 lists exactly these eight types."
+    },
+    {
+      "id": "repo-backend-p4-002",
+      "holds": true,
+      "reason": "OutboxEventType.java:51 prefixes the value with 'uk.gov.defra.imports.notification.'."
+    },
+    {
+      "id": "repo-backend-p4-003",
+      "holds": true,
+      "reason": "OutboxEventType.java:52-53 builds the schema URL under DEFRA/trade-imports-schemas schemas/profiles/imports/gb/events/; file names at lines 19-40, such as gbn-ag-event-notification-submitted-v1.schema.json."
+    },
+    {
+      "id": "repo-backend-p4-004",
+      "holds": true,
+      "reason": "createNotification calls saveWithStatusAndOutboxEvent with NotificationStatus.DRAFT and NOTIFICATION_CREATED (NotificationService.java around 462-468)."
+    },
+    {
+      "id": "repo-backend-p4-005",
+      "holds": true,
+      "reason": "The replace path accepts only DRAFT or AMEND and saves with its current status and NOTIFICATION_EDITED, as quoted."
+    },
+    {
+      "id": "repo-backend-p4-006",
+      "holds": true,
+      "reason": "submitNotification picks NOTIFICATION_SUBMITTED when the status is not AMEND (only DRAFT and AMEND reach that point) and saves with SUBMITTED."
+    },
+    {
+      "id": "repo-backend-p4-007",
+      "holds": true,
+      "reason": "Same code: AMEND gives NOTIFICATION_SUBMISSION_AMENDED and target status SUBMITTED."
+    },
+    {
+      "id": "repo-backend-p4-008",
+      "holds": true,
+      "reason": "amendNotification requires SUBMITTED and saves with AMEND and NOTIFICATION_AMENDMENT_REQUESTED."
+    },
+    {
+      "id": "repo-backend-p4-009",
+      "holds": true,
+      "reason": "cancelAmendNotification saves with SUBMITTED and NOTIFICATION_AMENDMENT_CANCELLED."
+    },
+    {
+      "id": "repo-backend-p4-010",
+      "holds": true,
+      "reason": "softDeleteNotification picks NOTIFICATION_DELETED for DRAFT and saves with DELETED."
+    },
+    {
+      "id": "repo-backend-p4-011",
+      "holds": true,
+      "reason": "Same code: SUBMITTED or AMEND gives NOTIFICATION_SUBMISSION_DELETED, target DELETED."
+    },
+    {
+      "id": "repo-backend-p4-012",
+      "holds": true,
+      "reason": "softDeleteNotification returns early with the quoted log when already DELETED, before saveWithStatusAndOutboxEvent, so no event is appended. Sound inference."
+    },
+    {
+      "id": "repo-backend-p4-013",
+      "holds": true,
+      "reason": "saveWithStatusAndOutboxEvent runs save then outboxService.appendEvent inside executeWithOutboxLock in @Transactional methods, as quoted; the note carries mechanism:."
+    },
+    {
+      "id": "repo-backend-p4-014",
+      "holds": true,
+      "reason": "OutboxEvent.java:16 @Document(collection = \"outbox\")."
+    },
+    {
+      "id": "repo-backend-p4-015",
+      "holds": true,
+      "reason": "OutboxService.java:91 eventId(UUID.randomUUID().toString())."
+    },
+    {
+      "id": "repo-backend-p4-016",
+      "holds": true,
+      "reason": "OutboxService.java:36 prefix and 137-139 buildAggregateId."
+    },
+    {
+      "id": "repo-backend-p4-017",
+      "holds": true,
+      "reason": "OutboxService.java:33 AGGREGATE_TYPE = \"Notification\", set at line 93."
+    },
+    {
+      "id": "repo-backend-p4-018",
+      "holds": true,
+      "reason": "OutboxService.java:34 SUB_TYPE = \"GBN-AG\", set at line 94."
+    },
+    {
+      "id": "repo-backend-p4-019",
+      "holds": true,
+      "reason": "OutboxService.java:55-58: latest event's aggregateVersion + 1, else 1."
+    },
+    {
+      "id": "repo-backend-p4-020",
+      "holds": true,
+      "reason": "Unique compound index aggregate_version_uq on aggregateId and aggregateVersion at OutboxEvent.java:17-19; DuplicateKeyException becomes OutboxWriteException with the quoted message at OutboxService.java:109-115."
+    },
+    {
+      "id": "repo-backend-p4-021",
+      "holds": true,
+      "reason": "OutboxService.java:60 truncates now to millis and line 97 sets timestamp."
+    },
+    {
+      "id": "repo-backend-p4-022",
+      "holds": true,
+      "reason": "OutboxService.java:98 as quoted; OutboxEvent has organisationId at the top level."
+    },
+    {
+      "id": "repo-backend-p4-023",
+      "holds": true,
+      "reason": "OutboxService.java:100-101 sets metadata correlationId; it is the correlationId passed from the request (traceId header in the controller)."
+    },
+    {
+      "id": "repo-backend-p4-024",
+      "holds": true,
+      "reason": "OutboxService.java:35 SCHEMA_VERSION = \"1\", set at line 102."
+    },
+    {
+      "id": "repo-backend-p4-025",
+      "holds": true,
+      "reason": "OutboxService.java:103 schemaUrl(eventType.schemaUrl())."
+    },
+    {
+      "id": "repo-backend-p4-026",
+      "holds": true,
+      "reason": "Actor.java has the six fields and @JsonInclude(NON_NULL)."
+    },
+    {
+      "id": "repo-backend-p4-027",
+      "holds": true,
+      "reason": "resolveActor in NotificationController.java (about 283-290) rebuilds the actor with organisationId from the organisation header, ignoring any supplied value."
+    },
+    {
+      "id": "repo-backend-p4-028",
+      "holds": true,
+      "reason": "StatusChange has status, dateChanged and actor; OutboxService.java:62-79 carries the previous event's statusChanges forward and appends the current one when it differs, so each event holds the whole history."
+    },
+    {
+      "id": "repo-backend-p4-029",
+      "holds": true,
+      "reason": "OutboxService.java:70-79: a new StatusChange only when status != lastStatus, otherwise priorChanges are reused."
+    },
+    {
+      "id": "repo-backend-p4-030",
+      "holds": true,
+      "reason": "OutboxEvent.java:49-50 publishedAt is @JsonIgnore, so the SNS body (objectMapper.writeValueAsString) leaves it out."
+    },
+    {
+      "id": "repo-backend-p4-031",
+      "holds": true,
+      "reason": "OutboxService.java:86-88 maps the saved aggregate into data when the event is written; sound inference that it is a snapshot."
+    },
+    {
+      "id": "repo-backend-p4-032",
+      "holds": true,
+      "reason": "NO_VERSION_ID_EVENTS at OutboxService.java:41-44; computeVersionId returns null for them (121-124)."
+    },
+    {
+      "id": "repo-backend-p4-033",
+      "holds": true,
+      "reason": "computeVersionId counts submission events (SUBMISSION_EVENTS at OutboxEventType.java:43-45) and adds 1 for a submission type."
+    },
+    {
+      "id": "repo-backend-p4-034",
+      "holds": true,
+      "reason": "Sound inference: these three types are in neither set, so computeVersionId returns the submission count unchanged."
+    },
+    {
+      "id": "repo-backend-p4-035",
+      "holds": true,
+      "reason": "application.yml:160 topic-arn: ${OUTBOX_SNS_TOPIC_ARN:} and OutboxConfig.Sns at line 49. Note OutboxConfig marks topicArn @NotBlank under @Validated, so the empty default would fail config validation at startup (see missed p4-035-m1)."
+    },
+    {
+      "id": "repo-backend-p4-036",
+      "holds": true,
+      "reason": "OutboxPublishService.java:37-41 returns 0 with the quoted debug log when the ARN is null or blank. The branch is a guard: OutboxConfig's @NotBlank should stop a blank ARN reaching it."
+    },
+    {
+      "id": "repo-backend-p4-037",
+      "holds": true,
+      "reason": "OutboxPublishService.java:112-113 sets messageGroupId to aggregateId and messageDeduplicationId to eventId; NotificationController's replay description names SNS FIFO. Inference about ordering and dedup is sound."
+    },
+    {
+      "id": "repo-backend-p4-038",
+      "holds": true,
+      "reason": "OutboxPublishService.java:107 serialises the whole OutboxEvent as the message (publishedAt excluded by @JsonIgnore)."
+    },
+    {
+      "id": "repo-backend-p4-039",
+      "holds": true,
+      "reason": "buildMessageAttributes (OutboxPublishService.java:119-136) sets the four String attributes and stringAttribute substitutes \"\" for null."
+    },
+    {
+      "id": "repo-backend-p4-040",
+      "holds": true,
+      "reason": "OutboxPoller.java:25 @Scheduled(fixedDelayString = \"${outbox.poller.interval-ms:2000}\"), and application.yml interval-ms: 2000; fixedDelay counts from the end of the previous run."
+    },
+    {
+      "id": "repo-backend-p4-041",
+      "holds": true,
+      "reason": "application.yml batch-size: 10; OutboxConfig defaults to 10 when not positive; page size is min(batchSize, remaining)."
+    },
+    {
+      "id": "repo-backend-p4-042",
+      "holds": true,
+      "reason": "application.yml max-events-per-run: ${OUTBOX_POLLER_MAX_EVENTS_PER_RUN:500}; the loop stops at maxEventsPerRun handled (published plus skipped)."
+    },
+    {
+      "id": "repo-backend-p4-043",
+      "holds": true,
+      "reason": "OutboxPoller uses LockingTaskExecutor with LOCK_NAME outbox-poller and lockAtMostFor/lockAtLeastFor from config; application.yml sets 1s and 30s."
+    },
+    {
+      "id": "repo-backend-p4-044",
+      "holds": true,
+      "reason": "OutboxPoller.java:16 @ConditionalOnProperty with matchIfMissing = true; application.yml enabled: true."
+    },
+    {
+      "id": "repo-backend-p4-045",
+      "holds": true,
+      "reason": "OutboxConfig.java:31-45: interval <= 0 throws the quoted IllegalArgumentException; batchSize <= 0 -> 10, maxEventsPerRun <= 0 -> 500, null lockAtLeastFor -> 1s, null lockAtMostFor -> 30s. The compact constructor runs before @Positive validation, so the fallbacks apply."
+    },
+    {
+      "id": "repo-backend-p4-046",
+      "holds": true,
+      "reason": "OutboxEventRepository.java:17 query method orders by timestamp asc then aggregateVersion asc; called at OutboxPublishService.java:50-52."
+    },
+    {
+      "id": "repo-backend-p4-047",
+      "holds": true,
+      "reason": "OutboxPublishService.java:79-82 sets publishedAt to Instant.now() truncated to millis, publishes, then saves; the poller only selects events with publishedAt null."
+    },
+    {
+      "id": "repo-backend-p4-048",
+      "holds": true,
+      "reason": "OutboxPublishService.java:71-76 logs the quoted error and continues without setting publishedAt, so the event stays unpublished. Statement describes handler code; it would benefit from a mechanism: note."
+    },
+    {
+      "id": "repo-backend-p4-049",
+      "holds": true,
+      "reason": "OutboxPublishService.java:92-98 catches SnsException, resets publishedAt to null, logs the quoted message and breaks with stoppedOnError, which ends the run (line 59). Retry on the next poll and ordering follow from the oldest-first unpublished query; inference is sound and note carries mechanism:."
+    },
+    {
+      "id": "repo-backend-p4-050",
+      "holds": true,
+      "reason": "OutboxPublishService.java:84-91 catches JsonProcessingException, resets publishedAt, logs the quoted 'manual investigation required' message and breaks the run."
+    },
+    {
+      "id": "repo-backend-p4-051",
+      "holds": true,
+      "reason": "OutboxPublishService.java:115-116 log.info with eventId, aggregateId and version after snsClient.publish."
+    },
+    {
+      "id": "repo-backend-p4-052",
+      "holds": true,
+      "reason": "NotificationController.java:226-236 @GetMapping(\"/{referenceNumber}/outbox-events\") returns outboxService.findByReferenceNumber, which orders by aggregateVersion ascending (OutboxService.java:131-135). 'Operator' is consistent with it being an admin route (p2-089)."
+    },
+    {
+      "id": "repo-backend-p4-053",
+      "holds": true,
+      "reason": "NotificationController.java:238-255 quoted @Operation description; returns ReplayResponse(count) from OutboxReplayService.replay."
+    },
+    {
+      "id": "repo-backend-p4-054",
+      "holds": true,
+      "reason": "Quoted description at NotificationController.java:240-242; OutboxReplayService.java:37-39 calls publishToSns, which never saves, and publishToSns uses aggregateId as group id and eventId as dedup id (OutboxPublishService.java:112-113)."
+    },
+    {
+      "id": "repo-backend-p4-055",
+      "holds": true,
+      "reason": "OutboxReplayService.java:31-33 throws NotFoundException with the quoted message when no events are found."
+    },
+    {
+      "id": "repo-backend-p4-056",
+      "holds": true,
+      "reason": "NotificationController.java:251 @RequestHeader(value = HEADER_USER_ID, required = true) String userId."
+    },
+    {
+      "id": "repo-backend-p4-057",
+      "holds": true,
+      "reason": "OutboxReplayService.java:50,56-66 builds an Audit with action REPLAY_EVENTS, result, notificationReferenceNumbers, numberOfEvents, traceId, userId and timestamp; result FAILURE or SUCCESS from the failed flag."
+    },
+    {
+      "id": "repo-backend-p4-058",
+      "holds": true,
+      "reason": "OutboxReplayService.java:40-46 sets failed = true and breaks on JsonProcessingException; line 50 records Result.FAILURE."
+    },
+    {
+      "id": "repo-backend-p4-059",
+      "holds": true,
+      "reason": "OutboxReplayService.java:38-47 catches only JsonProcessingException; an SnsException (runtime) propagates out of the loop before writeAuditRecord at line 50. Inference sound."
+    },
+    {
+      "id": "repo-backend-p4-060",
+      "holds": true,
+      "reason": "OutboxReplayService.java:53 returns events.size() regardless of the failed flag, so the count is the events found even after an early stop. Inference sound."
+    },
+    {
+      "id": "repo-backend-p4-061",
+      "holds": true,
+      "reason": "GbnAgEventData.java:9 @JsonProperty(\"$model\") and :15 MODEL_VALUE = \"defra/certificate-internal/1\", set at :26."
+    },
+    {
+      "id": "repo-backend-p4-062",
+      "holds": true,
+      "reason": "GbnAgEventData.java:10 @JsonProperty(\"$type\") and :16 TYPE_VALUE = \"gbn-ag\", set at :27."
+    },
+    {
+      "id": "repo-backend-p4-063",
+      "holds": true,
+      "reason": "GbnAgEventData.java:11-12 has exchangedDocument and specifiedConsignment alongside $model and $type."
+    },
+    {
+      "id": "repo-backend-p4-064",
+      "holds": true,
+      "reason": "ExchangedDocument.java:29 identifier = notificationAggregate.getReferenceNumber()."
+    },
+    {
+      "id": "repo-backend-p4-065",
+      "holds": true,
+      "reason": "ExchangedDocument.java:30 traderAssignedId = origin.getInternalReference(), null when no origin."
+    },
+    {
+      "id": "repo-backend-p4-066",
+      "holds": true,
+      "reason": "ExchangedDocument.java:31 status.name(); NotificationStatus.java:4 enum DRAFT, SUBMITTED, AMEND, DELETED."
+    },
+    {
+      "id": "repo-backend-p4-067",
+      "holds": true,
+      "reason": "ExchangedDocument.java:11 @JsonInclude(NON_NULL) at record level, :16 Integer versionId, :32 set from the versionId passed in; OutboxService.computeVersionId returns null for created/edited/deleted events."
+    },
+    {
+      "id": "repo-backend-p4-068",
+      "holds": true,
+      "reason": "ExchangedDocument.java:33 toUtcDateTime(getUpdated()); :47-49 Instant.toString(), which is ISO-8601 UTC."
+    },
+    {
+      "id": "repo-backend-p4-069",
+      "holds": true,
+      "reason": "OutboxService.java:83-84 fetches findClaimedScannedCleanByNotificationReferenceNumber and passes them to the mapper; ExchangedDocument.java:35,40-45 maps only those. The 'still uploading, unclaimed or not clean' exclusion is inferred from the method name; sound."
+    },
+    {
+      "id": "repo-backend-p4-070",
+      "holds": true,
+      "reason": "ExchangedDocument.java:38-43 quoted comment; returns null for empty list and NON_NULL drops the key."
+    },
+    {
+      "id": "repo-backend-p4-071",
+      "holds": true,
+      "reason": "ReferencedDocument.java:37-44 typeCode from document type, urlId GBN_AG_DOCUMENT_TYPES (:18), identifier = documentReference, issueDateTime = dateOfIssue.toString(); dateOfIssue is a LocalDate (AccompanyingDocument.java:54), so date-only. relationshipTypeCode is null and dropped."
+    },
+    {
+      "id": "repo-backend-p4-072",
+      "holds": true,
+      "reason": "ReferencedDocument.java:62 VETERINARY_HEALTH_CERTIFICATE -> \"853\"."
+    },
+    {
+      "id": "repo-backend-p4-073",
+      "holds": true,
+      "reason": "ReferencedDocument.java:63 AIR_WAYBILL -> \"740\"."
+    },
+    {
+      "id": "repo-backend-p4-074",
+      "holds": true,
+      "reason": "ReferencedDocument.java:64 SEA_WAYBILL -> \"710\"."
+    },
+    {
+      "id": "repo-backend-p4-075",
+      "holds": true,
+      "reason": "ReferencedDocument.java:65 RAIL_WAYBILL -> \"720\"."
+    },
+    {
+      "id": "repo-backend-p4-076",
+      "holds": true,
+      "reason": "ReferencedDocument.java:66 BILL_OF_LADING -> \"705\"."
+    },
+    {
+      "id": "repo-backend-p4-077",
+      "holds": true,
+      "reason": "ReferencedDocument.java:67 COMMERCIAL_INVOICE -> \"380\"."
+    },
+    {
+      "id": "repo-backend-p4-078",
+      "holds": true,
+      "reason": "ReferencedDocument.java:68 ITAHC -> \"856\" with the quoted inline comment."
+    },
+    {
+      "id": "repo-backend-p4-079",
+      "holds": true,
+      "reason": "ReferencedDocument.java:69 IMPORT_PERMIT -> \"911\" // Import licence."
+    },
+    {
+      "id": "repo-backend-p4-080",
+      "holds": true,
+      "reason": "ReferencedDocument.java:70 JOURNEY_LOG -> \"GBN3\"."
+    },
+    {
+      "id": "repo-backend-p4-081",
+      "holds": true,
+      "reason": "ReferencedDocument.java:71 SELF_DECLARATION -> \"GBN1\"."
+    },
+    {
+      "id": "repo-backend-p4-082",
+      "holds": true,
+      "reason": "ReferencedDocument.java:72 CITES_PERMIT_OR_CERTIFICATE -> \"GBN2\"."
+    },
+    {
+      "id": "repo-backend-p4-083",
+      "holds": true,
+      "reason": "ReferencedDocument.java:73 PACKING_OR_SPECIES_LIST -> \"GBN4\"."
+    },
+    {
+      "id": "repo-backend-p4-084",
+      "holds": true,
+      "reason": "ReferencedDocument.java:74 OTHER -> \"916\" // Related document; :59 comment '916 (Related document) is only for OTHER, never a default'."
+    },
+    {
+      "id": "repo-backend-p4-085",
+      "holds": true,
+      "reason": "ReferencedDocument.java:58 quoted comment; the switch at :61-75 has no default branch, so an unhandled enum constant fails to compile."
+    },
+    {
+      "id": "repo-backend-p4-086",
+      "holds": true,
+      "reason": "Authentication.java:18-25 always adds Clause.purpose first and Clause.goodsCertifiedAs last; ExchangedDocument.java:18,34 names the field firstSignatoryAuthentication and Authentication's list is includedClause."
+    },
+    {
+      "id": "repo-backend-p4-087",
+      "holds": true,
+      "reason": "Authentication.java:20-22 adds INTERNAL_MARKET_PURPOSE only when reasonForImport equals \"internalMarket\" (Clause.java:8), between the two other adds."
+    },
+    {
+      "id": "repo-backend-p4-088",
+      "holds": true,
+      "reason": "Clause.java:10 GBN_AG_PURPOSES and :19-21 purpose(reasonForImport) uses it."
+    },
+    {
+      "id": "repo-backend-p4-089",
+      "holds": true,
+      "reason": "Clause.java:11-12 GBN_AG_INTERNAL_MARKET_PURPOSES and :23-26 internalMarketPurpose(purposeInInternalMarket)."
+    },
+    {
+      "id": "repo-backend-p4-090",
+      "holds": true,
+      "reason": "Clause.java:13 and :28-31 goodsCertifiedAs; Authentication.java:23-24 passes additionalDetails.getCertifiedFor(), null when no additional details."
+    },
+    {
+      "id": "repo-backend-p4-091",
+      "holds": true,
+      "reason": "Clause.java:35-37 returns new Clause(identifier, null, null) for a null or blank stored key; Authentication always adds the clause, and Clause has no @JsonInclude, so content and urlId serialise as null in the record before conversion. 'no content or list' holds."
+    },
+    {
+      "id": "repo-backend-p4-092",
+      "holds": true,
+      "reason": "Clause.java:38-42 logs the quoted warn with referenceNumber, identifier and value, and returns Clause(identifier, storedKey, urlId). Handler behaviour; arguably a mechanism needing a mechanism: note."
+    },
+    {
+      "id": "repo-backend-p4-093",
+      "holds": true,
+      "reason": "Clause.java:48 INTERNAL_MARKET_REASON (\"internalMarket\") -> \"INTERNAL_MARKET\"."
+    },
+    {
+      "id": "repo-backend-p4-094",
+      "holds": true,
+      "reason": "Clause.java:49 quoted case."
+    },
+    {
+      "id": "repo-backend-p4-095",
+      "holds": true,
+      "reason": "Clause.java:50 quoted case."
+    },
+    {
+      "id": "repo-backend-p4-096",
+      "holds": true,
+      "reason": "Clause.java:51 quoted case."
+    },
+    {
+      "id": "repo-backend-p4-097",
+      "holds": true,
+      "reason": "Clause.java:52 quoted case."
+    },
+    {
+      "id": "repo-backend-p4-098",
+      "holds": true,
+      "reason": "Clause.java:59 quoted case."
+    },
+    {
+      "id": "repo-backend-p4-099",
+      "holds": true,
+      "reason": "Clause.java:60 quoted case."
+    },
+    {
+      "id": "repo-backend-p4-100",
+      "holds": true,
+      "reason": "Clause.java:61 quoted case."
+    },
+    {
+      "id": "repo-backend-p4-101",
+      "holds": true,
+      "reason": "Clause.java:62 quoted case."
+    },
+    {
+      "id": "repo-backend-p4-102",
+      "holds": true,
+      "reason": "Clause.java:63 quoted case."
+    },
+    {
+      "id": "repo-backend-p4-103",
+      "holds": true,
+      "reason": "Clause.java:64 quoted case."
+    },
+    {
+      "id": "repo-backend-p4-104",
+      "holds": true,
+      "reason": "Clause.java:65 quoted case."
+    },
+    {
+      "id": "repo-backend-p4-105",
+      "holds": true,
+      "reason": "Clause.java:66 has case \"production\" -> \"PRODUCTION\" in internalMarketPurposeCode."
+    },
+    {
+      "id": "repo-backend-p4-106",
+      "holds": true,
+      "reason": "Clause.java:67 has case \"slaughter\" -> \"SLAUGHTER\" in internalMarketPurposeCode."
+    },
+    {
+      "id": "repo-backend-p4-107",
+      "holds": true,
+      "reason": "Clause.java:68 has case \"fattening\" -> \"FATTENING\"."
+    },
+    {
+      "id": "repo-backend-p4-108",
+      "holds": true,
+      "reason": "Clause.java:69 has case \"restocking\" -> \"RESTOCKING\"."
+    },
+    {
+      "id": "repo-backend-p4-109",
+      "holds": true,
+      "reason": "Clause.java:76 has case \"further-keeping\" -> \"FURTHER_KEEPING\" in goodsCertifiedAsCode."
+    },
+    {
+      "id": "repo-backend-p4-110",
+      "holds": true,
+      "reason": "Clause.java:77 has case \"slaughter\" -> \"SLAUGHTER\" in goodsCertifiedAsCode."
+    },
+    {
+      "id": "repo-backend-p4-111",
+      "holds": true,
+      "reason": "Clause.java:78 matches the quote."
+    },
+    {
+      "id": "repo-backend-p4-112",
+      "holds": true,
+      "reason": "Clause.java:79 matches the quote."
+    },
+    {
+      "id": "repo-backend-p4-113",
+      "holds": true,
+      "reason": "Clause.java:80 maps registered-equine-animal to REGISTERED_EQUIDAE, as quoted."
+    },
+    {
+      "id": "repo-backend-p4-114",
+      "holds": true,
+      "reason": "Clause.java:81 matches the quote."
+    },
+    {
+      "id": "repo-backend-p4-115",
+      "holds": true,
+      "reason": "Clause.java:82 matches the quote."
+    },
+    {
+      "id": "repo-backend-p4-116",
+      "holds": true,
+      "reason": "Clause.java:83 matches the quote."
+    },
+    {
+      "id": "repo-backend-p4-117",
+      "holds": true,
+      "reason": "Clause.java:84 matches the quote."
+    },
+    {
+      "id": "repo-backend-p4-118",
+      "holds": true,
+      "reason": "Clause.java:85 matches the quote."
+    },
+    {
+      "id": "repo-backend-p4-119",
+      "holds": true,
+      "reason": "Clause.java:86 matches the quote."
+    },
+    {
+      "id": "repo-backend-p4-120",
+      "holds": true,
+      "reason": "Clause.java:87 matches the quote."
+    },
+    {
+      "id": "repo-backend-p4-121",
+      "holds": true,
+      "reason": "Clause.java:88 matches the quote."
+    },
+    {
+      "id": "repo-backend-p4-122",
+      "holds": true,
+      "reason": "Clause.java:89 matches the quote."
+    },
+    {
+      "id": "repo-backend-p4-123",
+      "holds": true,
+      "reason": "Clause.java:90 matches the quote."
+    },
+    {
+      "id": "repo-backend-p4-124",
+      "holds": true,
+      "reason": "Clause.java:91 matches the quote; 16 goods-certified-as cases in all (lines 76-91)."
+    },
+    {
+      "id": "repo-backend-p4-125",
+      "holds": true,
+      "reason": "SpecifiedConsignment.java:29 passes notification.getConsignor() into the consignorParty position (record field 1, line 10)."
+    },
+    {
+      "id": "repo-backend-p4-126",
+      "holds": true,
+      "reason": "SpecifiedConsignment.java:30, consigneeParty position."
+    },
+    {
+      "id": "repo-backend-p4-127",
+      "holds": true,
+      "reason": "SpecifiedConsignment.java:31 maps getPlaceOfOrigin() into despatchParty (record field 3)."
+    },
+    {
+      "id": "repo-backend-p4-128",
+      "holds": true,
+      "reason": "SpecifiedConsignment.java:32 maps getDestination() into deliveryParty (record field 4)."
+    },
+    {
+      "id": "repo-backend-p4-129",
+      "holds": true,
+      "reason": "SpecifiedConsignment.java:33, importer position."
+    },
+    {
+      "id": "repo-backend-p4-130",
+      "holds": true,
+      "reason": "SpecifiedConsignment.java:34 builds carrier from transport.getTransporter(), null when no transport."
+    },
+    {
+      "id": "repo-backend-p4-131",
+      "holds": true,
+      "reason": "SpecifiedConsignment.java:35 builds originCountry from notification.getOrigin()."
+    },
+    {
+      "id": "repo-backend-p4-132",
+      "holds": true,
+      "reason": "SpecifiedConsignment.java:36 passes transport.getPortOfEntry() to LogisticsLocation.from, which (LogisticsLocation.java:13-15) sets only identifier. It does not say the location is left out when no port is given; see the missed claim."
+    },
+    {
+      "id": "repo-backend-p4-133",
+      "holds": true,
+      "reason": "LogisticsLocation.java:11 CPH_REGISTER and :22-27 cph() returns null for a null or blank CPH number, else identifier plus that urlId; SpecifiedConsignment.java:37 passes notification.getCphNumber()."
+    },
+    {
+      "id": "repo-backend-p4-134",
+      "holds": true,
+      "reason": "Javadoc at LogisticsLocation.java:17-21 says exactly this, and line 26 passes null for postalAddress."
+    },
+    {
+      "id": "repo-backend-p4-135",
+      "holds": true,
+      "reason": "LogisticsTransportMovement.java:24-36 returns null for no transport, else a one-item list."
+    },
+    {
+      "id": "repo-backend-p4-136",
+      "holds": true,
+      "reason": "TradeCountry.java:31-38 returns null for a null or empty list, else one TradeCountry per code with no subdivision or region; SpecifiedConsignment.java:39 passes transport.getTransitedCountries()."
+    },
+    {
+      "id": "repo-backend-p4-137",
+      "holds": true,
+      "reason": "SpecifiedConsignment.java:44-49: empty when no details or no answer, else \"yes\".equalsIgnoreCase(...); line 40 maps empty to null. Reshapes a yes/no answer into a boolean, so it arguably needs a mechanism: note."
+    },
+    {
+      "id": "repo-backend-p4-138",
+      "holds": true,
+      "reason": "ConsignmentItem.java:10-19: null when getCommodities() is empty, else one ConsignmentItem whose lines are the flat-mapped trade lines of every commodity."
+    },
+    {
+      "id": "repo-backend-p4-139",
+      "holds": true,
+      "reason": "TradeParty.java:21-29 sets identifier, urlId, partyRoleCode and partyTypeCode to null and fills name, postal address and contact. The permanent address use is confirmed at TradeProductInstance.java:38, TradeParty.from(animal.getPermanentAddress())."
+    },
+    {
+      "id": "repo-backend-p4-140",
+      "holds": true,
+      "reason": "TradeParty.java:31-36 returns null when both email and phone are null, else one DefinedContact with personName null (DefinedContact.java:3-7)."
+    },
+    {
+      "id": "repo-backend-p4-141",
+      "holds": true,
+      "reason": "TradeParty.java:19-20 constant and :46-47 identifier from getApprovalNumber(), urlId only when it is not null."
+    },
+    {
+      "id": "repo-backend-p4-142",
+      "holds": true,
+      "reason": "TradeParty.java:17-18 and :42-44; partyTypeCode is a one-item list coded with OPERATOR_ACTIVITY_TYPE, and null when the type is not given (not stated, minor)."
+    },
+    {
+      "id": "repo-backend-p4-143",
+      "holds": true,
+      "reason": "TradeParty.java:45-52: name and TradeAddress from the transporter, definedContact null, partyRoleCode null."
+    },
+    {
+      "id": "repo-backend-p4-144",
+      "holds": true,
+      "reason": "TradeAddress.java:15-27 maps the fields in that order into lineOne, lineTwo, cityName, postcodeCode, countryId, then county into countrySubDivisionName at line 26."
+    },
+    {
+      "id": "repo-backend-p4-145",
+      "holds": true,
+      "reason": "TradeAddress.java:25 sets countryName null with the quoted comment."
+    },
+    {
+      "id": "repo-backend-p4-146",
+      "holds": true,
+      "reason": "TradeCountry.java:20-25 returns null when origin or its country code is null, else CodedValue.of(countryCode), whose value is the code (CodedValue.java:9-11)."
+    },
+    {
+      "id": "repo-backend-p4-147",
+      "holds": true,
+      "reason": "TradeCountrySubDivision.java:14-15 constants and :24-30 ofOrigin returns null for a blank code; TradeCountry.java:26,42-44 wraps it in a one-item list or null. The note matches the comment at lines 12-13 and the Javadoc at 19-22."
+    },
+    {
+      "id": "repo-backend-p4-148",
+      "holds": true,
+      "reason": "Quoted verbatim from the Javadoc at TradeCountrySubDivision.java:19-23."
+    },
+    {
+      "id": "repo-backend-p4-149",
+      "holds": true,
+      "reason": "TradeCountry.java:46-53: published only when requiresRegionCode is yes (any case) and the code is not blank; the comment at 46-47 says the frontend keeps a code entered before a no answer."
+    },
+    {
+      "id": "repo-backend-p4-150",
+      "holds": true,
+      "reason": "TradeCountry.java:7-12 Javadoc says the region of origin code is a disease zone from the health certificate and only the origin country carries it; fromCountryCodes (line 36) passes null for transit countries."
+    },
+    {
+      "id": "repo-backend-p4-151",
+      "holds": true,
+      "reason": "LogisticsTransportMovement.java:43."
+    },
+    {
+      "id": "repo-backend-p4-152",
+      "holds": true,
+      "reason": "LogisticsTransportMovement.java:44."
+    },
+    {
+      "id": "repo-backend-p4-153",
+      "holds": true,
+      "reason": "LogisticsTransportMovement.java:45."
+    },
+    {
+      "id": "repo-backend-p4-154",
+      "holds": true,
+      "reason": "LogisticsTransportMovement.java:46. That modeCode is left out when no means is given (lines 39-41) is not stated; see the missed claim."
+    },
+    {
+      "id": "repo-backend-p4-155",
+      "holds": true,
+      "reason": "LogisticsTransportMovement.java:32 builds LogisticsTransportMeans from getTransportIdentification(), name only (lines 16-21). 'such as a vehicle or flight number' is illustration the code does not state, but does not overreach the mapping."
+    },
+    {
+      "id": "repo-backend-p4-156",
+      "holds": true,
+      "reason": "ReferencedDocument.java:25-30 returns null for a null or blank reference, else one document with the reference as identifier; called from LogisticsTransportMovement.java:33-34."
+    },
+    {
+      "id": "repo-backend-p4-157",
+      "holds": true,
+      "reason": "Javadoc ReferencedDocument.java:20-23 says only the reference is collected and the type is inferred; :46-56 maps the four means to 705/720/730/740 and null when no means is given."
+    },
+    {
+      "id": "repo-backend-p4-158",
+      "holds": true,
+      "reason": "TransportEvent.java:15-23 returns null when no arrival date, else one event; :25-32 converts the date to the start of day in UTC. Reshapes a date into an instant, so it arguably needs a mechanism: note."
+    },
+    {
+      "id": "repo-backend-p4-159",
+      "holds": true,
+      "reason": "TransportEvent.java:19-22 passes null for actualOccurrenceDateTime and occurrenceLogisticsLocation; LogisticsTransportMovement.java:28-30 passes null for identifier and urlId."
+    },
+    {
+      "id": "repo-backend-p4-160",
+      "holds": true,
+      "reason": "TradeLineItem.java:17-25 maps each species to fromSpecies."
+    },
+    {
+      "id": "repo-backend-p4-161",
+      "holds": true,
+      "reason": "TradeLineItem.java:19-20 and :38-47: scientificName null, commonName from the commodity name (null when blank), totals for count and packages, individualTradeProductInstance null."
+    },
+    {
+      "id": "repo-backend-p4-162",
+      "holds": true,
+      "reason": "TradeLineItem.java:49-56 returns null for a null or blank commodity code; ApplicableClassification.java:12-19 sets systemId CN, classCode CodedValue.of(code), systemName and className null."
+    },
+    {
+      "id": "repo-backend-p4-163",
+      "holds": true,
+      "reason": "TradeLineItem.java:81-87 returns null when blank, else a one-item list; used at lines 30 and 41 with entry.getDescription()."
+    },
+    {
+      "id": "repo-backend-p4-164",
+      "holds": true,
+      "reason": "TradeLineItem.java:31 passes species.getText() into the scientificName position."
+    },
+    {
+      "id": "repo-backend-p4-165",
+      "holds": true,
+      "reason": "TradeLineItem.java:58-64 tradeLineCommonName returns the species' non-blank commonName, else textOrNull(entry.getName()); quote is verbatim at :60-63."
+    },
+    {
+      "id": "repo-backend-p4-166",
+      "holds": true,
+      "reason": "LineTradeDelivery.java:14 builds ProductUnitQuantity(totalNoOfAnimals, null); TradeLineItem.java:33 passes species.getNoOfAnimals(), :44 entry.getTotalNoOfAnimals(). unitCode is null. Quote verbatim."
+    },
+    {
+      "id": "repo-backend-p4-167",
+      "holds": true,
+      "reason": "LogisticsPackage.java:12 new LogisticsPackage(null, null, totalNoOfPackages): levelCode and typeCode null; TradeLineItem.java:34 species.getNoOfPackages(), :45 entry.getTotalNoOfPackages(). Quote verbatim."
+    },
+    {
+      "id": "repo-backend-p4-168",
+      "holds": true,
+      "reason": "TradeProductInstance.java:34-39 maps each animalIdentifiers entry to a TradeProductInstance with animal.getHorseName(), identifiersOf(earTag, passport, microchip, tattoo) and TradeParty.from(animal.getPermanentAddress()) (a ConsignmentParty, AnimalIdentifier.java:22). Quote verbatim."
+    },
+    {
+      "id": "repo-backend-p4-169",
+      "holds": true,
+      "reason": "TradeProductInstance.java:28-32: when animalIdentifiers is null or empty, one instance with name null, identifiersOf(species earTag, passport, microchip, null) and permanentLocation null. Quote verbatim at :31."
+    },
+    {
+      "id": "repo-backend-p4-170",
+      "holds": true,
+      "reason": "TradeProductInstance.java:17-22 constants and URL; :43-51 adds in order EAR_TAG, PASSPORT, MICROCHIP, TATTOO; :53-56 skips null or blank content; :50 returns null when the list is empty. Quote verbatim at :17."
+    },
+    {
+      "id": "repo-backend-p4-171",
+      "holds": true,
+      "reason": "NotificationBase.java:42-47 holds destinationCountry, portOfExit, exitDate; SpecifiedConsignment.from (:25-42) reads none of them and a grep of outbox/ for getDestinationCountry, getPortOfExit and getExitDate finds nothing. Inference sound."
+    },
+    {
+      "id": "repo-backend-p4-172",
+      "holds": true,
+      "reason": "AnimalIdentifier.java:20-21 has identificationDetails and description; TradeProductInstance.java:34-39 reads only horseName, earTag, passport, microchip, tattoo and permanentAddress, and grep of outbox/ finds no getIdentificationDetails. Quote verbatim."
+    },
+    {
+      "id": "repo-backend-p4-173",
+      "holds": true,
+      "reason": "Species.java:15 private String value; grep of outbox/ finds no getValue, and TradeLineItem.java:27-36 reads species text and commonName. 'Only its text and common name' means of its naming fields: the species' counts and its ear tag, passport and microchip are also published (TradeLineItem :33-35, TradeProductInstance :31), so the wording is loose but the claim about value holds."
+    },
+    {
+      "id": "repo-backend-p4-174",
+      "holds": true,
+      "reason": "NotificationAggregate.java:51-70 holds created, submittedAt, expireAt, fulfilments, preAmendNotification, preAmendFulfilments and answersDifferFromSubmitted; ExchangedDocument.java:26-35 reads only referenceNumber, status, updated and the notification, and grep of outbox/ finds no getter for the others. Quote verbatim at :55."
+    },
+    {
+      "id": "repo-backend-p4-175",
+      "holds": true,
+      "reason": "TradeParty.java:25-28 passes null identifier, null urlId and null partyRoleCode for a ConsignmentParty; :45-52 passes null partyRoleCode for the transporter. These are the only TradeParty constructions in src/main (grep). Inference sound; the quote is the :27-28 fragment."
+    },
+    {
+      "id": "repo-backend-p4-176",
+      "holds": true,
+      "reason": "Case-insensitive grep for germinal across outbox/ finds only Clause.java:79 \"germinal-products\" -> \"GERMINAL_PRODUCTS\"; no record carries germinal product details. Gap confirmed."
+    },
+    {
+      "id": "repo-backend-p4-177",
+      "holds": true,
+      "reason": "TradeLineItem.java:7-15 record components are applicableClassification, description, scientificName, commonName, specifiedLineTradeDelivery, physicalReferencedLogisticsPackage and individualTradeProductInstance: no typeCode. Gap confirmed."
+    },
+    {
+      "id": "repo-backend-p4-178",
+      "holds": true,
+      "reason": "Case-insensitive grep for category across outbox/ (envelope and gbnag) finds nothing. Gap confirmed."
+    }
+  ],
+  "missed": [
+    {
+      "id": "repo-backend-p1-014-m1",
+      "statement": "The two pre-amend snapshots are deep copies, independent of each other, and the notification snapshot keeps the inline party details as they stood when the amendment started, so a later edit cannot change what was submitted.",
+      "kind": "rule",
+      "ref": "docs/design-notes.md:26-27",
+      "quote": "The two snapshots are independent, and the notification snapshot keeps inline party details as they stood when the amendment started. Submitting or cancelling the amendment clears both.",
+      "confidence": "verbatim",
+      "note": "Clearing on submit or cancel is also claimed by part 2 (p2-046, p2-058); this claim adds the deep-copy and party-detail meaning of the snapshot fields."
+    },
+    {
+      "id": "repo-backend-p1-011-m1",
+      "statement": "Each submission, first or from an amendment, records the status SUBMITTED and the submitted date, and the record stores nothing about what is still owed.",
+      "kind": "data",
+      "ref": "docs/design-notes.md:28",
+      "quote": "Each submission, first or from an amendment, records SUBMITTED and the submitted date. Nothing is stored about what is still owed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p1-081-m1",
+      "statement": "A refusal raised as forbidden gets 403, with type forbidden, title \"Forbidden\" and the refusal's message as detail. In the notification code, only the fulfilments read raises it, for a notification that exists under another organisation.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:195-199; notification/NotificationService.java:161-165",
+      "quote": "return problemResponse(HttpStatus.FORBIDDEN, TYPE_FORBIDDEN, \"Forbidden\", ex.getMessage());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-005-m1",
+      "statement": "The notification list and the fulfilments read take only the organisation header and no trace id header.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:189-193, 206-208",
+      "quote": "@RequestParam(defaultValue = \"1\") @Min(1) int page,\n        @RequestParam(required = false) String sort,\n        @RequestParam(required = false) String referenceNumber,\n        @RequestHeader(value = TraderOrganisationHeaderFilter.ORGANISATION_ID_HEADER) String organisationId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-019-m1",
+      "statement": "The per-notification outbox write lock is held for at most 10 seconds, and for at least the notification.submit.lock-at-least-for setting.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:45, 344-345",
+      "quote": "private static final Duration LOCK_AT_MOST_FOR = Duration.ofSeconds(10);",
+      "confidence": "verbatim",
+      "note": "mechanism: ShedLock configuration that serialises writes to one notification's outbox."
+    },
+    {
+      "id": "repo-backend-p2-031-m1",
+      "statement": "Copy as new clears the origin's internal reference (the trader's own reference): the copied origin carries only the country code, subdivision, requires-region flag and region code.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:45-55; notification/Origin.java:16",
+      "quote": "return Origin.builder() .countryCode(source.getCountryCode()) .countrySubdivisionCode(source.getCountrySubdivisionCode()) .requiresRegionCode(source.getRequiresRegionCode()) .regionOfOriginCode(source.getRegionOfOriginCode()) .build();",
+      "confidence": "inferred",
+      "note": "Inferred: Origin also has internalReference (Origin.java:16), which mapOrigin does not set."
+    },
+    {
+      "id": "repo-backend-p2-039-m1",
+      "statement": "Copying a notification that is open for amendment copies its current, in-progress answers, not the submitted version held in the amendment snapshot.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:14,29; notification/NotificationService.java:133-135",
+      "quote": "Notification source = notificationAggregate.requireNotification();",
+      "confidence": "inferred",
+      "note": "Inferred: copy is allowed from AMEND, and the mapper reads getNotification() and getFulfilments(), never preAmendNotification or preAmendFulfilments."
+    },
+    {
+      "id": "repo-backend-p2-042-m1",
+      "statement": "Copy and submit refuse a request with no concurrencyToken query parameter with 400, before the service runs: the parameter is required on both endpoints.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:94,127; exceptions/GlobalExceptionHandler.java:149-154",
+      "quote": "@RequestParam Long concurrencyToken,",
+      "confidence": "verbatim",
+      "note": "The service's own message \"concurrencyToken is required to submit a notification\" (NotificationService.java:211) cannot be reached through the endpoint, since the required parameter is refused first with errors {concurrencyToken: [\"Required request parameter is missing\"]}."
+    },
+    {
+      "id": "repo-backend-p2-081-m1",
+      "statement": "The fulfilments view's 403 for another organisation's notification carries the problem detail \"Cannot read fulfilments for notification with reference number: \" followed by the reference and the caller's organisation id.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:161-165; exceptions/GlobalExceptionHandler.java:195-199",
+      "quote": "throw new ForbiddenException( \"Cannot read fulfilments for notification with reference number: \" + referenceNumber + \" organisationId: \" + organisationId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-111-m1",
+      "statement": "A replay for a notification with no outbox events writes no audit record: it is refused as not found before any audit is written.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxReplayService.java:30-33,50",
+      "quote": "if (events.isEmpty()) {\n            throw new NotFoundException(\"No outbox events found for: \" + referenceNumber);\n        }",
+      "confidence": "verbatim",
+      "note": "Unlike the hard delete, which audits a not-found attempt with FAILURE, a not-found replay leaves no audit trail."
+    },
+    {
+      "id": "repo-backend-p3-039-m1",
+      "statement": "On every document endpoint, a notification that belongs to another organisation answers 404 'Cannot find notification with reference number: <ref>', not the 403 the OpenAPI annotations document: the organisation check looks the notification up by reference and organisation together and treats a miss as not found.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:82,98,120,135,155,168,189,198,219,229,248,256,299,308; P/notification/NotificationService.java:438-448",
+      "quote": "notificationRepository.findByReferenceNumberAndOrganisationId(referenceNumber, organisationId);\n        if (scoped.isPresent()) {\n            return scoped.get();\n        }\n        throw new NotFoundException(CANNOT_FIND_NOTIFICATION_WITH_REFERENCE_NUMBER + referenceNumber);",
+      "confidence": "verbatim",
+      "note": "The annotations say '@ApiResponse(responseCode = \"403\", description = \"Notification belongs to another organisation\"' on all six trader endpoints; the code never raises ForbiddenException here. The OpenAPI contract and behaviour disagree; reconcile should pick one."
+    },
+    {
+      "id": "repo-backend-p3-034-m1",
+      "statement": "The Location header a registration returns points at GET /document-uploads/<uploadId>, which answers 404 until a claim or scan result has written the document, since registering writes only a session.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:100,213,321-327; P/accompanyingdocument/DocumentService.java:39-49,139-144",
+      "quote": "return URI.create(baseUrl + \"/document-uploads/\" + uploadId); ... new NotFoundException(\"No accompanying document found with uploadId: \" + uploadId)",
+      "confidence": "inferred",
+      "note": "Inferred from registerUpload saving only an UploadSession and findByUploadId reading the accompanying_documents collection."
+    },
+    {
+      "id": "repo-backend-p3-074-m1",
+      "statement": "The get, delete and download endpoints take the uploadId path value with no pattern check, unlike claim, which requires 1 to 100 letters, digits, full stops, underscores or hyphens.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentController.java:160-161,224,252,303",
+      "quote": "@PathVariable\n      @Pattern(regexp = UPLOAD_SESSION_IDENTIFIER_PATTERN) String uploadId, ... @PathVariable String uploadId,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-035-m1",
+      "statement": "The SNS topic ARN is a required setting: the outbox configuration is validated and marks the topic ARN not blank, so a deployment that leaves OUTBOX_SNS_TOPIC_ARN unset (an empty default in application.yml) should fail configuration validation at startup rather than run without publishing.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/configuration/OutboxConfig.java:16-20,49; src/main/resources/application.yml:160",
+      "quote": "@Validated\n@ConfigurationProperties(prefix = \"outbox\")\npublic record OutboxConfig(\n    @Valid @NotNull Poller poller,\n    @Valid @NotNull Sns sns) { ... public record Sns(@NotBlank String topicArn) {}",
+      "confidence": "inferred",
+      "note": "Inferred from the @Validated configuration record with a @NotBlank topicArn; the service was not started to prove it. It means the 'topic not configured, skip publish' branch in OutboxPublishService is a guard that validated configuration should not reach."
+    },
+    {
+      "id": "repo-backend-p4-048-m1",
+      "statement": "An event skipped for having no data still counts towards the run's 500-event limit, so skipped events reduce how many others one run publishes.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:58",
+      "quote": "handled += outcome.published() + outcome.skipped();",
+      "confidence": "verbatim",
+      "note": "mechanism: the poller's per-run counter over outbox events. Because a skipped event stays unpublished, each page re-reads it from the head of the queue."
+    },
+    {
+      "id": "repo-backend-p4-060-m1",
+      "statement": "Each replay is logged at info with the number of events, the reference number and the user id who asked for it.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxReplayService.java:51-52",
+      "quote": "log.info(\"Replayed {} event(s) for referenceNumber={} by userId={}\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-132-m1",
+      "statement": "specifiedConsignment.unloadingBaseportLocation is left out when the notification has no transport answers or no port of entry.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/SpecifiedConsignment.java:36; LogisticsLocation.java:13-15",
+      "quote": "return identifier != null ? new LogisticsLocation(identifier, null, null, null, null) : null;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-154-m1",
+      "statement": "The transport movement's modeCode is left out when no means of transport is given.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/LogisticsTransportMovement.java:38-41",
+      "quote": "if (meansOfTransport == null) {\n            return null;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-155-m1",
+      "statement": "The transport movement's usedLogisticsTransportMeans is left out when no transport identification is given.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/LogisticsTransportMovement.java:18-20",
+      "quote": "return name != null ? new LogisticsTransportMeans(name) : null;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-142-m1",
+      "statement": "The carrier has no partyTypeCode when the transporter type is not given, and the carrier is left out altogether when there is no transporter.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeParty.java:38-44",
+      "quote": "List<CodedValue> partyTypeCode = transporter.getType() != null\n            ? List.of(CodedValue.of(transporter.getType(), OPERATOR_ACTIVITY_TYPE))\n            : null;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-166-m1",
+      "statement": "A trade line's specifiedLineTradeDelivery is left out when its number of animals is not given.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/LineTradeDelivery.java:10-13",
+      "quote": "if (totalNoOfAnimals == null) {\n            return null;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-167-m1",
+      "statement": "A trade line's physicalReferencedLogisticsPackage is left out when its number of packages is not given.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/LogisticsPackage.java:8-11",
+      "quote": "if (totalNoOfPackages == null) {\n            return null;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p4-173-m1",
+      "statement": "When a commodity has species, its own total number of animals and total number of packages are not published: each trade line carries only its species' counts.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeLineItem.java:17-36",
+      "quote": "LineTradeDelivery.headCount(species.getNoOfAnimals()),\n            LogisticsPackage.packageCount(species.getNoOfPackages()),",
+      "confidence": "inferred",
+      "note": "Inferred: the commodity totals (Commodity.totalNoOfAnimals, totalNoOfPackages) are read only in fromComplementTotals, which runs only when the commodity has no species."
+    }
+  ]
+}

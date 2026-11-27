@@ -1,0 +1,851 @@
+{
+  "source": "trace:prototype-dr2-1",
+  "structure": "Part 7, adding an address in the journey, permanent address and contact address. Read in full: consignment-parties.fit.spec.js (454 lines; its 'add an address from the journey', 'add-address pages for the other roles', 'permanent address' and 'contact address for consignment' describes) and all 6 trace zips the part names, each opened with tim's Playwright 1.65.0 and its full action list taken. Traces, short names used in refs: T1 = consignment-parties--add-an-address-from-the-journey-place-of-origin-an-international-address-entered-by-hand.zip (95 actions); T2 = consignment-parties--add-an-address-from-the-journey-consignee-a-uk-address-found-by-postcode-then-completed.zip (164); T3 = consignment-parties--add-address-pages-for-the-other-roles-consignor-is-entered-by-hand-importer-and-place-of-destination-start-with-a-uk-pos.zip (106); T4 = consignment-parties--permanent-address-cat-one-choice-per-animal-same-as-destination-or-a-new-address.zip (115); T5 = consignment-parties--permanent-address-the-enter-address-path-is-retired-and-lands-on-the-per-animal-page.zip (44); T6 = consignment-parties--contact-address-for-consignment-the-contact-address-page-sends-the-user-to-the-review.zip (45). Every trace first walks the opening run (create-notification, notification type, origin, commodity, reason, consignment details) then navigates to /roles-and-addresses; those pages belong to other parts and are not claimed here. Pages mined, in journey order: (1) /<role>/add-address, the manual add-address form, reached directly from the place of origin and consignor pickers (international roles: 42-country select) and, through 'Enter address manually' or a chosen lookup result, from the consignee, importer and place of destination pickers (UK roles: country fixed to United Kingdom, label 'Postcode'); snapshots T1 actions 55, 66, 84; T2 actions 132, 144, 159; T3 actions 44, 69, 94. (2) /<role>/find-address, the UK postcode step for consignee, importer and place of destination, with its empty and partial-postcode errors; T2 actions 47, 60, 72; T3 actions 56, 81. (3) /<role>/find-address/select, conditional on a postcode being submitted: either 'No addresses found for <postcode>' (T2 action 85) or 'Select an address' with a select of results and its error (T2 actions 101, 113). (4) /permanent-address, which redirects to /permanent-address/select, the per-animal permanent address page shown only for pet consignments (cat): warning, guidance, one card per animal with radios and a conditionally revealed new-address form, its errors, and the POD address shown once one is chosen; T4 actions 50, 63, 83, 100, 104. (5) /permanent-address/enter-address, retired, redirecting to /permanent-address/select (T5 action 39). (6) /contact-address-for-consignment, which redirects to /review-notification (T6 action 40). Network logs of T1, T2, T4, T5, T6 were read for the data calls: every call is a same-origin form POST to the prototype itself, with no outbound address lookup. What the slice does not show (error states on the consignor, importer and place of destination forms, email and phone format checks, the effect of the address-use checkboxes, save-and-return from the permanent address page) is written as gap claims.",
+  "claims": [
+    {
+      "id": "trace-prototype-dr2-1-p7-001",
+      "statement": "From the place of origin picker, 'Add a new address' opens the manual add-address form at /place-of-origin/add-address, with no postcode step.",
+      "kind": "behaviour",
+      "ref": "trace T1 action 40 (Click locator('main a').filter({ hasText: 'Add a new address' }) then toHaveURL)",
+      "quote": "Add a new address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-002",
+      "statement": "From the consignor picker, 'Add a new address' opens the manual add-address form at /consignor-or-exporter/add-address, with no postcode step.",
+      "kind": "behaviour",
+      "ref": "trace T3 actions 39-44; form action post /design-release-2.1/consignor-or-exporter/add-address",
+      "quote": "Add an address for a consignor",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-003",
+      "statement": "The add-address page's heading names the role it is for: 'Add an address for a place of origin', '... a consignor', '... a consignee', '... an importer', '... a place of destination'.",
+      "kind": "copy",
+      "ref": "trace T1 action 55; T3 actions 44, 69, 94; T2 action 132 (h1)",
+      "quote": "Add an address for a place of origin | Add an address for a consignor | Add an address for a consignee | Add an address for an importer | Add an address for a place of destination",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-004",
+      "statement": "The add-address page's title is the heading followed by ' - Import notification service - GOV.UK', separated by hyphens.",
+      "kind": "copy",
+      "ref": "trace T1 action 55 (document.title); T2 action 132",
+      "quote": "Add an address for a place of origin - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-005",
+      "statement": "Above the heading, the add-address page shows the notification's status as a 'Draft' tag beside its type and reference.",
+      "kind": "copy",
+      "ref": "trace T1 action 55 (.app-dr2-notification-status)",
+      "quote": "Draft\nLive animals - GBN-AG-26-02H6BX",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-006",
+      "statement": "The add-address form groups its address fields under a second-level heading 'Address'.",
+      "kind": "copy",
+      "ref": "trace T1 action 55 (H2.app-address-book-lookup-page__section-heading)",
+      "quote": "Address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-007",
+      "statement": "The add-address form asks for a name or organisation, as a full-width text input, and the user must give it.",
+      "kind": "data",
+      "ref": "trace T1 actions 43, 55 (#address-book-manual-name, name addressBookManualName); error at action 66",
+      "quote": "Name or organisation",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-008",
+      "statement": "The add-address form asks for address line 1, as a full-width text input, and the user must give it.",
+      "kind": "data",
+      "ref": "trace T1 actions 44, 55 (#address-book-manual-address-line-1); error at action 66",
+      "quote": "Address line 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-009",
+      "statement": "The add-address form offers an optional address line 2, as a full-width text input.",
+      "kind": "data",
+      "ref": "trace T1 actions 45, 55 (#address-book-manual-address-line-2)",
+      "quote": "Address line 2 (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-010",
+      "statement": "The add-address form asks for a town or city, as a half-width text input, and the user must give it.",
+      "kind": "data",
+      "ref": "trace T1 actions 46, 55 (#address-book-manual-town-or-city, class app-address-book-manual-address-fields__input--one-half); error at action 66",
+      "quote": "Town or city",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-011",
+      "statement": "For the place of origin and the consignor, the add-address form asks for a postcode or zip code, as a half-width text input, and the user must give it.",
+      "kind": "data",
+      "ref": "trace T1 actions 47, 55 (#address-book-manual-postcode); T3 action 44; error at T1 action 66",
+      "quote": "Postcode or Zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-012",
+      "statement": "For the place of origin and the consignor, the add-address form asks the user to choose a country from a select whose first entry is 'Select one', and the user must choose one. It lists 42 countries and territories: EU member states, their outermost regions, the Crown Dependencies and the United Kingdom.",
+      "kind": "data",
+      "ref": "trace T1 action 55 (#address-book-manual-country, 43 options); T3 action 44 (43 options)",
+      "quote": "Select one\nAustria\nAzores (Portugal)\nBelgium\nBulgaria\nCanary Islands (Spain)\nCeuta (Spain)\nCroatia\nCyprus\nCzech Republic\nDenmark\nEstonia\nFinland\nFrance\nFrench Guiana (France)\nGermany\nGreece\nGuadeloupe (France)\nGuernsey (United Kingdom)\nHungary\nIsle of Man (United Kingdom)",
+      "confidence": "verbatim",
+      "note": "First 20 of 42 entries quoted; the list goes on to Italy, Jersey (United Kingdom), Latvia, Lithuania, Luxembourg, Madeira (Portugal), Malta, Martinique (France), Mayotte (France), Melilla (Spain), Netherlands, Poland, Portugal, Republic of Ireland, Reunion (France), Romania, Saint Martin (France), Slovakia, Slovenia, Spain, Sweden, United Kingdom. Reference data, not copy."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-013",
+      "statement": "The add-address form groups its email and phone fields under a second-level heading 'Contact details'.",
+      "kind": "copy",
+      "ref": "trace T1 action 55 (H2.app-address-book-lookup-page__section-heading)",
+      "quote": "Contact details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-014",
+      "statement": "The add-address form asks for an email address, as a full-width text input of type text, and the user must give it.",
+      "kind": "data",
+      "ref": "trace T1 actions 49, 55 (#address-book-manual-email, type=text); error at action 66",
+      "quote": "Email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-015",
+      "statement": "The add-address form asks for a phone number, as a two-thirds-width text input with a hint about international numbers, and the user must give it.",
+      "kind": "data",
+      "ref": "trace T1 actions 50, 55 (#address-book-manual-phone, aria-describedby address-book-manual-phone-hint); error at action 66",
+      "quote": "Phone number\nFor international numbers include the country code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-016",
+      "statement": "The add-address form ends with a checkbox fieldset, legend 'Add to your address book', whose hint says the address is added to the address book as the role being added and asks which other types of address it can also be used for.",
+      "kind": "data",
+      "ref": "trace T1 actions 51-53, 55 (LEGEND.govuk-fieldset__legend--m, P.govuk-hint#address-uses-hint, input name addressUses)",
+      "quote": "Add to your address book\n\nThis address will be added to your address book as a Place of origin. Select any other types of address this can also be used for.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-017",
+      "statement": "The address-book hint names the role with 'a' or 'an' before its capitalised name: 'as a Place of origin', 'as a Consignor', 'as a Consignee', 'as an Importer', 'as a Place of destination'.",
+      "kind": "copy",
+      "ref": "trace T1 action 55; T3 actions 44, 69, 94; T2 action 132 (#address-uses-hint)",
+      "quote": "This address will be added to your address book as an Importer. Select any other types of address this can also be used for.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-018",
+      "statement": "For the place of origin and the consignor, the other address type offered is the other of the two: Place of origin offers 'Consignor', and Consignor offers 'Place of origin'.",
+      "kind": "rule",
+      "ref": "trace T1 actions 53, 55 (address-use-consignor); T3 actions 45, 44 (address-use-place-of-origin)",
+      "quote": "Consignor | Place of origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-019",
+      "statement": "For the consignee, importer and place of destination, the other address types offered are the other two of the three: Consignee offers 'Importer' and 'Place of destination', Importer offers 'Consignee' and 'Place of destination', and Place of destination offers 'Consignee' and 'Importer'.",
+      "kind": "rule",
+      "ref": "trace T2 actions 131-132; T3 actions 69-70, 94-95 (input name addressUses + label)",
+      "quote": "Importer\nPlace of destination | Consignee\nPlace of destination | Consignee\nImporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-020",
+      "statement": "No address-use checkbox is ticked when the add-address form opens.",
+      "kind": "rule",
+      "ref": "trace T2 action 132 (addressUses inputs, checked empty); T1 action 55",
+      "quote": "INPUT|addressUses|address-use-importer|importer||govuk-checkboxes__input",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-021",
+      "statement": "The add-address form has two buttons: 'Save and select' as the primary button and 'Save and return to address page' as a secondary button.",
+      "kind": "copy",
+      "ref": "trace T1 actions 54, 55 (button name action values select and return; classes govuk-button and govuk-button--secondary)",
+      "quote": "Save and select\nSave and return to address page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-022",
+      "statement": "Below the buttons, the add-address form has a 'Cancel and return to hub' link to the notification hub.",
+      "kind": "copy",
+      "ref": "trace T1 action 55 (a href /design-release-2.1/notification-hub)",
+      "quote": "Cancel and return to hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-023",
+      "statement": "When the add-address form is reached straight from a picker, its back link goes to that role's picker.",
+      "kind": "behaviour",
+      "ref": "trace T1 action 55 (back link /design-release-2.1/place-of-origin); T3 action 44 (/design-release-2.1/consignor-or-exporter)",
+      "quote": "<a href=\"/design-release-2.1/place-of-origin\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-024",
+      "statement": "Submitting an empty add-address form shows an error summary titled 'There is a problem', listing each missing answer in field order, each linked to its field, with the same message shown inline above the field.",
+      "kind": "behaviour",
+      "ref": "trace T1 actions 62-66 (.govuk-error-summary, .govuk-error-message ids address-book-manual-*-error)",
+      "quote": "There is a problem",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-025",
+      "statement": "A blank name or organisation on the add-address form gives an error.",
+      "kind": "rule",
+      "ref": "trace T1 action 66 (link #address-book-manual-name)",
+      "quote": "Enter a name or organisation name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-026",
+      "statement": "A blank address line 1 on the add-address form gives an error.",
+      "kind": "rule",
+      "ref": "trace T1 action 66 (link #address-book-manual-address-line-1)",
+      "quote": "Enter address line 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-027",
+      "statement": "A blank town or city on the add-address form gives an error.",
+      "kind": "rule",
+      "ref": "trace T1 action 66 (link #address-book-manual-town-or-city)",
+      "quote": "Enter a town or city",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-028",
+      "statement": "A blank postcode or zip code on the add-address form gives an error.",
+      "kind": "rule",
+      "ref": "trace T1 action 66 (link #address-book-manual-postcode)",
+      "quote": "Enter a postcode or Zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-029",
+      "statement": "No country chosen on the add-address form gives an error.",
+      "kind": "rule",
+      "ref": "trace T1 action 66 (link #address-book-manual-country)",
+      "quote": "Select a country",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-030",
+      "statement": "A blank email address on the add-address form gives an error.",
+      "kind": "rule",
+      "ref": "trace T1 action 66 (link #address-book-manual-email); T2 action 144",
+      "quote": "Enter an email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-031",
+      "statement": "A blank phone number on the add-address form gives an error.",
+      "kind": "rule",
+      "ref": "trace T1 action 66 (link #address-book-manual-phone); T2 action 144",
+      "quote": "Enter a phone number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-032",
+      "statement": "Address line 2 is not required: an empty add-address form lists no error for it.",
+      "kind": "rule",
+      "ref": "trace T1 action 66 (seven errors, none for address-book-manual-address-line-2)",
+      "quote": "Enter a name or organisation name\nEnter address line 1\nEnter a town or city\nEnter a postcode or Zip code\nSelect a country\nEnter an email address\nEnter a phone number",
+      "confidence": "inferred",
+      "note": "Inferred from the error summary leaving the field out; the address-use checkboxes are also left out, so they are optional too."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-033",
+      "statement": "The add-address page's title does not gain an 'Error: ' prefix when its form shows errors, unlike the find-address and select pages.",
+      "kind": "rule",
+      "ref": "trace T1 action 66 (document.title); T2 action 144",
+      "quote": "Add an address for a place of origin - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-034",
+      "statement": "'Save and return to address page' on a complete form saves the address to the address book and returns the user to the role's picker, without choosing it for the role.",
+      "kind": "behaviour",
+      "ref": "trace T1 actions 73-84 (POST /place-of-origin/add-address 302 to /design-release-2.1/place-of-origin; every placeOfOriginAddressId radio unchecked at action 84)",
+      "quote": "Save and return to address page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-035",
+      "statement": "After an address is added, the page the user lands on shows a success notification banner naming the address.",
+      "kind": "copy",
+      "ref": "trace T1 action 84 (.govuk-notification-banner on /place-of-origin); T2 action 159 (on /roles-and-addresses)",
+      "quote": "Success\n\nFerme du Lac address added to your address book.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-036",
+      "statement": "A newly added address appears first in the role's picker list, and the results count goes up by one.",
+      "kind": "behaviour",
+      "ref": "trace T1 action 84 (first row 'Select Ferme du Lac'; count 10 where the spec asserts 9 before)",
+      "quote": "Showing 10 out of 10 results",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-037",
+      "statement": "In the picker list, a hand-entered address shows its town and postcode joined on one line after the address lines, with the country in its own column.",
+      "kind": "rule",
+      "ref": "trace T1 action 84 (row for Ferme du Lac)",
+      "quote": "Ferme du Lac\t3 Rue du Lac\nAnnecy, 74000\tFrance\tView",
+      "confidence": "verbatim",
+      "note": "mechanism: town 'Annecy' and postcode '74000', entered in separate fields, show as 'Annecy, 74000'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-038",
+      "statement": "'Save and select' on a complete form saves the address to the address book, chooses it for the role, and returns the user to the consignment addresses page.",
+      "kind": "behaviour",
+      "ref": "trace T2 actions 151-159 (POST /consignee/add-address 302 to /design-release-2.1/roles-and-addresses; consignee shows Oxid House Imports)",
+      "quote": "Oxid House Imports\n\nFLAT 105 OXID HOUSE\n\n78 NEWTON STREET\n\nMANCHESTER, M1 1AL, United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-039",
+      "statement": "From the consignee, importer and place of destination pickers, 'Add a new address' opens a postcode step at /<role>/find-address before the address form.",
+      "kind": "behaviour",
+      "ref": "trace T2 actions 39-40 (/consignee/find-address); T3 actions 53-57 (/importer/find-address), 78-82 (/place-of-destination/find-address)",
+      "quote": "Enter a UK postcode",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-040",
+      "statement": "The find-address page's heading is the same as the add-address page's for that role, such as 'Add an address for a consignee'.",
+      "kind": "copy",
+      "ref": "trace T2 action 47; T3 actions 56, 81 (h1)",
+      "quote": "Add an address for a consignee",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-041",
+      "statement": "The find-address, no-addresses and select pages' titles use en dashes and end 'GOV.UK Prototype Kit', unlike the other journey pages, which use hyphens and end 'GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace T2 actions 47, 85, 101 (document.title)",
+      "quote": "Add an address for a consignee – Import notification service – GOV.UK Prototype Kit",
+      "confidence": "verbatim",
+      "note": "Looks like the Prototype Kit's default page layout rather than a design choice."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-042",
+      "statement": "The find-address, no-addresses and select pages show no notification status (Draft tag and reference) above the heading, unlike the add-address page.",
+      "kind": "copy",
+      "ref": "trace T2 actions 47, 85, 101 (main innerText starts with the h1)",
+      "quote": "Add an address for a consignee\nEnter a UK postcode\nFor example, AB12 3CD\nFind address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-043",
+      "statement": "The find-address page asks for a UK postcode in a width-10 text input with an example hint and postal-code autocomplete.",
+      "kind": "data",
+      "ref": "trace T2 actions 44, 47 (#postcode, name findAddressPostcode, govuk-input--width-10, autocomplete postal-code, aria-describedby postcode-hint)",
+      "quote": "Enter a UK postcode\nFor example, AB12 3CD",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-044",
+      "statement": "The find-address page's button is 'Find address'.",
+      "kind": "copy",
+      "ref": "trace T2 actions 47, 55",
+      "quote": "Find address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-045",
+      "statement": "The find-address page has an 'Enter address manually' link to /<role>/add-address?manual=true.",
+      "kind": "copy",
+      "ref": "trace T2 actions 45, 47 (/design-release-2.1/consignee/add-address?manual=true); T3 actions 56, 81",
+      "quote": "Enter address manually",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-046",
+      "statement": "The find-address page has a 'Cancel and return to hub' link to the notification hub.",
+      "kind": "copy",
+      "ref": "trace T2 actions 46, 47 (/design-release-2.1/notification-hub)",
+      "quote": "Cancel and return to hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-047",
+      "statement": "The find-address page's back link goes to the role's picker.",
+      "kind": "behaviour",
+      "ref": "trace T2 action 47 (/design-release-2.1/consignee); T3 actions 56 (/importer), 81 (/place-of-destination)",
+      "quote": "<a href=\"/design-release-2.1/consignee\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-048",
+      "statement": "The find-address, no-addresses and select pages use only GOV.UK Frontend classes: text input, select, button, links, body text and the grid.",
+      "kind": "constraint",
+      "ref": "trace T2 actions 47, 85, 101 (class lists under main)",
+      "quote": "govuk-!-margin-bottom-9 govuk-body govuk-button govuk-form-group govuk-grid-column-two-thirds govuk-grid-row govuk-heading-l govuk-hint govuk-input govuk-input--width-10 govuk-label govuk-link",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-049",
+      "statement": "Submitting the find-address page with no postcode gives an error, linked to the postcode field, and the page title gains an 'Error: ' prefix.",
+      "kind": "rule",
+      "ref": "trace T2 actions 55-60 (error summary link #postcode; inline #postcode-error; title 'Error: Add an address for a consignee – ...')",
+      "quote": "Enter a postcode",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-050",
+      "statement": "Submitting a part postcode such as 'M1' gives an error asking for a full UK postcode, and the value entered stays in the field.",
+      "kind": "rule",
+      "ref": "trace T2 actions 67-72 (#postcode value M1 after submit)",
+      "quote": "Enter a full UK postcode, like BB4 4AA",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-051",
+      "statement": "A valid postcode sends the user to /<role>/find-address/select?findAddressPostcode=<postcode>.",
+      "kind": "behaviour",
+      "ref": "trace T2 request 446 (POST /consignee/find-address 302, location /design-release-2.1/consignee/find-address/select?findAddressPostcode=ZZ9%209ZZ)",
+      "quote": "location: /design-release-2.1/consignee/find-address/select?findAddressPostcode=ZZ9%209ZZ",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-052",
+      "statement": "When a postcode has no addresses, the page's title is 'No addresses found' and its heading names the postcode.",
+      "kind": "copy",
+      "ref": "trace T2 actions 83-85",
+      "quote": "No addresses found for ZZ9 9ZZ",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-053",
+      "statement": "The no-addresses and select pages show the postcode searched for under a 'Postcode' label, with a 'Change postcode' link back to find-address carrying that postcode.",
+      "kind": "copy",
+      "ref": "trace T2 actions 85, 101 (link /design-release-2.1/consignee/find-address?findAddressPostcode=ZZ9%209ZZ)",
+      "quote": "Postcode\nZZ9 9ZZ Change postcode",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-054",
+      "statement": "The no-addresses and select pages' back link goes to find-address carrying the postcode searched for.",
+      "kind": "behaviour",
+      "ref": "trace T2 actions 85, 101 (back link)",
+      "quote": "<a href=\"/design-release-2.1/consignee/find-address?findAddressPostcode=ZZ9%209ZZ\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-055",
+      "statement": "The no-addresses page offers 'Enter address manually' and 'Cancel and return to hub' links, and no button.",
+      "kind": "behaviour",
+      "ref": "trace T2 actions 85-86",
+      "quote": "Enter address manually\n\nCancel and return to hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-056",
+      "statement": "When a postcode has addresses, the select page's title and heading are 'Select an address'.",
+      "kind": "copy",
+      "ref": "trace T2 actions 98-101",
+      "quote": "Select an address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-057",
+      "statement": "The select page lists the postcode's addresses in a full-width select labelled 'Select an address', whose first entry is a count of addresses found and each later entry is a whole address on one line, in capitals, separated by commas.",
+      "kind": "data",
+      "ref": "trace T2 action 101 (#address-id, name foundAddressId, govuk-select govuk-!-width-full)",
+      "quote": "2 addresses found\nFLAT 105 OXID HOUSE, 78 NEWTON STREET, MANCHESTER, M1 1AL\nFLAT 606 OXID HOUSE, 78 NEWTON STREET, MANCHESTER, M1 1AL",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-058",
+      "statement": "The select page has a 'Continue' button, then 'Enter address manually' and 'Cancel and return to hub' links.",
+      "kind": "copy",
+      "ref": "trace T2 action 101",
+      "quote": "Continue\n\nEnter address manually\n\nCancel and return to hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-059",
+      "statement": "Continuing from the select page without choosing an address gives an error linked to the select, and the title gains an 'Error: ' prefix.",
+      "kind": "rule",
+      "ref": "trace T2 actions 108-113 (link #address-id; title 'Error: Select an address – ...')",
+      "quote": "Select an address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-060",
+      "statement": "Choosing an address and continuing opens the role's add-address form with the found address filled in: address line 1, address line 2, town or city and postcode.",
+      "kind": "behaviour",
+      "ref": "trace T2 actions 121-132 (URL /consignee/add-address?foundAddressId=ch-M11AL-0; field values)",
+      "quote": "FLAT 105 OXID HOUSE | 78 NEWTON STREET | MANCHESTER | M1 1AL",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-061",
+      "statement": "A found address fills the form in the capitals the lookup returns, split at its commas into address line 1, address line 2 and town.",
+      "kind": "rule",
+      "ref": "trace T2 actions 101, 132",
+      "quote": "FLAT 105 OXID HOUSE, 78 NEWTON STREET, MANCHESTER, M1 1AL",
+      "confidence": "verbatim",
+      "note": "mechanism: the one-line lookup result 'FLAT 105 OXID HOUSE, 78 NEWTON STREET, MANCHESTER, M1 1AL' becomes four fields, still in capitals."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-062",
+      "statement": "A found address leaves the name, email address and phone number blank, and the user must still give all three: 'Save and select' then lists those three errors only.",
+      "kind": "rule",
+      "ref": "trace T2 actions 140-144",
+      "quote": "Enter a name or organisation name\nEnter an email address\nEnter a phone number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-063",
+      "statement": "For the consignee, importer and place of destination, the add-address form labels its postcode field 'Postcode', not 'Postcode or Zip code'.",
+      "kind": "copy",
+      "ref": "trace T2 actions 130, 132; T3 actions 69, 94 (labels)",
+      "quote": "Postcode",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-064",
+      "statement": "For the consignee, importer and place of destination, the add-address form's country select offers only 'United Kingdom', already chosen, both after a lookup and when the address is entered by hand.",
+      "kind": "rule",
+      "ref": "trace T2 action 132 (1 option, selected); T3 actions 69, 94 (country options 1, sel=United Kingdom)",
+      "quote": "United Kingdom=United Kingdom[sel]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-065",
+      "statement": "When the add-address form is reached from the postcode step, by a found address or by 'Enter address manually', its back link goes to the role's find-address page.",
+      "kind": "behaviour",
+      "ref": "trace T2 action 132 (/consignee/find-address); T3 actions 69 (/importer/find-address), 94 (/place-of-destination/find-address)",
+      "quote": "<a href=\"/design-release-2.1/importer/find-address\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-066",
+      "statement": "'Enter address manually' opens the role's add-address form, empty, with the same heading as the postcode step.",
+      "kind": "behaviour",
+      "ref": "trace T3 actions 64-69 (importer), 89-94 (place of destination); URL contains manual=true",
+      "quote": "Add an address for an importer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-067",
+      "statement": "The postcode lookup makes no call to an outside address service: the prototype answers the find-address and select form posts itself, from canned results.",
+      "kind": "integration",
+      "ref": "trace T2 requests 366, 406, 446, 527 (POST find-address), 568, 608 (POST select); no other data calls in the log",
+      "quote": "POST     302      find-address",
+      "confidence": "verbatim",
+      "note": "The results for M1 1AL (ids ch-M11AL-0, ch-M11AL-1) and none for ZZ9 9ZZ are prototype fixtures."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-068",
+      "statement": "The trace does not show which real address lookup service would answer the postcode search, its call shape or how it fails.",
+      "kind": "integration",
+      "ref": "trace T2 network log",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-069",
+      "statement": "The add-address form sets field widths with its own classes rather than GOV.UK Frontend's width classes: full for name, address lines and email, one-half for town and postcode, two-thirds for phone. Its section headings and address-use fieldset also use app-* classes. GOV.UK Frontend's govuk-input--width-* and govuk-!-width-* classes could replace the width ones.",
+      "kind": "constraint",
+      "ref": "trace T1 action 55 (input classes); class list under main",
+      "quote": "app-address-book-manual-address-fields__input--full app-address-book-manual-address-fields__input--one-half app-address-book-manual-address-fields__input--two-thirds",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-070",
+      "statement": "The add-address page loads its own script, consignment-add-address-uses.js, beside the standard checkboxes for the address uses.",
+      "kind": "constraint",
+      "ref": "trace T1 requests 30, 327 (GET consignment-add-address-uses.js)",
+      "quote": "consignment-add-address-uses.js",
+      "confidence": "verbatim",
+      "note": "What the script does is not visible in the trace; the form posts and validates without it."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-071",
+      "statement": "The trace does not show what ticking another address type does: whether the saved address is then offered in, or chosen for, that other role.",
+      "kind": "behaviour",
+      "ref": "trace T1 actions 80-84 (consignor ticked, then only the place of origin picker seen)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-072",
+      "statement": "The trace does not show whether the email address and phone number are checked for format: only blank values were refused.",
+      "kind": "rule",
+      "ref": "trace T1 actions 66, 78-81; T2 actions 144, 153-155",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-073",
+      "statement": "The trace does not show the error states of the consignor, importer and place of destination add-address forms, nor 'Save and return to address page' for the consignee, importer and place of destination.",
+      "kind": "rule",
+      "ref": "trace T3 (no submit); T2 (Save and select only)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-074",
+      "statement": "For a pet consignment, the 'Add a permanent address' link goes to /permanent-address, which redirects to /permanent-address/select, the per-animal permanent address page.",
+      "kind": "behaviour",
+      "ref": "trace T4 actions 39-40; requests 288 (GET permanent-address 302), 289 (GET select 200)",
+      "quote": "Add a permanent address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-075",
+      "statement": "The permanent address page's title is 'Permanent address - Import notification service - GOV.UK', with the caption 'Addresses' above the heading 'Permanent address'.",
+      "kind": "copy",
+      "ref": "trace T4 actions 41-42, 50 (P.app-permanent-address-animals-page__caption, H1.app-permanent-address-animals-page__heading)",
+      "quote": "Addresses\n\nPermanent address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-076",
+      "statement": "The permanent address page shows the notification's status as a 'Draft' tag beside its type and reference, above the caption.",
+      "kind": "copy",
+      "ref": "trace T4 action 50 (.app-dr2-notification-status)",
+      "quote": "Draft\nLive animals - GBN-AG-26-0X6708",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-077",
+      "statement": "The permanent address page warns, in a warning text, that a false address is fraud.",
+      "kind": "copy",
+      "ref": "trace T4 actions 43, 50 (DIV.govuk-warning-text)",
+      "quote": "Providing a false address is an act of fraud",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-078",
+      "statement": "The permanent address page explains what a permanent address is, with a bulleted list.",
+      "kind": "copy",
+      "ref": "trace T4 action 50 (P.app-permanent-address-animals-page__guidance-text, govuk-list--bullet)",
+      "quote": "A permanent address is where an animal:\n\nwill permanently reside\ncan be checked by the Animal and Plant Health Agency (APHA)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-079",
+      "statement": "The permanent address page asks its question as a second-level heading.",
+      "kind": "copy",
+      "ref": "trace T4 actions 44, 50 (H2.app-permanent-address-animals-page__question)",
+      "quote": "Where will their permanent address be?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-080",
+      "statement": "The permanent address page asks once per animal in the consignment: two cats give two cards, each headed with the species name and a running number.",
+      "kind": "behaviour",
+      "ref": "trace T4 actions 33 (2 cats), 45, 50 (H3.app-permanent-address-animal-card__heading); T5 action 39 (1 cat, one card)",
+      "quote": "Domestic cat (Felis catus) 1\nDomestic cat (Felis catus) 2",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-081",
+      "statement": "Each animal's card asks the user to choose, from radios under the legend 'Select an address', between the place of destination and a new address.",
+      "kind": "data",
+      "ref": "trace T4 actions 46-47, 50 (permanentAddressChoice[cat-felis-catus:0] values same-as-pod, new-address)",
+      "quote": "Select an address\nSame as the place of destination (POD)\nEnter a new address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-082",
+      "statement": "The 'Enter a new address' radio has a hint saying the permanent address is where the animal stays after 48 hours at the place of destination.",
+      "kind": "copy",
+      "ref": "trace T4 actions 48, 50 (#permanent-address-choice-cat-felis-catus:0-2-item-hint, in the new-address item)",
+      "quote": "This is where they will stay after spending 48 hours at the place of destination.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-083",
+      "statement": "Once a place of destination has been chosen, the 'Same as the place of destination (POD)' radio shows that address beneath it, on one line.",
+      "kind": "rule",
+      "ref": "trace T4 action 100",
+      "quote": "Same as the place of destination (POD)\nRiverside Holding Facility, East Farm Road, Leeds, LS25 3EB, United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-084",
+      "statement": "Choosing 'Same as the place of destination (POD)' before a place of destination is chosen gives an error, linked to that animal's radios.",
+      "kind": "rule",
+      "ref": "trace T4 actions 58-63 (link #permanent-address-choice-cat-felis-catus:0)",
+      "quote": "Add a place of destination before you can continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-085",
+      "statement": "Choosing 'Enter a new address' reveals an address form under that animal's radio, as a conditional reveal.",
+      "kind": "rule",
+      "ref": "trace T4 actions 71-72 (#permanentAddressDetails-cat-felis-catus-0-name visible; aria-controls conditional-permanent-address-choice-cat-felis-catus:0-2; govuk-radios__conditional)",
+      "quote": "Enter a new address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-086",
+      "statement": "The revealed new-address form asks for name or organisation name, address line 1, an optional address line 2, town or city, an optional county, postcode or zip code, email address and phone number, with the phone hint about international numbers.",
+      "kind": "data",
+      "ref": "trace T4 action 50 (permanentAddressDetails[cat-felis-catus:0][name|addressLine1|addressLine2|townOrCity|county|postcode|email|phone])",
+      "quote": "Name or organisation name | Address line 1 | Address line 2 (optional) | Town or city | County (optional) | Postcode or Zip code | Email address | Phone number | For international numbers include the country code",
+      "confidence": "verbatim",
+      "note": "The name label here is 'Name or organisation name'; the add-address form's is 'Name or organisation'. This form has a county field the add-address form lacks."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-087",
+      "statement": "The permanent address new-address form has no country field.",
+      "kind": "data",
+      "ref": "trace T4 action 50 (inputs listed; no select)",
+      "quote": "INPUT|text|permanentAddressDetails[cat-felis-catus:0][postcode]|permanentAddressDetails-cat-felis-catus-0-postcode|||",
+      "confidence": "inferred",
+      "note": "Inferred from the field list: there is no select or country input inside the reveal."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-088",
+      "statement": "On the permanent address page, each error in the summary names the animal it is for, and the same error shown inline by the field leaves the animal's name out.",
+      "kind": "rule",
+      "ref": "trace T4 action 83 (summary vs #permanentAddressDetails-cat-felis-catus-0-name-error)",
+      "quote": "Enter a name or organisation name for Domestic cat (Felis catus) 1",
+      "confidence": "verbatim",
+      "note": "Inline text is 'Enter a name or organisation name'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-089",
+      "statement": "A blank name or organisation name in an animal's new address gives an error.",
+      "kind": "rule",
+      "ref": "trace T4 action 83 (link #permanentAddressDetails-cat-felis-catus-0-name)",
+      "quote": "Enter a name or organisation name for Domestic cat (Felis catus) 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-090",
+      "statement": "A blank address line 1 in an animal's new address gives an error.",
+      "kind": "rule",
+      "ref": "trace T4 action 83 (link #permanentAddressDetails-cat-felis-catus-0-address-line-1)",
+      "quote": "Enter address line 1 for Domestic cat (Felis catus) 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-091",
+      "statement": "A blank town or city in an animal's new address gives an error.",
+      "kind": "rule",
+      "ref": "trace T4 action 83 (link #permanentAddressDetails-cat-felis-catus-0-town-or-city)",
+      "quote": "Enter a town or city for Domestic cat (Felis catus) 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-092",
+      "statement": "A blank postcode or zip code in an animal's new address gives an error.",
+      "kind": "rule",
+      "ref": "trace T4 action 83 (link #permanentAddressDetails-cat-felis-catus-0-postcode)",
+      "quote": "Enter a postcode or Zip code for Domestic cat (Felis catus) 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-093",
+      "statement": "A blank email address in an animal's new address gives an error.",
+      "kind": "rule",
+      "ref": "trace T4 action 83 (link #permanentAddressDetails-cat-felis-catus-0-email)",
+      "quote": "Enter an email address for Domestic cat (Felis catus) 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-094",
+      "statement": "A blank phone number in an animal's new address gives an error.",
+      "kind": "rule",
+      "ref": "trace T4 action 83 (link #permanentAddressDetails-cat-felis-catus-0-phone)",
+      "quote": "Enter a phone number for Domestic cat (Felis catus) 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-095",
+      "statement": "Address line 2 and county are optional in an animal's new address: a blank form lists no error for them.",
+      "kind": "rule",
+      "ref": "trace T4 action 83 (six errors, none for address-line-2 or county)",
+      "quote": "Address line 2 (optional) | County (optional)",
+      "confidence": "inferred",
+      "note": "Inferred from the error summary and the '(optional)' labels."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-096",
+      "statement": "An animal left with no choice made raises no error: in both error runs the second cat had no answer and the summary named only the first.",
+      "kind": "rule",
+      "ref": "trace T4 actions 63, 83 (permanentAddressChoice[cat-felis-catus:1] both radios unchecked; errors only for cat 1)",
+      "quote": "permanentAddressChoice[cat-felis-catus:1]=same-as-pod:false\npermanentAddressChoice[cat-felis-catus:1]=new-address:false",
+      "confidence": "inferred",
+      "note": "Inferred: the trace never submits with every animal blank, so whether an all-blank page is refused is not shown."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-097",
+      "statement": "The permanent address page has 'Save and continue' and 'Save and return to hub' buttons, a 'Cancel and return to hub' link, and a back link to the consignment addresses page.",
+      "kind": "copy",
+      "ref": "trace T4 actions 49-50 (button values continue and hub; back link /design-release-2.1/roles-and-addresses)",
+      "quote": "Save and continue\nSave and return to hub\n\nCancel and return to hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-098",
+      "statement": "With a place of destination chosen and every animal set to 'Same as the place of destination (POD)', 'Save and continue' returns the user to the consignment addresses page, which lists each animal under 'Permanent address' with the place of destination's address and one 'Change' and 'Remove permanent address' pair.",
+      "kind": "behaviour",
+      "ref": "trace T4 actions 99-104 (POST /permanent-address/select 302; /roles-and-addresses content)",
+      "quote": "Permanent address\n\nA permanent address is where an animal:\n\nwill permanently reside\ncan be checked by the Animal and Plant Health Agency (APHA)\nDomestic cat (Felis catus) 1\n\nRiverside Holding Facility\n\nEast Farm Road\n\nLeeds, LS25 3EB, United Kingdom\n\nDomestic cat (Felis catus) 2\n\nRiverside Holding Facility\n\nEast Farm Road\n\nLeeds, LS25 3EB, United Kingdom\n\nChange Remove\n permanent address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-099",
+      "statement": "The permanent address page is built from its own app-permanent-address-* classes: each animal is a section card, and the caption and heading use custom classes rather than govuk-caption and govuk-heading. It also loads its own script, permanent-address-animals.js. Its standard parts are GOV.UK Frontend radios with conditional reveals, warning text, a bulleted list, inputs and buttons.",
+      "kind": "constraint",
+      "ref": "trace T4 action 50 (class list under main; .app-permanent-address-animal-card is a SECTION); request 26 (GET /public/javascripts/permanent-address-animals.js)",
+      "quote": "app-permanent-address-animal-card app-permanent-address-animal-card__heading app-permanent-address-animal-card__legend",
+      "confidence": "verbatim",
+      "note": "A GOV.UK summary card or a fieldset per animal with a standard heading could replace the custom card. What the script does is not visible in the trace."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-100",
+      "statement": "The permanent address new-address fields set their widths with custom classes: three-quarters for name, address lines and email, one-half for town, county and postcode, two-thirds for phone.",
+      "kind": "constraint",
+      "ref": "trace T4 action 50 (permanentAddressDetails-cat-felis-catus-0-* classes)",
+      "quote": "app-permanent-address-new-address-fields__input--three-quarters",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-101",
+      "statement": "The trace does not show a new permanent address being saved, 'Save and return to hub' from the permanent address page, or the page for a pet species other than a cat.",
+      "kind": "behaviour",
+      "ref": "trace T4 (only same-as-pod saved)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-102",
+      "statement": "The old /permanent-address/enter-address path redirects to the per-animal page at /permanent-address/select.",
+      "kind": "behaviour",
+      "ref": "trace T5 actions 38-39; requests 286 (GET enter-address 302), 287 (GET select 200)",
+      "quote": "Where will their permanent address be?\nDomestic cat (Felis catus) 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-103",
+      "statement": "Opening /contact-address-for-consignment redirects the user to the review page, 'Review your notification'.",
+      "kind": "behaviour",
+      "ref": "trace T6 actions 38-40; request 287 (GET contact-address-for-consignment 302)",
+      "quote": "Review your notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p7-104",
+      "statement": "The trace renders no contact address page: no heading, question or field for a contact address for the consignment.",
+      "kind": "behaviour",
+      "ref": "trace T6 (redirect only)",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

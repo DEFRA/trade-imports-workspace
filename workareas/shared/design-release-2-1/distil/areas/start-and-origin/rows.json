@@ -3,63 +3,76 @@
   "rows": [
     {
       "title": "The germinal products origin page's Back link returns to wherever the notification was started from",
-      "detail": "A trader reaches the germinal products set's 'Origin of the import' page three ways: by choosing germinal products on the question that asks what they are importing, by creating a notification from the germinal products set's own notifications list, and by opening the origin task from a notification's overview. Back should take them to whichever of those they came from, so leaving the page never drops them into another set's pages or onto a list they never visited. The live animals set already works this way; the germinal set's copy of the page needs its own answers because its list and its start are its own.",
+      "detail": "A trader reaches the germinal products set's 'Origin of the import' page three ways: by choosing germinal products on the question that asks what they are importing, by creating a notification from the germinal products set's own notifications list, and by opening the origin task from a notification's overview. Back takes them to whichever of those they came from, so leaving the page never drops them into another set's pages or onto a list they never visited. The live animals set already works this way; the germinal set's copy of the page needs its own destinations because its list and its start are its own. The requirement is parked with the templates concept, so the row waits until templates are planned again.",
       "acceptanceCriteria": [
-        "Choosing germinal products on the 'What are you importing?' question and continuing, the germinal products 'Origin of the import' page shows a Back link that goes to that question. (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-005; prototype:dr2-1-source prototype-dr2-1-source-p2-028; conflicts:c-007)",
-        "Starting a notification from the germinal products set's own notifications list, the germinal products 'Origin of the import' page shows a Back link that goes to that list. (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-005; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-104)",
+        "Choosing germinal products on the 'What are you importing?' question and continuing, the germinal products 'Origin of the import' page shows a Back link that goes to that question. (trace:prototype-dr2-1 trace-prototype-dr2-1-p1-022; prototype:dr2-1-source prototype-dr2-1-source-p2-028)",
+        "Starting a notification from the germinal products set's own notifications list, the germinal products 'Origin of the import' page shows a Back link that goes to that list. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-104; prototype:dr2-1-source prototype-dr2-1-source-p2-028)",
         "Opening the origin task from a germinal products notification's overview, the 'Origin of the import' page shows a Back link that goes to that overview. (prototype:dr2-1-source prototype-dr2-1-source-p2-028; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-014)",
-        "Following the germinal products 'Origin of the import' page's Back link leaves the answers already saved against the notification as they were. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-014; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-104)"
+        "Following the germinal products 'Origin of the import' page's Back link leaves the answers already saved against the notification as they were. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-014, ruling-sam-2026-10-09-p1-057)"
       ],
       "requirements": ["req-1740"],
       "sources": [
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "trace-prototype-dr2-1-p12-005 (TRACE G action 17 snapshot; TRACE C action 16 snapshot)"
-        },
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p2-028 (app/routes.js:10586-10600 getOriginBackLink)"
-        },
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "ruling-sam-2026-10-09-p1-014, p1-057"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "ruling-sam-2026-10-09-pm-p3-104 (the germinal set's own list at its root)"
-        },
-        {
-          "source": "ruling:interaction-designer-2026-11-09",
-          "ref": "ruling-interaction-designer-2026-11-09-p1-010 (templates dropped for now)"
-        }
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p1-022" },
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p2-028 (getOriginBackLink)" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-014, -p1-057" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-104 (the germinal set's own list at its root)" },
+        { "source": "ruling:sam-2026-11-25", "ref": "templates deferred as a theme; req-1740 parked with them" }
       ],
       "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "blocked",
+      "gate": null,
+      "openQuestions": [
+        "Blocked by ruling:sam-2026-11-25: the whole templates concept is deferred as a theme (after ruling:sam-2026-11-04 claim 1 and ruling:interaction-designer-2026-11-09 point 4), and this requirement is parked with it. Sam must plan templates again before the row builds."
+      ],
+      "notes": "Re-distil: keeps inc-280's id. req-1740 now carries a blocker (ruling:sam-2026-11-25 parks it with templates), and a requirement with a blocker sits in a blocked row, so the row moves from todo to blocked and keeps its criteria, rewritten without conflict ids. One slice: the germinal set's own origin feature folder, which inc-176 copies, and its own notifications list, which inc-141 builds; keep dependsOn inc-141 and inc-176 and the externalDependsOn on the type-question workarea's inc-150 as they are. Not split off: the code is the germinal products set's own origin folder, which only the germinal-products theme touches.",
+      "touches": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/origin",
+        "tests:tests/animals/e2e/germinal-products"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/flow"
+      ],
+      "existingRow": "inc-280"
+    },
+    {
+      "title": "The INS type question takes a germinal products notification back to its own journey",
+      "detail": "Once the INS 'What are you importing?' question offers Germinal products again and hands it to the germinal products set's start, a trader who follows Back from a germinal products notification's origin page to that question must return to the same notification, as a live animals notification already does. Opened for a germinal products notification, the question shows Germinal products selected; continuing with it goes back to that notification's origin page in the germinal products set without creating another draft; choosing a different type starts a new notification of that type, and the germinal one is left as it was.",
+      "acceptanceCriteria": [
+        "The INS type question lists Live animals; Germinal products (semen, ova, embryos); Plants for planting; Potatoes (seed and ware); Wood products, in that order, in English and Welsh. (review:type-question-theme Sam's ruling of 6 November 2026)",
+        "Choosing Germinal products on a new start and continuing lands on the germinal products set's start page in the animals frontend, in the local docker stack, the CI docker stack and CDP. (review:type-question-theme Sam's ruling of 6 November 2026; repo:insfrontend repo-insfrontend-p3-035)",
+        "Following Back from a germinal products notification's 'Origin of the import' page opens the type question with Germinal products selected and every other option unselected. (repo:insfrontend repo-insfrontend-p3-026, repo-insfrontend-p3-028; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-048)",
+        "Continuing with Germinal products from that question returns to the same notification's 'Origin of the import' page in the germinal products set, showing its reference and the answers already given, and the trader's germinal products notifications list holds the same number of drafts as before. (repo:insfrontend repo-insfrontend-p3-031; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-054)",
+        "Choosing a different type from that question and continuing starts a new notification of that type with a new reference, and the germinal products notification is still listed with its reference, its Draft status and its answers. (repo:insfrontend repo-insfrontend-p3-034, repo-insfrontend-p3-036; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-056)",
+        "Choosing Germinal products from a live animals notification's Back link leaves that live animals notification with its reference, its Draft status and its answers. (review:type-question-theme Sam's ruling of 6 November 2026; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-056)"
+      ],
+      "requirements": ["req-2564"],
+      "sources": [
+        { "source": "repo:insfrontend", "ref": "repo-insfrontend-p3-026, -p3-028, -p3-029, -p3-031, -p3-034, -p3-035, -p3-036 (src/server/app/features/notification-type)" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-048, -p1-054, -p1-056" },
+        { "source": "review:type-question-theme", "ref": "Sam's ruling of 6 November 2026: germinal products must not have a dead link; the type question offers it once the germinal products start page exists" }
+      ],
+      "repos": ["insfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "dependsOn": ["inc-141", "inc-176"],
-      "notes": [
-        "This area's part of inc-186 only. req-1740 already sits in inc-186 (theme germinal-products) alongside the templates area's req-1875 and req-1876: the combiner merges this draft back into inc-186 and keeps that id, its wider title and detail, its repos (backend joins from req-1875 and req-1876), its dependsOn (inc-182) and its externalDependsOn on the split-off type-question and type-question-and-templates workareas (inc-150, inc-151, inc-154 to inc-161, inc-164, inc-165).",
-        "Rewrite needed in inc-186: templates are no longer a Back destination (ruling:interaction-designer-2026-11-09 ruling-interaction-designer-2026-11-09-p1-010 dropped templates for now), so inc-186's title clause about returning to a template's review and its last acceptance criterion ('Opened while a saved germinal products template is being edited, the germinal products origin page's Back link goes to that template's review') are replaced by the three destinations above. req-1740's statement now names only the type question, the germinal set's own notifications list and the notification overview.",
-        "Ordering: the germinal set's origin page itself is built by inc-176 and the germinal set's root list by inc-141, so both must land before the Back link can be seen; inc-186's existing dependsOn inc-182 stays. The Back-to-the-type-question destination needs the type question, which the split-off type-question theme owns, and inc-186's externalDependsOn already names it.",
-        "Not split off: the code is the germinal products set's own origin feature folder and journey flow under frontend:src/server/app/sets/germinal-products, which the germinal-products theme owns. No split-off pointer touches it: origin-page and design-snagging touch only the live-animals and plants origin folders.",
-        "The shared return-marker and trail rule in the animals frontend is read, not changed, by this row: the split-off journey-foundation theme owns it."
-      ],
+      "notes": "Re-distil: builds into inc-264, which restores the Germinal products option and its hand-over; req-2564 is the same option's return path, on the same controller, copy and spec, so building it apart would repeat the set-up. inc-264's three criteria are kept as the first, second and sixth here. Keep inc-264's dependsOn inc-176 and its externalDependsOn on the type-question workarea's inc-263. Not listed as split off to type-question-and-templates, although its code is insfrontend:src/server/app/features/notification-type: that branch removed the Germinal products option (inc-263) because the germinal start did not exist, Sam's 6 November ruling hands the option back to the germinal-products theme, which already touches that folder, and the return to a germinal origin page cannot be observed on a branch with no germinal products set. Logging of the hand-over and of a type that cannot be taken back is already built (req-2566, req-2565 exist).",
       "touches": [
-        "frontend:src/server/app/sets/germinal-products",
-        "tests:tests/animals/e2e/germinal-products"
+        "insfrontend:src/server/app/features/notification-type",
+        "tests:tests/ins/e2e/features/notification-type",
+        "tests:domain/ins/constants/notification-types.ts"
       ],
       "shared": [],
-      "existingRow": "inc-186"
+      "existingRow": "inc-264"
     }
   ],
   "unobservable": [],
   "splitOff": [
     {
-      "requirement": "req-051",
-      "theme": "origin-page",
-      "why": "It changes the live-animals origin page's exits: the page gains a secondary 'Save and return to overview' button that saves before showing the overview and a 'Cancel and return to overview' link that reaches the overview even with no answers. That is frontend:src/server/app/sets/live-animals/journeys/linear/features/origin, its obligation section frontend:src/server/app/sets/live-animals/obligations/sections/origin.js and the page spec tests:tests/animals/e2e/pages/origin.spec.ts, all in theme origin-page's touches, and origin-page is the theme whose rows are the origin page's own behaviour. Its germinal half needs no row here: ruling:sam-2026-10-09 (ruling-sam-2026-10-09-p1-014) makes each germinal page a copy of its live-animals feature folder taken after the live twin is built, inc-176 copies the finished live-animals origin page into the germinal set, and inc-244 already covers both save buttons making the same checks on every germinal page that shows them. The blocker c-003 recorded (the 10 November ruling held the return links until the save and continue work merged) is gone: that work merged on 11 November, so req-051 carries no blockedBy and the row is buildable on the origin-page branch. The split-off design-snagging theme also lists the origin folder in its touches, but only to port finished origin-page work to main; origin-page is where the behaviour itself is built."
+      "requirement": "req-2567",
+      "theme": "journey-foundation",
+      "why": "It changes the journey strip that every journey page shows, built by journeyStrip in frontend:src/server/app/shared/kit.js with its copy in the shared copy, which journey-foundation owns. The germinal products set takes the same strip from the shared kit, naming itself 'Germinal products' once its set supplies that short name."
     }
   ]
 }

@@ -2,41 +2,30 @@
   "area": "cph-permanent-and-contact",
   "rows": [
     {
-      "title": "A germinal products notification is asked only for the five consignment addresses, with no county parish holding number and no permanent address",
-      "detail": "Germinal products are not kept on a holding and are never pets, so a trader filling in a germinal products notification must never be asked for a county parish holding number or for an animal's permanent address. The germinal products set's consignment addresses page is a copy of the live-animals one, which carries both sections, so the copy leaves them out and the set serves neither page: a trader importing semen, embryos or ova is only ever asked for the five consignment addresses.",
+      "title": "The germinal products set asks for no county parish holding number and no permanent address",
+      "detail": "Germinal products are not kept on a holding and are never pets, so a germinal products notification is never asked for a county parish holding number or an animal's permanent address. The germinal set's consignment addresses page is copied from the live-animals one, which carries both sections, so the copy leaves them out and the set serves neither page.",
       "acceptanceCriteria": [
-        "A germinal products notification's consignment addresses page shows exactly five sections, in this order: Place of origin, Consignor, Consignee, Importer, Place of destination (prototype:dr2-1-source prototype-dr2-1-source-p9-024; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-017, ruling-sam-2026-10-09-p1-018, ruling-sam-2026-10-09-p1-057)",
-        "Every link and button on a germinal products notification's pages opens one of that set's own steps, and none of them opens a county parish holding number page or a permanent address page (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006, ruling-sam-2026-10-09-p1-014, ruling-sam-2026-10-09-p1-017, ruling-sam-2026-10-09-p1-018; confluence:6497338582 §County Parish Holding (CPH), §Permanent Address)",
-        "Opening a county parish holding number page's address or a permanent address page's address under a germinal products notification shows 'Page not found' (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-017, ruling-sam-2026-10-09-p1-018, ruling-sam-2026-10-09-p1-025; confluence:6497338582 §County Parish Holding (CPH), §Permanent Address)"
+        "A germinal products notification's consignment addresses page shows exactly five sections, in this order: \"Place of origin\", \"Consignor\", \"Consignee\", \"Importer\", \"Place of destination\". (prototype:dr2-1-source prototype-dr2-1-source-p9-024, prototype-dr2-1-source-p9-085; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-017, -p1-018, -p1-057)",
+        "Every link and button on a germinal products notification's pages opens one of that set's own steps, and none of them opens a county parish holding number page or a permanent address page; opening either page's address under a germinal products notification shows \"Page not found\". (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006, -p1-014, -p1-017, -p1-018, -p1-025; confluence:6497338582 confluence-6497338582-p2-048, -p2-057, -p2-098, -p2-106)"
       ],
       "requirements": ["req-1832", "req-1833"],
       "sources": [
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "ruling-sam-2026-10-09-p1-006, p1-014, p1-017, p1-018, p1-025, p1-057"
-        },
-        {
-          "source": "confluence:6497338582",
-          "ref": "confluence-6497338582-p2-048, p2-057 (Permanent Address, animals journey only); p2-098, p2-106 (County Parish Holding, animals journey only)"
-        },
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p9-024"
-        }
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p9-024, -p9-085" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-006, -p1-014, -p1-017, -p1-018, -p1-025, -p1-057" },
+        { "source": "confluence:6497338582", "ref": "confluence-6497338582-p2-048, -p2-057 (Permanent Address); -p2-098, -p2-106 (County Parish Holding)" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the two halves of one rule, that the germinal set is asked for the five consignment addresses only: no county parish holding number section or page, and no permanent address section or page. They are one copied page and one route table, so building them apart would copy the page twice. Each is the germinal half of a live-animals requirement that the 9 October ruling split per set, so no live-animals page changes here. Observable only once the germinal products set's own mount, journey and consignment addresses page exist, and the copy is taken after the live twin is built, so this row lands after the live consignment addresses, county parish holding and permanent address work; both of those now build on their own branches, so the ordering runs through the germinal-products theme's dependencies rather than through this row. existingRow inc-181 already carries these two requirements alongside the germinal roles and addresses page and its five party pickers from the consignment-parties area and the germinal overview row from the notification-hub area: the combiner should keep inc-181's id, its germinal-products theme, its other requirements and its existing external dependencies on the identification-and-permanent-address and consignment-parties split branches, and take out the repeats between the drafts. Re-drafted on this re-distil with no change of substance: both requirements stand as they were, neither names a withdrawn claim, and both criteria state what the page shows rather than what it leaves out.",
+      "notes": "One slice: both requirements are the same copied page leaving out a section and its page, so they share one set-up. They already sit in inc-181 with the germinal consignment addresses page and its pickers (consignment-parties area) and the germinal overview's Addresses task (notification-hub area); the combiner keeps them there. The two criteria are worded as inc-181 already carries them.",
       "touches": [
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/addresses",
+        "frontend:src/server/app/sets/germinal-products",
         "tests:page-objects/germinal-products",
         "tests:tests/animals/e2e/germinal-products"
       ],
       "shared": [
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/flow",
         "frontend:src/server/app/routes-germinal-products.js"
       ],
       "existingRow": "inc-181"
@@ -45,14 +34,29 @@
   "unobservable": [],
   "splitOff": [
     {
-      "requirement": "req-731",
-      "theme": "identification-and-permanent-address",
-      "why": "It rewrites the live animals permanent address page's explanation bullets and its question, which theme identification-and-permanent-address owns: frontend:src/server/app/sets/live-animals/journeys/linear/features/permanent-address, tests:page-objects/animals/permanent-address-page.ts and tests:tests/animals/e2e/pages/permanent-address.spec.ts are all in its touches."
+      "requirement": "req-2738",
+      "theme": "consignment-parties",
+      "why": "It changes the plants consignment contact page's intro and sub-heading, in plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select, which theme consignment-parties owns."
     },
     {
-      "requirement": "req-1965",
+      "requirement": "req-2739",
       "theme": "consignment-parties",
-      "why": "It restores pagination at eight and the selected-address inset on the high-risk plants consignment contact picker, which theme consignment-parties owns: plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select, tests:page-objects/plants/consignment-contact-select-page.ts and tests:tests/plants/e2e/features/contact.spec.ts are all in its touches."
+      "why": "It changes the plants consignment contact page's save, return and amend controls, in plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select, which theme consignment-parties owns."
+    },
+    {
+      "requirement": "req-2740",
+      "theme": "consignment-parties",
+      "why": "It adds 'Remove CPH number' to the consignment addresses page's CPH section, in frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses (controller.js, copy, template.njk) and features/cph-number, which theme consignment-parties owns."
+    },
+    {
+      "requirement": "req-2741",
+      "theme": "consignment-parties",
+      "why": "It adds 'Remove permanent address' to the consignment addresses page's Permanent address section, rendered from frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js and its copy, which theme consignment-parties owns."
+    },
+    {
+      "requirement": "req-2742",
+      "theme": "identification-and-permanent-address",
+      "why": "It changes the permanent address page's layout and animal cards, in frontend:src/server/app/sets/live-animals/journeys/linear/features/permanent-address, which theme identification-and-permanent-address owns."
     }
   ]
 }

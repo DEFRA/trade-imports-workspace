@@ -1,7 +1,55 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 2 read, in full, the 15 named files of src/server/app/shared/ (layout.njk, kit.js, save-actions.njk, error-summary.njk, error.njk, section-caption.njk, render-macro.js, copy.js, copy.en.js, copy.cy.js, copy-leaves.js, paths.js, paging.js, trail.js, set-context.js), the six files of src/server/app/page-maturity/ (banner.njk, levels.js, page-maturity.js, _banner.scss and the English and Welsh copy), both shared search components under src/server/common/components/ (accessible-autocomplete and multi-select-search, each with macro.njk, its SCSS and its README), the client bundle (src/client/javascripts/application.js and its six component modules: accessible-autocomplete, autocomplete-text, multi-select-search, transporter-filter, region-code-prefix, status-announcer), the three client helpers (search-fold, bold-matches, welsh-results-available), the SCSS entry application.scss with its two core partials, seven component partials and two helper partials, and the type-ahead FIT spec src/server/app/sets/live-animals/journeys/linear/features/type-ahead.fit.spec.js. It covered the chrome every page shares rather than any one page: the GOV.UK page template the service extends, the service name, header, Alpha phase banner, service navigation and footer, the page-title and section-caption patterns, the Back link and the `from` trail it follows, the Save and continue / Save and return to overview / Cancel and return to overview controls, the error summary and inline field errors, the recoverable-error, stale-action and success banners, the journey status strip, the page-maturity banner and its four levels, every key of the shared English copy module with a parity claim for the Welsh one, the two shared search components with their client-side JavaScript, announcements and SCSS, each custom SCSS partial and the GOV.UK component it extends, the shared paging helper, the set-mounted URL shapes, and every behaviour the type-ahead FIT spec proves with JavaScript on and off. Two files outside the slice are named only where a file read here depends on them: the submitted-search macro the multi-select-search macro imports, and src/config/config.js for the maturity banner's switch. Welsh copy was read for key parity, not claimed string by string.",
+  "structure": "Part 2 read, in full, all 53 files its partition names: the shared layout (layout.njk), the shared kit (kit.js: route options, page widths, status strip, error summary, save targets, recoverable save, stale-action redirect, date field), the save-actions, error-summary, error and section-caption templates, render-macro.js, the copy resolver (copy.js), the English and Welsh shared copy and copy-leaves.js, paths.js, paging.js, trail.js and set-context.js; the page-maturity banner (template, levels, context builder, SCSS, English and Welsh copy); the accessible autocomplete, multi-select search and submitted search components (macros, SCSS, READMEs) and the shared remove-action button; the client entry point and its five enhancements (accessible autocomplete, multi-select search, transporter filter, region-code prefix, status announcer) with the search-fold, bold-matches and Welsh result-count helpers; the service stylesheet entry, core, components and helpers SCSS; and the type-ahead fit spec. To confirm reach it also looked, read-only, at the config switch for the maturity banner, the view context that sets the address book URL, the check-answers page descriptor, and the callers of the submitted search, the remove-action button and the paging helper. It covers the chrome every page shares (GOV.UK template, header, service navigation, phase and maturity banners, back link, page width, banners, status strip, footer, browser title), the save buttons and where each save goes, the error summary and inline errors, the trail behind the back link, URL shapes and set mounting, every shared copy key in English with Welsh parity, the search components and their behaviour with and without JavaScript, the custom SCSS against the GOV.UK components each extends, the paging helper, and every behaviour the type-ahead fit spec proves. Claims kept from the earlier extract keep their ids, with line references moved where kit.js has shifted; the earlier claim that a recoverable save fallback is logged as a warning is replaced, because it now logs at info.",
   "claims": [
+    {
+      "id": "repo-frontend-p1-002",
+      "statement": "A journey page's URL is /live-animals/notifications/<journeyId>/<page slug>.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:5,11-12",
+      "quote": "export const pageRoutePath = (slug) => `/notifications/{journeyId}/${slug}`\n...\nexport const pagePath = (journeyId, slug) =>\n  `${setBase()}/notifications/${journeyId}/${slug}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-003",
+      "statement": "The notification overview (the task list a trader returns to) is at /live-animals/notifications/<journeyId>, with no page slug.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:6,13",
+      "quote": "export const hubRoutePath = () => '/notifications/{journeyId}'\n...\nexport const hubPath = (journeyId) => `${setBase()}/notifications/${journeyId}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-004",
+      "statement": "A new notification is created at /live-animals/notifications, and /live-animals/start is a separate entry route.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:7-8,14",
+      "quote": "export const createRoutePath = () => '/notifications'\nexport const startRoutePath = () => '/start'\n...\nexport const createPath = () => `${setBase()}/notifications`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-005",
+      "statement": "The set's dashboard sits at /live-animals itself, because the dashboard page's slug is empty.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:9,15; src/server/app/sets/live-animals/journeys/linear/features/dashboard/page.js:1-5",
+      "quote": "export const dashboardRoutePath = () => '/'\n...\nexport const dashboardPath = () => setBase()\n---\nexport const dashboardPage = {\n  id: 'dashboard',\n  slug: '',\n  maturity: 'exploring'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-006",
+      "statement": "The dashboard section of the service is the base path, the create path and anything under the create path.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:17-20",
+      "quote": "export const inDashboardSection = (path) =>\n  path === dashboardPath() ||\n  path === createPath() ||\n  path.startsWith(`${createPath()}/`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-103",
+      "statement": "The review page's own slug is 'notification-view', the same as the page id, so a Change link from the review returns to /live-animals/notifications/<journeyId>/notification-view.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:76; src/server/app/sets/live-animals/journeys/linear/features/check-answers/page.js:1-5",
+      "quote": "export const CYA_SLUG = 'notification-view'\n---\nexport const notificationViewPage = {\n  id: 'notification-view',\n  slug: 'notification-view',\n  maturity: 'detailing'\n}",
+      "confidence": "verbatim"
+    },
     {
       "id": "repo-frontend-p2-001",
       "statement": "Every page of the service is rendered inside the GOV.UK page template, so the GOV.UK skip link, header, width container, main wrapper and footer surround the service's own content.",
@@ -104,7 +152,7 @@
       "id": "repo-frontend-p2-013",
       "statement": "The service name in the navigation links to the page's home URL, which on a journey page is the set's own notification list.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/layout.njk:52-53, src/server/app/shared/kit.js:306",
+      "ref": "src/server/app/shared/layout.njk:52-53, src/server/app/shared/kit.js:313 and :331",
       "quote": "serviceName: sharedCopy.layout.serviceName,\n    serviceUrl: homeUrl,",
       "confidence": "verbatim",
       "note": "homeUrl is dashboardPath() for a journey page and '/' for a page outside any set"
@@ -146,7 +194,7 @@
       "id": "repo-frontend-p2-018",
       "statement": "A page's content is two-thirds of the page width by default, the reading measure for a form.",
       "kind": "constraint",
-      "ref": "src/server/app/shared/layout.njk:73, src/server/app/shared/kit.js:36-39",
+      "ref": "src/server/app/shared/layout.njk:73, src/server/app/shared/kit.js:43-46",
       "quote": "<div class=\"{{ contentColumnClass | default(\"govuk-grid-column-two-thirds\", true) }}\">",
       "confidence": "verbatim"
     },
@@ -154,7 +202,7 @@
       "id": "repo-frontend-p2-019",
       "statement": "A page that displays rather than asks can render across the full page width.",
       "kind": "constraint",
-      "ref": "src/server/app/shared/kit.js:36-39",
+      "ref": "src/server/app/shared/kit.js:43-46",
       "quote": "export const SURFACES = Object.freeze({\n  form: 'govuk-grid-column-two-thirds',\n  display: 'govuk-grid-column-full'\n})",
       "confidence": "verbatim",
       "note": "only these two widths exist; a page names one of them"
@@ -163,7 +211,7 @@
       "id": "repo-frontend-p2-020",
       "statement": "A page asking for a width the service does not offer fails rather than rendering at a default width.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:41-48",
+      "ref": "src/server/app/shared/kit.js:48-55",
       "quote": "throw new Error(\n      `Unknown surface '${surface}'. Expected one of: ${Object.keys(SURFACES).join(', ')}`\n    )",
       "confidence": "verbatim",
       "note": "mechanism: guards the page's own width choice, not anything a trader sees"
@@ -189,7 +237,7 @@
       "id": "repo-frontend-p2-023",
       "statement": "A journey page shows a status strip above its content holding the notification's status tag and its reference in bold.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/layout.njk:88-94, src/server/app/shared/kit.js:90-97",
+      "ref": "src/server/app/shared/layout.njk:88-94, src/server/app/shared/kit.js:97-104",
       "quote": "{{ govukTag({ text: journeyStrip.status.text, classes: journeyStrip.status.classes }) }}\n          <span class=\"govuk-body govuk-!-font-weight-bold\">{{ journeyStrip.reference }}</span>",
       "confidence": "verbatim",
       "note": "a page may leave the strip off"
@@ -198,7 +246,7 @@
       "id": "repo-frontend-p2-024",
       "statement": "The status strip's tag reads Draft in blue, Submitted in green, Amend in yellow or Deleted in grey.",
       "kind": "copy",
-      "ref": "src/server/app/shared/kit.js:50-67, src/server/app/shared/copy.en.js:66-72",
+      "ref": "src/server/app/shared/kit.js:57-74, src/server/app/shared/copy.en.js:66-72",
       "quote": "journeyStrip: {\n    draft: 'Draft',\n    submitted: 'Submitted',\n    amend: 'Amend',\n    cancelAmend: 'Cancel amend',\n    deleted: 'Deleted'\n  }",
       "confidence": "verbatim",
       "note": "classes are govuk-tag--blue, --green, --yellow and --grey in that order"
@@ -207,7 +255,7 @@
       "id": "repo-frontend-p2-025",
       "statement": "While a notification is being amended, every journey page offers a \"Cancel amend\" link in the status strip, going to the notification's cancel-amend page.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:71-79, src/server/app/shared/layout.njk:92",
+      "ref": "src/server/app/shared/kit.js:80-86, src/server/app/shared/layout.njk:92",
       "quote": "export const cancelAmendControl = (journey) =>\n  journey.status === AMEND\n    ? {\n        href: pagePath(journey.journeyId, CANCEL_AMEND_SLUG),\n        text: sharedCopy.journeyStrip.cancelAmend\n      }\n    : undefined",
       "confidence": "verbatim",
       "note": "a page may suppress the link with offerCancelAmend false"
@@ -272,7 +320,7 @@
       "id": "repo-frontend-p2-033",
       "statement": "A journey page's caption is the caption of the journey section its page belongs to, and a page the journey leaves uncaptioned shows none.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:286-305",
+      "ref": "src/server/app/shared/kit.js:293-324",
       "quote": "caption: journeySectionCaption(page?.id),",
       "confidence": "verbatim",
       "note": "the section captions themselves belong to the journey flow, not to this part"
@@ -338,7 +386,7 @@
       "id": "repo-frontend-p2-041",
       "statement": "A refused page shows an error summary titled \"There is a problem\".",
       "kind": "copy",
-      "ref": "src/server/app/shared/kit.js:124, src/server/app/shared/copy.en.js:31-33",
+      "ref": "src/server/app/shared/kit.js:131, src/server/app/shared/copy.en.js:31-33",
       "quote": "errorSummary: {\n    title: 'There is a problem'\n  }",
       "confidence": "verbatim"
     },
@@ -346,7 +394,7 @@
       "id": "repo-frontend-p2-042",
       "statement": "The error summary lists one entry per field in error, in the order the page's error map gives them, and each entry links to that field on the page.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:99 and :115-128",
+      "ref": "src/server/app/shared/kit.js:106 and :122-135",
       "quote": "errorList: entries.map(([field, text]) => ({ text, href: href(field) }))",
       "confidence": "verbatim",
       "note": "the default link is the in-page anchor #<field>; a page may supply its own builder when the entries point at another page"
@@ -355,7 +403,7 @@
       "id": "repo-frontend-p2-043",
       "statement": "No error summary is shown when a page has no errors.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:119-122, src/server/app/shared/error-summary.njk:3-5",
+      "ref": "src/server/app/shared/kit.js:126-129, src/server/app/shared/error-summary.njk:3-5",
       "quote": "if (entries.length === 0) {\n    return null\n  }",
       "confidence": "verbatim"
     },
@@ -363,7 +411,7 @@
       "id": "repo-frontend-p2-044",
       "statement": "A page that shows an error summary without the trader having just been refused can keep the caret where it is instead of moving it to the summary.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:107-125",
+      "ref": "src/server/app/shared/kit.js:116-132",
       "quote": "disableAutoFocus,",
       "confidence": "verbatim"
     },
@@ -371,7 +419,7 @@
       "id": "repo-frontend-p2-045",
       "statement": "A field in error also shows its message inline against the field itself, the same words the summary carries.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:130-131",
+      "ref": "src/server/app/shared/kit.js:137-138",
       "quote": "export const fieldError = (fieldErrors, field) =>\n  fieldErrors?.[field] ? { text: fieldErrors[field] } : undefined",
       "confidence": "verbatim"
     },
@@ -379,7 +427,7 @@
       "id": "repo-frontend-p2-046",
       "statement": "Pressing Save and return to overview on any journey page takes the trader to that notification's overview.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:163-190 and :243-245",
+      "ref": "src/server/app/shared/kit.js:170-197 and :250-252",
       "quote": "export const hubExitTarget = (\n  request,\n  { saveChoice = requestSaveChoice(request) } = {}\n) => (saveChoice.hubExit ? hubPath(request.params.journeyId) : null)",
       "confidence": "verbatim"
     },
@@ -387,7 +435,7 @@
       "id": "repo-frontend-p2-047",
       "statement": "Pressing Save and continue takes the trader to the next page of the journey that applies to the notification, and to the review page when no page is left.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:208-245",
+      "ref": "src/server/app/shared/kit.js:215-252",
       "quote": "const landing = nextStepLanding(page.id, scope, journeyId)\n  if (!landing) {\n    return pagePath(journeyId, CYA_SLUG)\n  }",
       "confidence": "verbatim"
     },
@@ -395,7 +443,7 @@
       "id": "repo-frontend-p2-048",
       "statement": "When the next page needs a required earlier answer the notification does not have, Save and continue opens the page that asks for that answer instead.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:213-224",
+      "ref": "src/server/app/shared/kit.js:221-232",
       "quote": "'Save and continue opened the page that asks for a missing earlier answer'",
       "confidence": "verbatim",
       "note": "logged once with the saved page, the unopened page and the missing answer ids"
@@ -404,7 +452,7 @@
       "id": "repo-frontend-p2-049",
       "statement": "The review page of a notification is reached at the slug notification-view, and the page that abandons an amendment at the slug cancel-amend.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:69-71",
+      "ref": "src/server/app/shared/kit.js:76-78",
       "quote": "export const CYA_SLUG = 'notification-view'\n\nexport const CANCEL_AMEND_SLUG = 'cancel-amend'",
       "confidence": "verbatim"
     },
@@ -412,24 +460,16 @@
       "id": "repo-frontend-p2-050",
       "statement": "A refusal is recorded once in the service's logs with the keys of the fields refused, never the messages the trader was shown.",
       "kind": "non-functional",
-      "ref": "src/server/app/shared/kit.js:133 and :149-161",
+      "ref": "src/server/app/shared/kit.js:140 and :156-168",
       "quote": "errorCodes: Object.keys(fieldErrors)",
       "confidence": "verbatim",
       "note": "mechanism: logging of refusals; the log message is 'Answer refused, page shown again'"
     },
     {
-      "id": "repo-frontend-p2-051",
-      "statement": "When a save fails on a backend error the trader can wait out, the page answers with its own fallback and the failure is recorded once as a warning.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:345-371",
-      "quote": "export const SAVE_FALLBACK_LOG_MESSAGE =\n  'Save failed on a recoverable backend error, fallback response sent'",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-frontend-p2-052",
       "statement": "A post refused because the notification changed since the page was shown sends the trader back to the same page carrying a staleAction marker, which is what raises the \"The notification has been updated\" banner.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:373-391",
+      "ref": "src/server/app/shared/kit.js:381-399",
       "quote": "query.set('staleAction', '1')\n      return h.redirect(`${request.path}?${query.toString()}`)",
       "confidence": "verbatim"
     },
@@ -437,7 +477,7 @@
       "id": "repo-frontend-p2-053",
       "statement": "Every journey page carries the notification's concurrency token, so a post can be refused when the notification has moved on.",
       "kind": "data",
-      "ref": "src/server/app/shared/kit.js:311",
+      "ref": "src/server/app/shared/kit.js:318",
       "quote": "concurrencyToken: journey?.concurrencyToken ?? null,",
       "confidence": "verbatim"
     },
@@ -486,7 +526,7 @@
       "id": "repo-frontend-p2-059",
       "statement": "A sub-page opened from another page returns to that page when the request carries a `return` marker naming a page allowed to open it; a marker naming anything else is ignored and recorded once as a warning.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/trail.js:9, :83-112, src/server/app/shared/kit.js:201-206",
+      "ref": "src/server/app/shared/trail.js:9, :83-112, src/server/app/shared/kit.js:208-213",
       "quote": "'Return marker not recognised, marker dropped'",
       "confidence": "verbatim"
     },
@@ -774,7 +814,7 @@
       "ref": "src/server/common/components/multi-select-search/macro.njk:39-58",
       "quote": "attributes: {\n        \"aria-controls\": params.resultsId,\n        \"autocomplete\": \"off\"\n      },",
       "confidence": "verbatim",
-      "note": "the box itself comes from the submitted-search macro, which this part did not read"
+      "note": "the box itself is the shared submitted search (src/server/common/components/submitted-search/macro.njk), with its type set to search"
     },
     {
       "id": "repo-frontend-p2-095",
@@ -933,13 +973,13 @@
       "ref": "src/client/stylesheets/core/_main.scss:9-28",
       "quote": ".app-link-button {\n  background: none;\n  border: none;",
       "confidence": "verbatim",
-      "note": "used by the confirmation, dashboard, addresses and commodity-search pages"
+      "note": "used by the confirmation, dashboard, addresses, origin and commodity-search pages, and by the shared remove-action button"
     },
     {
       "id": "repo-frontend-p2-114",
       "statement": "A date answer is given in one box as day/month/year text with the Ministry of Justice date picker beside it, in a ten-character-wide GOV.UK input with a small label.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:455-482",
+      "ref": "src/server/app/shared/kit.js:463-490",
       "quote": "classes: 'govuk-input--width-10',\n    label: { text: label, classes: labelClasses },",
       "confidence": "verbatim",
       "note": "a date field may carry its own hint, error, earliest and latest date, all as d/m/yyyy text"
@@ -948,7 +988,7 @@
       "id": "repo-frontend-p2-115",
       "statement": "A date the trader typed is read as day, month and year only when it is one or two digits, a slash, one or two digits, a slash and four digits; anything else is kept as typed and shown back to them.",
       "kind": "rule",
-      "ref": "src/server/app/shared/kit.js:412-432",
+      "ref": "src/server/app/shared/kit.js:420-431",
       "quote": "const match = /^(?<day>\\d{1,2})\\/(?<month>\\d{1,2})\\/(?<year>\\d{4})$/.exec(raw)\n  if (!match) {\n    return raw\n  }",
       "confidence": "verbatim",
       "note": "mechanism: reads and re-renders a stored { day, month, year } as d/m/yyyy text for the date picker"
@@ -1111,7 +1151,7 @@
       "id": "repo-frontend-p2-134",
       "statement": "Every page of a set is reached only by a signed-in user: the shared route options put every page behind the session.",
       "kind": "non-functional",
-      "ref": "src/server/app/shared/kit.js:23 and :32",
+      "ref": "src/server/app/shared/kit.js:30 and :39",
       "quote": "export const routeOptions = { auth: 'session' }",
       "confidence": "verbatim"
     },
@@ -1119,7 +1159,7 @@
       "id": "repo-frontend-p2-135",
       "statement": "A page can be shown but not posted to: a page with no post handler answers a GET only.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:393-410",
+      "ref": "src/server/app/shared/kit.js:401-418",
       "quote": "...(post\n    ? [\n        {\n          method: 'POST',",
       "confidence": "verbatim"
     },
@@ -1274,6 +1314,271 @@
       "quote": "// Example SASS helpers\n\n@mixin app-link-style {\n  text-decoration: none;",
       "confidence": "inferred",
       "note": "grep -rn app-link-style over src/ finds only the mixin's own definition; GOV.UK link styling applies everywhere instead"
+    },
+    {
+      "id": "repo-frontend-p4-049",
+      "statement": "A status tag reads \"Draft\" in blue, \"Submitted\" in green, \"Amend\" in yellow or \"Deleted\" in grey.",
+      "kind": "data",
+      "ref": "src/server/app/shared/kit.js:57-74, src/server/app/shared/copy.en.js:66-71",
+      "quote": "const STRIP_STATUS = { [DRAFT]: { text: sharedCopy.journeyStrip.draft, classes: 'govuk-tag--blue' }, [SUBMITTED]: { text: sharedCopy.journeyStrip.submitted, classes: 'govuk-tag--green' }, [AMEND]: { text: sharedCopy.journeyStrip.amend, classes: 'govuk-tag--yellow' }, [DELETED]: { text: sharedCopy.journeyStrip.deleted, classes: 'govuk-tag--grey' } }; journeyStrip: { draft: 'Draft', submitted: 'Submitted', amend: 'Amend', ... deleted: 'Deleted' }",
+      "confidence": "verbatim",
+      "note": "The status words and colours come from the shared kit, so the list shows the same words as the status strip on an answering page."
+    },
+    {
+      "id": "repo-frontend-p15-041",
+      "statement": "Previous is shown only when the trader is past the first page, and Next only when there is a page after the current one.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paging.js:18-27",
+      "quote": "previous:\n      page > FIRST_PAGE\n        ? { href: hrefFor(page - 1), text: labels.previous }\n        : undefined,\n    next:\n      page < totalPages\n        ? { href: hrefFor(page + 1), text: labels.next }\n        : undefined",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-044",
+      "statement": "No pagination is rendered when the party's addresses fit on one page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paging.js:13-17, fit/hub-picker.fit.spec.js:636-648",
+      "quote": "const minimumPagesToPaginate = 2\n  if (totalPages < minimumPagesToPaginate) {\n    return null\n  }",
+      "confidence": "verbatim",
+      "note": "The consignee picker proves it: every consignee address is a radio and the Pagination navigation has count 0."
+    },
+    {
+      "id": "repo-frontend-p16-086",
+      "statement": "Returning to the contact page after adding an address in the INS address book shows a success banner reading '<name> address added to your address book', shown once.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js:121 with addresses/ins-handshake.js:64-75 and shared/copy.en.js:75-78",
+      "quote": "      successBanner: takeAddedAddressBanner(request, h)",
+      "confidence": "verbatim",
+      "note": "The banner is taken from a cookie and the cookie cleared, so it shows on the next render only."
+    },
+    {
+      "id": "repo-frontend-p16-087",
+      "statement": "A failed hand-off to the INS address book is shown on the contact page as an error summary against the choice, reading 'The address could not be found in your address book. Select another address or try adding it again.' when the address was not found and 'The address book could not be reached. Your answers on this page have been saved. Try again in a few minutes.' when the book could not be reached.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js:39-48 and :102-105 with shared/copy.en.js:79-84 and addresses/ins-handshake.js:23-31",
+      "quote": "      notFound:\n        'The address could not be found in your address book. Select another address or try adding it again.',\n      unavailable:\n        'The address book could not be reached. Your answers on this page have been saved. Try again in a few minutes.'",
+      "confidence": "verbatim",
+      "note": "The unreachable case also puts the page into its recoverable-error state (controller.js:105)."
+    },
+    {
+      "id": "repo-frontend-p2-154",
+      "statement": "When a save fails on a backend error the trader can wait out, the page answers with its own fallback, and the fallback is logged once at info, with the failure attached unless it was already logged when it was raised.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:340-379",
+      "quote": "if (isRecoverableBackendError(error)) {\n      request.logger.info(\n        {\n          ...ids,\n          journeyId: request.params.journeyId,\n          route: request.route?.path,\n          ...errFieldUnlessLogged(error)\n        },\n        SAVE_FALLBACK_LOG_MESSAGE\n      )",
+      "confidence": "verbatim",
+      "note": "replaces the earlier claim that the fallback was recorded as a warning; the log message is 'Save failed on a recoverable backend error, fallback response sent'. A refusal because the notification changed is not treated as recoverable here: it is rethrown to the stale-action redirect."
+    },
+    {
+      "id": "repo-frontend-p2-155",
+      "statement": "A post refused because the notification changed since the page was shown is logged once at info with the journey id and the concurrency token the page posted.",
+      "kind": "non-functional",
+      "ref": "src/server/app/shared/kit.js:385-392",
+      "quote": "request.logger.info(\n        {\n          journeyId: request.params.journeyId,\n          postedConcurrencyToken: request.payload?.concurrencyToken\n        },\n        'Save refused: the notification changed since the page was shown'\n      )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-156",
+      "statement": "A page outside any notification set has the service root as its home URL and shows no status strip, no success banner and no recoverable-error banner, at the two-thirds form width.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:326-338",
+      "quote": "export const setlessBase = (title) => ({\n  layout: SHARED_LAYOUT,\n  pageTitle: title,\n  homeUrl: '/',\n  journeyStrip: null,\n  concurrencyToken: null,\n  sharedCopy,\n  recoverableError: false,\n  successBanner: null,\n  contentColumnClass: SURFACES.form\n})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-157",
+      "statement": "Every page's route carries the page's own descriptor, which is where the maturity banner reads the level the page's feature sets.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:32-39, src/server/app/page-maturity/page-maturity.js:43",
+      "quote": "export const pageRouteOptions = (page) => ({ ...routeOptions, app: { page } })",
+      "confidence": "verbatim",
+      "note": "mechanism: the page.js descriptor rides on the hapi route as app.page; a route with no page shows no maturity banner"
+    },
+    {
+      "id": "repo-frontend-p2-158",
+      "statement": "The Address book navigation link goes to the INS address book.",
+      "kind": "integration",
+      "ref": "src/server/app/shared/layout.njk:37-40, src/config/nunjucks/context/context.js:76",
+      "quote": "text: sharedCopy.layout.serviceNavigation.addressBook,\n        href: addressBookUrl",
+      "confidence": "inferred",
+      "note": "the layout takes addressBookUrl from the shared view context, which sets it to insAddressBookUrl(); that helper sits outside this part"
+    },
+    {
+      "id": "repo-frontend-p2-159",
+      "statement": "The submitted search is a text box with a medium-size label, an optional hint and a blue square magnifier button joined to it, and the button submits the page's form with action=search.",
+      "kind": "behaviour",
+      "ref": "src/server/common/components/submitted-search/macro.njk:1-3 and :30-57",
+      "quote": "appSubmittedSearch — a text box with a joined blue icon button that submits\n  the page's form with action=search.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-160",
+      "statement": "The submitted search button shows only the magnifier icon: its text is visually hidden and is the button's accessible name, such as \"Search\".",
+      "kind": "copy",
+      "ref": "src/server/common/components/submitted-search/macro.njk:14 and :31-40",
+      "quote": "<span class=\"govuk-visually-hidden\">{{ params.button.text }}</span>",
+      "confidence": "verbatim",
+      "note": "the button text, label and hint words are each page's own copy (the transporter list and the address picker), not this component's"
+    },
+    {
+      "id": "repo-frontend-p2-161",
+      "statement": "A submitted search term is shown back in the box when the page is rendered again, from the term the page passes in.",
+      "kind": "behaviour",
+      "ref": "src/server/common/components/submitted-search/macro.njk:8 and :45",
+      "quote": "value          (string)  the term to show in the box",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-162",
+      "statement": "The submitted search offers no control of its own to clear a search: no clear link or button is rendered beside the box.",
+      "kind": "behaviour",
+      "ref": "src/server/common/components/submitted-search/macro.njk:30-57",
+      "quote": "",
+      "confidence": "gap",
+      "note": "looked in the macro and its stylesheet: they render the label, hint, box, error and search button only. Whether a page clears a search by emptying the box and searching again belongs to the transporter list and address picker parts"
+    },
+    {
+      "id": "repo-frontend-p2-163",
+      "statement": "The submitted search works without JavaScript: its button is an ordinary submit button in the page's form, and no script enhances the component itself.",
+      "kind": "behaviour",
+      "ref": "src/server/common/components/submitted-search/macro.njk:35-40, src/client/javascripts/application.js:17-28",
+      "quote": "{{ govukButton({\n      html: hiddenLabelHtml,\n      classes: \"moj-search__button moj-search__button--icon app-submitted-search__button\",\n      name: \"action\",\n      value: \"search\"\n    }) }}",
+      "confidence": "inferred",
+      "note": "inferred because application.js registers no module for the submitted search; the transporter filter and the multi-select search enhance pages that use it"
+    },
+    {
+      "id": "repo-frontend-p2-164",
+      "statement": "The submitted search is built on the Ministry of Justice search component's input wrapper and icon button, restyled as the service's blue square icon button with no gap between box and button.",
+      "kind": "constraint",
+      "ref": "src/server/common/components/submitted-search/submitted-search.scss:3-10, src/server/common/components/submitted-search/macro.njk:37 and :52",
+      "quote": ".app-submitted-search__button {\n  @extend %blue-square-icon-button;\n  margin-left: 0;\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-165",
+      "statement": "A page can set the width of the submitted search box and button together; the address picker sets it to one half of the column and the transporter list leaves it at full width.",
+      "kind": "behaviour",
+      "ref": "src/server/common/components/submitted-search/macro.njk:15-16 and :51-53; src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:71-79; src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.njk:69-76",
+      "quote": "wrapperClasses: \"govuk-!-width-one-half\"",
+      "confidence": "verbatim",
+      "note": "these two pages are the submitted search's only direct callers; the multi-select search also renders it"
+    },
+    {
+      "id": "repo-frontend-p2-166",
+      "statement": "The shared remove action is a submit button styled as a GOV.UK link, posting action with the value naming what to remove, so it sits inside the page's form rather than being a link.",
+      "kind": "behaviour",
+      "ref": "src/server/common/components/remove-action-button.js:6-15",
+      "quote": "return `<button type=\"submit\" class=\"${buttonClasses}\" name=\"action\" value=\"${escapeHtml(action)}\">${escapeHtml(text)}${hiddenName}</button>`",
+      "confidence": "verbatim",
+      "note": "classes are govuk-link app-link-button plus any the caller adds"
+    },
+    {
+      "id": "repo-frontend-p2-167",
+      "statement": "The remove action reads its visible text followed by visually hidden text naming the item, after a space, so a screen reader hears which item it removes.",
+      "kind": "copy",
+      "ref": "src/server/common/components/remove-action-button.js:13, src/server/common/visually-hidden-text.js",
+      "quote": "const hiddenName = visuallyHiddenText(` ${hiddenText}`)",
+      "confidence": "verbatim",
+      "note": "the visible text and the hidden text are each caller's copy; the action value, text and hidden text are all escaped"
+    },
+    {
+      "id": "repo-frontend-p2-168",
+      "statement": "A button inside a multi-select search's results, such as Remove or Clear all, posts its own name and value with the refresh, so the results route can tell which was pressed.",
+      "kind": "behaviour",
+      "ref": "src/client/javascripts/components/multi-select-search.js:3-9 and :185-198, src/server/common/components/multi-select-search/README.md:86-88",
+      "quote": "Pressing Search, Enter in the box, or any button inside the results is caught\n  before the form submits. The button's own name and value are posted, so the\n  route can tell a Remove from Clear all.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-169",
+      "statement": "A tick the trader makes while a multi-select refresh is on its way is kept when the refreshed results arrive.",
+      "kind": "behaviour",
+      "ref": "src/client/javascripts/components/multi-select-search.js:26-35, :101-104 and :110-112",
+      "quote": "const reapplyTicks = (fresh, ticks) => {\n  for (const box of fresh.querySelectorAll('input[type=\"checkbox\"]')) {\n    const checked = ticks.get(tickKeyOf(box))",
+      "confidence": "verbatim",
+      "note": "mechanism: ticks noted since the last request are re-applied to the fresh tick boxes by name and value"
+    },
+    {
+      "id": "repo-frontend-p2-170",
+      "statement": "The multi-select search box hides the browser's own clear cross.",
+      "kind": "constraint",
+      "ref": "src/server/common/components/multi-select-search/multi-select-search.scss:18-20",
+      "quote": ".app-multi-select-search input[type='search']::-webkit-search-cancel-button {\n  appearance: none;\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-171",
+      "statement": "After the multi-select search has fallen back to posting the page, coming back to it through browser history lets in-place refreshes run again.",
+      "kind": "behaviour",
+      "ref": "src/client/javascripts/components/multi-select-search.js:83-87",
+      "quote": "window.addEventListener('pageshow', (event) => {\n    if (event.persisted) {\n      submittingNatively = false\n    }\n  })",
+      "confidence": "inferred",
+      "note": "mechanism: a page restored from the back-forward cache clears the flag that stops refreshes once a native submit starts"
+    },
+    {
+      "id": "repo-frontend-p2-172",
+      "statement": "The multi-select search is enhanced only inside a form that holds its results, its live region, its search box and button and a results URL; otherwise the page stays the version that needs no JavaScript.",
+      "kind": "behaviour",
+      "ref": "src/client/javascripts/components/multi-select-search.js:51-63 and :241-255, src/server/common/components/multi-select-search/README.md:82-83",
+      "quote": "return Object.values(parts).every(Boolean) ? parts : null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-173",
+      "statement": "With JavaScript, the transporter list's Search button filters the rows already on the page without posting it.",
+      "kind": "behaviour",
+      "ref": "src/client/javascripts/components/transporter-filter.js:75-78",
+      "quote": "searchButton.addEventListener('click', (event) => {\n      event.preventDefault()\n      filterAndAnnounce()\n    })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-174",
+      "statement": "An empty or blank search term matches every entry, and the term's leading and trailing spaces are ignored.",
+      "kind": "rule",
+      "ref": "src/client/common/helpers/search-fold.js:7-12",
+      "quote": "const foldTerm = (term) => foldForSearch(term.trim())\n\n/** Whether a text holds a search term, ignoring case and accents. An empty\n * term is held by every text. */",
+      "confidence": "verbatim",
+      "note": "an empty term bolds nothing (matchPositions returns no positions)"
+    },
+    {
+      "id": "repo-frontend-p2-175",
+      "statement": "The accessible autocomplete box leaves room on its right for the search button, so typed text never runs under it.",
+      "kind": "constraint",
+      "ref": "src/server/common/components/accessible-autocomplete/accessible-autocomplete.scss:16-18",
+      "quote": ".autocomplete__input {\n  padding-right: helpers.$app-square-icon-button-size;\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-176",
+      "statement": "Previous and Next take their words from the list's own copy, and each links to the page before or after through the list's own link builder.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paging.js:13-27",
+      "quote": "export const previousAndNextLinks = ({ page, totalPages, labels }, hrefFor) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-177",
+      "statement": "On a notification list the sort controls sit in one row aligned along their bottom edge and wrap when narrow, and the search form keeps its button flush with the form's foot.",
+      "kind": "constraint",
+      "ref": "src/client/stylesheets/components/_notification-list.scss:51-76",
+      "quote": ".notification-list__sort-form {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: flex-end;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-178",
+      "statement": "On the notification list's Previous and Next control, the underline of the page it leads to thickens on hover and focus.",
+      "kind": "constraint",
+      "ref": "src/client/stylesheets/components/_notifications-pagination.scss:44-52",
+      "quote": "&:hover .notifications-pagination__page,\n  &:focus .notifications-pagination__page {\n    text-decoration-thickness: max(3px, 0.1875rem, 0.12em);\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-179",
+      "statement": "Each request runs with the signed-in user's organisation as well as its set, so whatever the page reads or saves is for that organisation.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/set-context.js:80-81 and :103-107",
+      "quote": "export const runInRequestContext = (request, setId, fn) =>\n  withOrganisationId(organisationIdOf(request), () => withSetContext(setId, fn))",
+      "confidence": "inferred",
+      "note": "mechanism: the organisation id is carried in async context for the request; how services use it is outside this part"
     }
   ]
 }

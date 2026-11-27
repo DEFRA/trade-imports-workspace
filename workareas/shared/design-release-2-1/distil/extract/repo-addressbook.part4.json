@@ -1,0 +1,842 @@
+{
+  "source": "repo:addressbook",
+  "structure": "Part 4, Transporters. Read in full on main: the 19 files of src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/ (the Transporter record in the transporters collection, TransporterRequest and TransporterResponse, TransporterType, TransporterStatus, the TransporterApprovalRequirement and CommercialTransporterCountry class-level constraints and their validators, TransporterController with its five operations, TransporterService, TransporterMapper, the list query, criteria, requested filters, page response and repository); the 6 unit test files in src/test/.../transporter/ (TransporterRequestValidationTest, TransporterServiceTest, TransporterMapperTest, TransporterResponseTest, TransporterListCriteriaTest and the TransporterTestSupport fixtures); integration/IntegrationBase.java (the transporter helpers and fixture bodies only) and the five transporter ITs (TransporterCrudIT, TransporterDeleteIT, TransporterScopingIT, TransporterSearchIT, TransporterIndexIT); docs/openapi/addresses.yml for the two transporter paths and the TransporterRequest, TransporterType, TransporterResponse and TransporterPageResponse components plus the security scheme; README.md's intro, 'Transporters', the transporter sentences of 'Soft delete (tombstones)' and the 'MongoDB' collections line. Covered: the stored record and its fields, every request field with its constraint and verbatim message, the stray roles and role refusals, the two types, the approval number and Northern Ireland country rules, the response shape and its derived deleted flag, the five operations with method, path, status and body, list paging, order, q over 7 fields, countryCode, type and searchType filters and their 400s, soft delete and tombstones, organisation scoping, the org_status_created index, the non-prod expiry stamp, metrics and logging, and the tests that prove each (named in each claim's note). No pages or copy files: the copy here is API validation messages. Shared scoping, paging and search classes are part 3's; only how transporters use them is claimed here.",
+  "claims": [
+    {
+      "id": "repo-addressbook-p4-001",
+      "statement": "Transporters are stored in their own MongoDB collection, transporters, separate from addresses.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/Transporter.java:21; README.md:252",
+      "quote": "@Document(collection = \"transporters\")",
+      "confidence": "verbatim",
+      "note": "README: \"**Collections:** `addresses` and `transporters`\"."
+    },
+    {
+      "id": "repo-addressbook-p4-002",
+      "statement": "A transporter is its own organisation-owned record on its own route, never an address, with an intrinsic private-or-commercial type and no roles.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/Transporter.java:17-20; README.md:5-7",
+      "quote": "An organisation-owned transporter: its own record on its own address-book route, never an {@code Address}. It carries an intrinsic {@link TransporterType} and no roles.",
+      "confidence": "verbatim",
+      "note": "README: \"A transporter carries an intrinsic private-or-commercial type and a commercial one's approval number; it holds no roles and is never an address.\""
+    },
+    {
+      "id": "repo-addressbook-p4-003",
+      "statement": "A stored transporter holds name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email, type, approvalNumber, organisationId, status, createdAt, modifiedAt, expireAt and version.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/Transporter.java:32-71",
+      "quote": "private TransporterType type;\n\n  private String approvalNumber;\n\n  private String organisationId;\n\n  private TransporterStatus status;",
+      "confidence": "verbatim",
+      "note": "Plus an id. The address fields are the Standard Address Block fields (README:199)."
+    },
+    {
+      "id": "repo-addressbook-p4-004",
+      "statement": "The service sets a transporter's createdAt when it is first saved and its modifiedAt on every save; a caller cannot set either.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/Transporter.java:62-66; TransporterMapper.java:27-28",
+      "quote": "@CreatedDate\n  private Instant createdAt;\n\n  @LastModifiedDate\n  private Instant modifiedAt;",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterServiceTest.create_neverSetsServerFieldsFromTheRequest and TransporterCrudIT.updateReplacesEveryMutableFieldAndBumpsModifiedAt."
+    },
+    {
+      "id": "repo-addressbook-p4-005",
+      "statement": "A transporter is versioned for optimistic locking: a save from a stale copy is refused, so a soft-deleted transporter cannot be brought back by a late write.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/Transporter.java:70-71; src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterDeleteIT.java:53-64",
+      "quote": "assertThatThrownBy(() -> transporterRepository.save(stale))\n        .isInstanceOf(OptimisticLockingFailureException.class);",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterDeleteIT.delete_shouldPreventTombstoneResurrection_whenStaleSaveFollowsDelete. mechanism: Mongo @Version field on the transporter document."
+    },
+    {
+      "id": "repo-addressbook-p4-006",
+      "statement": "A concurrent update conflict on replacing a transporter is answered with 409 and a problem body.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterController.java:341-347; docs/openapi/addresses.yml:106-111",
+      "quote": "responseCode = \"409\",\n      description = \"Concurrent update conflict\"",
+      "confidence": "verbatim",
+      "note": "Documented only; no transporter test in this slice drives a 409 through the API."
+    },
+    {
+      "id": "repo-addressbook-p4-007",
+      "statement": "A transporter's name is required; a blank or missing name is refused with \"Enter a name or organisation\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:23",
+      "quote": "@NotBlank(message = \"Enter a name or organisation\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest invalidFields 'blank name'."
+    },
+    {
+      "id": "repo-addressbook-p4-008",
+      "statement": "A transporter's name can be at most 255 characters; a longer one is refused with \"Name must be 255 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:24",
+      "quote": "@Size(max = 255, message = \"Name must be 255 characters or less\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest invalidFields 'over-length name'."
+    },
+    {
+      "id": "repo-addressbook-p4-009",
+      "statement": "A transporter's address line 1 is required; a blank or missing one is refused with \"Enter address line 1\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:32",
+      "quote": "@NotBlank(message = \"Enter address line 1\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest invalidFields 'blank addressLine1'."
+    },
+    {
+      "id": "repo-addressbook-p4-010",
+      "statement": "A transporter's address line 1 can be at most 255 characters; a longer one is refused with \"Address line 1 must be 255 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:33",
+      "quote": "@Size(max = 255, message = \"Address line 1 must be 255 characters or less\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest invalidFields 'over-length addressLine1'."
+    },
+    {
+      "id": "repo-addressbook-p4-011",
+      "statement": "A transporter's address line 2 is optional and can be at most 255 characters; a longer one is refused with \"Address line 2 must be 255 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:41-43",
+      "quote": "@Size(max = 255, message = \"Address line 2 must be 255 characters or less\")",
+      "confidence": "verbatim",
+      "note": "No test in this slice drives the address line 2 length message."
+    },
+    {
+      "id": "repo-addressbook-p4-012",
+      "statement": "A transporter's town or city is required; a blank or missing one is refused with \"Enter a town or city\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:44",
+      "quote": "@NotBlank(message = \"Enter a town or city\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest invalidFields 'blank townOrCity'."
+    },
+    {
+      "id": "repo-addressbook-p4-013",
+      "statement": "A transporter's town or city can be at most 100 characters; a longer one is refused with \"Town or city must be 100 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:45",
+      "quote": "@Size(max = 100, message = \"Town or city must be 100 characters or less\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest invalidFields 'over-length townOrCity'."
+    },
+    {
+      "id": "repo-addressbook-p4-014",
+      "statement": "A transporter's county is optional and can be at most 100 characters; a longer one is refused with \"County must be 100 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:53-55",
+      "quote": "@Size(max = 100, message = \"County must be 100 characters or less\")",
+      "confidence": "verbatim",
+      "note": "No test in this slice drives the county length message."
+    },
+    {
+      "id": "repo-addressbook-p4-015",
+      "statement": "A transporter's postcode is required; a blank or missing one is refused with \"Enter a postcode or Zip code\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:56",
+      "quote": "@NotBlank(message = \"Enter a postcode or Zip code\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest invalidFields 'blank postcode'. The postcode has no format check, only presence and length."
+    },
+    {
+      "id": "repo-addressbook-p4-016",
+      "statement": "A transporter's postcode can be at most 12 characters; a longer one is refused with \"Postcode must be 12 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:57",
+      "quote": "@Size(max = 12, message = \"Postcode must be 12 characters or less\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest invalidFields 'over-length postcode'."
+    },
+    {
+      "id": "repo-addressbook-p4-017",
+      "statement": "A transporter's country code is required; a blank or missing one is refused with \"Select a country\". It has no length or list check of its own and is stored as given.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:65-71",
+      "quote": "@NotBlank(message = \"Select a country\")",
+      "confidence": "verbatim",
+      "note": "Schema description: \"Country code (stored as given). Fixed to GB-NIR when type is COMMERCIAL\". Proven by TransporterRequestValidationTest invalidFields 'blank countryCode'."
+    },
+    {
+      "id": "repo-addressbook-p4-018",
+      "statement": "A transporter's phone number is required; a blank or missing one is refused with \"Enter a phone number\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:72",
+      "quote": "@NotBlank(message = \"Enter a phone number\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest invalidFields 'blank phone'. No format check on the number."
+    },
+    {
+      "id": "repo-addressbook-p4-019",
+      "statement": "A transporter's phone number can be at most 20 characters; a longer one is refused with \"Telephone number must be 20 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:73",
+      "quote": "@Size(max = 20, message = \"Telephone number must be 20 characters or less\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest invalidFields 'over-length phone'. The required message says 'phone number' and the length message 'Telephone number'."
+    },
+    {
+      "id": "repo-addressbook-p4-020",
+      "statement": "A transporter's email address is required; a blank or missing one is refused with \"Enter an email address\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:81",
+      "quote": "@NotBlank(message = \"Enter an email address\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest invalidFields 'blank email'."
+    },
+    {
+      "id": "repo-addressbook-p4-021",
+      "statement": "A transporter's email address must be well formed; a malformed one is refused with \"Enter an email address in the correct format\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:82",
+      "quote": "@Email(message = \"Enter an email address in the correct format\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest invalidFields 'malformed email' (\"not-an-email\")."
+    },
+    {
+      "id": "repo-addressbook-p4-022",
+      "statement": "A transporter's email address can be at most 254 characters; a longer one is refused with \"Email address must be 254 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:83",
+      "quote": "@Size(max = 254, message = \"Email address must be 254 characters or less\")",
+      "confidence": "verbatim",
+      "note": "No test in this slice drives the email length message."
+    },
+    {
+      "id": "repo-addressbook-p4-023",
+      "statement": "A transporter's type is required; a missing type is refused with \"Select what kind of transporter this is\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:91-95",
+      "quote": "@NotNull(message = \"Select what kind of transporter this is\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest invalidFields 'missing type'. README:223: \"`type` is required: `PRIVATE` or `COMMERCIAL`.\""
+    },
+    {
+      "id": "repo-addressbook-p4-024",
+      "statement": "A transporter's approval number can be at most 50 characters; a longer one is refused with \"Approval number must be 50 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:96-101",
+      "quote": "@Size(max = 50, message = \"Approval number must be 50 characters or less\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest invalidFields 'over-length approval number'. No format check on the approval number."
+    },
+    {
+      "id": "repo-addressbook-p4-025",
+      "statement": "A transporter request that carries roles is refused on roles with \"roles is not a supported field\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:102-104",
+      "quote": "@Null(message = \"roles is not a supported field\")",
+      "confidence": "verbatim",
+      "note": "Hidden from the OpenAPI schema. Proven by TransporterRequestValidationTest invalidFields 'stray roles'."
+    },
+    {
+      "id": "repo-addressbook-p4-026",
+      "statement": "A transporter request that carries role is refused on role with \"role is not a supported field\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:105-107",
+      "quote": "@Null(message = \"role is not a supported field\")",
+      "confidence": "verbatim",
+      "note": "Hidden from the OpenAPI schema. Proven by TransporterRequestValidationTest invalidFields 'stray role'."
+    },
+    {
+      "id": "repo-addressbook-p4-027",
+      "statement": "Server-assigned fields sent in a transporter request body (id, organisationId, deleted, timestamps) are accepted and ignored, not refused.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:15-16; TransporterController.java:183-185",
+      "quote": "Server-assigned fields ({@code id}, {@code organisationId}, {@code deleted}, timestamps) are not components, so a body that echoes them is accepted and they are dropped.",
+      "confidence": "verbatim",
+      "note": "Proven in part by TransporterServiceTest.create_neverSetsServerFieldsFromTheRequest and TransporterMapperTest.toEntity_mapsAPrivateRequestCarryingNoApprovalNumber (id, organisationId, status null after mapping)."
+    },
+    {
+      "id": "repo-addressbook-p4-028",
+      "statement": "Every transporter field is camelCase on the wire, in both request and response.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:12-13; TransporterResponse.java:9-10",
+      "quote": "Every field is camelCase on the wire, under its Java name.",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterMapperTest.response_serialisesEntirelyInCamelCaseWithADerivedDeletedBooleanAndNoRolesOrAddressType."
+    },
+    {
+      "id": "repo-addressbook-p4-029",
+      "statement": "A transporter's type is one of two values: PRIVATE, a privately operated transporter, or COMMERCIAL, a commercial haulier based in Northern Ireland.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterType.java:9-13; docs/openapi/addresses.yml:689-694",
+      "quote": "@Schema(description = \"A privately operated transporter\")\n  PRIVATE,\n  @Schema(description = \"A commercial haulier, based in Northern Ireland\")\n  COMMERCIAL",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-030",
+      "statement": "A transporter type other than PRIVATE or COMMERCIAL in a create body is refused with 400.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterCrudIT.java:87-91",
+      "quote": "postTransporter(transporterBody().with(\"type\", \"APPROVED\"))\n        .andExpect(status().isBadRequest());",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterCrudIT.aTransporterTypeOutsidePrivateOrCommercialIsRefused. The test checks only the status, not the problem body's shape."
+    },
+    {
+      "id": "repo-addressbook-p4-031",
+      "statement": "A commercial transporter must have an approval number; one with none, or a blank one, is refused on approvalNumber with \"Enter the approval number\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterApprovalRequirement.java:21; TransporterApprovalRequirementValidator.java:12-18",
+      "quote": "String message() default \"Enter the approval number\";",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest.aCommercialTransporterWithNoApprovalNumberIsRefusedOnApprovalNumber and TransporterCrudIT.aCommercialTransporterWithNoApprovalNumberIsRefusedOnApprovalNumber (400, errors.approvalNumber, nothing stored)."
+    },
+    {
+      "id": "repo-addressbook-p4-032",
+      "statement": "A private transporter must not have an approval number; one that does is refused on approvalNumber with \"A private transporter must not have an approval number\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterApprovalRequirementValidator.java:19-21",
+      "quote": "return ClassLevelViolations.reportOn(\n          context, \"approvalNumber\", \"A private transporter must not have an approval number\");",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest.aPrivateTransporterWithAnApprovalNumberIsRefusedOnApprovalNumber and TransporterCrudIT.aPrivateTransporterWithAnApprovalNumberIsRefusedOnApprovalNumber."
+    },
+    {
+      "id": "repo-addressbook-p4-033",
+      "statement": "A blank approval number counts as none, so a private transporter sent with a blank approval number is not refused by the approval rule.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterApprovalRequirementValidator.java:12-13",
+      "quote": "boolean hasApprovalNumber =\n        request.approvalNumber() != null && !request.approvalNumber().isBlank();",
+      "confidence": "inferred",
+      "note": "Inferred from the validator: only a non-blank value counts as having one. Whether the blank value is then stored on a private transporter is not tested in this slice."
+    },
+    {
+      "id": "repo-addressbook-p4-034",
+      "statement": "A commercial transporter's country code must be GB-NIR (Northern Ireland); any other value is refused on countryCode with \"A commercial transporter must be in Northern Ireland\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/CommercialTransporterCountry.java:21; CommercialTransporterCountryValidator.java:11-21",
+      "quote": "String message() default \"A commercial transporter must be in Northern Ireland\";",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest.aCommercialTransporterNotInNorthernIrelandIsRefusedOnCountryCode, aCommercialTransporterInNorthernIrelandIsNotRefused and TransporterCrudIT.aCommercialTransporterOutsideNorthernIrelandIsRefusedOnCountryCode. README:226-227."
+    },
+    {
+      "id": "repo-addressbook-p4-035",
+      "statement": "The commercial country check is an exact match on the string GB-NIR, so a differently cased or spaced value is refused.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/CommercialTransporterCountryValidator.java:18",
+      "quote": "if (NORTHERN_IRELAND_COUNTRY_CODE.equals(request.countryCode())) {",
+      "confidence": "inferred",
+      "note": "Inferred from String.equals: no trim or case folding before the comparison."
+    },
+    {
+      "id": "repo-addressbook-p4-036",
+      "statement": "A private transporter may be in any country: its country code is checked only for presence.",
+      "kind": "rule",
+      "ref": "README.md:227; src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/CommercialTransporterCountryValidator.java:15-17",
+      "quote": "A private transporter's `countryCode` is presence-only.",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterRequestValidationTest.aPrivateTransporterMayBeInAnyCountry (ES) and the private fixture's FR."
+    },
+    {
+      "id": "repo-addressbook-p4-037",
+      "statement": "The approval number and commercial country refusals are 400 validation problems keyed by the field they name.",
+      "kind": "behaviour",
+      "ref": "README.md:224-227",
+      "quote": "A commercial transporter requires `approvalNumber`; a private one must not carry one. Both are\n  `400` validation problems keyed by `approvalNumber`.",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterCrudIT (jsonPath $.errors.approvalNumber and $.errors.countryCode exist)."
+    },
+    {
+      "id": "repo-addressbook-p4-038",
+      "statement": "A complete private transporter request, and a complete commercial one with an approval number and GB-NIR, are accepted with no validation errors.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequestValidationTest.java:21-29",
+      "quote": "void aFullyPopulatedValidCommercialRequestHasNoViolations() {",
+      "confidence": "verbatim",
+      "note": "Proven by aFullyPopulatedValidPrivateRequestHasNoViolations and aFullyPopulatedValidCommercialRequestHasNoViolations."
+    },
+    {
+      "id": "repo-addressbook-p4-039",
+      "statement": "A transporter in a response carries exactly id, name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email, type, approvalNumber, organisationId, deleted, createdAt and modifiedAt.",
+      "kind": "data",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterMapperTest.java:57-83; docs/openapi/addresses.yml:695-762",
+      "quote": "void response_serialisesEntirelyInCamelCaseWithADerivedDeletedBooleanAndNoRolesOrAddressType() {",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterMapperTest.response_serialisesEntirelyInCamelCaseWithADerivedDeletedBooleanAndNoRolesOrAddressType and toResponse_copiesEveryFieldFromTheEntityAndDerivesDeletedFalseForAnActiveRow."
+    },
+    {
+      "id": "repo-addressbook-p4-040",
+      "statement": "A transporter in a response carries no roles and no address type.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterResponse.java:9-10; src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterCrudIT.java:34-35",
+      "quote": "It carries no roles and no address type.",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterCrudIT.aCreatedPrivateTransporterReadsBackWithItsTypeAndNoApprovalNumberRolesOrAddressType."
+    },
+    {
+      "id": "repo-addressbook-p4-041",
+      "statement": "A response shows soft deletion as a deleted boolean, true for a tombstone and false otherwise; the internal status is never on the wire.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterMapper.java:17-21; TransporterStatus.java:3-6",
+      "quote": "expression = \"java(transporter.getStatus() == TransporterStatus.DELETED)\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterMapperTest.toResponse_derivesDeletedTrueForATombstone and toResponse_copiesEveryFieldFromTheEntityAndDerivesDeletedFalseForAnActiveRow. TransporterStatus: \"The enum is never on the wire.\""
+    },
+    {
+      "id": "repo-addressbook-p4-042",
+      "statement": "A transporter's internal expiry date and version are never returned in a response.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterMapper.java:17",
+      "quote": "@BeanMapping(ignoreUnmappedSourceProperties = {\"status\", \"version\", \"expireAt\"})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-043",
+      "statement": "In a response, addressLine2, county and approvalNumber are optional; every other field is always present.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterResponse.java:15-16; docs/openapi/addresses.yml:749-762",
+      "quote": "Every field except {@code addressLine2}, {@code county} and {@code approvalNumber} is\n * required",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterResponseTest.compactConstructor_rejectsNullOnEveryRequiredField and compactConstructor_allowsNullOptionalFields."
+    },
+    {
+      "id": "repo-addressbook-p4-044",
+      "statement": "A private transporter read back has no approvalNumber property in its JSON at all, rather than a null one.",
+      "kind": "data",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterCrudIT.java:33",
+      "quote": ".andExpect(jsonPath(\"$.approvalNumber\").doesNotExist())",
+      "confidence": "inferred",
+      "note": "Inferred from the IT: doesNotExist on a JSON path suggests nulls are left out of the body, though Spring's jsonPath doesNotExist can also pass on a null value."
+    },
+    {
+      "id": "repo-addressbook-p4-045",
+      "statement": "A transporter id is an opaque string, such as 665f1c2ab3e4d51a2c9d0e77.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterResponse.java:21-25",
+      "quote": "description = \"Opaque transporter identifier\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-046",
+      "statement": "GET /organisation/{orgId}/transporters (list-transporters) answers 200 with one page of the caller's live transporters.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterController.java:74-84; docs/openapi/addresses.yml:314-386; README.md:205",
+      "quote": "summary = \"List the caller's live transporters (paginated, searchable)\")",
+      "confidence": "verbatim",
+      "note": "Its 400 is \"An out-of-range or non-numeric page or page size, an unknown type or search type, or a missing org header\"; 404 when the path orgId does not match the header; 500 on an unexpected error."
+    },
+    {
+      "id": "repo-addressbook-p4-047",
+      "statement": "POST /organisation/{orgId}/transporters (create-transporter) creates a transporter and answers 201 with the created transporter and a Location header holding its absolute URI.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterController.java:192-248; docs/openapi/addresses.yml:407-441",
+      "quote": "description = \"Absolute URI of the created transporter\"",
+      "confidence": "verbatim",
+      "note": "Proven by every IT's createdResourceId (expects 201 and reads the id from Location)."
+    },
+    {
+      "id": "repo-addressbook-p4-048",
+      "statement": "Create refuses a body that fails validation, or a request with no identity header, with 400 as either a validation problem with field errors or a plain problem.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterController.java:208-217; docs/openapi/addresses.yml:442-450",
+      "quote": "description = \"Validation error, or a missing identity header\"",
+      "confidence": "verbatim",
+      "note": "anyOf ValidationProblem, Problem. Replace declares the same 400 (\"Validation error, or a missing org header\")."
+    },
+    {
+      "id": "repo-addressbook-p4-049",
+      "statement": "GET /organisation/{orgId}/transporters/{transporter-id} (get-transporter) answers 200 with the transporter, soft-deleted ones included, marked deleted true or false.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterController.java:250-301; docs/openapi/addresses.yml:14-56",
+      "quote": "summary = \"Fetch one transporter, including tombstones\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterServiceTest.get_returnsTheTransporterForTheOwningOrganisation and TransporterDeleteIT.aSoftDeletedTransporterLeavesTheListAndStaysReadableByIdMarkedDeleted."
+    },
+    {
+      "id": "repo-addressbook-p4-050",
+      "statement": "Getting an unknown transporter id, or one in another organisation, answers 404; a 404 is not a sign of deletion, only a tombstone with deleted true is.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterController.java:251-254",
+      "quote": "an unknown id, or one belonging to another organisation, is a 404 (existence is\n   * never leaked). A 404 is therefore NOT a deletion signal: only the tombstone is.",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterServiceTest.get_forAnotherOrganisationsIdReturnsEmpty and TransporterScopingIT."
+    },
+    {
+      "id": "repo-addressbook-p4-051",
+      "statement": "PUT /organisation/{orgId}/transporters/{transporter-id} (update-transporter) replaces every client-supplied field of a live transporter and answers 200 with the updated transporter and a later modifiedAt.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterController.java:303-370; docs/openapi/addresses.yml:57-119",
+      "quote": "summary = \"Replace a transporter's mutable fields\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterCrudIT.updateReplacesEveryMutableFieldAndBumpsModifiedAt and TransporterMapperTest.updateEntity_replacesAllMutableFieldsAndPreservesServerOwnedFields."
+    },
+    {
+      "id": "repo-addressbook-p4-052",
+      "statement": "Replacing a transporter keeps its id, organisation, status and createdAt.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterService.java:151-154",
+      "quote": "Its\n   * {@code id}, {@code organisationId}, {@code status} and {@code createdAt} are kept, and {@code\n   * modifiedAt} is bumped.",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterCrudIT.updateReplacesEveryMutableFieldAndBumpsModifiedAt (createdAt unchanged) and TransporterMapperTest.updateEntity_replacesAllMutableFieldsAndPreservesServerOwnedFields."
+    },
+    {
+      "id": "repo-addressbook-p4-053",
+      "statement": "Replace is a full replace: a field left out of the body, such as an optional address line or the approval number, is cleared, and the type can change between commercial and private.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterMapperTest.java:105-119",
+      "quote": "transporterMapper.updateEntity(validPrivateRequest().name(\"Lowland Haulage\").build(), existing);\n\n    assertThat(existing.getName()).isEqualTo(\"Lowland Haulage\");\n    assertThat(existing.getType()).isEqualTo(TransporterType.PRIVATE);\n    assertThat(existing.getApprovalNumber()).isNull();",
+      "confidence": "inferred",
+      "note": "Inferred from the mapper test: a stored commercial transporter updated with a private request becomes private with no approval number. No IT drives the type change through PUT."
+    },
+    {
+      "id": "repo-addressbook-p4-054",
+      "statement": "Replacing a soft-deleted transporter answers 404, as for an unknown id or one in another organisation.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterService.java:163-168; TransporterController.java:334-340",
+      "quote": "description = \"Unknown id, an id outside the caller's organisation scope, or a tombstone\"",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterServiceTest.update_ofADeletedTransporterThrowsNotFound and update_ofAnotherOrganisationsIdThrowsNotFound."
+    },
+    {
+      "id": "repo-addressbook-p4-055",
+      "statement": "DELETE /organisation/{orgId}/transporters/{transporter-id} (delete-transporter) soft-deletes a transporter and answers 204 with no body.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterController.java:384-422; docs/openapi/addresses.yml:120-163",
+      "quote": "@ApiResponse(responseCode = \"204\", description = \"Soft-deleted (or already deleted — idempotent)\")",
+      "confidence": "verbatim",
+      "note": "Its 400 is a missing org header; 404 an unknown id or one outside the caller's organisation."
+    },
+    {
+      "id": "repo-addressbook-p4-056",
+      "statement": "Soft delete keeps the transporter: its status becomes DELETED and its modifiedAt is bumped.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterController.java:373-375; TransporterService.java:196-198",
+      "quote": "The document is not removed: {@code status} flips to {@code\n   * DELETED} and {@code modifiedAt} is bumped",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterServiceTest.delete_flipsAnActiveTransporterToADeletedTombstone."
+    },
+    {
+      "id": "repo-addressbook-p4-057",
+      "statement": "A soft-deleted transporter leaves the list but stays readable by id with deleted true.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterDeleteIT.java:20-28",
+      "quote": "void aSoftDeletedTransporterLeavesTheListAndStaysReadableByIdMarkedDeleted() throws Exception {",
+      "confidence": "verbatim",
+      "note": "README:347: \"The soft-delete and expiry rules above hold for transporters exactly as they do for addresses.\""
+    },
+    {
+      "id": "repo-addressbook-p4-058",
+      "statement": "Deleting a transporter that is already deleted answers 204 and changes nothing, not even modifiedAt.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterDeleteIT.java:30-41; src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterService.java:192-194",
+      "quote": "void deletingAnAlreadyDeletedTransporterChangesNothing() throws Exception {",
+      "confidence": "verbatim",
+      "note": "Proven also by TransporterServiceTest.delete_isIdempotentForAnAlreadyDeletedTombstone."
+    },
+    {
+      "id": "repo-addressbook-p4-059",
+      "statement": "Deleting an unknown transporter id answers 404 with an application/problem+json not-found problem.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterDeleteIT.java:43-50",
+      "quote": ".andExpect(jsonPath(\"$.type\").value(\"https://api.cdp.defra.cloud/problems/not-found\"))",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterDeleteIT.delete_shouldReturn404NotFoundProblem_whenIdIsUnknown and TransporterServiceTest.delete_ofAnUnknownOrAnotherOrganisationsIdThrowsNotFound."
+    },
+    {
+      "id": "repo-addressbook-p4-060",
+      "statement": "Soft-deleting a transporter leaves its approval number as it was.",
+      "kind": "rule",
+      "ref": "README.md:228",
+      "quote": "A soft-deleted transporter's approval number is unaffected by the delete.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-061",
+      "statement": "A new transporter is saved as ACTIVE, owned by the organisation in the caller's identity header, never one named in the body.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterService.java:119-128; TransporterController.java:183-185",
+      "quote": "{@code organisationId} is stamped from the\n   * identity header, never from the body",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterServiceTest.create_setsTheGivenOrganisationIdAndActiveStatus and TransporterScopingIT.organisationIdIsStampedOnCreateAndScopesReads."
+    },
+    {
+      "id": "repo-addressbook-p4-062",
+      "statement": "A created private transporter reads back with its name, address, country, type PRIVATE, its organisation and deleted false.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterCrudIT.java:19-38",
+      "quote": "void aCreatedPrivateTransporterReadsBackWithItsTypeAndNoApprovalNumberRolesOrAddressType()",
+      "confidence": "verbatim",
+      "note": "Also TransporterMapperTest.toEntity_mapsAPrivateRequestCarryingNoApprovalNumber."
+    },
+    {
+      "id": "repo-addressbook-p4-063",
+      "statement": "A created commercial transporter reads back with type COMMERCIAL, its approval number and country GB-NIR.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterCrudIT.java:40-50",
+      "quote": "void aCreatedCommercialTransporterReadsBackWithItsApprovalNumberAndFixedCountry()",
+      "confidence": "verbatim",
+      "note": "Also TransporterMapperTest.toEntity_mapsACommercialRequestCarryingItsApprovalNumberAndFixedCountry."
+    },
+    {
+      "id": "repo-addressbook-p4-064",
+      "statement": "An approval number looks like UK/BELF/T2/00104115 in the service's examples and fixtures.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:100; src/test/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterTestSupport.java:16",
+      "quote": "example = \"UK/BELF/T2/00104115\")",
+      "confidence": "verbatim",
+      "note": "An example only: the service checks no approval number format."
+    },
+    {
+      "id": "repo-addressbook-p4-065",
+      "statement": "The transporter list is paged: page is 1-based with default 1, and pageSize runs from 1 to 100 with default 25, the same bounds as the address list.",
+      "kind": "rule",
+      "ref": "docs/openapi/addresses.yml:331-349; README.md:215",
+      "quote": "description: Transporters a page, from 1 to 100 (default 25)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-066",
+      "statement": "An out-of-range or non-numeric page or pageSize on the transporter list is a 400 bad-request problem with no errors map.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterController.java:58-62",
+      "quote": "an out-of-range or\n   * non-numeric value for either is a 400 bad-request problem with no {@code errors} map.",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterServiceTest.list_withAPageBelow1IsABadRequest and list_withARequestedPageSizeOutsideBoundsIsABadRequest. No transporter IT drives a non-numeric value."
+    },
+    {
+      "id": "repo-addressbook-p4-067",
+      "statement": "The transporter list answers a top-level object of items, page, pageSize, totalItems and totalPages, never a bare array; pageSize is the size served, the requested one else the default, and totalItems counts every match across pages.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterPageResponse.java:7-32; docs/openapi/addresses.yml:951-984",
+      "quote": "@Schema(description = \"Paginated list of live transporters (never a bare array)\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-068",
+      "statement": "The transporter list is newest first: by creation time descending, then by id descending.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterService.java:70-74",
+      "quote": "Sort.by(Sort.Direction.DESC, \"createdAt\").and(Sort.by(Sort.Direction.DESC, \"id\")));",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterServiceTest.list_asksForNewestFirstAndTranslatesToA0BasedPage and TransporterCrudIT.newestTransporterIsFirstOnTheList."
+    },
+    {
+      "id": "repo-addressbook-p4-069",
+      "statement": "The transporter list holds only live (ACTIVE) transporters of the caller's organisation; tombstones are left out.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterListQueryImpl.java:35-44; TransporterListQuery.java:10",
+      "quote": "One page of the organisation's {@code ACTIVE} transporters that match the criteria.",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterDeleteIT.aSoftDeletedTransporterLeavesTheListAndStaysReadableByIdMarkedDeleted."
+    },
+    {
+      "id": "repo-addressbook-p4-070",
+      "statement": "The list's q is a case-insensitive partial-word search over name, address line 1, address line 2, town or city, county, postcode and approval number.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterListQueryImpl.java:18-26; TransporterController.java:135-141; README.md:216",
+      "quote": "Case-insensitive partial-word search over name, address line 1, address line\"\n                      + \" 2, town or city, county, postcode and approval number.",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterSearchIT.aSearchTermMatchesTheName, aSearchTermMatchesTheApprovalNumber and partialWordSearchMatchesCaseInsensitively over addressLine1, addressLine2, townOrCity, county and postcode."
+    },
+    {
+      "id": "repo-addressbook-p4-071",
+      "statement": "q does not search a transporter's country code, phone, email or type.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterListQueryImpl.java:18-26",
+      "quote": "List.of(\n          \"name\",\n          \"addressLine1\",\n          \"addressLine2\",\n          \"townOrCity\",\n          \"county\",\n          \"postcode\",\n          \"approvalNumber\");",
+      "confidence": "inferred",
+      "note": "Inferred from the searchable fields list, which leaves these out."
+    },
+    {
+      "id": "repo-addressbook-p4-072",
+      "statement": "The search term is trimmed and matched as literal text, so characters such as / in an approval number are not treated as patterns.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/RequestedTransporterListFilters.java:22; src/test/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterServiceTest.java:191-200",
+      "quote": "List.of(), List.of(new TransporterListCriteria.TextMatching(\".*\\\\QUK/BELF\\\\E.*\"))));",
+      "confidence": "inferred",
+      "note": "mechanism: quotes the trimmed search term into a partial-match pattern. Proven by TransporterServiceTest.list_passesTheSearchTermAsAPartialMatchPattern. The quoting itself is part 3's SearchTerms."
+    },
+    {
+      "id": "repo-addressbook-p4-073",
+      "statement": "countryCode on the list is repeatable; a transporter in any of the codes matches the search, and blank codes are dropped and the rest trimmed.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterController.java:142-148; RequestedTransporterListFilters.java:23-27",
+      "quote": "ISO alpha-2 or alpha-2-plus-subdivision country codes. Repeatable. A\"\n                      + \" transporter in any of them matches the search, as one matching q or a\"\n                      + \" searchType does.",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterSearchIT.aCountryCodeNarrowsToTransportersInThatCountry and TransporterServiceTest.list_withSeveralCountryCodesTrimsEachAndDropsBlanksAndNulls. The IT is titled 'narrows' but countryCode joins the OR search with q and searchType."
+    },
+    {
+      "id": "repo-addressbook-p4-074",
+      "statement": "searchType on the list is repeatable; a transporter of any of the given types matches the search, as one matching q or countryCode does.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterController.java:156-163; README.md:219",
+      "quote": "Types that make a transporter match the search: a transporter of any of them\"\n                      + \" matches, as one matching q or countryCode does.",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterSearchIT.searchType_shouldReturnExactlyTheTransportersOfThatType_whenOnlyASearchTypeIsGiven, searchType_shouldAlsoReturnATransporterOfThatType_whenASearchTermIsGiven and TransporterServiceTest.list_passesTheSearchTypesAsOneMatch."
+    },
+    {
+      "id": "repo-addressbook-p4-075",
+      "statement": "q, countryCode and searchType combine as alternatives: a transporter that matches any one of them is listed.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterListQueryImpl.java:51-58",
+      "quote": "new Criteria()\n              .orOperator(",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterSearchIT.searchType_shouldAlsoReturnATransporterOfThatType_whenASearchTermIsGiven (q=green plus searchType COMMERCIAL returns both)."
+    },
+    {
+      "id": "repo-addressbook-p4-076",
+      "statement": "type on the list is repeatable and keeps only transporters of the given types, across every page, narrowing the q, countryCode and searchType search.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterController.java:149-155; README.md:218",
+      "quote": "Keeps only transporters of any of these types. Repeatable. Narrows the search\"\n                      + \" (q, countryCode and searchType).",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterSearchIT.aTypeFilterKeepsOnlyThatType and list_shouldKeepSearchTypeMatchesWithinTheTypesToKeep_whenBothAreGiven (type PRIVATE with searchType COMMERCIAL lists none)."
+    },
+    {
+      "id": "repo-addressbook-p4-077",
+      "statement": "An unknown type or searchType value on the list is refused with a 400 bad-request problem with no errors map.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterSearchIT.java:124-133; IntegrationBase.java:381-389",
+      "quote": "listTransporters(\"type\", \"APPROVED\").andExpect(badRequestProblemWithNoErrors());",
+      "confidence": "verbatim",
+      "note": "The problem has type https://api.cdp.defra.cloud/problems/bad-request, title \"Bad Request\" and status 400. Proven by list_shouldReturn400BadRequestProblemWithNoErrorsMap_whenATypeIsUnknown and _whenASearchTypeIsUnknown."
+    },
+    {
+      "id": "repo-addressbook-p4-078",
+      "statement": "A blank searchType value is ignored when other search types are given, and repeated type or searchType values count once.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterSearchIT.java:111-122; src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/RequestedTransporterListFilters.java:28-29",
+      "quote": "listTransporters(\"searchType\", \"COMMERCIAL\", \"searchType\", \"\")",
+      "confidence": "verbatim",
+      "note": "mechanism: drops absent elements and repeats from the type and searchType lists. Proven by list_shouldIgnoreABlankSearchType_whenOtherSearchTypesAreGiven and TransporterServiceTest.list_passesTheTypesToKeepWithoutNullsOrRepeats."
+    },
+    {
+      "id": "repo-addressbook-p4-079",
+      "statement": "A search match is never built empty: a country or type match needs at least one value, so an absent filter adds no clause.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterListCriteria.java:36-56; TransporterService.java:93-108",
+      "quote": ".withMessage(\"A match needs at least one value\");",
+      "confidence": "verbatim",
+      "note": "mechanism: list criteria records for transporter filters. Proven by TransporterListCriteriaTest.inCountries_refusesNoCountryCodes, ofType_refusesNoTypes, transporterListCriteria_copiesTypesDefensively and transporterListCriteria_copiesMatchesDefensively."
+    },
+    {
+      "id": "repo-addressbook-p4-080",
+      "statement": "Every transporter operation needs the trusted Trade-Imports-Organisation-Id header and is authorised against the path orgId; the path is never trusted alone.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterController.java:38-47; README.md:197-198; docs/openapi/addresses.yml:1019-1024",
+      "quote": "Every operation is path-scoped to an {@code orgId}\n * and authorised against the caller's trusted {@code Trade-Imports-Organisation-Id} forwarded\n * header: the path is never trusted alone.",
+      "confidence": "verbatim",
+      "note": "Security scheme: \"Caller organisation id from the trusted forwarded header; must match path orgId\". A missing header is a 400 on every operation."
+    },
+    {
+      "id": "repo-addressbook-p4-081",
+      "statement": "When the identity header's organisation disagrees with the path orgId, every transporter operation, create included, answers 404 and changes nothing.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterScopingIT.java:35-49",
+      "quote": "void forwardedOrgHeaderDisagreeingWithThePathOrgIdIs404() throws Exception {",
+      "confidence": "verbatim",
+      "note": "The transporter stays ACTIVE after the refused delete and no second transporter is created."
+    },
+    {
+      "id": "repo-addressbook-p4-082",
+      "statement": "One organisation cannot see or reach another's transporters: its list is empty of them, and get, replace and delete of another's id answer 404, leaving the transporter untouched.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterScopingIT.java:19-33",
+      "quote": "void orgBBrowsingItsOwnPathCannotSeeOrReachOrgAsTransporter() throws Exception {",
+      "confidence": "verbatim",
+      "note": "Proven also by TransporterServiceTest.get_forAnotherOrganisationsIdReturnsEmpty, update_ofAnotherOrganisationsIdThrowsNotFound and delete_ofAnUnknownOrAnotherOrganisationsIdThrowsNotFound."
+    },
+    {
+      "id": "repo-addressbook-p4-083",
+      "statement": "A transporter in another organisation and an unknown id get the same answer, \"Transporter not found\", so the service never confirms that another organisation holds an id.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterService.java:26-31",
+      "quote": "static final String TRANSPORTER_NOT_FOUND = \"Transporter not found\";",
+      "confidence": "verbatim",
+      "note": "Javadoc: \"a cross-organisation request and an unknown id are deliberately indistinguishable\"."
+    },
+    {
+      "id": "repo-addressbook-p4-084",
+      "statement": "A transporter's organisation is stored on create and returned as organisationId, and reads and lists are scoped by it.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterScopingIT.java:51-66",
+      "quote": "void organisationIdIsStampedOnCreateAndScopesReads() throws Exception {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-085",
+      "statement": "The transporters collection has one index besides _id, org_status_created on organisationId ascending, status ascending and createdAt descending, and the live list query uses it rather than a collection scan.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/Transporter.java:22-24; src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterIndexIT.java:9-17",
+      "quote": "name = \"org_status_created\",\n    def = \"{'organisationId': 1, 'status': 1, 'createdAt': -1}\")",
+      "confidence": "verbatim",
+      "note": "Proven by TransporterIndexIT.index_shouldDeclareOnlyOrgStatusCreatedOnOrganisationStatusAndCreatedAt and listQuery_shouldUseOrgStatusCreatedIndex, under the integration-test profile."
+    },
+    {
+      "id": "repo-addressbook-p4-086",
+      "statement": "Outside prod, when a TTL in days is configured, a new transporter is given an expiry date that many days from its creation; a later update or soft delete keeps that date.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterService.java:110-136; TransporterMapper.java:30",
+      "quote": "Outside prod, when a\n   * TTL is configured, it is given an {@code expireAt} counted from now, which a later update or\n   * soft delete leaves as is.",
+      "confidence": "verbatim",
+      "note": "It uses the address TTL setting (AddressTtlConfig). README:347: \"The soft-delete and expiry rules above hold for transporters exactly as they do for addresses.\" No transporter test in this slice proves the stamp (the service test runs with no TTL)."
+    },
+    {
+      "id": "repo-addressbook-p4-087",
+      "statement": "This slice does not show whether a TTL index removes expired transporters from the transporters collection: the TTL index the README names is the address one, and the transporter index test expects only org_status_created and _id.",
+      "kind": "non-functional",
+      "ref": "README.md:347-357; src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterIndexIT.java:10; IntegrationBase.java:391-395",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the transporter package, TransporterIndexIT and the README expiry section. ExpiryIndexes, which creates TTL indexes, is part 3's; the index test may run with expiry disabled."
+    },
+    {
+      "id": "repo-addressbook-p4-088",
+      "statement": "In prod, transporters and their tombstones are kept indefinitely.",
+      "kind": "non-functional",
+      "ref": "README.md:346",
+      "quote": "In prod, addresses, transporters and their tombstones are retained indefinitely (~1 KB each).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-089",
+      "statement": "Each transporter operation is timed for metrics, as controller.listTransporters.time, controller.createTransporter.time, controller.getTransporter.time, controller.updateTransporter.time and controller.deleteTransporter.time, and the list's database query as controller.listTransporters.query.time.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterController.java:108,232,284,355,408; TransporterService.java:85",
+      "quote": "sample.stop(meterRegistry.timer(\"controller.listTransporters.query.time\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-090",
+      "statement": "The list logs only whether a search term was given, never its text, alongside the page, page size, country codes and types.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterController.java:166-174",
+      "quote": "\"GET transporters - page {}, pageSize {}, q present {}, countryCodes {}, types {},\"",
+      "confidence": "verbatim",
+      "note": "Create, update and soft delete each log one line with the transporter id (TransporterService.java:126,173,198)."
+    },
+    {
+      "id": "repo-addressbook-p4-091",
+      "statement": "The OpenAPI contract lists the transporter request's required fields as addressLine1, countryCode, email, name, phone, postcode, townOrCity and type.",
+      "kind": "integration",
+      "ref": "docs/openapi/addresses.yml:680-688",
+      "quote": "required:\n      - addressLine1\n      - countryCode\n      - email\n      - name\n      - phone\n      - postcode\n      - townOrCity\n      - type",
+      "confidence": "verbatim",
+      "note": "README:304: the locked contract pins the TransporterRequest required list."
+    },
+    {
+      "id": "repo-addressbook-p4-092",
+      "statement": "The generated OpenAPI gives the required transporter string fields a minimum length of 0, although the code refuses them blank; only countryCode shows minLength 1.",
+      "kind": "integration",
+      "ref": "docs/openapi/addresses.yml:621-679; src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequest.java:28",
+      "quote": "maxLength: 255\n          minLength: 0",
+      "confidence": "inferred",
+      "note": "Inferred by comparing the generated spec with the @Schema minLength = 1 in the code: the @Size max sets minLength 0 in the generated output. A documentation mismatch, not a behaviour."
+    },
+    {
+      "id": "repo-addressbook-p4-093",
+      "statement": "The OpenAPI groups the five transporter operations under the transporters tag, \"An organisation's transporters, scoped to its address book\".",
+      "kind": "integration",
+      "ref": "docs/openapi/addresses.yml:11-12; src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterController.java:46",
+      "quote": "- name: transporters\n  description: An organisation's transporters, scoped to its address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-094",
+      "statement": "A transporter has no separate status, expiry or approval-state field a caller can see or set: the only lifecycle a caller sees is deleted true or false.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterResponse.java:12-13",
+      "quote": "The soft-delete tombstone is a derived {@code deleted} boolean, never the internal status\n * enum.",
+      "confidence": "inferred",
+      "note": "Inferred from the request and response fields: no approval status, verification or expiry date is exposed."
+    }
+  ]
+}

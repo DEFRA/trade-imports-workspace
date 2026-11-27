@@ -1,12 +1,12 @@
 {
   "source": "prototype:dr2-1-source",
-  "structure": "Part 9, CPH number and permanent address. Read in full at commit 04a073b: app/views/design-release-2.1/cph-number.html (78 lines, extends layouts/main.html), app/views/design-release-2.1/permanent-address.html (94 lines, extends layouts/journey.html, the yes/no choice page), app/views/design-release-2.1/permanent-address-animals.html (119 lines, extends layouts/main.html, the per-animal page), app/views/partials/cph-number-input.html (three-box CPH input), app/views/partials/permanent-address-new-address-fields.html (eight new-address inputs, rendered server-side into each animal's conditional reveal), app/routes.js 2653-3200 (permanent address radio items, per-animal list, form parse, validation, summary sync, review rows, render functions), 3221-3288 (CPH split, parse, validateCphNumber, renderCphNumberPage) and 12859-13016 (GET and POST /cph-number, /permanent-address, /permanent-address/select, /permanent-address/enter-address). For when each page is required, also read as context (claimed here only for these two sections): app/data/consignment-address-sections.js (the cph and permanent-address section entries and the commodity-code to section map), app/data/commodities.js requiresPermanentAddress flags, app/data/commodity-identifiers.js for 01061900, routes.js 2422-2451 and 2584-2607 (section active and section complete rules), 1560-1586 (journey form actions and save redirects) and partials/design-release-2.1/journey-form-actions.html (button sets). Pages covered: /design-release-2.1/cph-number (one page, no validation), /design-release-2.1/permanent-address (GET and POST both reset and redirect, so its yes/no view is never rendered), /design-release-2.1/permanent-address/select (the live per-animal page, one card per cat, dog or ferret with Same as POD or Enter a new address), and /design-release-2.1/permanent-address/enter-address (redirect only). Stops before upload documents.",
+  "structure": "Part 9, CPH number and permanent address, read at commit c2078fb (the checkout's HEAD). Read in full: the three DR2.1 views cph-number.html, permanent-address.html and permanent-address-animals.html; the partials cph-number-input.html and permanent-address-new-address-fields.html; the shared partials/design-release-2.1/journey-form-actions.html both pages include; and app/routes.js lines 2791-2835 (which species need a permanent address and when each section is active, including the germinal CPH filter), 2837-2888 (removing a CPH number or permanent address, and the per-animal display list on the roles and addresses page), 2919-2970 and 3050-3065 (the section states and completeness the two sections feed), 3119-3671 (permanent address radios, per-animal list, form parse and validation, save, summary, review rows, render functions), 3692-3758 (CPH split, parse, validation and render), 1782-1808 (save actions and redirects), 10344-10382 (template blank-answer validation) and 14882-15041 (GET and POST /cph-number, /permanent-address, /permanent-address/select and /permanent-address/enter-address). Also looked at app/assets/javascripts/cph-number-input.js (the CPH box enhancement), app/data/consignment-address-sections.js (the CPH and permanent address section definitions and the commodity-code section map), app/data/commodity-curated.js and app/data/commodity-identifiers.js (which species need a permanent address and their identifiers). Covered: the CPH page (route and guard, caption, heading, details, three-box input with hint, the absent validation, save format, where each button leads) and the permanent address pages (which species need one, the bypassed yes/no choice page, the per-animal select page with its cards, two options and inline new-address fields, every validation message verbatim, what each choice saves, the summary and completeness rules, review rows, and the enter-address redirect). Since the earlier extract the caption on all three pages reads 'Addresses' rather than 'Consignment parties', and the per-animal card heading leads with the common name; those claims have new ids.",
   "claims": [
     {
       "id": "prototype-dr2-1-source-p9-001",
       "statement": "The CPH number page is at /design-release-2.1/cph-number and is only available when the CPH section is active for the notification; otherwise GET and POST both redirect to the roles and addresses page.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12859-12873",
+      "ref": "app/routes.js:14882-14897",
       "quote": "if (!isConsignmentAddressSectionActive(req.session.data, 'cph')) {\n    return res.redirect('/roles-and-addresses')\n  }",
       "confidence": "verbatim"
     },
@@ -14,16 +14,16 @@
       "id": "prototype-dr2-1-source-p9-002",
       "statement": "The CPH section is active for cattle (0102) and pigs (0103) and for any commodity code not in the section map (the default list, which covers sheep, goats, poultry, rabbits, camels, ostriches, parrots, reptiles, bees and fish), but not for horses (0101), commodity code 01061900 (cats, dogs, ferrets, other live mammals), 05111000 or 05119985.",
       "kind": "rule",
-      "ref": "app/data/consignment-address-sections.js:100-159",
+      "ref": "app/data/consignment-address-sections.js:102-161",
       "quote": "'0102': [ ... 'place-of-destination',\n    'cph'\n  ], '0103': [ ... 'cph'\n  ], ... const defaultConsignmentAddressSectionIds = [ ... 'place-of-destination',\n  'cph'\n]",
       "confidence": "verbatim",
-      "note": "Where several commodities are selected the active sections are the union of each code's list (getActiveConsignmentAddressSectionsForCommodityCodes), so one cattle line makes the CPH section appear."
+      "note": "Where several commodities are selected the active sections are the union of each code's list (getActiveConsignmentAddressSectionsForCommodityCodes), so one cattle line makes the CPH section appear. Taken from an app/data file: the programme goal makes V4 the owner of which commodities a rule covers."
     },
     {
       "id": "prototype-dr2-1-source-p9-003",
       "statement": "On the roles and addresses page the CPH section is headed 'County parish holding (CPH) number', has the hint 'The county parish holding (CPH) number identifies the holding where the animals will be kept.' and links to the CPH page with the text 'Add a CPH number'.",
       "kind": "copy",
-      "ref": "app/data/consignment-address-sections.js:70-78",
+      "ref": "app/data/consignment-address-sections.js:73-78",
       "quote": "heading: 'County parish holding (CPH) number',\n    hint: 'The county parish holding (CPH) number identifies the holding where the animals will be kept.',\n    linkText: 'Add a CPH number',\n    path: '/cph-number'",
       "confidence": "verbatim"
     },
@@ -31,16 +31,8 @@
       "id": "prototype-dr2-1-source-p9-004",
       "statement": "The CPH section counts as complete when a non-blank CPH number is saved; once saved the roles and addresses page shows the CPH number with a change link back to the CPH page.",
       "kind": "rule",
-      "ref": "app/routes.js:2458-2468, 2585-2587",
+      "ref": "app/routes.js:3050-3053, 2924-2933",
       "quote": "if (section.isCph) {\n    return Boolean((sessionData[section.sessionCphKey] || '').trim())\n  }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p9-005",
-      "statement": "The CPH number page shows the caption 'Consignment parties'.",
-      "kind": "copy",
-      "ref": "app/views/design-release-2.1/cph-number.html:32",
-      "quote": "<p class=\"app-cph-number-page__caption\">Consignment parties</p>",
       "confidence": "verbatim"
     },
     {
@@ -89,7 +81,8 @@
       "kind": "data",
       "ref": "app/views/partials/cph-number-input.html:17-54",
       "quote": "name: \"county\",\n        label: \"County\", ... maxlength: \"2\", ... name: \"parish\",\n        label: \"Parish\", ... maxlength: \"3\", ... name: \"holding\",\n        label: \"Holding number\", ... maxlength: \"4\"",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "The boxes are a GOV.UK date input component (govukDateInput) reused for the CPH number."
     },
     {
       "id": "prototype-dr2-1-source-p9-012",
@@ -103,7 +96,7 @@
       "id": "prototype-dr2-1-source-p9-013",
       "statement": "On save the three CPH boxes are trimmed and stored as one value in the form county/parish/holding (for example 12/345/6789).",
       "kind": "data",
-      "ref": "app/routes.js:3240-3270, 12890",
+      "ref": "app/routes.js:3711-3743, 14913",
       "quote": "value: isComplete ? `${county}/${parish}/${holding}` : '',",
       "confidence": "verbatim"
     },
@@ -111,7 +104,7 @@
       "id": "prototype-dr2-1-source-p9-014",
       "statement": "If any of the three CPH boxes is blank, the saved CPH number becomes empty, which clears any CPH number saved before, and the user still moves on without an error.",
       "kind": "behaviour",
-      "ref": "app/routes.js:3264-3269, 12876-12896",
+      "ref": "app/routes.js:3735-3742, 14899-14919",
       "quote": "const isComplete = Boolean(county && parish && holding)\n\n  return {\n    errors: {},\n    errorList: [],\n    value: isComplete ? `${county}/${parish}/${holding}` : '',",
       "confidence": "inferred",
       "note": "Inferred from validateCphNumber returning an empty errorList, so the POST always saves validation.value and redirects."
@@ -120,7 +113,7 @@
       "id": "prototype-dr2-1-source-p9-015",
       "statement": "The CPH number page has no validation: no required check, digit check or length check, and no error message is defined for it, although the page has an error summary titled 'There is a problem' ready to show one.",
       "kind": "rule",
-      "ref": "app/routes.js:3248-3272; app/views/design-release-2.1/cph-number.html:38-43",
+      "ref": "app/routes.js:3719-3743; app/views/design-release-2.1/cph-number.html:38-43",
       "quote": "",
       "confidence": "gap",
       "note": "Looked in validateCphNumber, the POST /cph-number handler and the view. The error plumbing (data.errorList, data.errors.cphNumber) exists but nothing ever fills it."
@@ -129,7 +122,7 @@
       "id": "prototype-dr2-1-source-p9-016",
       "statement": "When the CPH page is shown again, a saved CPH number is split back into the three boxes only if it matches 1-2 digits, 1-3 digits and 1-4 digits separated by slashes; otherwise the boxes are blank.",
       "kind": "behaviour",
-      "ref": "app/routes.js:3221-3238, 3274-3277",
+      "ref": "app/routes.js:3692-3709, 3745-3748",
       "quote": "const match = value.match(/^(\\d{1,2})\\/(\\d{1,3})\\/(\\d{1,4})$/)",
       "confidence": "verbatim",
       "note": "Because nothing validates digits on save, a non-numeric CPH entered via the boxes is saved but shows as blank boxes on return."
@@ -138,7 +131,7 @@
       "id": "prototype-dr2-1-source-p9-017",
       "statement": "Outside amend, the CPH page offers a 'Save and continue' button, a secondary 'Save and return to hub' button and a 'Cancel and return to hub' link to the notification hub.",
       "kind": "copy",
-      "ref": "app/views/design-release-2.1/cph-number.html:60-66; app/views/partials/design-release-2.1/journey-form-actions.html",
+      "ref": "app/views/design-release-2.1/cph-number.html:60-66; app/views/partials/design-release-2.1/journey-form-actions.html:34-36, 64-107",
       "quote": "hubText: \"Save and return to hub\",\n          cancelText: \"Cancel and return to hub\"",
       "confidence": "verbatim",
       "note": "'Save and continue' is the partial's default continueText."
@@ -147,7 +140,7 @@
       "id": "prototype-dr2-1-source-p9-018",
       "statement": "'Save and continue' on the CPH page returns the user to the roles and addresses page.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12896",
+      "ref": "app/routes.js:14919",
       "quote": "return res.redirect('/roles-and-addresses')",
       "confidence": "verbatim"
     },
@@ -155,7 +148,7 @@
       "id": "prototype-dr2-1-source-p9-019",
       "statement": "'Save and return to hub' on the CPH page saves the draft and goes to the notification hub; in amend the primary 'Save and return' goes to the review page instead.",
       "kind": "behaviour",
-      "ref": "app/routes.js:1564-1586, 12892-12894",
+      "ref": "app/routes.js:1786-1808, 14915-14917",
       "quote": "if (isJourneySoftSaveAction(getJourneyFormAction(req))) {\n    return res.redirect(getJourneySaveRedirect(getJourneyFormAction(req), '/roles-and-addresses', req.session.data))\n  }",
       "confidence": "verbatim",
       "note": "When editing a template from its review, getJourneySaveRedirect returns to the template review instead."
@@ -164,7 +157,7 @@
       "id": "prototype-dr2-1-source-p9-020",
       "statement": "When the notification is being amended, the CPH page shows the amend button set ('Save and return', secondary 'Save and continue', and a 'Save and return to overview' link button) and includes the cancel-amend modal.",
       "kind": "behaviour",
-      "ref": "app/views/design-release-2.1/cph-number.html:55-59, 74-76",
+      "ref": "app/views/design-release-2.1/cph-number.html:55-59, 74-76; app/views/partials/design-release-2.1/journey-form-actions.html:51-63, 95-103",
       "quote": "{% if data.notificationStatus == 'Amend' %}\n  {% include \"partials/design-release-2.1/cancel-amend-modal.html\" %}\n{% endif %}",
       "confidence": "verbatim"
     },
@@ -172,7 +165,7 @@
       "id": "prototype-dr2-1-source-p9-021",
       "statement": "The back link on the CPH page, the permanent address choice page and the per-animal permanent address page goes to the roles and addresses page.",
       "kind": "behaviour",
-      "ref": "app/routes.js:3177, 3193, 3280",
+      "ref": "app/routes.js:3648, 3664, 3751",
       "quote": "backLink: '/roles-and-addresses',",
       "confidence": "verbatim"
     },
@@ -188,15 +181,16 @@
       "id": "prototype-dr2-1-source-p9-023",
       "statement": "Only cats, dogs and ferrets need a permanent address; 'Other live mammals', which shares their commodity code 01061900, does not.",
       "kind": "rule",
-      "ref": "app/data/commodities.js:146-190; app/routes.js:2422-2426",
-      "quote": "name: 'Cat',\n    code: '01061900',\n    requiresPermanentAddress: true, ... name: 'Dog', ... requiresPermanentAddress: true, ... name: 'Ferret', ... requiresPermanentAddress: true,",
-      "confidence": "verbatim"
+      "ref": "app/data/commodity-curated.js:23-26, 73-76; app/routes.js:2791-2799",
+      "quote": "cat: companionMammalFields({ requiresPermanentAddress: true }),\n  dog: companionMammalFields({ requiresPermanentAddress: true }),\n  ferret: companionMammalFields({ requiresPermanentAddress: true }),\n  'other-live-mammals': companionMammalFields({ requiresPermanentAddress: false })",
+      "confidence": "verbatim",
+      "note": "Taken from an app/data file: the programme goal makes V4 the owner of which commodities a rule covers. The flag moved from app/data/commodities.js to app/data/commodity-curated.js since the earlier extract; the rule is unchanged."
     },
     {
       "id": "prototype-dr2-1-source-p9-024",
-      "statement": "The permanent address section is active only when commodity code 01061900 is in the consignment and at least one selected species needs a permanent address; when inactive every /permanent-address route redirects to the roles and addresses page.",
+      "statement": "The permanent address section is active only when commodity code 01061900 is in the consignment and at least one selected species needs a permanent address; when inactive every /permanent-address route except enter-address redirects to the roles and addresses page.",
       "kind": "rule",
-      "ref": "app/routes.js:2428-2451, 12902-12946; app/data/consignment-address-sections.js:124-131",
+      "ref": "app/routes.js:2797-2813, 14922-14970; app/data/consignment-address-sections.js:126-133",
       "quote": "if (!hasPermanentAddressRequiredSpecies(sessionData)) {\n    sections = sections.filter((section) => section.id !== 'permanent-address')\n  }",
       "confidence": "verbatim"
     },
@@ -204,7 +198,7 @@
       "id": "prototype-dr2-1-source-p9-025",
       "statement": "On the roles and addresses page the permanent address section is headed 'Permanent address', explains 'A permanent address is where an animal:' with two bullets, and links with the text 'Add a permanent address'.",
       "kind": "copy",
-      "ref": "app/data/consignment-address-sections.js:79-88",
+      "ref": "app/data/consignment-address-sections.js:82-89",
       "quote": "heading: 'Permanent address',\n    hint: 'A permanent address is where an animal:',\n    hintList: [\n      'will permanently reside',\n      'can be checked by the Animal and Plant Health Agency (APHA)'\n    ],\n    linkText: 'Add a permanent address',",
       "confidence": "verbatim"
     },
@@ -212,7 +206,7 @@
       "id": "prototype-dr2-1-source-p9-026",
       "statement": "Opening /permanent-address always sets the answer to 'not all going to the place of destination', clears the saved summary address, its id and the summary text, and redirects to /permanent-address/select; per-animal choices already saved are kept.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12899-12912",
+      "ref": "app/routes.js:14922-14935",
       "quote": "req.session.data.permanentAddressSameAsDestination = 'no'\n  req.session.data.permanentAddress = null\n  req.session.data.permanentAddressId = null\n  req.session.data.permanentAddressSummary = null\n\n  return res.redirect('/permanent-address/select')",
       "confidence": "verbatim"
     },
@@ -220,40 +214,32 @@
       "id": "prototype-dr2-1-source-p9-027",
       "statement": "Posting to /permanent-address does the same reset, also clears any errors, and redirects to /permanent-address/select.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12914-12929",
+      "ref": "app/routes.js:14937-14952",
       "quote": "req.session.data.errorList = null\n  req.session.data.errors = null\n\n  return res.redirect('/permanent-address/select')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p9-028",
-      "statement": "The yes/no permanent address choice page (permanent-address.html) is never shown to a user in DR2.1, because both GET and POST /permanent-address redirect before rendering; renderPermanentAddressPage is not called by any handler in this slice.",
+      "statement": "The yes/no permanent address choice page (permanent-address.html) is never shown to a user in DR2.1, because both GET and POST /permanent-address redirect before rendering; renderPermanentAddressPage is not called by any handler.",
       "kind": "behaviour",
-      "ref": "app/routes.js:3186-3199, 12899-12929",
+      "ref": "app/routes.js:3657-3670, 14922-14952",
       "quote": "return res.redirect('/permanent-address/select')",
       "confidence": "inferred",
-      "note": "The view, its radio builder (buildPermanentAddressRadioItems), copyPlaceOfDestinationToPermanentAddress and a no-op validatePermanentAddressChoice all exist, so the design kept the page but routed past it. The next claims record what it would show."
+      "note": "A grep of routes.js finds renderPermanentAddressPage, validatePermanentAddressChoice and copyPlaceOfDestinationToPermanentAddress only at their definitions, so the design kept the page but routed past it. The next claims record what it would show."
     },
     {
       "id": "prototype-dr2-1-source-p9-029",
       "statement": "The unused choice page asks 'Are all the animals going to the place of destination?' with the radios 'Yes' and 'No', and the 'Yes' option's hint shows the place of destination as one line (name, address lines, country).",
       "kind": "copy",
-      "ref": "app/views/design-release-2.1/permanent-address.html:57-74; app/routes.js:2653-2675",
+      "ref": "app/views/design-release-2.1/permanent-address.html:57-74; app/routes.js:3119-3141",
       "quote": "<h2 class=\"app-permanent-address-page__question\">Are all the animals going to the place of destination?</h2> ... value: 'yes',\n    text: 'Yes', ... value: 'no',\n      text: 'No',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p9-030",
-      "statement": "The unused choice page uses the same caption 'Consignment parties', heading 'Permanent address', fraud warning and guidance as the per-animal page, and offers 'Save and continue', 'Save and return to hub' and 'Cancel and return to hub'.",
-      "kind": "copy",
-      "ref": "app/views/design-release-2.1/permanent-address.html:30-46, 82-87",
-      "quote": "continueText: \"Save and continue\",\n          hubText: \"Save and return to hub\",\n          cancelText: \"Cancel and return to hub\"",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p9-031",
       "statement": "/permanent-address/enter-address exists but GET and POST both just redirect to /permanent-address/select; new addresses are entered inline on the select page instead.",
       "kind": "behaviour",
-      "ref": "app/routes.js:13009-13015; app/data/consignment-address-sections.js:90",
+      "ref": "app/routes.js:15035-15041; app/data/consignment-address-sections.js:92",
       "quote": "router.get('/permanent-address/enter-address', (req, res) => {\n  return res.redirect('/permanent-address/select')\n})",
       "confidence": "verbatim",
       "note": "This route has no section-active check, unlike the others."
@@ -262,16 +248,8 @@
       "id": "prototype-dr2-1-source-p9-032",
       "statement": "The per-animal permanent address page is at /design-release-2.1/permanent-address/select and posts back to the same path.",
       "kind": "behaviour",
-      "ref": "app/views/design-release-2.1/permanent-address-animals.html:62; app/routes.js:12931-12941",
+      "ref": "app/views/design-release-2.1/permanent-address-animals.html:62; app/routes.js:14954-14964",
       "quote": "<form method=\"post\" action=\"/design-release-2.1/permanent-address/select\" novalidate class=\"app-permanent-address-animals-form\">",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p9-033",
-      "statement": "The per-animal page shows the caption 'Consignment parties' and the heading 'Permanent address'.",
-      "kind": "copy",
-      "ref": "app/views/design-release-2.1/permanent-address-animals.html:34-35",
-      "quote": "<p class=\"app-permanent-address-animals-page__caption\">Consignment parties</p>\n      <h1 class=\"app-permanent-address-animals-page__heading\">Permanent address</h1>",
       "confidence": "verbatim"
     },
     {
@@ -302,23 +280,15 @@
       "id": "prototype-dr2-1-source-p9-037",
       "statement": "The per-animal page shows one card for each individual animal of a species that needs a permanent address, using the number of animals entered for that species; species that do not need one get no cards.",
       "kind": "behaviour",
-      "ref": "app/routes.js:2757-2801",
+      "ref": "app/routes.js:3228-3272",
       "quote": "const total = Number((sessionData.numberOfAnimals || {})[speciesId]) || 0 ... for (let index = 0; index < total; index++) {",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p9-038",
-      "statement": "Each animal card is headed with the species' scientific label and the animal's number, such as 'Canis familiaris 1'.",
-      "kind": "copy",
-      "ref": "app/routes.js:2741-2743, 2793; app/views/design-release-2.1/permanent-address-animals.html:70",
-      "quote": "return `${match.species.label} ${animalNumber}`",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p9-039",
       "statement": "Each animal card shows, in inset text, the identifiers already entered for that animal (Microchip, Passport, Tattoo for cats, dogs and ferrets) as 'label: value', leaving out blank ones and the inset entirely when none are entered.",
       "kind": "behaviour",
-      "ref": "app/routes.js:2775-2787; app/views/design-release-2.1/permanent-address-animals.html:72-80; app/data/commodity-identifiers.js:4-8",
+      "ref": "app/routes.js:3245-3258; app/views/design-release-2.1/permanent-address-animals.html:72-80; app/data/commodity-identifiers.js:4-8",
       "quote": "<strong>{{ identifier.label }}:</strong> {{ identifier.value }}",
       "confidence": "verbatim"
     },
@@ -334,7 +304,7 @@
       "id": "prototype-dr2-1-source-p9-041",
       "statement": "The first option on each card is 'Same as the place of destination (POD)', with the place of destination shown as its hint on one line when one has been added.",
       "kind": "copy",
-      "ref": "app/routes.js:2885-2898, 2639-2651",
+      "ref": "app/routes.js:3356-3369",
       "quote": "value: 'same-as-pod',\n    text: 'Same as the place of destination (POD)',",
       "confidence": "verbatim"
     },
@@ -342,7 +312,7 @@
       "id": "prototype-dr2-1-source-p9-042",
       "statement": "The second option on each card is 'Enter a new address', with the hint 'This is where they will stay after spending 48 hours at the place of destination.'",
       "kind": "copy",
-      "ref": "app/routes.js:2900-2907",
+      "ref": "app/routes.js:3371-3378",
       "quote": "value: 'new-address',\n    text: 'Enter a new address',\n    hint: {\n      text: 'This is where they will stay after spending 48 hours at the place of destination.'\n    },",
       "confidence": "verbatim"
     },
@@ -350,9 +320,10 @@
       "id": "prototype-dr2-1-source-p9-043",
       "statement": "Choosing 'Enter a new address' reveals that animal's own set of new-address fields inside the card.",
       "kind": "behaviour",
-      "ref": "app/routes.js:2909-2913, 2938-2970",
+      "ref": "app/routes.js:3380-3384, 3409-3440",
       "quote": "newAddressItem.conditional = {\n      html: newAddressConditionalHtml\n    }",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "This is the GOV.UK radios conditional reveal."
     },
     {
       "id": "prototype-dr2-1-source-p9-044",
@@ -422,16 +393,16 @@
       "id": "prototype-dr2-1-source-p9-052",
       "statement": "The new-address form has no country field.",
       "kind": "data",
-      "ref": "app/views/partials/permanent-address-new-address-fields.html",
+      "ref": "app/views/partials/permanent-address-new-address-fields.html; app/routes.js:3338-3354",
       "quote": "country: 'United Kingdom',",
       "confidence": "inferred",
-      "note": "The partial has eight inputs and none for country; buildAddressFromPermanentAddressForm (routes.js:2879) fixes the country to United Kingdom even though the postcode label allows a Zip code."
+      "note": "The partial has eight inputs and none for country; buildAddressFromPermanentAddressForm fixes the country to United Kingdom even though the postcode label allows a Zip code."
     },
     {
       "id": "prototype-dr2-1-source-p9-053",
       "statement": "Choosing 'Same as the place of destination (POD)' for an animal when no place of destination has been added shows the error 'Add a place of destination before you can continue' on that animal's radios and in the error summary.",
       "kind": "rule",
-      "ref": "app/routes.js:3088-3099",
+      "ref": "app/routes.js:3559-3569",
       "quote": "text: 'Add a place of destination before you can continue'",
       "confidence": "verbatim"
     },
@@ -439,7 +410,7 @@
       "id": "prototype-dr2-1-source-p9-054",
       "statement": "With 'Enter a new address', a blank name shows 'Enter a name or organisation name' on the field and 'Enter a name or organisation name for <animal heading>' in the error summary, linked to the field.",
       "kind": "rule",
-      "ref": "app/routes.js:3107-3113",
+      "ref": "app/routes.js:3578-3584",
       "quote": "errors[`${errorPrefix}-name`] = { text: 'Enter a name or organisation name' }\n      errorList.push({\n        text: `Enter a name or organisation name for ${animal.heading}`,",
       "confidence": "verbatim"
     },
@@ -447,7 +418,7 @@
       "id": "prototype-dr2-1-source-p9-055",
       "statement": "With 'Enter a new address', a blank address line 1 shows 'Enter address line 1' on the field and 'Enter address line 1 for <animal heading>' in the error summary.",
       "kind": "rule",
-      "ref": "app/routes.js:3115-3121",
+      "ref": "app/routes.js:3586-3592",
       "quote": "errors[`${errorPrefix}-address-line-1`] = { text: 'Enter address line 1' }\n      errorList.push({\n        text: `Enter address line 1 for ${animal.heading}`,",
       "confidence": "verbatim"
     },
@@ -455,7 +426,7 @@
       "id": "prototype-dr2-1-source-p9-056",
       "statement": "With 'Enter a new address', a blank town or city shows 'Enter a town or city' on the field and 'Enter a town or city for <animal heading>' in the error summary.",
       "kind": "rule",
-      "ref": "app/routes.js:3123-3129",
+      "ref": "app/routes.js:3594-3600",
       "quote": "errors[`${errorPrefix}-town-or-city`] = { text: 'Enter a town or city' }\n      errorList.push({\n        text: `Enter a town or city for ${animal.heading}`,",
       "confidence": "verbatim"
     },
@@ -463,7 +434,7 @@
       "id": "prototype-dr2-1-source-p9-057",
       "statement": "With 'Enter a new address', a blank postcode shows 'Enter a postcode or Zip code' on the field and 'Enter a postcode or Zip code for <animal heading>' in the error summary.",
       "kind": "rule",
-      "ref": "app/routes.js:3131-3137",
+      "ref": "app/routes.js:3602-3608",
       "quote": "errors[`${errorPrefix}-postcode`] = { text: 'Enter a postcode or Zip code' }\n      errorList.push({\n        text: `Enter a postcode or Zip code for ${animal.heading}`,",
       "confidence": "verbatim"
     },
@@ -471,7 +442,7 @@
       "id": "prototype-dr2-1-source-p9-058",
       "statement": "With 'Enter a new address', a blank email address shows 'Enter an email address' on the field and 'Enter an email address for <animal heading>' in the error summary.",
       "kind": "rule",
-      "ref": "app/routes.js:3139-3145",
+      "ref": "app/routes.js:3610-3616",
       "quote": "errors[`${errorPrefix}-email`] = { text: 'Enter an email address' }\n      errorList.push({\n        text: `Enter an email address for ${animal.heading}`,",
       "confidence": "verbatim"
     },
@@ -479,7 +450,7 @@
       "id": "prototype-dr2-1-source-p9-059",
       "statement": "With 'Enter a new address', a blank phone number shows 'Enter a phone number' on the field and 'Enter a phone number for <animal heading>' in the error summary.",
       "kind": "rule",
-      "ref": "app/routes.js:3147-3153",
+      "ref": "app/routes.js:3618-3624",
       "quote": "errors[`${errorPrefix}-phone`] = { text: 'Enter a phone number' }\n      errorList.push({\n        text: `Enter a phone number for ${animal.heading}`,",
       "confidence": "verbatim"
     },
@@ -487,7 +458,7 @@
       "id": "prototype-dr2-1-source-p9-060",
       "statement": "Address line 2 and county are optional and are never validated.",
       "kind": "rule",
-      "ref": "app/routes.js:3105-3153; app/views/partials/permanent-address-new-address-fields.html:31, 53",
+      "ref": "app/routes.js:3576-3624; app/views/partials/permanent-address-new-address-fields.html:31, 53",
       "quote": "text: \"Address line 2 (optional)\" ... text: \"County (optional)\"",
       "confidence": "inferred",
       "note": "Inferred from the labels and from validatePermanentAddressAnimalsForm checking only name, addressLine1, townOrCity, postcode, email and phone."
@@ -496,7 +467,7 @@
       "id": "prototype-dr2-1-source-p9-061",
       "statement": "The email address, phone number and postcode on a new permanent address are only checked for being blank; there is no format check and no format error message.",
       "kind": "rule",
-      "ref": "app/routes.js:3131-3153",
+      "ref": "app/routes.js:3602-3624",
       "quote": "",
       "confidence": "gap",
       "note": "Looked in validatePermanentAddressAnimalsForm and parsePermanentAddressDetails."
@@ -505,7 +476,7 @@
       "id": "prototype-dr2-1-source-p9-062",
       "statement": "An animal left with no option chosen raises no error: the page saves the other animals and moves on, leaving that animal without a permanent address.",
       "kind": "behaviour",
-      "ref": "app/routes.js:3077-3082, 12969-12974",
+      "ref": "app/routes.js:3551-3553, 14995-15000",
       "quote": "if (!choice) {\n      return\n    }",
       "confidence": "verbatim",
       "note": "The section then stays incomplete on the roles and addresses page because every animal must have a saved address."
@@ -514,7 +485,7 @@
       "id": "prototype-dr2-1-source-p9-063",
       "statement": "No error message exists for not choosing where an animal's permanent address will be.",
       "kind": "rule",
-      "ref": "app/routes.js:3071-3157",
+      "ref": "app/routes.js:3542-3628",
       "quote": "",
       "confidence": "gap",
       "note": "The view reads data.errors['permanentAddressChoice-<key>'] but the only message set under that key is the missing place of destination one."
@@ -523,7 +494,7 @@
       "id": "prototype-dr2-1-source-p9-064",
       "statement": "When the per-animal page shows errors, each animal's submitted choice and new-address values are kept on the re-rendered page.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12953-12961, 2946-2952",
+      "ref": "app/routes.js:14979-14987, 3417-3423",
       "quote": "return renderPermanentAddressAnimalsPage(req, res, {\n      submittedChoices: validation.choices,\n      submittedAddressDetails: validation.addressDetails,\n      errors: validation.errors\n    })",
       "confidence": "verbatim"
     },
@@ -539,7 +510,7 @@
       "id": "prototype-dr2-1-source-p9-066",
       "statement": "With no animals counted the page still lets the user continue: the save buttons stay on the page and the POST saves nothing and returns to roles and addresses, despite the copy saying they cannot continue.",
       "kind": "behaviour",
-      "ref": "app/routes.js:3000-3002, 12967-13006; app/views/design-release-2.1/permanent-address-animals.html:104-113",
+      "ref": "app/routes.js:3471-3473, 14964-15032; app/views/design-release-2.1/permanent-address-animals.html:104-113",
       "quote": "if (!animals.length) {\n    return\n  }",
       "confidence": "inferred",
       "note": "Inferred: the journey-form-actions include sits outside the animals.length branch and validation over an empty list returns no errors."
@@ -548,67 +519,61 @@
       "id": "prototype-dr2-1-source-p9-067",
       "statement": "Saving 'Same as the place of destination (POD)' copies the place of destination's name, address lines, country, email, phone and address-book id into that animal's permanent address.",
       "kind": "data",
-      "ref": "app/routes.js:12976-12983, 2972-2994",
+      "ref": "app/routes.js:15002-15009, 3443-3465",
       "quote": "sessionData.permanentAnimalAddresses[animalKey] = {\n    choice,\n    addressId: address.id || null,\n    address: {\n      name: address.name,\n      addressLines: [...(address.addressLines || [])],\n      country: address.country || 'United Kingdom',\n      email: address.email || '',\n      phone: address.phone || ''\n    }\n  }",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "mechanism: copies the place of destination address record into a per-animal entry."
     },
     {
       "id": "prototype-dr2-1-source-p9-068",
       "statement": "Saving 'Enter a new address' stores that animal's address as the name, the non-blank address lines in the order line 1, line 2, town or city, postcode, the country United Kingdom, the email and the phone number.",
       "kind": "data",
-      "ref": "app/routes.js:2867-2883, 12990-12997",
+      "ref": "app/routes.js:3338-3354, 15016-15023",
       "quote": "const addressLines = [\n    form.addressLine1,\n    form.addressLine2,\n    form.townOrCity,\n    form.postcode\n  ].filter(Boolean)",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "mechanism: flattens the new-address form fields into an address lines list."
     },
     {
       "id": "prototype-dr2-1-source-p9-069",
       "statement": "The county entered on a new permanent address is not saved, so it is lost and the County field is blank when the page is revisited.",
       "kind": "data",
-      "ref": "app/routes.js:2878, 2981-2991, 2835",
+      "ref": "app/routes.js:3349, 3452-3461, 3306",
       "quote": "county: form.county, ... address: {\n      name: address.name,\n      addressLines: [...(address.addressLines || [])],\n      country: address.country || 'United Kingdom',",
       "confidence": "inferred",
-      "note": "buildAddressFromPermanentAddressForm sets county but copyAddressToPermanentAnimalEntry does not copy it, and the form reads address.county back."
+      "note": "mechanism: buildAddressFromPermanentAddressForm sets county but copyAddressToPermanentAnimalEntry does not copy it, and the form reads address.county back."
     },
     {
       "id": "prototype-dr2-1-source-p9-070",
       "statement": "When a saved new address has no address line 2, revisiting the page shows the town in the 'Address line 2' box and the postcode in the 'Town or city' box, because saved lines are read back by position after blanks were dropped.",
       "kind": "behaviour",
-      "ref": "app/routes.js:2827-2839, 2868-2873",
+      "ref": "app/routes.js:3299-3310, 3339-3344",
       "quote": "addressLine2: lines[1] || '',\n    townOrCity: lines[2] || '',\n    county: address.county || '',\n    postcode: lines[3] || '',",
       "confidence": "inferred",
-      "note": "Inferred from the save dropping blank lines with filter(Boolean) and the read-back indexing lines by fixed position."
+      "note": "mechanism: reads saved address lines back into form fields by fixed position. Inferred from the save dropping blank lines with filter(Boolean) and the read-back indexing lines by fixed position."
     },
     {
       "id": "prototype-dr2-1-source-p9-071",
       "statement": "After saving, if every animal is 'Same as the place of destination (POD)' and a place of destination exists, the notification's permanent address becomes the place of destination and the answer to 'all going to the place of destination' becomes yes.",
       "kind": "behaviour",
-      "ref": "app/routes.js:3004-3016",
+      "ref": "app/routes.js:3475-3487",
       "quote": "const allSameAsPod = animals.every((animal) => saved[animal.key] && saved[animal.key].choice === 'same-as-pod')",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "mechanism: syncPermanentAddressSummary derives a notification-level permanent address from the per-animal entries."
     },
     {
       "id": "prototype-dr2-1-source-p9-072",
       "statement": "Otherwise, if exactly one animal has a saved address, that address becomes the notification's permanent address.",
       "kind": "behaviour",
-      "ref": "app/routes.js:3018-3033",
+      "ref": "app/routes.js:3491-3503",
       "quote": "if (addresses.length === 1) {\n    sessionData.permanentAddressId = saved[animals[0].key].addressId || null",
       "confidence": "verbatim",
-      "note": "The id is taken from the first animal even if the one saved address belongs to another animal."
-    },
-    {
-      "id": "prototype-dr2-1-source-p9-073",
-      "statement": "Otherwise the roles and addresses page summarises the section as 'Permanent addresses added for N animals', where N is the number of animals that need one.",
-      "kind": "copy",
-      "ref": "app/routes.js:3035-3037, 2481-2487",
-      "quote": "sessionData.permanentAddressSummary = `Permanent addresses added for ${animals.length} animals`",
-      "confidence": "verbatim",
-      "note": "N counts all animals needing an address, not those with one saved, and the text says 'animals' even when N is 0 or 1 addresses saved."
+      "note": "mechanism: syncPermanentAddressSummary. The id is taken from the first animal even if the one saved address belongs to another animal."
     },
     {
       "id": "prototype-dr2-1-source-p9-074",
       "statement": "The permanent address section is complete when every animal that needs one has a saved address with a name (or, if the answer is yes, when the notification-level permanent address has a name).",
       "kind": "rule",
-      "ref": "app/routes.js:2589-2599, 3040-3057",
+      "ref": "app/routes.js:3050-3065, 3511-3528",
       "quote": "return animals.every((animal) => {\n    const entry = saved[animal.key]\n\n    return entry && entry.address && entry.address.name\n  })",
       "confidence": "verbatim"
     },
@@ -616,7 +581,7 @@
       "id": "prototype-dr2-1-source-p9-075",
       "statement": "The roles and addresses link and change link for the permanent address section go to /permanent-address/select once the answer is no, otherwise to /permanent-address.",
       "kind": "behaviour",
-      "ref": "app/routes.js:2476-2504",
+      "ref": "app/routes.js:2942-2970",
       "quote": "const href = sessionData.permanentAddressSameAsDestination === 'no'\n        ? section.selectPath\n        : section.path",
       "confidence": "verbatim"
     },
@@ -632,7 +597,7 @@
       "id": "prototype-dr2-1-source-p9-077",
       "statement": "'Save and continue' on the per-animal page returns to the roles and addresses page; 'Save and return to hub' saves the draft and goes to the notification hub, and in amend 'Save and return' goes to the review page.",
       "kind": "behaviour",
-      "ref": "app/routes.js:13002-13006",
+      "ref": "app/routes.js:15028-15032, 1790-1808",
       "quote": "if (isJourneySoftSaveAction(getJourneyFormAction(req))) {\n    return res.redirect(getJourneySaveRedirect(getJourneyFormAction(req), '/notification-hub', req.session.data))\n  }\n\n  return res.redirect('/roles-and-addresses')",
       "confidence": "verbatim"
     },
@@ -649,17 +614,130 @@
       "id": "prototype-dr2-1-source-p9-079",
       "statement": "On the review, permanent address shows one row per animal, labelled with the species' common name and number (such as 'Domestic dog 1'), whose value is that animal's saved address or, failing that, the notification-level permanent address.",
       "kind": "data",
-      "ref": "app/routes.js:2709-2739, 694-696",
+      "ref": "app/routes.js:3175-3205",
       "quote": "return `${getSpeciesCommonName(match)} ${animal.animalIndex + 1}`",
       "confidence": "verbatim",
-      "note": "The review uses the common name while the per-animal page cards use the scientific label ('Canis familiaris 1')."
+      "note": "The review uses the common name alone, while the per-animal page cards add the scientific label in brackets ('Domestic dog (Canis familiaris) 1')."
     },
     {
       "id": "prototype-dr2-1-source-p9-080",
       "statement": "If no animals needing a permanent address are counted, the review shows a single permanent address row keyed 'Address'.",
       "kind": "data",
-      "ref": "app/routes.js:2723-2728",
+      "ref": "app/routes.js:3189-3194",
       "quote": "return [{\n      key: 'Address',\n      value: formatAddressForReviewValue(sessionData.permanentAddress)\n    }]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p9-081",
+      "statement": "The CPH number page shows the caption 'Addresses'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/cph-number.html:32",
+      "quote": "<p class=\"app-cph-number-page__caption\">Addresses</p>",
+      "confidence": "verbatim",
+      "note": "Replaces the earlier extract's p9-005, which read the caption as 'Consignment parties'."
+    },
+    {
+      "id": "prototype-dr2-1-source-p9-082",
+      "statement": "The unused choice page uses the caption 'Addresses', the heading 'Permanent address', the same fraud warning and guidance as the per-animal page, and offers 'Save and continue', 'Save and return to hub' and 'Cancel and return to hub'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/permanent-address.html:30-46, 82-87",
+      "quote": "<p class=\"app-permanent-address-page__caption\">Addresses</p>\n      <h1 class=\"app-permanent-address-page__heading\">Permanent address</h1> ... continueText: \"Save and continue\",\n          hubText: \"Save and return to hub\",\n          cancelText: \"Cancel and return to hub\"",
+      "confidence": "verbatim",
+      "note": "Replaces the earlier extract's p9-030, which read the caption as 'Consignment parties'."
+    },
+    {
+      "id": "prototype-dr2-1-source-p9-083",
+      "statement": "The per-animal page shows the caption 'Addresses' and the heading 'Permanent address'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/permanent-address-animals.html:34-35",
+      "quote": "<p class=\"app-permanent-address-animals-page__caption\">Addresses</p>\n      <h1 class=\"app-permanent-address-animals-page__heading\">Permanent address</h1>",
+      "confidence": "verbatim",
+      "note": "Replaces the earlier extract's p9-033, which read the caption as 'Consignment parties'."
+    },
+    {
+      "id": "prototype-dr2-1-source-p9-084",
+      "statement": "Each animal card is headed with the species' common name, its scientific label in brackets and the animal's number, such as 'Domestic dog (Canis familiaris) 1'; the same heading names the animal in every error summary message on the page.",
+      "kind": "copy",
+      "ref": "app/routes.js:3207-3214, 3264; app/views/design-release-2.1/permanent-address-animals.html:70",
+      "quote": "// The updated versions lead with the common name, for example \"Domestic dog (Canis familiaris) 1\"\n  if (hasJourneyUpdates(sessionData)) {\n    return `${getSpeciesCommonName(match)} (${match.species.label}) ${animalNumber}`\n  }",
+      "confidence": "verbatim",
+      "note": "hasJourneyUpdates is true only in the Design Release 2.1 version (routes.js:320-322). Replaces the earlier extract's p9-038, which read the heading as the scientific label and number alone ('Canis familiaris 1'), the form other versions still use."
+    },
+    {
+      "id": "prototype-dr2-1-source-p9-085",
+      "statement": "The CPH section, and so the CPH number page, is not available on a germinal products notification, whatever its commodities.",
+      "kind": "rule",
+      "ref": "app/routes.js:2815-2817",
+      "quote": "if (getNotificationType(sessionData) === 'germinal-products') {\n    sections = sections.filter((section) => section.id !== 'cph')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p9-086",
+      "statement": "In Design Release 2.1, once at least one animal has a saved permanent address, the roles and addresses page lists every animal that needs one by its card heading with its saved address, in place of a single address or a summary line, with a change link.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:2874-2888, 2893-2899",
+      "quote": "// The updated versions list the permanent address of every animal that needs one, in\n// place of a single address or a \"added for N animals\" summary.",
+      "confidence": "verbatim",
+      "note": "How the list is laid out on the roles and addresses page belongs to that page's part."
+    },
+    {
+      "id": "prototype-dr2-1-source-p9-087",
+      "statement": "When not every animal is 'Same as the place of destination (POD)' and not exactly one animal has a saved address, the notification's permanent address is cleared and a summary 'Permanent addresses added for N animals' is stored, N being the number of animals that need one; the roles and addresses page shows this summary only when no animal has a saved address, so it can claim addresses were added when none were.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:3506-3508, 2887, 2947-2953",
+      "quote": "sessionData.permanentAddressSummary = `Permanent addresses added for ${animals.length} animals`",
+      "confidence": "inferred",
+      "note": "mechanism: syncPermanentAddressSummary. Inferred: with two or more saved addresses the per-animal list (p9-086) replaces the summary, so the summary only shows when every animal was left unchosen. Replaces the earlier extract's p9-073, which said the summary is what the page shows."
+    },
+    {
+      "id": "prototype-dr2-1-source-p9-088",
+      "statement": "In Design Release 2.1 the roles and addresses page offers 'Remove CPH number' once a CPH number is saved and 'Remove permanent address' once a permanent address is saved; removing the permanent address also clears the 'all going to the place of destination' answer, the summary and every animal's saved address.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:2837-2872, 2907-2915",
+      "quote": "removeText: section.isCph ? 'Remove CPH number' : `Remove ${section.heading.toLowerCase()}`",
+      "confidence": "verbatim",
+      "note": "The remove action itself is handled on the roles and addresses page, which another part covers. In a template, what was removed is left blank for the person using the template."
+    },
+    {
+      "id": "prototype-dr2-1-source-p9-089",
+      "statement": "While a template is being created or edited, the per-animal permanent address page raises none of its errors, so a new address can be saved with blank required fields.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10348-10382, 14974-14977",
+      "quote": "// The updated versions let any answer be left blank or cleared while a template is\n// created or edited. An answer that has been entered must still be valid.",
+      "confidence": "inferred",
+      "note": "Inferred: the POST passes no submittedValues to applyJourneyValidation, so in template creation every error is dropped, including 'Add a place of destination before you can continue', which is not about a blank answer."
+    },
+    {
+      "id": "prototype-dr2-1-source-p9-090",
+      "statement": "While a template is being created, the CPH and per-animal permanent address pages' secondary button reads 'Save and return to template' and the cancel link reads 'Cancel and return to template' and goes to the template review page.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/journey-form-actions.html:27-40",
+      "quote": "{% if isTemplateCreate %}\n  {% set hubText = 'Save and return to template' %}\n  {% set cancelText = 'Cancel and return to template' %}\n{% endif %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p9-091",
+      "statement": "When a template is being edited from its review, the CPH and per-animal permanent address pages show a single 'Save and return' button, which returns to the template review, and a 'Cancel' link to the template.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/journey-form-actions.html:45-50, 91-94; app/routes.js:1790-1793",
+      "quote": "{% if isTemplateReview %}\n      {{ govukButton({\n        text: \"Save and return\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p9-092",
+      "statement": "With JavaScript, the CPH boxes strip anything but digits, move focus to the next box once a box is full, move back to the previous box on Backspace in an empty box, and spread a pasted number across the boxes.",
+      "kind": "behaviour",
+      "ref": "app/assets/javascripts/cph-number-input.js:1-104; app/views/partials/cph-number-input.html:3",
+      "quote": "// CPH number inputs — move focus to the next box when enough digits are entered",
+      "confidence": "verbatim",
+      "note": "Custom JavaScript on top of the GOV.UK date input. The programme goal bars custom JavaScript copied from the prototype, and ruling:interaction-designer-2026-11-09 says the CPH boxes follow the GOV.UK date input with no JavaScript on top."
+    },
+    {
+      "id": "prototype-dr2-1-source-p9-093",
+      "statement": "On the per-animal page the warning, guidance and error summary sit in a two-thirds column, and the question and animal cards below them span the full width, each card a section labelled by its heading.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/permanent-address-animals.html:28-70",
+      "quote": "<div class=\"govuk-grid-column-two-thirds app-permanent-address-animals-page__intro\"> ... <div class=\"govuk-grid-column-full app-permanent-address-animals-page__form-column\"> ... <section class=\"app-permanent-address-animal-card\" aria-labelledby=\"permanent-address-animal-{{ loop.index }}\">",
       "confidence": "verbatim"
     }
   ]

@@ -1,0 +1,889 @@
+{
+  "source": "trace:prototype-dr2-1",
+  "structure": "Part 16, Manage notifications. Read manage-notifications.fit.spec.js in full and opened and mined all 7 traces it produced, every action of each: (A) view › submitted with action required (53 actions); (B) view › submitted, past and draft (51); (C) amend › confirm, change an answer, save and return, then resubmit (108); (D) amend › cancel an amendment from the amend review (35); (E) amend and copy guards (25); (F) copy as new (33); (G) delete a notification (50). Refs below name the trace by its zip stem. Pages reached, in journey order: the Live animals dashboard (/live-animals, View link only); the notification view page /review-notification?reference=<ref> in four states (submitted with action required, submitted, past, draft), each with a page header (reference as h1, status tag, an MoJ button menu 'Actions', a date line), an 'Import reference numbers' section and five numbered read-only (or, for a draft, editable) answer sections; the amend confirmation page /notifications/amend; the amend review (/review-notification in amend state, headed 'Review your notification', then 'Review before re-submitting' once an answer has changed) with an Amend status bar, a Cancel amend link-button and a cancel-amend modal; question pages opened in amend (origin-of-the-import, arrival-details) with Save and return / Save and continue / Save and return to overview; the declaration; the notification-submitted page; /notifications/cancel-amend (GET, redirects); /notifications/copy-as-new (GET, redirects to the notification hub with a new draft); the delete confirmation page /notifications/delete and the dashboard success banner. Conditional: Amend appears in the Actions menu only for submitted notifications; Change links appear only for draft and amend states; the warning and Continue button only for action-required; the error summary only for a draft with incomplete sections. The network log shows only the prototype's own server-rendered GET/POST routes, no outbound data calls. Make template is linked from the menu but never followed in this part.",
+  "claims": [
+    {
+      "id": "trace-prototype-dr2-1-p16-001",
+      "statement": "Each notification row on the Live animals dashboard has a 'View' link that opens the notification's view page at /review-notification?reference=<reference>.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 8",
+      "quote": "View",
+      "confidence": "verbatim",
+      "note": "href seen: /design-release-2.1/review-notification?reference=GBN-AG-26-7K8M2P"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-002",
+      "statement": "The notification view page's h1 is the notification reference number, not a descriptive heading.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 39, .app-dr2-review-page-header__reference",
+      "quote": "<h1 class=\"app-dr2-review-page-header__reference\">GBN-AG-26-7K8M2P</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-003",
+      "statement": "The view page's browser title is the service name only, with no page-specific prefix.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 39",
+      "quote": "Import notification service - GOV.UK",
+      "confidence": "verbatim",
+      "note": "Every other page in this part carries a page-specific title prefix; the view page does not."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-004",
+      "statement": "Beside the reference the view page shows a GOV.UK tag with the notification's status: 'Submitted', 'Past' or 'Draft'.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications actions 15, 24, 37",
+      "quote": "Submitted / Past / Draft",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-005",
+      "statement": "The status tag carries a status-specific modifier class: submitted for Submitted, submission-complete for Past, and template for Draft.",
+      "kind": "constraint",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications actions 24, 37",
+      "quote": "app-dr2-review-status__tag--submission-complete ... app-dr2-review-status__tag--template",
+      "confidence": "verbatim",
+      "note": "The Draft tag uses the --template modifier, which looks like a prototype slip; the reconciler should not read it as a template state. A govuk-tag colour modifier would replace the custom app-dr2-review-status__tag classes."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-006",
+      "statement": "A submitted or past notification's view page shows the date it was submitted under the header, labelled 'Date submitted:' with a long-form date.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications actions 15, 24",
+      "quote": "Date submitted: 25 November 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-007",
+      "statement": "A draft notification's view page shows 'Date created:' with a long-form date in place of the submitted date.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications action 37",
+      "quote": "Date created: 23 November 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-008",
+      "statement": "The view page header has an 'Actions' button that opens a menu of actions for the notification.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 29",
+      "quote": "Actions",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-009",
+      "statement": "The Actions menu is the Ministry of Justice button menu component (moj-button-menu), whose items are links styled as buttons.",
+      "kind": "constraint",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 39",
+      "quote": "<div class=\"moj-button-menu\" data-module=\"moj-button-menu\" data-button-text=\"Actions\"",
+      "confidence": "verbatim",
+      "note": "The MoJ button menu needs JavaScript to collapse into a toggle; without JavaScript MoJ renders the items as a row of buttons."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-010",
+      "statement": "For a submitted notification the Actions menu lists, in order, 'Amend', 'Make template', 'Copy as new' and 'Delete'.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 30",
+      "quote": "Amend / Make template / Copy as new / Delete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-011",
+      "statement": "The Actions menu items link to /notifications/amend, /notifications/make-template, /notifications/copy-as-new and /notifications/delete, each with ?reference=<reference>.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers actions 31-34",
+      "quote": "/design-release-2.1/notifications/amend?reference=GBN-AG-26-7K8M2P",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-012",
+      "statement": "A past notification's Actions menu has no Amend: it offers only 'Make template', 'Copy as new' and 'Delete'.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications action 24",
+      "quote": "Make template>/design-release-2.1/notifications/make-template?reference=GBN-AG-26-7K8M2W ; Copy as new> ... ; Delete>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-013",
+      "statement": "A draft notification's Actions menu has no Amend: it offers only 'Make template', 'Copy as new' and 'Delete'.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications action 37",
+      "quote": "Make template>/design-release-2.1/notifications/make-template?reference=GBN-GP-26-7K8M2T ; Copy as new> ... ; Delete>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-014",
+      "statement": "A submitted notification that needs action shows a GOV.UK warning text in its header saying what the trader must do.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 39",
+      "quote": "You need to upload a health certificate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-015",
+      "statement": "The action-required warning appears only on a notification that needs action: the plain submitted notification has no header warning.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications action 15",
+      "quote": "GBN-AG-26-7K8M2U\nSubmitted\nActions\n\nDate submitted: 25 November 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-016",
+      "statement": "The action-required state still shows the status tag 'Submitted'; the need for action is carried by the warning and a page-level modifier class, not by the tag.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 26",
+      "quote": "app-review-notification-page--dr2-action-required ... app-dr2-review-status__tag--submitted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-017",
+      "statement": "The view page has an 'Import reference numbers' section, headed by an h2.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 26",
+      "quote": "Import reference numbers",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-018",
+      "statement": "The Import reference numbers section opens with a warning text telling the trader to use the right reference and code on the customs declaration.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 26",
+      "quote": "You must use the correct reference and code on the customs declaration or your consignment will be delayed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-019",
+      "statement": "The Import reference numbers section lists the 'Notification reference' (the notification's own reference) and the 'Customs document code' C640.",
+      "kind": "data",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 26",
+      "quote": "Notification reference\n\nGBN-AG-26-7K8M2P\n\nCopy\n\nCustoms document code\n\nC640",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-020",
+      "statement": "Each import reference has a secondary 'Copy' button that copies its value, so the section has two Copy buttons.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers actions 17, 39",
+      "quote": "<button class=\"govuk-button govuk-button--secondary app-dr2-import-reference-section__copy-button\" type=\"button\" data-copy-text=\"C640\">Copy</button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-021",
+      "statement": "The Copy buttons are custom JavaScript (type=button with data-copy-text) with no GOV.UK Frontend equivalent; without JavaScript they do nothing, so the values must stand as selectable text.",
+      "kind": "constraint",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 39",
+      "quote": "data-copy-text=\"GBN-AG-26-7K8M2P\"",
+      "confidence": "inferred",
+      "note": "Inferred from a type=button with a data attribute and no form; no test clicked Copy."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-022",
+      "statement": "The Import reference numbers section appears on submitted, past and also draft notifications.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications action 37",
+      "quote": "Date created: 23 November 2026\n\nThere is a problem\nComplete arrival details\nImport reference numbers",
+      "confidence": "verbatim",
+      "note": "A draft has no customs use yet, so showing the section on a draft may be a prototype slip; recorded as rendered."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-023",
+      "statement": "The view page shows the notification's answers in five numbered sections: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Uploaded documents' and '5. Addresses'.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 26",
+      "quote": "1. About the consignment ... 2. Description of the goods ... 3. Transport and arrival ... 4. Uploaded documents ... 5. Addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-024",
+      "statement": "Section 1 holds the cards 'Origin of import', 'What are you importing?' and 'Main import reason'.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 26",
+      "quote": "Origin of import ... What are you importing? ... Main import reason",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-025",
+      "statement": "The Origin of import card shows 'Country of origin', 'Region of origin code' and 'Internal reference number'; a region code that was not given shows 'Not applicable'.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications action 15",
+      "quote": "Country of origin\nRepublic of Ireland\nRegion of origin code\nNot applicable\nInternal reference number\nLIV-2026-0142",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-026",
+      "statement": "The What are you importing? card shows 'Commodity code' as code with the commodity name in brackets, and 'Species'; several commodities are listed comma-separated.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 26",
+      "quote": "Commodity code\n010410 (Sheep), 010420 (Goat)\nSpecies\nOvis aries, Capra hircus",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-027",
+      "statement": "The Main import reason card repeats its title as its first row label, 'Main import reason', followed by 'Purpose in the market'.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 26",
+      "quote": "Main import reason\nMain import reason\nInternal market\nPurpose in the market\nTransfer of ownership - Sale/gift",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-028",
+      "statement": "Section 2 has one card per commodity, titled '<name> (<code>)' with the species under it, showing 'Number of animals', 'Number of packages (when required)' and 'Identification details'.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 26",
+      "quote": "Sheep (010410)\nOvis aries\nNumber of animals\n1\nNumber of packages (when required)\nNot applicable\nIdentification details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-029",
+      "statement": "Identification details show as a table with an 'Animal' column then one column per identifier type (such as 'Ear tag', 'Passport'), one row per animal.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications action 15",
+      "quote": "Identification details\nAnimal\nEar tag\nPassport\nBison bison 1\nUK123456789012\nGB-CAT-8821",
+      "confidence": "verbatim",
+      "note": "Built from custom app-dr2-review-identification-table classes; govuk-table would replace it."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-030",
+      "statement": "A commodity missing its identification shows an inline section error under Identification details on a submitted notification.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 26, .app-dr2-review-section-error--inline",
+      "quote": "Enter a minimum of 1 identifier",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-031",
+      "statement": "Section 3 holds the cards 'Arrival details' (Port of entry, Arrival date at destination, Means of transport to the port of entry, Transport identification, Transport document reference) and 'Transport details' (Name, Address, Country, Approval number, Type).",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications action 15",
+      "quote": "Arrival details\nPort of entry\nLondon Heathrow\nArrival date at destination\n6 December 2026\nMeans of transport to the port of entry\nAir\nTransport identification\nBA0123\nTransport document reference\nAWB-2026-8841\nTransport details\nName",
+      "confidence": "verbatim",
+      "note": "The row is labelled 'Arrival date at destination' here while the arrival page asks 'Arrival date at port of entry'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-032",
+      "statement": "Where transit countries were given, the Arrival details card adds a 'Transit countries' sub-heading with 'Countries that the consignment will travel through' listed comma-separated.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 26",
+      "quote": "Transit countries\nCountries that the consignment will travel through\nFrance, Germany, Spain",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-033",
+      "statement": "Section 4 lists each upload as 'Document 1' and on, showing 'Document reference', 'Document type', 'Date of issue' (dd/mm/yyyy) and 'Attachment' (the file name).",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications action 15",
+      "quote": "Document 1\nDocument reference\nHC-2026-0198\nDocument type\nIntra Trade Animal Health Certificate (ITAHC)\nDate of issue\n23/11/2026\nAttachment\nhealth-certificate.pdf",
+      "confidence": "verbatim",
+      "note": "Date of issue shows as dd/mm/yyyy while other dates on the page are long-form."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-034",
+      "statement": "A submitted notification with no documents shows a section error in Uploaded documents.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 26",
+      "quote": "Upload a valid health certificate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-035",
+      "statement": "Section 5 has a 'Consignment addresses' card listing Place of origin, Consignor, Consignee, Importer and Place of destination as multi-line addresses, then 'County parish holding (CPH) number'.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 26",
+      "quote": "Consignment addresses\nPlace of origin ... Consignor ... Consignee ... Importer ... Place of destination ... County parish holding (CPH) number\n12/345/6789",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-036",
+      "statement": "Addresses on the view page show the name and street lines on their own lines and town, postcode and country joined on one comma-separated line.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 26",
+      "quote": "Nordic Livestock Export AB\n\nVästra Hamngatan 6\n\nFloor 2\n\nGothenburg, 41117, Sweden",
+      "confidence": "verbatim",
+      "note": "mechanism: the last address line joins town, postcode and country with commas, while the transporter address in Transport details shows them on separate lines with Country as its own row."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-037",
+      "statement": "A submitted notification's answers are read-only: the view page has no Change links.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 20",
+      "quote": "locator('main').getByRole('link', { name: 'Change' }) toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-038",
+      "statement": "Past notifications' answers are read-only too: no Change links render.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications action 24",
+      "quote": "||ACTIONS Actions> ; Make template> ; Copy as new> ; Delete> ; Copy> ; Copy>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-039",
+      "statement": "A submitted notification that needs action ends with a 'Continue' button, a link to the notification hub; a plain submitted or past notification has no button at the foot.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 26",
+      "quote": "<a class=\"govuk-button\" href=\"/design-release-2.1/notification-hub\">Continue</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-040",
+      "statement": "The view page's Back link goes to the overall dashboard (the service root), even when the page was opened from the Live animals list.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 21",
+      "quote": "<a href=\"/design-release-2.1\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-041",
+      "statement": "A draft notification's view page is editable: each card has a 'Change' link to its question page, such as Origin of import to /origin-of-the-import.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications action 32",
+      "quote": "Change>/design-release-2.1/origin-of-the-import ; Change>/design-release-2.1/what-are-you-importing ; Change>/design-release-2.1/reason-for-import ; Change>/design-release-2.1/consignment-details ; Change>/design-release-2.1/consignment-details ; Change>/design-release-2.1/animal-identification-details ; Change>/design-release-2.1/arrival-details ; Change>/design-release-2.1/transporter ; Change>/design-release-2.1/upload-documents?from=review ; Change>/design-release-2.1/roles-and-addresses",
+      "confidence": "verbatim",
+      "note": "Two Change links on a commodity card (commodity, number of animals) both go to consignment-details; documents' Change carries ?from=review."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-042",
+      "statement": "A draft with incomplete sections shows a GOV.UK error summary 'There is a problem' listing each incomplete section as a link to its card.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications action 31",
+      "quote": "There is a problem ... <a href=\"#review-arrival-details\">Complete arrival details</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-043",
+      "statement": "The incomplete card in a draft also shows the error inline as a GOV.UK error message under its title.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications action 37",
+      "quote": "<p class=\"govuk-error-message app-dr2-review-card__error-message\"> <span class=\"govuk-visually-hidden\">Error:</span> Complete arrival details </p>",
+      "confidence": "verbatim",
+      "note": "The submitted page's section errors use a custom app-dr2-review-section-error, not govuk-error-message: two styles for one idea."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-044",
+      "statement": "A draft's view page ends with a 'Continue' submit button in a form that POSTs to /review-notification.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications action 37",
+      "quote": "<form method=\"post\" action=\"/design-release-2.1/review-notification\" novalidate=\"\" class=\"app-review-notification-page__form\"> <div class=\"govuk-button-group\"> <button type=\"submit\" class=\"govuk-button\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-045",
+      "statement": "The view page's answer cards, section headings and page header are built from custom app-dr2-review-* classes rather than the GOV.UK summary card and summary list; a govuk-summary-card per card would replace them.",
+      "kind": "constraint",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 26, class inventory",
+      "quote": "app-dr2-review-card app-dr2-review-card__header app-dr2-review-card__rows app-dr2-review-row__key app-dr2-review-row__value app-dr2-review-page-header",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-046",
+      "statement": "The view page uses only these GOV.UK components: tag, warning text, buttons (primary and secondary), error summary and error message; everything else on it is custom.",
+      "kind": "constraint",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers action 26, class inventory",
+      "quote": "govuk-button govuk-button--secondary govuk-grid-column-full govuk-grid-row govuk-tag govuk-visually-hidden govuk-warning-text",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-047",
+      "statement": "Choosing Amend opens a confirmation page at /notifications/amend?reference=<reference>, titled and headed 'Amend this notification?'.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 23",
+      "quote": "Amend this notification? - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-048",
+      "statement": "The amend confirmation page shows a GOV.UK summary list of 'Reference number', 'Commodity', 'Number' and 'Origin'.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit actions 14-15",
+      "quote": "Reference number / Commodity / Number / Origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-049",
+      "statement": "The confirmation summary shows the commodity as name with species in brackets, re-cased to title case.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 15",
+      "quote": "Cattle (Bison Bison)",
+      "confidence": "verbatim",
+      "note": "mechanism: the review shows species 'Bison bison' and the confirm page 'Bison Bison'; the delete page likewise turns 'Ovis aries' into 'Ovis Aries'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-050",
+      "statement": "The confirmation summary's 'Number' is the total number of animals across all commodity lines.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--delete-a-notification-confirm-the-deletion-the-dashboard-shows-a-success-banner action 23",
+      "quote": "Number </dt> <dd class=\"govuk-summary-list__value\"> 3 </dd>",
+      "confidence": "inferred",
+      "note": "Inferred: the notification has 1 sheep and 2 goats, and the delete page shows Number 3."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-051",
+      "statement": "The amend confirmation page asks the trader to confirm in body text under the summary.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 16",
+      "quote": "Confirm that you want to amend this notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-052",
+      "statement": "The amend confirmation page has a 'Yes, amend' primary button that POSTs the form, and a 'No, cancel' link back to the notification's view page, in a button group.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 23",
+      "quote": "<button type=\"submit\" class=\"govuk-button\"> Yes, amend </button> <a class=\"govuk-link\" href=\"/design-release-2.1/review-notification?reference=GBN-AG-26-7K8M2U\">No, cancel</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-053",
+      "statement": "The amend confirmation page's Back link goes to the notification's view page.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 18",
+      "quote": "<a href=\"/design-release-2.1/review-notification?reference=GBN-AG-26-7K8M2U\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-054",
+      "statement": "Choosing 'No, cancel' returns to the view page with the notification still Submitted.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit actions 25-26",
+      "quote": "Submitted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-055",
+      "statement": "The amend confirmation is a server-rendered page using only GOV.UK components (heading, summary list, body, button, link).",
+      "kind": "constraint",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 23",
+      "quote": "<h1 class=\"govuk-heading-l\">Amend this notification?</h1> <dl class=\"govuk-summary-list\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-056",
+      "statement": "'Yes, amend' starts an amendment and opens the amend review at /review-notification (no reference in the URL).",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit request 160-161",
+      "quote": "POST 302 amend?reference=GBN-AG-26-7K8M2U ... GET 200 review-notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-057",
+      "statement": "The amend review is headed and titled 'Review your notification' until an answer is changed.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 39",
+      "quote": "Review your notification - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-058",
+      "statement": "Once an answer has been changed in the amendment, the amend review's heading and title become 'Review before re-submitting'.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 55",
+      "quote": "Review before re-submitting - Import notification service - GOV.UK || Review before re-submitting",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-059",
+      "statement": "During an amendment every page of the journey shows an amend status bar above the heading: an 'Amend' tag, the notification reference and a 'Cancel amend' link-styled button.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit actions 39, 49, 76",
+      "quote": "<strong class=\"govuk-tag app-dr2-review-status__tag app-dr2-review-status__tag--amend\">Amend</strong> <span class=\"app-dr2-notification-status__reference\">GBN-AG-26-7K8M2U</span> <button class=\"govuk-link app-dr2-notification-status__cancel-link\" type=\"button\" data-modal-open=\"cancel-amend-modal\"> Cancel amend </button>",
+      "confidence": "verbatim",
+      "note": "Seen on the amend review, Origin of the import and Arrival details; not on the declaration or the submitted page."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-060",
+      "statement": "The amend review shows the answers with Change links on every card, as a draft does.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 34",
+      "quote": "Change>/design-release-2.1/origin-of-the-import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-061",
+      "statement": "The amend review has no Import reference numbers section, no Actions menu and no date line.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 39",
+      "quote": "Amend\nGBN-AG-26-7K8M2U\nCancel amend\nReview your notification\n1. About the consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-062",
+      "statement": "The amend review ends with a button group: 'Continue' (submit), 'Cancel amend' (secondary) and 'Delete' (warning button linking to /notifications/delete?reference=<reference>).",
+      "kind": "copy",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 39",
+      "quote": "<button type=\"submit\" class=\"govuk-button\"> Continue </button> <button class=\"govuk-button govuk-button--secondary\" type=\"button\" data-modal-open=\"cancel-amend-modal\"> Cancel amend </button> <a href=\"/design-release-2.1/notifications/delete?reference=GBN-AG-26-7K8M2U\" role=\"button\" draggable=\"false\" class=\"govuk-button govuk-button--warning\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-063",
+      "statement": "The amend review's Back link goes to the notification hub.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 39",
+      "quote": "BACK /design-release-2.1/notification-hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-064",
+      "statement": "Cancel amend (in the status bar or at the foot) opens a modal dialog headed 'Are you sure you want to cancel this amendment?' with a 'Yes, cancel amendment' button and a 'Go back' link-styled button.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-cancel-an-amendment-from-the-amend-review actions 11-18",
+      "quote": "Are you sure you want to cancel this amendment?\nYes, cancel amendment\nGo back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-065",
+      "statement": "The cancel-amend modal is custom JavaScript (app-dr2-amend-modal, role=dialog, hidden until opened, with an overlay and a Close button); the Cancel amend buttons are type=button and do nothing without JavaScript.",
+      "kind": "constraint",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 39, #cancel-amend-modal",
+      "quote": "<div class=\"app-dr2-amend-modal\" id=\"cancel-amend-modal\" hidden=\"\" data-module=\"dr2-confirm-modal\"> ... <div class=\"app-dr2-amend-modal__dialog\" role=\"dialog\" aria-modal=\"true\"",
+      "confidence": "verbatim",
+      "note": "No GOV.UK component gives a modal; a confirmation page (like the amend and delete confirmations) would replace it."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-066",
+      "statement": "'Yes, cancel amendment' is a GET link to /notifications/cancel-amend, which ends the amendment and redirects to the notification's view page, still Submitted.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-cancel-an-amendment-from-the-amend-review request 82-83, actions 20-22",
+      "quote": "GET 302 cancel-amend ... GET 200 review-notification?reference=GBN-AG-26-7K...",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-067",
+      "statement": "A question page opened from the amend review offers three actions: 'Save and return' (primary, back to the review), 'Save and continue' (secondary) and 'Save and return to overview' (a link-styled button).",
+      "kind": "copy",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 49",
+      "quote": "action=review=Save and return=govuk-button ; action=continue=Save and continue=govuk-button govuk-button--secondary ; action=hub=Save and return to overview=govuk-link app-govuk-body-link",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-068",
+      "statement": "The same three amend actions show on the Arrival details page when it is opened directly during an amendment.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 64",
+      "quote": "Save and return / Save and continue / Save and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-069",
+      "statement": "During an amendment, question pages are pre-filled with the notification's submitted answers.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 49",
+      "quote": "INPUT|search||country-of-origin|Republic of Ireland ; ... INPUT|text|internalReference|internal-reference|LIV-2026-0142",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-070",
+      "statement": "Saving a changed answer with Save and return brings the trader back to the amend review showing the new value.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit actions 51-55",
+      "quote": "Internal reference number / AMENDED-REF",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-071",
+      "statement": "The Back link on a question page opened from the amend review does not go back to the review: on Origin of the import it goes to /notification-type, and on Arrival details to the notification hub.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit actions 49, 76",
+      "quote": "BACK /design-release-2.1/notification-type ... BACK /design-release-2.1/notification-hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-072",
+      "statement": "Continue on the amend review is refused silently while the seeded arrival date and port of entry are not in the formats the arrival page saves: the review re-renders with no error summary and no error messages.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit actions 58-61, request 282",
+      "quote": "POST 200 review-notification ... ES none || ERRS",
+      "confidence": "verbatim",
+      "note": "The test calls this a seed-format quirk. A refused Continue with no message is a defect to keep out of the rebuild."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-073",
+      "statement": "Once the arrival date and port are re-entered on Arrival details, Continue on the amend review goes on to the declaration.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit actions 65-84, requests 361-403",
+      "quote": "POST 302 review-notification ... GET 200 declaration",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-074",
+      "statement": "During an amendment the port of entry is picked from a search that offers options such as 'London Heathrow - LHR', and shows 'Selected London Heathrow - LHR' once chosen.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit actions 67-76",
+      "quote": "Selected London Heathrow - LHR",
+      "confidence": "verbatim",
+      "note": "The search uses custom button.app-country-search__option options; the Arrival details page itself is another part's."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-075",
+      "statement": "The amended port shows on the review in a different form from the search option: the review shows 'London Heathrow', the option 'London Heathrow - LHR'.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit actions 57, 76",
+      "quote": "Port of entry\nLondon Heathrow",
+      "confidence": "inferred",
+      "note": "mechanism: the review shows the seeded port as 'London Heathrow' while the search saves 'London Heathrow - LHR'; the review after the re-pick was not snapshotted for the port."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-076",
+      "statement": "An amendment is resubmitted through the same declaration page as a new notification, with its 'Declaration confirmation' checkbox and Continue.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit actions 84-86",
+      "quote": "Declaration confirmation \nI confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-077",
+      "statement": "The declaration page during an amendment has no amend status bar, and its Back link goes to /review-notification.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 85",
+      "quote": "Declaration\nI am the contact for the authorities and located in the UK. ... BACK /design-release-2.1/review-notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-078",
+      "statement": "Resubmitting an amendment lands on the 'Import notification submitted' confirmation panel, which shows the same reference number as the original notification.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit actions 88-94",
+      "quote": "Import notification submitted\nYour reference number\nGBN-AG-26-7K8M2U",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-079",
+      "statement": "The confirmation after an amendment uses the same copy as a first submission, with no wording that says it was an amendment.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 94",
+      "quote": "How to view or amend this notification\n\nYou can view or change this notification from your dashboard.\n\nReturn to your dashboard\n\nCreate a new notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-080",
+      "statement": "After an amendment the confirmation still lists 'complete the animal identifier information in the notification' under 'You still need to:', although the notification has identifiers for its animals.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit action 94",
+      "quote": "Before the consignment is imported\n\nYou still need to:\n\ncomplete the animal identifier information in the notification",
+      "confidence": "verbatim",
+      "note": "The cattle line has Ear tag and Passport for its one animal row but 5 animals, so the reminder may fire on fewer identifier rows than animals; recorded as rendered."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-081",
+      "statement": "Visiting /notifications/cancel-amend with no amendment in progress redirects to the overall dashboard, with no message.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--amend-and-copy-guards-cancel-amend-with-no-amendment-in-progress-and-unknown-references-return-to-the-dashboard actions 7-8, requests 1-2",
+      "quote": "GET 302 cancel-amend ... GET 200 design-release-2.1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-082",
+      "statement": "Opening /notifications/amend with an unknown reference redirects to the overall dashboard, with no message.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--amend-and-copy-guards-cancel-amend-with-no-amendment-in-progress-and-unknown-references-return-to-the-dashboard actions 9-10, request 42",
+      "quote": "GET 302 amend?reference=GBN-AG-26-NOSUCH",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-083",
+      "statement": "Opening /notifications/copy-as-new with an unknown reference redirects to the overall dashboard, with no message.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--amend-and-copy-guards-cancel-amend-with-no-amendment-in-progress-and-unknown-references-return-to-the-dashboard actions 11-12, request 83",
+      "quote": "GET 302 copy-as-new?reference=GBN-AG-26-NOSUCH",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-084",
+      "statement": "The guard redirects land on the overall dashboard, titled 'Dashboard' and headed 'Import notification service', with no banner or error summary.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--amend-and-copy-guards-cancel-amend-with-no-amendment-in-progress-and-unknown-references-return-to-the-dashboard action 12",
+      "quote": "Dashboard - Import notification service - GOV.UK || H1 Import notification service || BANNER none",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-085",
+      "statement": "Copy as new is a GET link that creates a new draft from the notification and redirects straight to the notification hub, with no confirmation step.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--copy-as-new-copying-a-submitted-notification-opens-a-new-draft-on-the-hub requests 41-42",
+      "quote": "GET 302 copy-as-new?reference=GBN-AG-26-7K8M2U ... GET 200 notification-hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-086",
+      "statement": "The copy gets its own new reference, shown in the hub caption with the set name, and the hub shows it as a Draft.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--copy-as-new-copying-a-submitted-notification-opens-a-new-draft-on-the-hub action 19",
+      "quote": "Draft\nLive animals - GBN-AG-26-0LWUJY\nOverview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-087",
+      "statement": "Copy as new keeps the origin, commodity, import reason, additional details and addresses, and clears commodity details, identification, arrival, transport and documents.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--copy-as-new-copying-a-submitted-notification-opens-a-new-draft-on-the-hub action 19",
+      "quote": "Where is this consignment coming from?\nComplete\nWhat are you importing?\nComplete\nMain import reason\nComplete\n2. Description of the goods\nCommodity details\nTo do\nIdentification details\nTo do\nAdditional details\nComplete\n3. Transport and arrival\nArrival details\nTo do\nTransport details\nTo do\n4. Documents\nUpload documents\nTo do\n5. Addresses\nConsignment addresses ... Complete",
+      "confidence": "inferred",
+      "note": "Inferred from the hub's task statuses straight after the copy; the copy's answers were not opened."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-088",
+      "statement": "After a copy the hub's counts show 0 commodities and 0 animals, so commodity quantities are not carried over.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--copy-as-new-copying-a-submitted-notification-opens-a-new-draft-on-the-hub action 19",
+      "quote": "Your commodities\n\n0\n\nAnimals\n\nTotal number of animals in this consignment\n\n0",
+      "confidence": "verbatim",
+      "note": "'Your commodities' 0 while 'What are you importing?' is Complete may be a prototype inconsistency."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-089",
+      "statement": "The hub after a copy shows no success banner saying the notification was copied.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--copy-as-new-copying-a-submitted-notification-opens-a-new-draft-on-the-hub action 19",
+      "quote": "BANNER none",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-090",
+      "statement": "Choosing Delete opens a confirmation page at /notifications/delete?reference=<reference>, titled and headed 'Delete this notification?'.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--delete-a-notification-confirm-the-deletion-the-dashboard-shows-a-success-banner actions 10-12",
+      "quote": "Delete this notification? - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-091",
+      "statement": "The delete confirmation page shows the same summary list as the amend one: 'Reference number', 'Commodity' (all commodity lines, comma-separated), 'Number' and 'Origin'.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--delete-a-notification-confirm-the-deletion-the-dashboard-shows-a-success-banner action 23",
+      "quote": "Reference number </dt> <dd class=\"govuk-summary-list__value\"> GBN-AG-26-7K8M2P </dd> ... Commodity </dt> <dd class=\"govuk-summary-list__value\"> Sheep (Ovis Aries), Goat (Capra Hircus) </dd> ... Number ... Origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-092",
+      "statement": "The delete confirmation page asks for confirmation and warns that deletion is permanent, in two body paragraphs.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--delete-a-notification-confirm-the-deletion-the-dashboard-shows-a-success-banner actions 15-16",
+      "quote": "Confirm that you want to delete this notification.</p> <p class=\"govuk-body\">This action cannot be undone.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-093",
+      "statement": "The delete confirmation page has a 'Yes, delete' warning button that POSTs the form and a 'No, cancel' link back to the view page.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--delete-a-notification-confirm-the-deletion-the-dashboard-shows-a-success-banner action 23",
+      "quote": "<button type=\"submit\" class=\"govuk-button govuk-button--warning\"> Yes, delete </button> <a class=\"govuk-link\" href=\"/design-release-2.1/review-notification?reference=GBN-AG-26-7K8M2P\">No, cancel</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-094",
+      "statement": "The delete confirmation page's Back link goes to the notification's view page.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--delete-a-notification-confirm-the-deletion-the-dashboard-shows-a-success-banner action 18",
+      "quote": "<a href=\"/design-release-2.1/review-notification?reference=GBN-AG-26-7K8M2P\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-095",
+      "statement": "'Yes, delete' deletes the notification and redirects to the overall dashboard, which shows no banner itself.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--delete-a-notification-confirm-the-deletion-the-dashboard-shows-a-success-banner actions 25-28, requests 81-82",
+      "quote": "POST 302 delete?reference=GBN-AG-26-7K8M2P ... GET 200 design-release-2.1 ... BANNER none",
+      "confidence": "verbatim",
+      "note": "The goal sends every 'overall dashboard' destination to the set's own list instead."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-096",
+      "statement": "The Live animals list then shows a GOV.UK success notification banner titled 'Success' naming the deleted reference.",
+      "kind": "copy",
+      "ref": "trace manage-notifications--delete-a-notification-confirm-the-deletion-the-dashboard-shows-a-success-banner action 36",
+      "quote": "<h2 class=\"govuk-notification-banner__title\" id=\"govuk-notification-banner-title\"> Success </h2> ... <p class=\"govuk-notification-banner__heading\"> GBN-AG-26-7K8M2P has been deleted. </p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-097",
+      "statement": "The deleted notification no longer appears in the Live animals notification list.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--delete-a-notification-confirm-the-deletion-the-dashboard-shows-a-success-banner action 31",
+      "quote": "expect(page.locator('.app-dr2-dashboard-notification-list')).not.toContainText('GBN-AG-26-7K8M2P')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-098",
+      "statement": "The delete success banner is set to dismiss itself after 5 seconds, a custom data-auto-dismiss-ms behaviour outside GOV.UK Frontend.",
+      "kind": "constraint",
+      "ref": "trace manage-notifications--delete-a-notification-confirm-the-deletion-the-dashboard-shows-a-success-banner action 36",
+      "quote": "data-auto-dismiss-ms=\"5000\"",
+      "confidence": "verbatim",
+      "note": "Auto-dismissing content conflicts with WCAG 2.2.1 timing; the standard banner stays until the page changes."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-099",
+      "statement": "The delete action is offered on submitted notifications, and on the amend review, with no rule seen about which statuses may be deleted.",
+      "kind": "rule",
+      "ref": "trace manage-notifications--delete-a-notification-confirm-the-deletion-the-dashboard-shows-a-success-banner action 9",
+      "quote": "Delete",
+      "confidence": "inferred",
+      "note": "Inferred from Delete being in every Actions menu seen (submitted, past, draft) and on the amend review; only a submitted notification was deleted."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-100",
+      "statement": "Make template is linked from every Actions menu but no trace in this part follows it, so its page and behaviour are not shown here.",
+      "kind": "behaviour",
+      "ref": "manage-notifications.fit.spec.js line 41",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-101",
+      "statement": "No trace shows the 'Go back' or Close controls of the cancel-amend modal being used, so what they do is not shown.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-cancel-an-amendment-from-the-amend-review",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-102",
+      "statement": "No trace shows Delete on an unknown reference, on a draft or past notification, or the 'No, cancel' link of the delete page being followed.",
+      "kind": "rule",
+      "ref": "manage-notifications.fit.spec.js 'amend and copy guards', 'delete a notification'",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-103",
+      "statement": "No trace shows the Copy buttons on the import references being used, or what feedback they give.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-104",
+      "statement": "No trace shows the action-required Continue being followed, the draft's Continue being pressed, or what the hub then offers to resolve the action.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-105",
+      "statement": "No trace shows how the dashboard or the view page shows a notification after it has been amended and resubmitted (status, dates, any amended marker).",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-106",
+      "statement": "No trace shows viewing, amending, copying or deleting a germinal products notification from its own list; the draft viewed (GBN-GP reference) was opened by URL and shows live-animal answers.",
+      "kind": "behaviour",
+      "ref": "trace manage-notifications--view-a-notification-from-the-dashboard-submitted-past-and-draft-notifications action 27",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The GBN-GP draft shows 'Cattle (0102)' and 'Bison bison', so its fixture is live-animal data under a germinal reference."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p16-107",
+      "statement": "The network log of every trace in this part shows only the prototype's own server-rendered routes; no outbound call to another system is seen for view, amend, copy or delete.",
+      "kind": "integration",
+      "ref": "requests --grep design-release, every trace in part 16",
+      "quote": "GET 200 review-notification ... POST 302 amend ... GET 302 copy-as-new ... POST 302 delete",
+      "confidence": "verbatim",
+      "note": "Persistence for amend, copy and delete is session-held in the prototype; the real backend calls these need are not shown."
+    }
+  ]
+}

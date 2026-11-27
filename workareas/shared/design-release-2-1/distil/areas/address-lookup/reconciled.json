@@ -1,0 +1,885 @@
+{
+  "area": "address-lookup",
+  "requirements": [
+    {
+      "id": "req-1871",
+      "statement": "trade-imports-stub's address lookup simulator answers GET /simulator/address-lookup/v2.1/addresses with optional postcode or find (postcode winning when both are sent), a 400 'Either postcode or find is required' when neither is sent, and exactly and case-sensitively matched reserved terms: SW1A 1AA, 'Buckingham Palace' and 'Downing Street' give the three London fixtures shaped as the real gateway's dev response; ZZ1 1ZZ a 204; QQ1 1QQ a 400; XX1 1XX a 503; YY1 1YY an HTML 200; TT1 1TT the three fixtures after 15 seconds; anything else a 200 with no results. Before any of that it checks the bearer's scheme, RSA signature, api:// audience and expiry only, and answers a failed check with the gateway's exact 401 body and no WWW-Authenticate header.",
+      "why": "It stands in for the address lookup on the local stack and will answer the address search once the search is built; nothing in the design changes it.",
+      "claims": [
+        "repo-stub-p1-001",
+        "repo-stub-p1-002",
+        "repo-stub-p1-003",
+        "repo-stub-p1-004",
+        "repo-stub-p1-005",
+        "repo-stub-p1-006",
+        "repo-stub-p1-007",
+        "repo-stub-p1-008",
+        "repo-stub-p1-009",
+        "repo-stub-p1-010",
+        "repo-stub-p1-011",
+        "repo-stub-p1-012",
+        "repo-stub-p1-013",
+        "repo-stub-p1-014",
+        "repo-stub-p1-015",
+        "repo-stub-p1-016",
+        "repo-stub-p1-017",
+        "repo-stub-p1-018",
+        "repo-stub-p1-019",
+        "repo-stub-p1-020",
+        "repo-stub-p1-021",
+        "repo-stub-p1-022",
+        "repo-stub-p1-023",
+        "repo-stub-p1-024",
+        "repo-stub-p1-025",
+        "repo-stub-p1-026",
+        "repo-stub-p1-027",
+        "repo-stub-p1-028",
+        "repo-stub-p1-029",
+        "repo-stub-p1-030",
+        "repo-stub-p1-031",
+        "repo-stub-p1-031-m1",
+        "repo-stub-p1-032",
+        "repo-stub-p1-032-m1",
+        "repo-stub-p1-033",
+        "repo-stub-p1-034",
+        "repo-stub-p1-035",
+        "repo-stub-p1-036",
+        "repo-stub-p1-037",
+        "repo-stub-p1-040",
+        "repo-stub-p1-041",
+        "repo-stub-p1-042",
+        "repo-stub-p1-043",
+        "repo-stub-p1-044",
+        "repo-stub-p1-045",
+        "repo-stub-p1-046",
+        "repo-stub-p1-047",
+        "repo-stub-p1-048",
+        "repo-stub-p1-049",
+        "repo-stub-p1-050",
+        "repo-stub-p1-051",
+        "repo-stub-p1-052",
+        "repo-stub-p1-053"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-stub-p1-001 to p1-037 describe the simulator as built, and the tests in repo-stub-p1-040 to p1-053 prove it.",
+      "conflicts": []
+    },
+    {
+      "id": "req-1873",
+      "statement": "The address lookup simulator's gaps are left as they are: no test of the TT1 1TT delay, the 'Downing Street' term or postcode winning over find; no truncation or paged fixture and no fixture of more than three addresses; no fixture address outside England nor in a language other than English; and a class Javadoc that still calls find a later iteration.",
+      "why": "Gaps in today's stub that no designed page depends on and this programme does not fix; they go to the report.",
+      "claims": [
+        "repo-stub-p1-038",
+        "repo-stub-p1-039",
+        "repo-stub-p1-054"
+      ],
+      "status": "out-of-scope",
+      "delta": "exists",
+      "deltaNote": "repo-stub-p1-038, p1-039 and p1-054.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-lookup-001",
+      "statement": "Adding an address from the consignee, importer or place of destination address section, and adding an address in the address book, starts with a find-address step: the trader enters a UK postcode, picks the address from those found there, and lands on the address form filled from it. The place of origin, consignor, county parish holding and permanent address sections have no find-address step.",
+      "why": "The design starts these add-address journeys with a postcode search. Only the receiving roles get it because the address book refuses a consignee, importer or place of destination outside the United Kingdom, while a place of origin or consignor may be abroad, so a UK postcode search fits only the former. The germinal products copy of these sections takes the same step, and plants takes it in the same increment for any of these sections it has.",
+      "claims": [
+        "prototype-dr2-1-source-p17-010",
+        "ruling-paul-2026-11-05-p1-030",
+        "ruling-paul-2026-11-05-p1-030-m1",
+        "ruling-ian-2026-11-16-p1-043",
+        "ruling-sam-2026-11-09-p1-002",
+        "ruling-sam-2026-10-09-p1-178",
+        "repo-insfrontend-p8-002",
+        "repo-insfrontend-p8-004"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today no journey page leads to an address lookup: the only lookup page is the dev and local spike, linked from nowhere (repo-insfrontend-p8-002, p8-004). Until this is built the add-address pages offer manual entry only, as req-1830 and req-1862 say.",
+      "conflicts": [
+        "c-address-lookup-001",
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work, not needed for the deadline (ruling:sam-2026-11-09 point 2), and waits on the INS backend's address lookup becoming a real feature: today only the EUDPA-390 spike exists, gated to dev and local on a standalone page and not wired in (ruling:sam-2026-10-09 claim 34). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-002",
+      "statement": "The address book's find-address page is headed \"Add an address\".",
+      "why": "The design's heading for the address book's find-address page.",
+      "claims": [
+        "prototype-dr2-1-source-p17-005"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-003",
+      "statement": "On the address book's find-address and select pages, the cancel link reads \"Cancel and return to address book\" and goes to the address book list, and the find-address page's back link goes to the address book's add page.",
+      "why": "The design's navigation for the address book's find-address step.",
+      "claims": [
+        "prototype-dr2-1-source-p17-006",
+        "prototype-dr2-1-source-p17-008"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-004",
+      "statement": "A consignment address section's find-address page is headed \"Add an address for a consignee\", \"Add an address for an importer\" or \"Add an address for a place of destination\", by section.",
+      "why": "The design's heading for each section's find-address page.",
+      "claims": [
+        "prototype-dr2-1-source-p17-013"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-005",
+      "statement": "On a consignment address section's find-address and select pages, the cancel link reads \"Cancel and return to hub\" and goes to the notification's overview, and the find-address page's back link goes to the section's page.",
+      "why": "The design's navigation for each section's find-address step. The overview is the real service's own page at its own path.",
+      "claims": [
+        "prototype-dr2-1-source-p17-014",
+        "prototype-dr2-1-source-p17-016"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-006",
+      "statement": "Below the form on both the find-address page and the select page, whether or not addresses were found, an \"Enter address manually\" link comes first and the cancel link second; \"Enter address manually\" opens the same address form for the trader to fill in by hand.",
+      "why": "The design always offers a way past the search, so a trader whose address is not found can still add it.",
+      "claims": [
+        "prototype-dr2-1-source-p17-007",
+        "prototype-dr2-1-source-p17-015",
+        "prototype-dr2-1-source-p17-023",
+        "prototype-dr2-1-source-p17-045"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-007",
+      "statement": "The find-address and select pages' title is the page heading, with \"Error: \" in front when the page shows an error, and both pages show the service's Alpha phase banner with its 'give your feedback by email' link.",
+      "why": "The design's page title and banner, matching every other page of the service.",
+      "claims": [
+        "prototype-dr2-1-source-p17-018",
+        "prototype-dr2-1-source-p17-019",
+        "prototype-dr2-1-source-p17-035"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-008",
+      "statement": "The find-address page has one text field labelled \"Enter a UK postcode\" with the hint \"For example, AB12 3CD\".",
+      "why": "The design's label and hint: the journey's search is by UK postcode only.",
+      "claims": [
+        "prototype-dr2-1-source-p17-020",
+        "repo-insfrontend-p8-008",
+        "repo-insfrontend-p8-009"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "The only lookup page today, the dev and local spike, labels its field 'Postcode or address' with a hint that anything other than a postcode is searched as free text (repo-insfrontend-p8-008, p8-009); the spike stays as it is.",
+      "conflicts": [
+        "c-address-lookup-002",
+        "c-address-lookup-004"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-009",
+      "statement": "The postcode field is a width-10 input with the browser's postal-code autocomplete and spellcheck turned off.",
+      "why": "The design's field size and attributes help a trader enter a postcode and let the browser offer a saved one.",
+      "claims": [
+        "prototype-dr2-1-source-p17-021"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-010",
+      "statement": "The find-address page's button reads \"Find address\".",
+      "why": "The design's button text.",
+      "claims": [
+        "prototype-dr2-1-source-p17-022",
+        "repo-insfrontend-p8-010"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "The spike's button reads 'Search' (repo-insfrontend-p8-010); the spike stays as it is.",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-011",
+      "statement": "Coming back to the find-address page from the select page, by its back link or its \"Change postcode\" link, fills the postcode field with the postcode searched.",
+      "why": "The trader corrects the postcode rather than typing it again.",
+      "claims": [
+        "prototype-dr2-1-source-p17-024",
+        "prototype-dr2-1-source-p17-037"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-012",
+      "statement": "Submitting the find-address page with no postcode shows the error \"Enter a postcode\".",
+      "why": "The design's error message for an empty postcode.",
+      "claims": [
+        "prototype-dr2-1-source-p17-025",
+        "repo-insfrontend-p8-011"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "The spike's empty-term error reads 'Enter a postcode or an address to search for' (repo-insfrontend-p8-011); the spike stays as it is.",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-013",
+      "statement": "Submitting the find-address page with something that is not a full UK postcode shows the error \"Enter a full UK postcode, like BB4 4AA\".",
+      "why": "The design's error message for a partial or malformed postcode, checked before any lookup is made.",
+      "claims": [
+        "prototype-dr2-1-source-p17-026"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-014",
+      "statement": "A postcode error shows in a \"There is a problem\" error summary that links to the postcode field, and beside the field, and the field keeps what the trader typed.",
+      "why": "The GOV.UK error pattern the design and the rest of the service use.",
+      "claims": [
+        "prototype-dr2-1-source-p17-027",
+        "repo-insfrontend-p8-011-m1"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "The spike shows its error only on the input, with no error summary, no title prefix and the input emptied (repo-insfrontend-p8-011-m1); the spike stays as it is.",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-015",
+      "statement": "A postcode is checked ignoring spaces and letter case, and is accepted as a full UK postcode when it is an outward code of one or two letters, a digit and an optional letter or digit, followed by an inward code of a digit and two letters, or is GIR 0AA.",
+      "why": "The design's rule for what counts as a full UK postcode, so a trader is not refused for spacing or case.",
+      "claims": [
+        "prototype-dr2-1-source-p17-028",
+        "prototype-dr2-1-source-p17-029",
+        "repo-insfrontend-p8-013"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "The spike detects a postcode with a similar pattern that allows spaces and ignores case but does not accept GIR 0AA, and uses it only to choose between postcode and free-text search (repo-insfrontend-p8-013).",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-016",
+      "statement": "The find-address step shows a postcode as its outward code, a space and its inward code, in upper case (such as \"BB4 4AA\"), everywhere it shows one: the select page's postcode line, its \"No addresses found for\" heading, each address option, and the postcode field of the address form it fills.",
+      "why": "One format for the searched postcode on every page of the step, whatever spacing or case the trader typed.",
+      "claims": [
+        "prototype-dr2-1-source-p17-030",
+        "prototype-dr2-1-source-p17-034",
+        "prototype-dr2-1-source-p17-036",
+        "prototype-dr2-1-source-p17-040",
+        "prototype-dr2-1-source-p17-049",
+        "repo-insfrontend-p8-014"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "The spike normalises a postcode the same way, but only to send it to the lookup (repo-insfrontend-p8-014).",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-017",
+      "statement": "Submitting a full postcode opens the select page for that postcode, and the select page searches the postcode it shows; opening or submitting the select page without a full postcode returns the trader to the find-address page.",
+      "why": "The design's two-page flow: postcode first, then the choice of address.",
+      "claims": [
+        "prototype-dr2-1-source-p17-031",
+        "prototype-dr2-1-source-p17-032",
+        "prototype-dr2-1-source-p17-043"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-018",
+      "statement": "When addresses are found at the postcode, the select page is headed and titled \"Select an address\".",
+      "why": "The design's heading for the select page.",
+      "claims": [
+        "prototype-dr2-1-source-p17-033"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-019",
+      "statement": "When the lookup finds no addresses at the postcode, the select page is titled \"No addresses found\" and headed \"No addresses found for <postcode>\", and shows no address list and no Continue button.",
+      "why": "The design's page for a postcode with nothing at it. The address lookup answers that case either with an empty result or with no content, and both read as no addresses found.",
+      "claims": [
+        "prototype-dr2-1-source-p17-034",
+        "repo-stub-p1-016",
+        "repo-stub-p1-024"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-020",
+      "statement": "The select page shows \"Postcode\" with the searched postcode in bold beneath it, followed by a \"Change postcode\" link to the find-address page.",
+      "why": "The design shows the trader which postcode the list is for and lets them change it.",
+      "claims": [
+        "prototype-dr2-1-source-p17-036",
+        "prototype-dr2-1-source-p17-037"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-021",
+      "statement": "The select page lists the addresses found in a plain full-width GOV.UK select (a dropdown, not an autocomplete) labelled \"Select an address\".",
+      "why": "The design uses a plain select here, and a field the design shows as a plain select stays plain.",
+      "claims": [
+        "prototype-dr2-1-source-p17-038"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-022",
+      "statement": "The select's first option has no value and reads \"1 address found\" or \"<N> addresses found\", with the number of addresses listed.",
+      "why": "The design tells the trader how many addresses are at the postcode before they pick one.",
+      "claims": [
+        "prototype-dr2-1-source-p17-039",
+        "repo-insfrontend-p8-023"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "The spike shows '<returned> of <total> returned.' as a line of text (repo-insfrontend-p8-023); the spike stays as it is.",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-023",
+      "statement": "Each address option reads the address as one line ending with its postcode, such as \"UNIT 1, YORK AVENUE, HASLINGDEN, BB4 4AA\", with the postcode shown once.",
+      "why": "The design's option text. The lookup's own one-line address already ends with the postcode, so the option shows it once.",
+      "claims": [
+        "prototype-dr2-1-source-p17-040",
+        "repo-stub-p1-010",
+        "repo-insfrontend-p8-024"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "The spike lists each result's one-line address, which ends with the postcode (repo-insfrontend-p8-024, repo-stub-p1-010).",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-024",
+      "statement": "When the select page is shown again after an error, the address the trader had picked stays selected.",
+      "why": "The trader does not lose their choice to an error.",
+      "claims": [
+        "prototype-dr2-1-source-p17-041"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-025",
+      "statement": "The select page's button reads \"Continue\".",
+      "why": "The design's button text.",
+      "claims": [
+        "prototype-dr2-1-source-p17-042"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-026",
+      "statement": "Continuing on the select page without choosing an address, or with one that is not among those found, shows the error \"Select an address\" in a \"There is a problem\" summary that links to the select, and beside the select.",
+      "why": "The design's error for a missing choice, in the GOV.UK error pattern.",
+      "claims": [
+        "prototype-dr2-1-source-p17-044"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-027",
+      "statement": "Continuing with a chosen address opens the address form it was reached from (the address book's add form, or the section's add-address page) with address line 1, address line 2, town or city and postcode filled from the chosen address and the country set to United Kingdom, every field still editable; name or organisation and county are left for the trader. The address lines are made from the lookup's own fields (sub-building, building name, number, street and locality), so no part of the address the lookup returned is dropped.",
+      "why": "The design fills the address form from the chosen address. The real lookup returns structured fields rather than the design's one-line text, and no county, so the lines are composed from those fields.",
+      "claims": [
+        "prototype-dr2-1-source-p17-049",
+        "repo-insfrontend-p8-049",
+        "repo-insfrontend-p8-050",
+        "repo-insfrontend-p8-051",
+        "repo-insfrontend-p8-052",
+        "repo-insfrontend-p8-053",
+        "repo-stub-p1-014",
+        "repo-stub-p1-015"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today only the spike maps a lookup result onto the address book's fields, and only to display them; it leaves the country empty because the lookup returns it as free text such as 'ENGLAND' (repo-insfrontend-p8-049 to p8-053, p8-058). A UK postcode search sets United Kingdom.",
+      "conflicts": [
+        "c-address-lookup-002"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-028",
+      "statement": "The addresses found at a postcode are those the INS backend's address lookup returns for a postcode search (postcode=<postcode>, carrying the trace id), which trade-imports-stub's address lookup simulator answers on the local stack.",
+      "why": "The INS backend's address lookup is the service that finds addresses; where the design's addresses come from is the prototype's own fixture, not the service's architecture.",
+      "claims": [
+        "repo-insfrontend-p8-060",
+        "repo-insfrontend-p8-061",
+        "repo-stub-p1-001",
+        "repo-stub-p1-002",
+        "repo-stub-p1-003",
+        "ruling-sam-2026-10-09-p1-066"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today only the spike calls the INS backend's address lookup (repo-insfrontend-p8-060), and in stub mode an in-memory stub answers instead (repo-insfrontend-p8-064).",
+      "conflicts": [
+        "c-address-lookup-002",
+        "c-address-lookup-003",
+        "c-address-lookup-004"
+      ],
+      "blockedBy": "Address search is parked as concept work (ruling:sam-2026-11-09 point 2) and waits on the INS backend's address lookup becoming a real feature (today only the EUDPA-390 spike, dev and local only, not wired in). The address search area is re-distilled once it lands."
+    },
+    {
+      "id": "req-address-lookup-029",
+      "statement": "The INS front door's address lookup spike page at /address-lookup-spike exists only in dev and local, with maturity 'exploring', titled and headed 'Address lookup spike' with a caption saying it is temporary and saves nothing, laid out full width, linked from no page and with no links of its own, and it saves nothing to the address book or the session.",
+      "why": "Today's spike, which the programme leaves as it is until the address lookup is a real feature.",
+      "claims": [
+        "repo-insfrontend-p8-001",
+        "repo-insfrontend-p8-002",
+        "repo-insfrontend-p8-003",
+        "repo-insfrontend-p8-004",
+        "repo-insfrontend-p8-005",
+        "repo-insfrontend-p8-005-m1",
+        "repo-insfrontend-p8-006",
+        "repo-insfrontend-p8-007",
+        "repo-insfrontend-p8-028",
+        "repo-insfrontend-p8-070",
+        "repo-insfrontend-p8-071",
+        "repo-insfrontend-p8-072",
+        "repo-insfrontend-p8-073",
+        "repo-insfrontend-p8-074",
+        "repo-insfrontend-p8-075",
+        "repo-insfrontend-p8-076",
+        "repo-insfrontend-p8-077",
+        "repo-insfrontend-p8-078",
+        "repo-insfrontend-p8-079",
+        "repo-insfrontend-p8-080"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p8-001 to p8-007 and p8-005-m1 describe the page as built, with draft Welsh copy in p8-070 to p8-080.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-lookup-030",
+      "statement": "The spike's search takes one 'Postcode or address' field and a 'Search' button, searches a term that looks like a UK postcode as a postcode and anything else as free text, and shows what it searched, an outcome tag, each result's one-line address with its match and UPRN and a 'Use this address' button, 'Nothing returned.' for no results, and warnings when the lookup call fails or a chosen result cannot be read, each logged with the trace id.",
+      "why": "Today's spike search, which the programme leaves as it is.",
+      "claims": [
+        "repo-insfrontend-p8-008",
+        "repo-insfrontend-p8-009",
+        "repo-insfrontend-p8-010",
+        "repo-insfrontend-p8-011",
+        "repo-insfrontend-p8-012",
+        "repo-insfrontend-p8-013",
+        "repo-insfrontend-p8-014",
+        "repo-insfrontend-p8-015",
+        "repo-insfrontend-p8-016",
+        "repo-insfrontend-p8-017",
+        "repo-insfrontend-p8-018",
+        "repo-insfrontend-p8-019",
+        "repo-insfrontend-p8-020",
+        "repo-insfrontend-p8-021",
+        "repo-insfrontend-p8-022",
+        "repo-insfrontend-p8-023",
+        "repo-insfrontend-p8-024",
+        "repo-insfrontend-p8-025",
+        "repo-insfrontend-p8-026",
+        "repo-insfrontend-p8-027",
+        "repo-insfrontend-p8-029",
+        "repo-insfrontend-p8-030",
+        "repo-insfrontend-p8-031",
+        "repo-insfrontend-p8-032",
+        "repo-insfrontend-p8-033",
+        "repo-insfrontend-p8-034",
+        "repo-insfrontend-p8-034-m1",
+        "repo-insfrontend-p8-035"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p8-008 to p8-035 and p8-034-m1 describe the spike's search as built.",
+      "conflicts": [
+        "c-address-lookup-004"
+      ]
+    },
+    {
+      "id": "req-address-lookup-031",
+      "statement": "After a search the spike shows a 'Where the time went' table of the token and lookup hops, the backend's total and its own round trip, says whether a cached token was reused, and gives the trace id, whenever the backend reports timings.",
+      "why": "Today's spike timings, which the programme leaves as they are.",
+      "claims": [
+        "repo-insfrontend-p8-036",
+        "repo-insfrontend-p8-037",
+        "repo-insfrontend-p8-038",
+        "repo-insfrontend-p8-039",
+        "repo-insfrontend-p8-040",
+        "repo-insfrontend-p8-041",
+        "repo-insfrontend-p8-042",
+        "repo-insfrontend-p8-043",
+        "repo-insfrontend-p8-044",
+        "repo-insfrontend-p8-045",
+        "repo-insfrontend-p8-046"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p8-036 to p8-046 describe the timings as built.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-lookup-032",
+      "statement": "After 'Use this address' the spike shows the chosen result mapped onto the address book's fields (address line 1, address line 2, town or city, county, postcode and country, '—' when empty), what the lookup could not fill, and the raw result as JSON.",
+      "why": "Today's spike mapping display, which the programme leaves as it is.",
+      "claims": [
+        "repo-insfrontend-p8-047",
+        "repo-insfrontend-p8-048",
+        "repo-insfrontend-p8-049",
+        "repo-insfrontend-p8-050",
+        "repo-insfrontend-p8-051",
+        "repo-insfrontend-p8-052",
+        "repo-insfrontend-p8-053",
+        "repo-insfrontend-p8-054",
+        "repo-insfrontend-p8-058",
+        "repo-insfrontend-p8-059"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p8-047 to p8-054, p8-058 and p8-059 describe the mapping display as built.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-lookup-033",
+      "statement": "The INS front door's address lookup client calls the INS backend's address lookup with a postcode or a free-text term, carrying the trace id, and in stub mode an in-memory stub answers every search with the same three London fixture addresses and no timings.",
+      "why": "Today's client and stub, which the find-address step will call once it is built.",
+      "claims": [
+        "repo-insfrontend-p8-060",
+        "repo-insfrontend-p8-061",
+        "repo-insfrontend-p8-062",
+        "repo-insfrontend-p8-063",
+        "repo-insfrontend-p8-064",
+        "repo-insfrontend-p8-065",
+        "repo-insfrontend-p8-066",
+        "repo-insfrontend-p8-067",
+        "repo-insfrontend-p8-068"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p8-060 to p8-068 describe the client and its stub as built.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-lookup-034",
+      "statement": "The spike's own gaps are left as they are: its empty-term error has no error summary or title prefix and empties the input, its mapping-gap messages are hard-coded English with no Welsh version, and its Welsh copy is an unreviewed machine draft.",
+      "why": "Gaps in a dev and local spike that no designed page uses and this programme does not fix; they go to the report.",
+      "claims": [
+        "repo-insfrontend-p8-011-m1",
+        "repo-insfrontend-p8-055",
+        "repo-insfrontend-p8-056",
+        "repo-insfrontend-p8-057",
+        "repo-insfrontend-p8-069",
+        "repo-insfrontend-p8-081"
+      ],
+      "status": "out-of-scope",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p8-011-m1, p8-055 to p8-057, p8-069 and p8-081.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-lookup-035",
+      "statement": "How the prototype carries a chosen address between pages is not copied: its session keys, its foundAddressId query parameter and its ids naming a postcode and a place in that postcode's list.",
+      "why": "Mechanism and URL or field names are the real service's architecture, which the prototype never decides.",
+      "claims": [
+        "prototype-dr2-1-source-p17-009",
+        "prototype-dr2-1-source-p17-017",
+        "prototype-dr2-1-source-p17-048"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-lookup-036",
+      "statement": "The prototype's address source is not copied: Companies House registered office addresses read from fixture files per postcode district, and its handling of a missing fixture file.",
+      "why": "A prototype fixture, not a real address lookup service; the real addresses come from the INS backend's address lookup.",
+      "claims": [
+        "prototype-dr2-1-source-p17-046",
+        "prototype-dr2-1-source-p17-047",
+        "prototype-dr2-1-source-p17-056"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-address-lookup-003"
+      ]
+    },
+    {
+      "id": "req-address-lookup-037",
+      "statement": "The prototype's splitting of a one-line address at its commas into address line 1, address line 2 and town is not copied.",
+      "why": "It exists because the prototype's fixture addresses are one line of text; the real lookup returns structured fields, from which the address lines are composed instead.",
+      "claims": [
+        "prototype-dr2-1-source-p17-049"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-lookup-038",
+      "statement": "The prototype's list of other addresses at the found postcode, or of its example UK addresses, on a UK address form is not built.",
+      "why": "Its reason is the prototype's own demo data: the example addresses are a prototype fixture and the list is the prototype's way of choosing which to offer.",
+      "claims": [
+        "prototype-dr2-1-source-p17-050"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-lookup-039",
+      "statement": "The prototype's switch that offers the consignment find-address pages only in its Design Release 2.1 session data, and otherwise redirects to the address book's add page, is not copied.",
+      "why": "A prototype mechanism for keeping its design releases apart, not part of the design.",
+      "claims": [
+        "prototype-dr2-1-source-p17-012"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-lookup-040",
+      "statement": "The prototype's standalone /postcode-lookup spike page ('Find an address by postcode', Companies House registered office addresses) is not built.",
+      "why": "A prototype spike linked from no journey, showing the prototype's own fixture data; the journey's find-address pages carry the design.",
+      "claims": [
+        "prototype-dr2-1-source-p17-051",
+        "prototype-dr2-1-source-p17-052",
+        "prototype-dr2-1-source-p17-052-m1",
+        "prototype-dr2-1-source-p17-053",
+        "prototype-dr2-1-source-p17-053-m1",
+        "prototype-dr2-1-source-p17-054",
+        "prototype-dr2-1-source-p17-055"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c-address-lookup-001",
+      "about": "Which address sections get the find-address step, where the prototype's answer comes from its app/data files.",
+      "positions": [
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The consignee, importer and place of destination sections get the find-address pages, because its app/data use-group file maps them to 'destination-and-receiver'.",
+          "claim": "prototype-dr2-1-source-p17-011"
+        },
+        {
+          "source": "ruling:ian-2026-11-16",
+          "says": "A rule claim from the prototype's app/data files is refused as readily as a data one.",
+          "claim": "ruling-ian-2026-11-16-p1-043"
+        },
+        {
+          "source": "ruling:paul-2026-11-05",
+          "says": "The address book refuses a consignee, importer or place of destination outside the United Kingdom.",
+          "claim": "ruling-paul-2026-11-05-p1-030"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The rulings win: the app/data rule is set aside, and the sections that get a UK postcode search are chosen by the address book's own rule that consignee, importer and place of destination must be in the United Kingdom, while place of origin and consignor may be abroad. The same three sections result, on the real model's ground (req-address-lookup-001).",
+      "overruled": [
+        "prototype-dr2-1-source-p17-011"
+      ]
+    },
+    {
+      "id": "c-address-lookup-002",
+      "about": "Whether the add-address journeys start with the postcode find-address step now, as the design shows.",
+      "positions": [
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Each destination-and-receiver section and the address book's add journey start with a find-address page.",
+          "claim": "prototype-dr2-1-source-p17-010"
+        },
+        {
+          "source": "ruling:sam-2026-11-09",
+          "says": "Address search is not to be built yet: it is concept work, not deadline work.",
+          "claim": "ruling-sam-2026-11-09-p1-002"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "Address search is blocked until the address lookup becomes a real feature.",
+          "claim": "ruling-sam-2026-10-09-p1-178"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The rulings win on timing: the find-address pages are adopted as designed but blocked, parked as concept work and waiting on the INS address lookup becoming a real feature, and re-distilled once it lands. Until then every add-address page offers manual entry only (req-1830, req-1862). Nothing is overruled: the prototype's design still backs the blocked requirements."
+    },
+    {
+      "id": "c-address-lookup-003",
+      "about": "Where the addresses found at a postcode come from.",
+      "positions": [
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The addresses are Companies House registered office addresses read from generated fixture files per postcode district.",
+          "claim": "prototype-dr2-1-source-p17-046"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "The prototype never decides architecture, including the split into services.",
+          "claim": "ruling-sam-2026-10-09-p1-066"
+        },
+        {
+          "source": "repo:insfrontend",
+          "says": "The INS front door looks addresses up from the INS backend's address lookup, by postcode or free text.",
+          "claim": "repo-insfrontend-p8-060"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The ruling wins: the addresses come from the INS backend's address lookup, answered locally by trade-imports-stub's simulator (req-address-lookup-028). The prototype's Companies House fixture is recorded out of scope (req-address-lookup-036).",
+      "overruled": [
+        "prototype-dr2-1-source-p17-046"
+      ]
+    },
+    {
+      "id": "c-address-lookup-004",
+      "about": "Whether the journey's address search takes free text as well as a postcode.",
+      "positions": [
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The find-address page asks only for a UK postcode.",
+          "claim": "prototype-dr2-1-source-p17-020"
+        },
+        {
+          "source": "repo:insfrontend",
+          "says": "The spike searches anything that is not a UK postcode as free text with find=<term>.",
+          "claim": "repo-insfrontend-p8-015"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The prototype wins on the journey's pages: they search by UK postcode only (req-address-lookup-008, req-address-lookup-028). The spike keeps its free-text mode, which still backs req-address-lookup-030, so nothing is overruled. req-1218's 'find=<term>' wording, owned by another area, reads against this and is for the cross-area pass."
+    }
+  ]
+}

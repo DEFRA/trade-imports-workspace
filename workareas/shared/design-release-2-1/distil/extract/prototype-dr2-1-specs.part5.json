@@ -1,0 +1,629 @@
+{
+  "source": "prototype:dr2-1-specs",
+  "structure": "Part 5, Address book. Read in full: e2e/address-book.fit.spec.js (239 lines; 3 describes, 9 tests: 'address book list' with 1 test 'categories, pagination and filters' in 7 steps; 'add an address to the address book' with 6 tests: choose an address type, origin or consignor entered by hand, destination/consignee/importer found by postcode, branch, transporter hand-over, usage-step guard; 'an address book entry' with 2 tests: view/edit/save in 4 steps, and delete), e2e/support/journey.js (283 lines; this part claims only the shared helpers the address-book tests call: url/urlFor for the /design-release-2.1 mount, expectHeading on the first h1, expectErrorSummary with its 'There is a problem' title and exact ordered message list, expectBackLink, submitForm and clickAction) and e2e/support/fixtures.js (48 lines; records each test's main-frame navigations for the trace index, which is suite tooling and no prototype behaviour, so it gets no claim). Routes covered: /address-book (list, ?category=, ?page=2, search and type filter), /address-book/add, /address-book/add/lookup (and ?manual=true), /address-book/add/find-address, /address-book/add/find-address/select, /address-book/add/usage (guard only), /transporter/add (hand-over only), /address-book/<entry>, /address-book/<entry>/edit and /address-book/<entry>/delete.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-specs-p5-001",
+      "statement": "The address book list is at /design-release-2.1/address-book and its page title is 'Address book - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:23-24 (address book list > categories, pagination and filters > origin and consignor addresses by default)",
+      "quote": "await page.goto(url('/address-book'))\n      await expect(page).toHaveTitle('Address book - Import notification service - GOV.UK')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-002",
+      "statement": "The address book list's heading is 'Address book'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:25",
+      "quote": "await expectHeading(page, 'Address book')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-003",
+      "statement": "The address book list says 'Manage your addresses for use across all your import notifications'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:27",
+      "quote": "await expect(main).toContainText('Manage your addresses for use across all your import notifications')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-004",
+      "statement": "The address book list has an 'Add a new address' link to /design-release-2.1/address-book/add.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:28",
+      "quote": "await expect(main.locator('a', { hasText: 'Add a new address' })).toHaveAttribute('href', url('/address-book/add'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-005",
+      "statement": "The address book list shows 'Filter addresses'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:29",
+      "quote": "await expect(main).toContainText('Filter addresses')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-006",
+      "statement": "The address book list has four category links, each to /design-release-2.1/address-book?category=<category>: 'Origin and Consignor' (origin-and-consignor), 'Destination, Consignee and Importer' (destination-consignee-importer), 'Transporter' (transporter) and 'Branch' (branch).",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:30-32",
+      "quote": "for (const [name, category] of [['Origin and Consignor', 'origin-and-consignor'], ['Destination, Consignee and Importer', 'destination-consignee-importer'], ['Transporter', 'transporter'], ['Branch', 'branch']]) {\n        await expect(main.locator(`a[href=\"${url(`/address-book?category=${category}`)}\"]`).first()).toContainText(name)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-007",
+      "statement": "With no category chosen, the address book list shows the origin and consignor addresses, under the heading 'Origin and Consignor addresses'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:22,33",
+      "quote": "await test.step('origin and consignor addresses by default', async () => {\n...\n      await expect(main.getByRole('heading', { name: 'Origin and Consignor addresses' })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-008",
+      "statement": "The address book list shows 8 addresses a page with a count line; the seeded origin and consignor category holds 23 addresses, so the first page says 'Showing 1-8 of 23'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:34",
+      "quote": "await expect(main).toContainText('Showing 1-8 of 23')",
+      "confidence": "verbatim",
+      "note": "The page size of 8 is read from the count line, here and on page 2 ('Showing 9-16 of 23')."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-009",
+      "statement": "The address book table has the columns Name, Type, Address and Country.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:35",
+      "quote": "await expect(main).toContainText(/Name\\s+Type\\s+Address\\s+Country/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-010",
+      "statement": "In the origin and consignor category, the address type filter (#address-book-type) has the options 'Select one', 'Place of Origin' and 'Consignor'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:36",
+      "quote": "await expect(page.locator('#address-book-type option')).toHaveText(['Select one', 'Place of Origin', 'Consignor'])",
+      "confidence": "verbatim",
+      "note": "The type options for the other three categories are not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-011",
+      "statement": "Each address book row has a 'View' link to its entry; the first origin and consignor row links to /design-release-2.1/address-book/green-valley-farm-sanpetru-0.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:37",
+      "quote": "await expect(main.getByRole('link', { name: 'View' }).first()).toHaveAttribute('href', url('/address-book/green-valley-farm-sanpetru-0'))",
+      "confidence": "verbatim",
+      "note": "The entry id looks like a slug of the name and town plus an index (green-valley-farm-sanpetru-0); the spec does not say how ids are formed."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-012",
+      "statement": "On the address book pages the service navigation marks 'Address book' as the active item.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:38",
+      "quote": "await expect(page.locator('.govuk-service-navigation__item--active')).toContainText('Address book')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-013",
+      "statement": "The address book list has GOV.UK pagination; its 'Next' link goes to page=2, which says 'Showing 9-16 of 23'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:42-46 (step 'page 2')",
+      "quote": "await page.locator('.govuk-pagination').getByRole('link', { name: 'Next' }).click()\n      await expect(page).toHaveURL(/page=2/)\n      await expect(page.locator('main')).toContainText('Showing 9-16 of 23')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-014",
+      "statement": "The destination-consignee-importer, transporter and branch categories each show an address table when chosen with ?category=.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:49-55",
+      "quote": "for (const category of ['destination-consignee-importer', 'transporter', 'branch']) {\n...\n        await page.goto(url(`/address-book?category=${category}`))\n        await expect(page.locator('main table')).toBeVisible()",
+      "confidence": "verbatim",
+      "note": "Headings, counts and rows of these three categories are not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-015",
+      "statement": "The search box and type filter sit inside a 'Filter addresses' disclosure that is collapsed when the list opens, so the search box is hidden until the disclosure is opened.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:59-61 (step 'search within a category')",
+      "quote": "// Search and type sit inside a collapsed \"Filter addresses\" disclosure.\n      await expect(page.locator('#address-book-search')).toBeHidden()\n      await page.locator('.app-address-book-page__filter-summary').click()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-016",
+      "statement": "The address book search box is labelled 'Search' with the placeholder 'Search by name, address or country'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:62-63",
+      "quote": "await expect(page.locator('label[for=\"address-book-search\"]')).toHaveText('Search')\n      await expect(page.locator('#address-book-search')).toHaveAttribute('placeholder', 'Search by name, address or country')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-017",
+      "statement": "Typing in the address book search narrows the visible rows of the current category as the user types, with no submit; typing 'Ballymore' leaves 2 visible rows, both Ballymore.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:64-67",
+      "quote": "await page.locator('#address-book-search').pressSequentially('Ballymore', { delay: 30 })\n...\n      await expect(page.locator('main tbody tr:visible')).toHaveCount(2)\n      await expect(page.locator('main tbody tr:visible')).toContainText(['Ballymore', 'Ballymore'])",
+      "confidence": "inferred",
+      "note": "That the filtering happens in the page as keys are typed is inferred: the test types key by key, presses no button and counts visible rows. mechanism: hides table rows client-side by search text."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-018",
+      "statement": "The same organisation can be held twice in the address book, once per use: Ballymore Farm is held once as a place of origin and once as a consignor.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:65",
+      "quote": "// Ballymore Farm is held twice: once as a place of origin, once as a consignor.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-019",
+      "statement": "Every address book route is reachable under /design-release-2.1/address-book and its links stay inside the /design-release-2.1 mount.",
+      "kind": "constraint",
+      "ref": "e2e/address-book.fit.spec.js:5-7",
+      "quote": "// The address book under the DR2.1 mount. Its views are shared with the other\n// releases (only the delete confirmation is a DR2.1 override), but every route is\n// reachable at /design-release-2.1/address-book and links stay inside the mount.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-020",
+      "statement": "The address book views are shared with the prototype's other releases; only the delete confirmation page is a Design Release 2.1 override.",
+      "kind": "constraint",
+      "ref": "e2e/address-book.fit.spec.js:5-6",
+      "quote": "Its views are shared with the other\n// releases (only the delete confirmation is a DR2.1 override)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-021",
+      "statement": "The choose-an-address-type page is at /design-release-2.1/address-book/add, with the title 'Choose an address type - Import notification service - GOV.UK' and the heading 'Choose an address type'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:75-77 (add an address to the address book > choose an address type)",
+      "quote": "await page.goto(url('/address-book/add'))\n    await expect(page).toHaveTitle('Choose an address type - Import notification service - GOV.UK')\n    await expectHeading(page, 'Choose an address type')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-022",
+      "statement": "The choose-an-address-type page shows 'Add a new address'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:79",
+      "quote": "await expect(main).toContainText('Add a new address')",
+      "confidence": "verbatim",
+      "note": "Probably the caption above the heading; the test only checks the text is in main."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-023",
+      "statement": "The address type question (addressType) has four radio options, in order: 'Origin or Consignor', 'Destination, Consignee or Importer', 'Transporter' and 'Branch'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:80",
+      "quote": "await expect(page.locator('input[name=\"addressType\"] + label')).toHaveText(['Origin or Consignor', 'Destination, Consignee or Importer', 'Transporter', 'Branch'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-024",
+      "statement": "The address type options carry the hints 'Place of origin, Consignor', 'Place of destination, Consignee, Importer', 'Private, Commercial' and 'Branch address'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:81-83",
+      "quote": "for (const hint of ['Place of origin, Consignor', 'Place of destination, Consignee, Importer', 'Private, Commercial', 'Branch address']) {\n      await expect(main).toContainText(hint)",
+      "confidence": "verbatim",
+      "note": "The test checks each hint is on the page, not which option it sits under; the order matches the four options."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-025",
+      "statement": "The choose-an-address-type page's back link goes to /design-release-2.1/address-book.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:84",
+      "quote": "await expectBackLink(page, url('/address-book'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-026",
+      "statement": "Pressing 'Continue' with no address type chosen shows the error 'Select an address type', linked to the first option (#address-type-origin-and-consignor).",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:87-89",
+      "quote": "await submitForm(page, 'Continue')\n    await expectErrorSummary(page, ['Select an address type'])\n    await expect(page.locator('.govuk-error-summary__list a')).toHaveAttribute('href', '#address-type-origin-and-consignor')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-027",
+      "statement": "Every address book error summary is titled 'There is a problem' and lists its messages as links, in the order asserted.",
+      "kind": "copy",
+      "ref": "e2e/support/journey.js:39-44 (expectErrorSummary), called at e2e/address-book.fit.spec.js:88,105,138",
+      "quote": "await expect(summary.locator('.govuk-error-summary__title')).toHaveText('There is a problem')\n  await expect(summary.locator('.govuk-error-summary__list a')).toHaveText(messages)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-028",
+      "statement": "Choosing 'Origin or Consignor' goes straight to the address form at /design-release-2.1/address-book/add/lookup, with no postcode lookup first.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:94-95 (origin or consignor: an address entered by hand with its uses)",
+      "quote": "await chooseType(page, 'origin-and-consignor')\n    await expect(page).toHaveURL(urlFor('/address-book/add/lookup'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-029",
+      "statement": "The address form page has the title 'Add an address - Import notification service - GOV.UK' and the heading 'Add an address'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:96-97",
+      "quote": "await expect(page).toHaveTitle('Add an address - Import notification service - GOV.UK')\n    await expectHeading(page, 'Add an address')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-030",
+      "statement": "The address form has an address uses checkbox group (addressUses) with the legend 'Add to your address book' and the hint 'Select what types of address this can be used for in your address book.'",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:98-100",
+      "quote": "await expect(uses.locator('legend')).toHaveText('Add to your address book')\n    await expect(uses).toContainText('Select what types of address this can be used for in your address book.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-031",
+      "statement": "For an origin or consignor address, the uses checkboxes are 'Place of origin' and 'Consignor'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:101",
+      "quote": "await expect(page.locator('input[name=\"addressUses\"] + label')).toHaveText(['Place of origin', 'Consignor'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-032",
+      "statement": "Submitting the empty address form shows six errors, in order: 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:9-12,104-105",
+      "quote": "const MANUAL_ERRORS = [\n  'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city',\n  'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'\n]\n...\n    await clickAction(page, 'continue')\n    await expectErrorSummary(page, MANUAL_ERRORS)",
+      "confidence": "verbatim",
+      "note": "So name, address line 1, town or city, postcode, email and phone are required."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-033",
+      "statement": "An empty address form shows no error for the country or for the address uses, so neither is reported as missing on a first empty submit.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:105",
+      "quote": "await expectErrorSummary(page, MANUAL_ERRORS)",
+      "confidence": "inferred",
+      "note": "Inferred from the exact error list: expectErrorSummary asserts the whole list, which holds no country or uses message. Whether a uses or country error appears once the other fields are filled is not tested."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-034",
+      "statement": "On the add page the address form's fields are labelled 'Name or organisation', 'Address line 1', 'Town or city', 'Postcode or Zip code', 'Email address' and 'Phone number', with a country field (#address-book-manual-country).",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:108-117",
+      "quote": "await page.getByLabel('Name or organisation', { exact: true }).fill('Hof Sonnenberg')\n    await page.getByLabel('Address line 1', { exact: true }).fill('Bergstrasse 5')\n    await page.getByLabel('Town or city', { exact: true }).fill('Munich')\n    await page.getByLabel('Postcode or Zip code', { exact: true }).fill('80331')\n    const country = page.locator('#address-book-manual-country')\n...\n    await page.getByLabel('Email address', { exact: true }).fill('hof@example.com')\n    await page.getByLabel('Phone number', { exact: true }).fill('+49 89 000000')",
+      "confidence": "verbatim",
+      "note": "The add form labels the name field 'Name or organisation' while its error and the edit page's label say 'Name or organisation name' (see the edit claims). Recorded, not reconciled."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-035",
+      "statement": "The add form's country field may or may not be a select list: the test picks 'Germany' only when it is a select.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:112-115",
+      "quote": "if (await country.evaluate((el) => el.tagName === 'SELECT')) {\n      await country.selectOption('Germany')\n    }",
+      "confidence": "gap",
+      "note": "The spec does not pin the country control's type or label for the origin and consignor form; it hedges between a select and another control (perhaps fixed or prefilled)."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-036",
+      "statement": "The address form is submitted with a button whose action is 'continue'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:104,119; e2e/support/journey.js:17-20 (clickAction)",
+      "quote": "await page.locator(`button[name=\"action\"][value=\"${value}\"]`).first().click()",
+      "confidence": "verbatim",
+      "note": "The button's visible text is not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-037",
+      "statement": "A completed origin or consignor address, with 'Place of origin' ticked as its use, is saved and the user returns to the address book, where the new address (Hof Sonnenberg) is listed.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:118-121",
+      "quote": "await page.locator('input[name=\"addressUses\"][value=\"place-of-origin\"]').check()\n    await clickAction(page, 'continue')\n    await expect(page).toHaveURL(/\\/design-release-2\\.1\\/address-book/)\n    await expect(page.locator('main')).toContainText('Hof Sonnenberg')",
+      "confidence": "verbatim",
+      "note": "The URL check is a prefix match, so the exact page after saving (the list, or another address-book page) is not pinned; no banner is asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-038",
+      "statement": "The value for the 'Place of origin' use is 'place-of-origin'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:118",
+      "quote": "input[name=\"addressUses\"][value=\"place-of-origin\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-039",
+      "statement": "Choosing 'Destination, Consignee or Importer' goes to a UK postcode finder at /design-release-2.1/address-book/add/find-address, headed 'Add an address'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:126-129 (destination, consignee or importer: a UK address found by postcode)",
+      "quote": "await chooseType(page, 'destination-consignee-importer')\n    await expect(page).toHaveURL(urlFor('/address-book/add/find-address'))\n...\n    await expectHeading(page, 'Add an address')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-040",
+      "statement": "The postcode finder's page title is 'Add an address – Import notification service – GOV.UK Prototype Kit', with en dashes and 'GOV.UK Prototype Kit', unlike the other address book titles.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:128",
+      "quote": "await expect(page).toHaveTitle('Add an address – Import notification service – GOV.UK Prototype Kit')",
+      "confidence": "verbatim",
+      "note": "Every other address book title uses hyphens and ends 'GOV.UK'. Recorded as the spec asserts it; looks like a prototype inconsistency."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-041",
+      "statement": "The postcode finder has a field labelled 'Enter a UK postcode' (#postcode) with the hint 'For example, AB12 3CD'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:131,141",
+      "quote": "await expect(page.getByLabel('Enter a UK postcode')).toHaveAccessibleDescription('For example, AB12 3CD')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-042",
+      "statement": "The postcode finder has an 'Enter address manually' link to /design-release-2.1/address-book/add/lookup?manual=true.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:132",
+      "quote": "await expect(main.getByRole('link', { name: 'Enter address manually' })).toHaveAttribute('href', url('/address-book/add/lookup?manual=true'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-043",
+      "statement": "The postcode finder has a 'Cancel and return to address book' link to /design-release-2.1/address-book.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:133",
+      "quote": "await expect(main.getByRole('link', { name: 'Cancel and return to address book' })).toHaveAttribute('href', url('/address-book'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-044",
+      "statement": "The postcode finder's back link goes to the choose-an-address-type page, /design-release-2.1/address-book/add.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:134",
+      "quote": "await expectBackLink(page, url('/address-book/add'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-045",
+      "statement": "Pressing 'Find address' with no postcode shows the error 'Enter a postcode'.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:137-138",
+      "quote": "await submitForm(page, 'Find address')\n    await expectErrorSummary(page, ['Enter a postcode'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-046",
+      "statement": "The spec does not test a postcode in the wrong format, or a postcode that finds no addresses, on the postcode finder.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:125-156",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through the destination and branch tests; only the empty postcode and one found postcode (BB4 4JG) are walked."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-047",
+      "statement": "A postcode that finds addresses goes to /design-release-2.1/address-book/add/find-address/select, headed 'Select an address'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:141-144",
+      "quote": "await page.locator('#postcode').fill('BB4 4JG')\n    await submitForm(page, 'Find address')\n    await expect(page).toHaveURL(urlFor('/address-book/add/find-address/select'))\n    await expectHeading(page, 'Select an address')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-048",
+      "statement": "The select-an-address list (#address-id) opens with an option giving the count found, such as '5 addresses found' for BB4 4JG.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:145",
+      "quote": "await expect(page.locator('#address-id option').first()).toHaveText('5 addresses found')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-049",
+      "statement": "Each found address is offered as one upper-case comma-separated line, such as 'UNIT 2 YORK AVENUE, HASLINGDEN, ROSSENDALE, BB4 4JG'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:146",
+      "quote": "await expect(page.locator('#address-id option')).toContainText(['UNIT 2 YORK AVENUE, HASLINGDEN, ROSSENDALE, BB4 4JG'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-050",
+      "statement": "Choosing a found address and pressing 'Continue' returns to the address form at /design-release-2.1/address-book/add/lookup with it filled in: address line 1 'UNIT 2 YORK AVENUE' and town or city 'ROSSENDALE'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:149-153",
+      "quote": "await page.locator('#address-id').selectOption({ label: 'UNIT 2 YORK AVENUE, HASLINGDEN, ROSSENDALE, BB4 4JG' })\n    await submitForm(page, 'Continue')\n    await expect(page).toHaveURL(urlFor('/address-book/add/lookup'))\n    await expect(page.getByLabel('Address line 1', { exact: true })).toHaveValue('UNIT 2 YORK AVENUE')\n    await expect(page.getByLabel('Town or city', { exact: true })).toHaveValue('ROSSENDALE')",
+      "confidence": "verbatim",
+      "note": "The town is the last place in the line (ROSSENDALE), not HASLINGDEN; where HASLINGDEN goes and whether the postcode is filled are not asserted. The select page's own error with nothing chosen is not tested."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-051",
+      "statement": "For a destination, consignee or importer address, the uses checkboxes are 'Place of destination', 'Consignee' and 'Importer'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:154",
+      "quote": "await expect(page.locator('input[name=\"addressUses\"] + label')).toHaveText(['Place of destination', 'Consignee', 'Importer'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-052",
+      "statement": "Saving a destination, consignee or importer address found by postcode is not walked: the test stops at the filled-in form.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:155-156",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-053",
+      "statement": "Choosing 'Branch' also goes to the UK postcode finder at /design-release-2.1/address-book/add/find-address.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:159-160 (branch: a UK address found by postcode, with the branch address use)",
+      "quote": "await chooseType(page, 'branch')\n    await expect(page).toHaveURL(urlFor('/address-book/add/find-address'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-054",
+      "statement": "Following 'Enter address manually' from the postcode finder opens the address form at /design-release-2.1/address-book/add/lookup with manual=true in the query.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:161-163",
+      "quote": "await page.locator('main').getByRole('link', { name: 'Enter address manually' }).click()\n    await expect(page).toHaveURL(urlFor('/address-book/add/lookup'))\n    await expect(page).toHaveURL(/manual=true/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-055",
+      "statement": "For a branch address, the uses group has one checkbox, 'Branch address'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:164-165",
+      "quote": "await expect(page.locator('input[name=\"addressUses\"]')).toHaveCount(1)\n    await expect(page.locator('input[name=\"addressUses\"] + label')).toHaveText(['Branch address'])",
+      "confidence": "verbatim",
+      "note": "The test title says the branch address is 'found by postcode', but the test enters it manually; a postcode-found branch address is not walked."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-056",
+      "statement": "Choosing 'Transporter' hands over to the add-a-transporter pages at /design-release-2.1/transporter/add, headed 'Choose a transporter type'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:169-173 (transporter: hands over to the add-a-transporter pages)",
+      "quote": "await chooseType(page, 'transporter')\n    await expect(page).toHaveURL(urlFor('/transporter/add'))\n    await expectHeading(page, 'Choose a transporter type')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-057",
+      "statement": "Opening /design-release-2.1/address-book/add/usage with no address pending redirects to the choose-an-address-type page, /design-release-2.1/address-book/add.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:175-178 (the usage step is only reachable with an address pending)",
+      "quote": "await page.goto(url('/address-book/add/usage'))\n    await expect(page).toHaveURL(urlFor('/address-book/add'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-058",
+      "statement": "The add flow has a usage step at /address-book/add/usage for an address that is pending, but the spec never shows that page or says when it is reached.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:175-178",
+      "quote": "test('the usage step is only reachable with an address pending'",
+      "confidence": "gap",
+      "note": "The origin, destination and branch walks pick uses on the address form itself and never land on /usage."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-059",
+      "statement": "An address book entry is at /design-release-2.1/address-book/<entry id>; its title is '<name> - Import notification service - GOV.UK' and its heading is the name, such as 'Green Valley Farm'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:182-188 (an address book entry > view, edit and save > view)",
+      "quote": "const ENTRY = '/address-book/green-valley-farm-sanpetru-0'\n...\n      await page.goto(url(ENTRY))\n      await expect(page).toHaveTitle('Green Valley Farm - Import notification service - GOV.UK')\n      await expectHeading(page, 'Green Valley Farm')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-060",
+      "statement": "An address book entry shows its details as label and value rows, including 'Name or organisation name', 'Country' and 'Email address' (Green Valley Farm, Romania, info@greenvalleyfarm.eu).",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:190-192",
+      "quote": "await expect(main).toContainText(/Name or organisation name\\s+Green Valley Farm/)\n      await expect(main).toContainText(/Country\\s+Romania/)\n      await expect(main).toContainText(/Email address\\s+info@greenvalleyfarm\\.eu/)",
+      "confidence": "verbatim",
+      "note": "Other rows (address lines, town, postcode, phone, uses) are not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-061",
+      "statement": "An address book entry has an 'Edit' link to /design-release-2.1/address-book/<entry id>/edit.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:197-198 (step 'edit')",
+      "quote": "await page.locator('main').locator('a', { hasText: /^\\s*Edit\\s*$/ }).click()\n      await expect(page).toHaveURL(urlFor(`${ENTRY}/edit`))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-062",
+      "statement": "The edit page has the title 'Edit address and contact details - Import notification service - GOV.UK' and the heading 'Edit address and contact details'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:199-200",
+      "quote": "await expect(page).toHaveTitle('Edit address and contact details - Import notification service - GOV.UK')\n      await expectHeading(page, 'Edit address and contact details')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-063",
+      "statement": "The edit page opens filled with the entry's saved details; its name field is labelled 'Name or organisation name' and holds 'Green Valley Farm'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:201",
+      "quote": "await expect(page.getByLabel('Name or organisation name', { exact: true })).toHaveValue('Green Valley Farm')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-064",
+      "statement": "The edit page also has fields labelled 'Town or city' and 'Postcode or Zip code'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:214-215",
+      "quote": "await page.getByLabel('Town or city', { exact: true }).fill('Sânpetru')\n      await page.getByLabel('Postcode or Zip code', { exact: true }).fill('507190')",
+      "confidence": "verbatim",
+      "note": "The edit page's other fields are not named by the test."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-065",
+      "statement": "Saving the edit page with the name cleared shows the error 'Enter a name or organisation name'.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:205-209 (step 'clearing a required field is an error')",
+      "quote": "await page.getByLabel('Name or organisation name', { exact: true }).fill('')\n      await page.locator('main form button[type=\"submit\"]').first().click()\n      await expect(page.locator('.govuk-error-summary')).toContainText('Enter a name or organisation name')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-066",
+      "statement": "Saving a valid edit returns to /design-release-2.1/address-book with a notification banner saying '<name> address updated', such as 'Green valley farm srl address updated'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:212-218 (step 'saving the edit returns to the list with a banner')",
+      "quote": "await page.locator('main form button[type=\"submit\"]').first().click()\n      await expect(page).toHaveURL(urlFor('/address-book'))\n      await expect(page.locator('.govuk-notification-banner')).toContainText(/Green valley farm srl address updated/i)",
+      "confidence": "verbatim",
+      "note": "The banner match is case-insensitive, so how the name is cased in the banner is not pinned (the delete banner's match is case-sensitive and sentence-cases the name)."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-067",
+      "statement": "The delete confirmation is at /design-release-2.1/address-book/<entry id>/delete, with the title 'Delete this address? - Import notification service - GOV.UK' and the heading 'Delete this address?'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:224-226 (delete: confirm, then the list says it was deleted)",
+      "quote": "await page.goto(url(`${ENTRY}/delete`))\n    await expect(page).toHaveTitle('Delete this address? - Import notification service - GOV.UK')\n    await expectHeading(page, 'Delete this address?')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-068",
+      "statement": "How a user reaches the delete confirmation from an entry is not shown: the test opens it by URL.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:224",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-069",
+      "statement": "The delete confirmation shows the address being deleted as an 'Address' row with its name.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:228",
+      "quote": "await expect(main).toContainText(/Address\\s+Green Valley Farm/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-070",
+      "statement": "The delete confirmation has the inset text 'This will not remove the address from existing notifications.'",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:229",
+      "quote": "await expect(main.locator('.govuk-inset-text')).toHaveText('This will not remove the address from existing notifications.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-071",
+      "statement": "Deleting an address book entry does not remove it from existing notifications.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:229",
+      "quote": "This will not remove the address from existing notifications.",
+      "confidence": "inferred",
+      "note": "Inferred from the page's copy; no test checks a notification after a delete."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-072",
+      "statement": "The delete confirmation says 'This action cannot be undone.'",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:230",
+      "quote": "await expect(main).toContainText('This action cannot be undone.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-073",
+      "statement": "The delete confirmation has a 'No, cancel' link.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:231",
+      "quote": "await expect(main.locator('a', { hasText: 'No, cancel' })).toBeVisible()",
+      "confidence": "verbatim",
+      "note": "Where 'No, cancel' leads is not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-074",
+      "statement": "Pressing 'Yes, delete' removes the entry and returns to /design-release-2.1/address-book with a notification banner saying 'Green valley farm address deleted', the name in sentence case.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:233-235",
+      "quote": "await submitForm(page, 'Yes, delete')\n    await expect(page).toHaveURL(urlFor('/address-book'))\n    await expect(page.locator('.govuk-notification-banner')).toContainText('Green valley farm address deleted')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p5-075",
+      "statement": "After a delete the list count drops by one: the origin and consignor category says 'Showing 1-8 of 22'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:236",
+      "quote": "await expect(page.locator('main')).toContainText('Showing 1-8 of 22')",
+      "confidence": "verbatim"
+    }
+  ]
+}

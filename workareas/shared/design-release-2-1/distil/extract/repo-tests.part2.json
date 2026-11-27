@@ -1,13 +1,12 @@
 {
   "source": "repo:tests",
-  "structure": "Part 2 of repos/trade-imports-ins-tests: the live-animals journey's party, address and transporter pages as the end-to-end suite proves them. Read in full: the 8 specs tests/animals/e2e/pages/{transited-countries,contact-address,permanent-address,private-transporter,commercial-transporter,transporter,transporter-add,transporter-add-save-cancel}.spec.ts, holding 56 test() declarations between them (transited-countries 11 in two describes, the second with javaScriptEnabled false; contact-address 11 plus 2 in a second describe tagged @address-book; permanent-address 5; private-transporter 2; commercial-transporter 4; transporter 11 plus 1 without JavaScript; transporter-add 7; transporter-add-save-cancel 2). The partition's per-spec counts (16/16/7/3/5/16/9/3) count test.describe, test.beforeEach, test.use and test.slow calls alongside the tests; the test totals are 11/13/5/2/4/12/7/2. Read as supporting context: the page objects page-objects/animals/{transited-countries,contact-address,permanent-address,addresses,party-picker,party-edit,transporter,transporter-add,private-transporter,commercial-transporter}-page.ts and page-objects/shared/{party-edit-form,address-picker-results,base-page,type-ahead,summary-list,journey-checks}.ts; the constants domain/animals/constants/{transit-countries-page,consignment-addresses-page,transporters,country-codes}.ts, domain/shared/constants/{journey-party-names,address-types,test-record-names}.ts and domain/ins/constants/{transporter-types,trader-transporter,trader-address,address-details}.ts; the flows flows/shared/address-book-seed.ts and flows/animals/journey.ts; fixtures/ui.ts and utils/transit-countries-assertions.ts. Covered: the transit countries page (route, heading, type-ahead search, add, remove, empty state, persistence, no-JavaScript path), the contact address page (headings, intro, controls, branch-address list, validation, the INS add-address hand-off, environment-dependent behaviour), the permanent address page (per-animal cards, the two options, the hand-entered fields, the HTTP 400 refusal and its messages, persistence), the transporter list (listing, approval-number column, search with and without JavaScript, validation, add), the transporter type question (options, warning, validation, redirects, status strip), the private and commercial add forms (titles, fields, banner, blank-save messages), and saving or cancelling an add. The party pickers and the shared party edit form are claimed from their page objects, because no test in this part exercises them beyond one consignor-picker assertion in contact-address.spec.ts; their own specs sit in the address-book parts, so the page size, the results count sentence, the 'Selected address' restatement and the Change and Remove actions are recorded as gaps for this part with the place they are proven named.",
-  "repoHead": "c293b056f39efb206c6c4f2df54c38e5febd8485",
+  "structure": "Part 2 of repos/trade-imports-ins-tests at c433e6b (main, 26 November 2026): the live-animals journey's per-page specs for transit countries, the permanent address page and the four transporter pages. Read in full: 7 specs under tests/animals/e2e/pages (transited-countries 10 tests in two describes, one without JavaScript; permanent-address 5; private-transporter 2; commercial-transporter 4; transporter 12 in two describes, one without JavaScript; transporter-add 7; transporter-add-save-cancel 2), the 9 animals page objects they drive (transited countries, permanent address, consignment addresses, party picker, party edit, transporter list, transporter type, private and commercial transporter forms), the shared page objects (party edit form, address picker results, base page, type-ahead, summary list, journey checks), the domain constants for transit countries, consignment addresses, transporters, country codes, journey party names, address types, test record names, INS transporter types, trader transporter, trader address and address details, the address book seed flow, the animals journey flow, the ui fixture and the transit countries assertion helper. The contact address page and its spec were removed from the suite (no contact-address spec or page object remains); the journey's overview task lists and Save and continue walk now end at Consignment addresses, which leads on to the review. Claims cover every test by title, every label, option, error message and control the page objects and constants name for these pages, the party pickers and party edit form as far as this part's files show them (the specs that exercise pickers and edit sit in the address-book parts), and gaps where a constant or locator is named but no test in this part asserts it.",
   "claims": [
     {
       "id": "repo-tests-p2-001",
       "statement": "A trader opens the transit countries page from the notification overview's \"Transit countries\" task, and the page's address is the notification's reference followed by transit-countries.",
       "kind": "behaviour",
-      "ref": "flows/animals/journey.ts:709-715, page-objects/animals/transited-countries-page.ts:9",
+      "ref": "flows/animals/journey.ts:700-706, page-objects/animals/transited-countries-page.ts:9",
       "quote": "await this.animalsPages.overview.task('Transit countries').click();\n    await this.animalsPages.transitedCountries.heading.waitFor(pageLoadWait);",
       "confidence": "verbatim"
     },
@@ -112,7 +111,7 @@
       "id": "repo-tests-p2-014",
       "statement": "A territory is offered and listed under its own name followed by its country in brackets, such as \"Canary Islands (Spain)\", and keeps that name when the page is reopened.",
       "kind": "data",
-      "ref": "tests/animals/e2e/pages/transited-countries.spec.ts:58-71, resources/reference-data/reference-data.ts:33-46",
+      "ref": "tests/animals/e2e/pages/transited-countries.spec.ts:58-71, resources/reference-data/reference-data.ts:38-46",
       "quote": "/** A country subdivision, whose display is \"<subdivision> (<country>)\". */",
       "confidence": "verbatim",
       "note": "The spec names the territory through countryCodes.subdivisions.canaryIslands; resources/reference-data/countries.json holds ES-CN as \"Canary Islands\" under ES \"Spain\"."
@@ -172,7 +171,7 @@
       "ref": "domain/animals/constants/transit-countries-page.ts:1, page-objects/shared/type-ahead.ts:22-24",
       "quote": "export const TRANSIT_COUNTRY_SELECT_TEXT = 'Select a country';",
       "confidence": "gap",
-      "note": "Looked in all 8 specs of this part: neither TRANSIT_COUNTRY_SELECT_TEXT nor TypeAhead.hint is asserted here."
+      "note": "Looked in all 7 specs of this part: neither TRANSIT_COUNTRY_SELECT_TEXT nor TypeAhead.hint is asserted here."
     },
     {
       "id": "repo-tests-p2-022",
@@ -189,176 +188,6 @@
       "ref": "tests/animals/e2e/pages/transited-countries.spec.ts:1-114",
       "quote": "",
       "confidence": "gap"
-    },
-    {
-      "id": "repo-tests-p2-024",
-      "statement": "A trader opens the contact address page from the overview's \"Contact address for this consignment\" task, and the page's address is the notification's reference followed by consignment/contact/select.",
-      "kind": "behaviour",
-      "ref": "flows/animals/journey.ts:751-756, page-objects/animals/contact-address-page.ts:17",
-      "quote": "await this.animalsPages.overview.task('Contact address for this consignment').click();\n    await this.animalsPages.contactAddress.heading.waitFor(pageLoadWait);",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-025",
-      "statement": "The contact address page carries exactly two headings: the first-level \"Contact address for consignment\" and the second-level \"Select an address\" over the choice.",
-      "kind": "copy",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:16-24, page-objects/animals/contact-address-page.ts:11-14",
-      "quote": "const PAGE_HEADING = 'Contact address for consignment';\n\nexport class AnimalsContactAddressPage extends NotificationPage {\n  static readonly headings = [PAGE_HEADING, PICKER_RESULTS_HEADING];",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-026",
-      "statement": "The contact address page's intro sits directly under its heading and reads \"This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.\"",
-      "kind": "copy",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:20-22",
-      "quote": "'This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-027",
-      "statement": "The contact address page ends with Save and continue and Save and return to hub side by side in one button group, and Cancel and return to hub on its own line entirely below them.",
-      "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:26-33, page-objects/shared/journey-checks.ts:71-82",
-      "quote": "await expect(saveButtons.getByRole('button')).toHaveText(['Save and continue', saveAndReturnLabel]);\n  await expectEntirelyAbove(saveButtons, cancelAndReturnLink);",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-028",
-      "statement": "Each contact address the page offers is a radio named for the address record's name, inside a group named \"Select an address\".",
-      "kind": "behaviour",
-      "ref": "page-objects/animals/contact-address-page.ts:36-48, page-objects/shared/address-picker-results.ts:64-66",
-      "quote": "address(name: string): Locator {\n    return this.page.getByRole('radio', { name });\n  }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-029",
-      "statement": "Each offered contact address is shown with its address line 1, town or city and postcode, comma separated and ending at the postcode.",
-      "kind": "copy",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:35-46",
-      "quote": "const contactAddressEndingAtPostcode = [\n      branchAddressFixture.addressLine1,\n      branchAddressFixture.townOrCity,\n      branchAddressFixture.postcode,\n    ].join(', ');",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-030",
-      "statement": "No contact address is chosen when the page first loads.",
-      "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:48-50",
-      "quote": "await expect(animalsPages.contactAddress.address(branchAddressFixture.name)).not.toBeChecked();",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-031",
-      "statement": "Choosing a contact address and pressing Save and continue goes on to the draft's check-your-answers review.",
-      "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:52-57",
-      "quote": "await animalsPages.contactAddress.saveAndContinue.click();\n\n    await animalsPages.notificationView.viewHeader.expectDraftReview();",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-032",
-      "statement": "A contact address saved with Save and return to hub is still shown as chosen when the trader comes back to the page from the overview task, and the page still shows exactly its two headings; saving again from that state keeps the choice.",
-      "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:59-76",
-      "quote": "await animalsPages.overview.task('Contact address for this consignment').click();\n    await expect(animalsPages.contactAddress.address(branchAddressFixture.name)).toBeChecked();",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-033",
-      "statement": "Save and continue with no contact address chosen keeps the trader on the page, links \"Select a contact address\" from the error summary and repeats that message against the options in the \"Select an address\" group, and the overview task stays \"To do\".",
-      "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:78-89",
-      "quote": "await expect(animalsPages.contactAddress.errorSummaryLink(SELECT_A_CONTACT_ADDRESS)).toBeVisible();\n    await expect(animalsPages.contactAddress.radiosError('Select an address')).toContainText(SELECT_A_CONTACT_ADDRESS);\n\n    await animalsPages.overview.open(animalsPages.contactAddress.referenceNumberFromUrl());\n    await expect(animalsPages.overview.taskStatus('Contact address for this consignment')).toHaveText('To do');",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-034",
-      "statement": "Save and return to hub with no contact address chosen refuses the save the same way, keeping the trader on the page with the \"Select a contact address\" error summary.",
-      "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:91-96",
-      "quote": "test('Save and return to hub with nothing chosen does the same', async ({ animalsPages }) => {",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-035",
-      "statement": "When the animals service runs against stubs rather than the full stack, the contact address page offers no way at all to add an address.",
-      "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:98-101",
-      "quote": "await expect(pages.page.getByRole('link', { name: /add.*address/i })).toHaveCount(0);",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-036",
-      "statement": "With the full stack running, the contact address page carries one add-address link, under the sentence \"If the correct address is not shown, add a new branch address, then return to this page.\", and the link \"add a new branch address\" points at the INS address book's add page with journey-type=gbn-ag.",
-      "kind": "integration",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:103-114",
-      "quote": "await expect(animalsPages.contactAddress.addNewBranchAddressSentence).toHaveText(\n      'If the correct address is not shown, add a new branch address, then return to this page.',\n    );\n    await expect(animalsPages.contactAddress.addNewBranchAddressLink).toHaveAttribute('href', /\\/address-book\\/add\\?journey-type=gbn-ag/);",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-037",
-      "statement": "The contact address page offers the organisation's branch addresses with the most recently added first.",
-      "kind": "rule",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:118-164",
-      "quote": "expect(listedIds.indexOf(laterBranch.id)).toBeLessThan(listedIds.indexOf(earlierBranch.id));",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-038",
-      "statement": "An address book record held only for a consignment role, such as consignor, is not offered as a contact address.",
-      "kind": "rule",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:149-165",
-      "quote": "await expect(animalsPages.contactAddress.address(consignorOnlyName)).toHaveCount(0);",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-039",
-      "statement": "A record held for the consignor role is offered in the consignor party picker, the same record the contact address page leaves out.",
-      "kind": "rule",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:167-168",
-      "quote": "await animalsJourney.toPartyPicker('Consignor');\n    await expect(animalsPages.consignorSelection.party(consignorOnlyName)).toBeVisible();",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-040",
-      "statement": "A branch address deleted from the address book after it was chosen as the contact address is no longer offered on the page, and the page then shows nothing as chosen.",
-      "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:171-195",
-      "quote": "await expect(animalsPages.contactAddress.chosenAddress).toHaveCount(0);\n    await expect(animalsPages.contactAddress.address(branchName)).toHaveCount(0);",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-041",
-      "statement": "After the chosen branch address is deleted, both Save and continue and Save and return to hub refuse to save with nothing chosen, each showing the \"Select a contact address\" summary link and the same message against the options.",
-      "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:197-206",
-      "quote": "await animalsPages.contactAddress.saveAndContinue.click();\n    await expect(animalsPages.contactAddress.heading).toBeVisible();\n    await expect(animalsPages.contactAddress.errorSummaryLink(SELECT_A_CONTACT_ADDRESS)).toBeVisible();",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-042",
-      "statement": "A notification keeps the contact address it was given even after that address book record is deleted: the overview task stays \"Complete\" and the notification's Contact address row still names the deleted address.",
-      "kind": "rule",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:208-211",
-      "quote": "await expect(animalsPages.overview.taskStatus('Contact address for this consignment')).toHaveText('Complete');\n    await animalsPages.notificationView.open(referenceNumber);\n    await expect(animalsPages.notificationView.partyRow('Contact address', 'Contact address')).toContainText(branchName);",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-043",
-      "statement": "The branch address the contact address tests choose is \"Animal and Plant Health Agency\", Woodham Lane, Addlestone, KT15 3NB, country code GB, with a phone number and an email address, held in the address book under the branch address role.",
-      "kind": "data",
-      "ref": "flows/shared/address-book-seed.ts:20-29, domain/shared/constants/journey-party-names.ts:6",
-      "quote": "export const branchAddressFixture: AddressBookRequest = {\n  name: CONTACT_ADDRESS_NAME,\n  addressLine1: 'Woodham Lane',\n  townOrCity: 'Addlestone',\n  postcode: 'KT15 3NB',\n  countryCode: 'GB',",
-      "confidence": "verbatim",
-      "note": "A seeded test fixture, not a specification of the data the service captures."
-    },
-    {
-      "id": "repo-tests-p2-044",
-      "statement": "The contact address page lists its branch addresses as a plain radio group with no search box and no pagination, unlike the party pickers, which carry both.",
-      "kind": "behaviour",
-      "ref": "page-objects/animals/contact-address-page.ts:13-61, page-objects/animals/party-picker-page.ts:96-118",
-      "quote": "get listedAddresses(): Locator {\n    return this.resultsGroup.getByRole('radio');\n  }",
-      "confidence": "inferred",
-      "note": "Follows from the contact address page object naming no search or pagination control while the party picker page object names both, and from no spec in this part searching on the contact address page."
     },
     {
       "id": "repo-tests-p2-045",
@@ -380,7 +209,7 @@
       "id": "repo-tests-p2-047",
       "statement": "The Permanent address section appears on the consignment addresses page only for a consignment whose commodity needs one: it is shown for a domestic cat and absent for cattle.",
       "kind": "rule",
-      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:54-61",
+      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:58-71",
       "quote": "await expect(animalsPages.addresses.permanentAddressSection).toHaveCount(0);",
       "confidence": "verbatim"
     },
@@ -388,7 +217,7 @@
       "id": "repo-tests-p2-048",
       "statement": "Opening the permanent address page's address directly for a consignment that needs no permanent address lands the trader on the consignment addresses page instead.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:63-67",
+      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:67-70",
       "quote": "await animalsPages.permanentAddress.open(referenceNumber);\n\n    await expect(animalsPages.addresses.heading).toBeVisible();",
       "confidence": "verbatim"
     },
@@ -436,7 +265,7 @@
       "id": "repo-tests-p2-054",
       "statement": "Saving the permanent address page with \"Enter a new address\" chosen and every field blank is refused, and the refusal is answered with HTTP 400 rather than a redirect.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:69-83",
+      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:73-87",
       "quote": "const status = await animalsPages.permanentAddress.saveAndReadStatus(referenceNumber);\n\n    expect(status).toBe(400);",
       "confidence": "verbatim"
     },
@@ -444,7 +273,7 @@
       "id": "repo-tests-p2-055",
       "statement": "A refused permanent address save prefixes the browser tab title with \"Error: \".",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:84",
+      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:88",
       "quote": "await expect(pages.page).toHaveTitle(/^Error: /);",
       "confidence": "verbatim"
     },
@@ -452,7 +281,7 @@
       "id": "repo-tests-p2-056",
       "statement": "The permanent address error summary names the animal the message belongs to: \"Enter a name or organisation name for Felis catus 1\".",
       "kind": "copy",
-      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:85",
+      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:89",
       "quote": "await expect(animalsPages.permanentAddress.errorSummaryLink('Enter a name or organisation name for Felis catus 1')).toBeVisible();",
       "confidence": "verbatim"
     },
@@ -460,7 +289,7 @@
       "id": "repo-tests-p2-057",
       "statement": "The message shown against the field itself names no animal: it reads \"Error: Enter a name or organisation name\".",
       "kind": "copy",
-      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:86-87",
+      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:90-91",
       "quote": "await expect(fieldError).toHaveText('Error: Enter a name or organisation name');",
       "confidence": "verbatim"
     },
@@ -468,7 +297,7 @@
       "id": "repo-tests-p2-058",
       "statement": "A refused permanent address save keeps \"Enter a new address\" chosen on the card the trader was filling in.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:88",
+      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:92",
       "quote": "await expect(card.getByRole('radio', { name: 'Enter a new address' })).toBeChecked();",
       "confidence": "verbatim"
     },
@@ -476,7 +305,7 @@
       "id": "repo-tests-p2-059",
       "statement": "Following Back from a refused permanent address page returns to the consignment addresses page, which still offers to add a permanent address.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:90-93",
+      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:94-97",
       "quote": "await animalsPages.permanentAddress.linkBack.click();\n\n    await expect(animalsPages.addresses.heading).toBeVisible();\n    await expect(animalsPages.addresses.addPermanentAddress).toBeVisible();",
       "confidence": "verbatim"
     },
@@ -484,15 +313,15 @@
       "id": "repo-tests-p2-060",
       "statement": "A cat consignment can be submitted once its permanent address is answered, ending on the confirmation page.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:47-52",
-      "quote": "await animalsJourney.submitNotification(CAT_ANSWERS);\n\n    await expect(animalsPages.confirmation.heading).toBeVisible();",
+      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:47-56",
+      "quote": "await animalsJourney.submitNotification(CAT_ANSWERS);\n\n      await expect(animalsPages.confirmation.heading).toBeVisible();",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p2-061",
       "statement": "A permanent address hand-entered for the first animal of a line is unchanged after a second animal on that line is saved on the identification details page.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:96-129",
+      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:100-133",
       "quote": "await expect(reopenedFirstCatCard.getByLabel('Name or organisation name', { exact: true })).toHaveValue(\n      catLine.permanentAddress.nameOrOrganisationName,\n    );",
       "confidence": "verbatim"
     },
@@ -500,7 +329,7 @@
       "id": "repo-tests-p2-062",
       "statement": "No test in this part asserts the validation messages for the permanent address form's other fields: only the name's message is proven, although a blank save leaves address line 1, town or city, postcode, email and phone blank too.",
       "kind": "rule",
-      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:69-94",
+      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:73-98",
       "quote": "",
       "confidence": "gap",
       "note": "Looked at the one refusal test in permanent-address.spec.ts: it asserts a single summary link and a single field message."
@@ -509,7 +338,7 @@
       "id": "repo-tests-p2-063",
       "statement": "A trader opens the transporter list from the overview's \"Transport details\" task; the page's address is the notification's reference followed by transporters and its first-level heading reads \"Transporter details\".",
       "kind": "behaviour",
-      "ref": "flows/animals/journey.ts:449-453, page-objects/animals/transporter-page.ts:6-12",
+      "ref": "flows/animals/journey.ts:447-451, page-objects/animals/transporter-page.ts:6-12",
       "quote": "await this.animalsPages.overview.task('Transport details').click();\n    await this.animalsPages.transporter.heading.waitFor(pageLoadWait);",
       "confidence": "verbatim"
     },
@@ -911,7 +740,7 @@
       "id": "repo-tests-p2-112",
       "statement": "The consignment addresses page offers one party picker per role, each opened by its own link: \"Add a consignor\", \"Add a place of destination\", \"Add a place of origin\", \"Add a consignee\" and \"Add an importer\".",
       "kind": "copy",
-      "ref": "page-objects/animals/addresses-page.ts:10-16, flows/animals/journey.ts:762-768",
+      "ref": "page-objects/animals/addresses-page.ts:10-16, flows/animals/journey.ts:746-752",
       "quote": "const ADD_LINK_BY_ROLE: Record<PartyRole, string> = {\n  Consignor: 'Add a consignor',\n  'Place of destination': 'Add a place of destination',\n  'Place of origin': 'Add a place of origin',\n  Consignee: 'Add a consignee',\n  Importer: 'Add an importer',\n};",
       "confidence": "verbatim"
     },
@@ -919,25 +748,16 @@
       "id": "repo-tests-p2-113",
       "statement": "A party picker lists each address as a radio named \"Select <name>\", inside a group under the second-level heading \"Select an address\".",
       "kind": "behaviour",
-      "ref": "page-objects/shared/address-picker-results.ts:4, page-objects/shared/address-picker-results.ts:32-34, page-objects/shared/address-picker-results.ts:52-66",
+      "ref": "page-objects/shared/address-picker-results.ts:4, page-objects/shared/address-picker-results.ts:32-34, page-objects/shared/address-picker-results.ts:62-76",
       "quote": "export const PICKER_RESULTS_HEADING = 'Select an address';\n...\nexport function pickerAddressRadio(page: Page, name: string): Locator {\n  return page.getByRole('radio', { name: `Select ${name}`, exact: true });\n}",
       "confidence": "verbatim",
       "note": "Claimed from the shared picker module this part reads; the specs that assert it sit in the address-book parts."
     },
     {
-      "id": "repo-tests-p2-114",
-      "statement": "A party picker carries a search box labelled \"Search\" and a \"Search\" button, and searching posts back to the picker's own address, so the search needs no JavaScript.",
-      "kind": "behaviour",
-      "ref": "page-objects/shared/address-picker-results.ts:72-82, page-objects/animals/party-picker-page.ts:112-118",
-      "quote": "const isSearchResponse = (response: Response): boolean =>\n      response.request().method() === 'POST' && new URL(response.url()).pathname.endsWith('/select');",
-      "confidence": "verbatim",
-      "note": "mechanism: the picker's search helper waits for that POST, so the claim about the form posting to the page's own address comes from the helper rather than from an assertion."
-    },
-    {
       "id": "repo-tests-p2-115",
       "statement": "A party picker whose search matches nothing shows \"No addresses match your search.\"",
       "kind": "copy",
-      "ref": "page-objects/shared/address-picker-results.ts:5, page-objects/shared/address-picker-results.ts:68-70",
+      "ref": "page-objects/shared/address-picker-results.ts:5, page-objects/shared/address-picker-results.ts:78-80",
       "quote": "const NO_MATCHES = 'No addresses match your search.';",
       "confidence": "verbatim"
     },
@@ -945,7 +765,7 @@
       "id": "repo-tests-p2-116",
       "statement": "A party picker offers an \"Add a new address\" button, and following it opens the INS address book's add page, signing the trader in there if asked.",
       "kind": "integration",
-      "ref": "page-objects/animals/party-picker-page.ts:108-110, flows/animals/journey.ts:770-774",
+      "ref": "page-objects/animals/party-picker-page.ts:118-120, flows/animals/journey.ts:754-758",
       "quote": "await this.partyPicker(role).addNewAddress.click();\n    await addressBookAdd.completeSignInIfRequested();\n    await addressBookAdd.heading.waitFor(pageLoadWait);",
       "confidence": "verbatim"
     },
@@ -961,7 +781,7 @@
       "id": "repo-tests-p2-118",
       "statement": "A party picker row carries a link named \"View <name>\" for the address it offers.",
       "kind": "copy",
-      "ref": "page-objects/animals/party-picker-page.ts:72-74",
+      "ref": "page-objects/animals/party-picker-page.ts:82-84",
       "quote": "partyViewLink(name: string): Locator {\n    return this.partyRow(name).getByRole('link', { name: `View ${name}`, exact: true });\n  }",
       "confidence": "verbatim"
     },
@@ -978,7 +798,7 @@
       "id": "repo-tests-p2-120",
       "statement": "No test in this part asserts the picker's restatement of the chosen address, \"Selected address: <name>\", above the results and below the Search button.",
       "kind": "copy",
-      "ref": "page-objects/shared/address-picker-results.ts:88-92",
+      "ref": "page-objects/shared/address-picker-results.ts:98-102",
       "quote": "expect(textBetweenSearchAndResults(await page.getByRole('main').innerText())).toBe(`Selected address: ${name}`);",
       "confidence": "gap",
       "note": "The helper that asserts it is used by the address-book picker specs, which sit in another part."
@@ -987,7 +807,7 @@
       "id": "repo-tests-p2-121",
       "statement": "No test in this part asserts the Change, Edit details or same-as actions the consignment addresses page offers against a chosen party, although the page names them: \"Change\", \"Edit details\", \"Same as place of origin\", \"Same as consignee\".",
       "kind": "behaviour",
-      "ref": "page-objects/animals/addresses-page.ts:18-22, page-objects/animals/addresses-page.ts:53-56",
+      "ref": "page-objects/animals/addresses-page.ts:18-22, page-objects/animals/addresses-page.ts:82-92",
       "quote": "const SAME_AS_LABEL_BY_ROLE: Partial<Record<PartyRole, string>> = {\n  Consignor: 'Same as place of origin',\n  Importer: 'Same as consignee',\n  'Place of destination': 'Same as consignee',\n};",
       "confidence": "gap",
       "note": "This part's specs use the addresses page only for its heading, its Permanent address section and that section's Add and Change links; the party actions are proven by the consignment-addresses and address-book specs in other parts."
@@ -1031,24 +851,7 @@
       "ref": "page-objects/animals/party-edit-page.ts:1-4",
       "quote": "export class AnimalsPartyEditPage extends withPartyEditForm(NotificationPage) {}",
       "confidence": "gap",
-      "note": "Looked through the 8 specs of this part: none imports or opens the party edit page."
-    },
-    {
-      "id": "repo-tests-p2-127",
-      "statement": "The journey words its save-and-return control differently by page: \"Save and return to overview\" on the transit countries and transporter pages, and \"Save and return to hub\" on the contact address page.",
-      "kind": "copy",
-      "ref": "page-objects/shared/base-page.ts:321-331, tests/animals/e2e/pages/contact-address.spec.ts:29-32",
-      "quote": "get saveAndReturnToOverview(): Locator {\n    return this.page.getByRole('button', { name: 'Save and return to overview', exact: true });\n  }\n...\n  get saveAndReturnToHub(): Locator {\n    return this.page.getByRole('button', { name: 'Save and return to hub', exact: true });\n  }",
-      "confidence": "verbatim",
-      "note": "Recorded, not reconciled: both wordings are proven on this part's pages."
-    },
-    {
-      "id": "repo-tests-p2-128",
-      "statement": "The cancel link is worded to match the save: \"Cancel and return to overview\" on the transit countries page and \"Cancel and return to hub\" on the contact address page.",
-      "kind": "copy",
-      "ref": "page-objects/shared/base-page.ts:313-327, domain/animals/constants/transit-countries-page.ts:7",
-      "quote": "get cancelAndReturnToOverview(): Locator {\n    return this.page.getByRole('link', { name: 'Cancel and return to overview', exact: true });\n  }\n...\n  get cancelAndReturnToHub(): Locator {\n    return this.page.getByRole('link', { name: 'Cancel and return to hub', exact: true });\n  }",
-      "confidence": "verbatim"
+      "note": "Looked through the 7 specs of this part: none imports or opens the party edit page."
     },
     {
       "id": "repo-tests-p2-129",
@@ -1059,69 +862,27 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-tests-p2-130",
-      "statement": "The transit countries, contact address, permanent address, transporter list, transporter type and both transporter form specs are all tagged as duplicated in the frontend repo, so the same behaviour is also proven by that repo's own tests.",
-      "kind": "non-functional",
-      "ref": "tests/animals/e2e/pages/transited-countries.spec.ts:6, tests/animals/e2e/pages/transporter.spec.ts:10",
-      "quote": "test.describe('Transporter list page', { tag: '@duplicated-in-frontend' }, () => {",
-      "confidence": "verbatim",
-      "note": "transporter-add-save-cancel.spec.ts carries no such tag; its two tests are proven only here."
-    },
-    {
-      "id": "repo-tests-p2-131",
-      "statement": "The branch-address ordering, filtering and deletion behaviour of the contact address page is proven only when the animals frontend runs against the real address book, and is skipped when it runs against stubs.",
-      "kind": "constraint",
-      "ref": "tests/animals/e2e/pages/contact-address.spec.ts:117-123, tests/animals/e2e/pages/contact-address.spec.ts:176",
-      "quote": "skipUnlessNonStubStackEnvironment('branch filtering and ordering need the real address book');",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-132",
-      "statement": "The address book holds each address against the roles it may be used for: place of origin, consignor, place of destination, consignee, importer and branch address, and a transporter is held as its own type carrying no roles.",
-      "kind": "data",
-      "ref": "domain/shared/constants/address-types.ts:1-33",
-      "quote": "/** The address types whose add form asks the roles question: every type but Transporter, which\n * opens the add-a-transporter pages instead and carries no roles. */",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-tests-p2-133",
       "statement": "Every address book record a test creates is named to a registered template and is deleted again after the test, so a shared organisation's address book is left as it was found.",
       "kind": "non-functional",
       "ref": "domain/shared/constants/test-record-names.ts:10-16, fixtures/ui.ts:179-183",
       "quote": "const api = new RecordTrackingAddressBookApiClient(request);\n    await use(api);\n    await api.deleteTrackedRecordsOneByOne();",
       "confidence": "verbatim",
-      "note": "mechanism: the suite's own clean-up, named because the transporter and branch-address tests of this part depend on it (Saved private transporter <stamp>, Abandoned Commercial Transporter <stamp>, Earlier/Later/Deleted Branch Office <stamp>, Consignor Only Farm <stamp> are all registered templates)."
+      "note": "mechanism: the suite's own clean-up, named because the transporter tests of this part depend on it (Saved private transporter <stamp> and Abandoned Commercial Transporter <stamp> are registered templates)."
     },
     {
       "id": "repo-tests-p2-134",
       "statement": "The transit countries task sits in the overview only for an overland consignment: the air or sea task list has no Transit countries row, and the overland one has it between Arrival details and Transport details.",
       "kind": "rule",
-      "ref": "flows/animals/journey.ts:74-101",
+      "ref": "flows/animals/journey.ts:74-99",
       "quote": "export const OVERLAND_OVERVIEW_TASKS = [\n...\n  'Arrival details',\n  'Transit countries',\n  'Transport details',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p2-135",
-      "statement": "Pressing Save and continue from the main import reason walks the trader through the pages in one order, with transit countries before transport details, documents, consignment addresses and finally the contact address.",
-      "kind": "behaviour",
-      "ref": "flows/animals/journey.ts:122-137",
-      "quote": "const stops: SaveAndContinueStop[] = [\n      this.animalsPages.importReason,\n      this.animalsPages.consignmentDetails,\n      this.animalsPages.animalIdentification,\n      this.animalsPages.additionalDetails,\n      this.animalsPages.arrivalDetails,\n      this.animalsPages.transitedCountries,\n      this.animalsPages.transporter,\n      this.animalsPages.accompanyingDocuments,\n      this.animalsPages.addresses,\n      this.animalsPages.contactAddress,\n    ];",
-      "confidence": "verbatim",
-      "note": "The walk itself is asserted by the journey specs in another part; claimed here because it fixes where this part's pages sit in the order."
-    },
-    {
-      "id": "repo-tests-p2-136",
-      "statement": "The consignment addresses page is headed \"Consignment addresses\" and introduced with \"Add all the addresses that are involved in the consignment.\", and it ends with a Continue button rather than a save.",
-      "kind": "copy",
-      "ref": "page-objects/animals/addresses-page.ts:58-64, page-objects/animals/addresses-page.ts:134-136, domain/animals/constants/consignment-addresses-page.ts:1",
-      "quote": "get intro(): Locator {\n    return this.page.getByText('Add all the addresses that are involved in the consignment.', { exact: true });\n  }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p2-137",
       "statement": "A permanent address saved for one animal can be answered as the place of destination instead of a hand-entered address, and a line's animals may be answered differently from one another.",
       "kind": "behaviour",
-      "ref": "flows/animals/journey.ts:612-640",
+      "ref": "flows/animals/journey.ts:603-631, flows/animals/journey.ts:1024-1033",
       "quote": "if (address.origin === 'placeOfDestination') {\n          await addressPage.selectPlaceOfDestination(card);\n        } else {\n          await addressPage.selectNewAddress(card);\n          await addressPage.fillNewAddress(address, card);\n        }",
       "confidence": "verbatim",
       "note": "mechanism: the journey flow's own loop over each animal's card; the per-animal mix is exercised by the cats-by-air journey spec in another part, not by this part's specs."
@@ -1130,9 +891,266 @@
       "id": "repo-tests-p2-138",
       "statement": "No test in this part proves what the permanent address page does when \"Same as the place of destination (POD)\" is chosen: only the hand-entered route is asserted here.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:9-129",
+      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:9-134",
       "quote": "",
       "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p2-139",
+      "statement": "The save-and-return control on this part's pages reads \"Save and return to overview\": on the transit countries page, the transporter list and the consignment addresses page.",
+      "kind": "copy",
+      "ref": "page-objects/shared/base-page.ts:321-323, domain/animals/constants/transit-countries-page.ts:10, flows/animals/journey.ts:414, tests/animals/e2e/pages/transporter.spec.ts:47",
+      "quote": "get saveAndReturnToOverview(): Locator {\n    return this.page.getByRole('button', { name: 'Save and return to overview', exact: true });\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p2-140",
+      "statement": "The suite still holds \"Save and return to hub\" and \"Cancel and return to hub\" controls and a save-controls layout check, but no test in this part uses them now that the contact address page has gone, so no page in this part is proven to use the hub wording.",
+      "kind": "copy",
+      "ref": "page-objects/shared/base-page.ts:325-331, page-objects/shared/journey-checks.ts:67-82",
+      "quote": "get cancelAndReturnToHub(): Locator {\n    return this.page.getByRole('link', { name: 'Cancel and return to hub', exact: true });\n  }\n\n  get saveAndReturnToHub(): Locator {\n    return this.page.getByRole('button', { name: 'Save and return to hub', exact: true });\n  }",
+      "confidence": "gap",
+      "note": "Looked through the 7 specs of this part: none calls saveAndReturnToHub, cancelAndReturnToHub or expectSaveControlsLayout."
+    },
+    {
+      "id": "repo-tests-p2-141",
+      "statement": "The transit countries, permanent address, private transporter, commercial transporter, transporter list and transporter type specs are tagged as duplicated in the frontend repo, so the same behaviour is also proven by that repo's own tests; the transporter save-and-cancel spec carries no such tag and is proven only here.",
+      "kind": "non-functional",
+      "ref": "tests/animals/e2e/pages/transited-countries.spec.ts:6, tests/animals/e2e/pages/permanent-address.spec.ts:9, tests/animals/e2e/pages/transporter.spec.ts:10, tests/animals/e2e/pages/transporter-add-save-cancel.spec.ts:4",
+      "quote": "test.describe('Transporter list page', { tag: '@duplicated-in-frontend' }, () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p2-142",
+      "statement": "Two tests in this part also run in the cross-browser runs: the transit countries page's empty-state render and the cat consignment that submits once its permanent address is answered.",
+      "kind": "non-functional",
+      "ref": "tests/animals/e2e/pages/transited-countries.spec.ts:11-13, tests/animals/e2e/pages/permanent-address.spec.ts:47-49",
+      "quote": "'renders the country search with only the intro paragraphs, the cancel link and the three buttons',\n    { tag: '@cross-browser' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p2-143",
+      "statement": "The address book holds three types of record: an origin-or-consignor address, a destination, consignee or importer address, and a transporter.",
+      "kind": "data",
+      "ref": "domain/shared/constants/address-types.ts:1-5",
+      "quote": "export const addressTypes = {\n  originOrConsignor: 'ORIGIN_OR_CONSIGNOR',\n  destinationConsigneeOrImporter: 'DESTINATION_CONSIGNEE_OR_IMPORTER',\n  transporter: 'TRANSPORTER',\n} as const;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p2-144",
+      "statement": "An address book address is held against the roles it may be used for, from five: place of origin, consignor, place of destination, consignee and importer. There is no branch address role.",
+      "kind": "data",
+      "ref": "domain/shared/constants/address-types.ts:15-21",
+      "quote": "export const addressRoles = {\n  placeOfOrigin: 'PLACE_OF_ORIGIN',\n  consignor: 'CONSIGNOR',\n  placeOfDestination: 'PLACE_OF_DESTINATION',\n  consignee: 'CONSIGNEE',\n  importer: 'IMPORTER',\n} as const;",
+      "confidence": "verbatim",
+      "note": "The earlier extract recorded a branch address role, used by the removed contact address page; the constant no longer holds one."
+    },
+    {
+      "id": "repo-tests-p2-145",
+      "statement": "Only the two address types ask which roles a record holds; a transporter carries no roles.",
+      "kind": "rule",
+      "ref": "domain/shared/constants/address-types.ts:9-11",
+      "quote": "export const addressTypesAskingRoles = [addressTypes.originOrConsignor, addressTypes.destinationConsigneeOrImporter] as const;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p2-146",
+      "statement": "The live-animals journey has no contact address page: both overview task lists end with Consignment addresses and hold no contact address task.",
+      "kind": "behaviour",
+      "ref": "flows/animals/journey.ts:74-99",
+      "quote": "  'Transport details',\n  'Upload documents',\n  CONSIGNMENT_ADDRESSES,\n] as const;",
+      "confidence": "verbatim",
+      "note": "The contact address spec and page object were removed from the suite; nothing in this part's files names a contact address."
+    },
+    {
+      "id": "repo-tests-p2-147",
+      "statement": "Pressing Save and continue from the main import reason walks the trader through the pages in one order: import reason, commodity details, identification details, additional details, arrival details, transit countries, transporter, documents and finally consignment addresses.",
+      "kind": "behaviour",
+      "ref": "flows/animals/journey.ts:120-134",
+      "quote": "const stops: SaveAndContinueStop[] = [\n      this.animalsPages.importReason,\n      this.animalsPages.consignmentDetails,\n      this.animalsPages.animalIdentification,\n      this.animalsPages.additionalDetails,\n      this.animalsPages.arrivalDetails,\n      this.animalsPages.transitedCountries,\n      this.animalsPages.transporter,\n      this.animalsPages.accompanyingDocuments,\n      this.animalsPages.addresses,\n    ];",
+      "confidence": "verbatim",
+      "note": "The walk itself is asserted by the journey specs in another part; claimed here because it fixes where this part's pages sit in the order."
+    },
+    {
+      "id": "repo-tests-p2-148",
+      "statement": "Continue on the consignment addresses page opens the notification's review page.",
+      "kind": "behaviour",
+      "ref": "flows/animals/journey.ts:307-311, flows/animals/journey.ts:860-862",
+      "quote": "await this.animalsPages.addresses.continueButton.click();\n    await this.animalsPages.notificationView.heading.waitFor(pageLoadWait);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p2-149",
+      "statement": "The consignment addresses page is headed \"Consignment addresses\" and introduced with \"Add all the addresses that are involved in the consignment.\"",
+      "kind": "copy",
+      "ref": "page-objects/animals/addresses-page.ts:58-64, domain/animals/constants/consignment-addresses-page.ts:1",
+      "quote": "get intro(): Locator {\n    return this.page.getByText('Add all the addresses that are involved in the consignment.', { exact: true });\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p2-150",
+      "statement": "The consignment addresses page offers both a Continue button and Save and return to overview.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/addresses-page.ts:134-136, flows/animals/journey.ts:409-416",
+      "quote": "await this.addCphOnAddressesHub(answers.cph);\n    await this.animalsPages.addresses.saveAndReturnToOverview.click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p2-151",
+      "statement": "When a consignment arrives by airplane, Save and continue on arrival details goes straight to the transporter list, with no transit countries page between them.",
+      "kind": "rule",
+      "ref": "flows/animals/journey.ts:822-828",
+      "quote": "await pages.arrivalDetails.chooseMeansOfTransport(meansOfTransport.airplane.display);\n    await pages.arrivalDetails.saveAndContinue.click();\n\n    await pages.transporter.heading.waitFor(pageLoadWait);",
+      "confidence": "verbatim",
+      "note": "The walks that drive this are used by journey specs in another part."
+    },
+    {
+      "id": "repo-tests-p2-152",
+      "statement": "When a consignment travels by railway, Save and continue on arrival details opens the transit countries page, and Save and continue there opens the transporter list.",
+      "kind": "rule",
+      "ref": "flows/animals/journey.ts:968-982, flows/animals/journey.ts:844",
+      "quote": "await pages.transitedCountries.heading.waitFor(pageLoadWait);\n    await pages.transitedCountries.addCountry(countryCodes.eu.belgium.display);\n    await pages.transitedCountries.addCountry(countryCodes.eu.france.display);\n    await pages.transitedCountries.saveAndContinue.click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p2-153",
+      "statement": "A party picker's search is a form submit: pressing Search loads a fresh page with the results, so it needs no JavaScript.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/party-picker-page.ts:122-126",
+      "quote": "await this.searchBox.fill(term);\n    await Promise.all([this.page.waitForEvent('load'), this.searchButton.click()]);",
+      "confidence": "inferred",
+      "note": "mechanism: the picker's search helper waits for a page load after pressing Search, so the claim comes from the helper rather than an assertion in this part."
+    },
+    {
+      "id": "repo-tests-p2-154",
+      "statement": "Searching a party picker for a country's name lists that country's addresses: every listed row reads the country, and the picker shows at most 8 with a count that matches what the address book holds.",
+      "kind": "behaviour",
+      "ref": "flows/shared/address-book-seed.ts:194-217",
+      "quote": "await expect(picker.resultsSummary).toHaveText(pickerResultsCount(shown, offered.length), { timeout: timeouts.veryShort });\n    await expect(picker.listedRows).toHaveCount(shown, { timeout: timeouts.veryShort });\n    await expect(picker.listedRowsOutsideCountry(countryLabel)).toHaveCount(0, { timeout: timeouts.veryShort });",
+      "confidence": "inferred",
+      "note": "A shared helper read by this part; the spec that calls it (addresses-picker.spec.ts) sits in the address-book part."
+    },
+    {
+      "id": "repo-tests-p2-155",
+      "statement": "A party picker offers the addresses held for its own role and the addresses held for no role at all.",
+      "kind": "rule",
+      "ref": "flows/shared/address-book-seed.ts:208-210",
+      "quote": "(address) => address.roles.length === 0 || address.roles.includes(role),",
+      "confidence": "inferred",
+      "note": "mechanism: the helper's own count of what the picker should offer; asserted by a spec in another part."
+    },
+    {
+      "id": "repo-tests-p2-156",
+      "statement": "The journey's parties are seeded address book records, each held for its role: \"Origin Farm\" in Ennis, Ireland as place of origin; \"Astra Rosales\" in Bern, Switzerland as consignor; \"Tech Imports Ltd\" in London as place of destination; \"British Livestock Ltd\" in Leeds as consignee; and \"Import Co UK\" in London as importer.",
+      "kind": "data",
+      "ref": "flows/shared/address-book-seed.ts:21-151, domain/shared/constants/journey-party-names.ts:1-5",
+      "quote": "export const PLACE_OF_ORIGIN_NAME = 'Origin Farm';\nexport const CONSIGNOR_NAME = 'Astra Rosales';\nexport const CONSIGNEE_NAME = 'British Livestock Ltd';\nexport const IMPORTER_NAME = 'Import Co UK';\nexport const DESTINATION_NAME = 'Tech Imports Ltd';",
+      "confidence": "verbatim",
+      "note": "Seeded test data, not a specification of the data the service captures. The seed also holds seven further consignors in Austria, Ireland, Spain, Denmark (two), France and Norway."
+    },
+    {
+      "id": "repo-tests-p2-157",
+      "statement": "Before the journeys run, the shared address book is kept to exactly one live record per seeded name, holding that record's details and roles.",
+      "kind": "non-functional",
+      "ref": "flows/shared/address-book-seed.ts:159-178",
+      "quote": "/**\n * Ensures one live record per journey fixture name, holding the fixture's details and roles.\n * Creates a missing record, rewrites one that differs and soft-deletes any extra with the name.\n */",
+      "confidence": "verbatim",
+      "note": "mechanism: the suite's seed upkeep for the shared organisation's address book."
+    },
+    {
+      "id": "repo-tests-p2-158",
+      "statement": "On the consignment addresses page each party is its own section named for the role, showing the chosen address in an inset, with Change and Edit details links whose full names include the role, such as \"Change consignor\" and \"Edit details consignor\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/addresses-page.ts:53-56, page-objects/animals/addresses-page.ts:66-72",
+      "quote": "static partyLinkNames(role: PartyRole): { change: string; editDetails: string } {\n    const party = role.toLowerCase();\n    return { change: `Change ${party}`, editDetails: `Edit details ${party}` };\n  }",
+      "confidence": "verbatim",
+      "note": "Named in this part's page object; the specs that assert these links sit in the consignment-addresses part."
+    },
+    {
+      "id": "repo-tests-p2-159",
+      "statement": "The consignment addresses page has a \"County parish holding (CPH) number\" section that offers an \"Add a CPH number\" link while no number has been given.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/addresses-page.ts:7, page-objects/animals/addresses-page.ts:110-112, flows/animals/journey.ts:399-407",
+      "quote": "get addCph(): Locator {\n    return this.cphSection.getByRole('link', { name: 'Add a CPH number', exact: true });\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p2-160",
+      "statement": "The permanent address's hand-entered form asks for no country, yet the saved address is shown back with \"United Kingdom\" as its country.",
+      "kind": "rule",
+      "ref": "page-objects/animals/permanent-address-page.ts:35-49, tests/animals/e2e/pages/permanent-address.spec.ts:29-37",
+      "quote": "country: 'United Kingdom',",
+      "confidence": "inferred",
+      "note": "Follows from the fill helper setting every field but a country, and the spec expecting United Kingdom on the consignment addresses page."
+    },
+    {
+      "id": "repo-tests-p2-161",
+      "statement": "No test in this part proves a permanent address outside the United Kingdom, or any country list on the permanent address page.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/permanent-address.spec.ts:9-134, page-objects/animals/permanent-address-page.ts:1-71",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p2-162",
+      "statement": "The suite's canned commercial transporter \"García Livestock Transport SL\" has the approval number ES-T2-45001294, the address 43 East Hague Extension and the country Switzerland.",
+      "kind": "data",
+      "ref": "domain/animals/constants/transporters.ts:3-11",
+      "quote": "garciaLivestockTransport: {\n    value: 'garcia-livestock-transport',\n    display: 'García Livestock Transport SL',\n    approvalNumber: 'ES-T2-45001294',\n    addressLine1: '43 East Hague Extension',\n    country: 'Switzerland',\n  },",
+      "confidence": "verbatim",
+      "note": "Recorded, not reconciled: a commercial transporter in Switzerland sits beside the suite's ruling that a commercial transporter's country is Northern Ireland (repo-tests-p2-101). This is canned list data, not something a test in this part asserts."
+    },
+    {
+      "id": "repo-tests-p2-163",
+      "statement": "Saving a completed commercial transporter form returns the trader to the transporter list, from where Save and return to overview opens the overview.",
+      "kind": "behaviour",
+      "ref": "flows/animals/journey.ts:453-458, flows/animals/journey.ts:737-740",
+      "quote": "await form.saveAndContinue.click();\n    await this.animalsPages.transporter.heading.waitFor(pageLoadWait);\n    await this.animalsPages.transporter.saveAndReturnToOverview.click();",
+      "confidence": "inferred",
+      "note": "A journey flow step; no test in this part saves the commercial form, and the specs that do sit in other parts."
+    },
+    {
+      "id": "repo-tests-p2-164",
+      "statement": "No test in this part proves the private transporter form's cancel control, or that saving a completed commercial transporter form adds the transporter.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/transporter-add-save-cancel.spec.ts:1-58, tests/animals/e2e/pages/private-transporter.spec.ts:1-24",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The save-and-cancel spec saves only the private form and cancels only the commercial one."
+    },
+    {
+      "id": "repo-tests-p2-165",
+      "statement": "No test in this part asserts the message shown against the transit country field itself when Add country is pressed with nothing chosen; only the error summary link is proven.",
+      "kind": "copy",
+      "ref": "page-objects/shared/type-ahead.ts:50-52, tests/animals/e2e/pages/transited-countries.spec.ts:95-99",
+      "quote": "get error(): Locator {\n    return this.page.locator(`#${this.fieldId}-error`);\n  }",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p2-166",
+      "statement": "A private transporter saved from the journey in the suite has a French address: 12 Rue des Fermes, Amiens, 80000, France, with a French phone number and an email address.",
+      "kind": "data",
+      "ref": "domain/animals/constants/transporters.ts:17-25, tests/animals/e2e/pages/transporter-add-save-cancel.spec.ts:17",
+      "quote": "addressLine1: '12 Rue des Fermes',\n  townOrCity: 'Amiens',\n  postalOrZipCode: '80000',\n  country: 'France',",
+      "confidence": "verbatim",
+      "note": "Canned test data. It shows a private transporter may be outside the United Kingdom on the journey's form."
+    },
+    {
+      "id": "repo-tests-p2-167",
+      "statement": "No test in this part asserts a party picker's caption, its heading or the description under it, although the picker page names a caption, heading and description row.",
+      "kind": "copy",
+      "ref": "page-objects/animals/party-picker-page.ts:30-44",
+      "quote": "get headingRowParts(): Locator {\n    return this.headingRow.locator('.govuk-caption-l, h1, a, button');\n  }",
+      "confidence": "gap",
+      "note": "The picker specs sit in the address-book part; this part's specs never open a picker."
+    },
+    {
+      "id": "repo-tests-p2-168",
+      "statement": "The transporter list's search box is labelled \"Search\" and sits beside a \"Search\" button, the same controls the party pickers use.",
+      "kind": "copy",
+      "ref": "page-objects/animals/transporter-page.ts:47-53, page-objects/shared/address-picker-results.ts:82-92",
+      "quote": "export function pickerSearchBox(page: Page): Locator {\n  return page.getByLabel('Search', { exact: true });\n}",
+      "confidence": "verbatim"
     }
   ]
 }

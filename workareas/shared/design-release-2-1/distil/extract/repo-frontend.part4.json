@@ -1,6 +1,6 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 4, the notification list (dashboard) of the live-animals set in repos/trade-imports-animals-frontend. Read in full: features/dashboard/page.js (5 lines: id 'dashboard', empty slug, maturity 'exploring'), controller.js (202 lines: renderDashboard plus four routes — GET the list at the set base, POST amend, POST create, GET /start), template.njk (157 lines: amend-refused banner, caption, h1, intro, start-button form, 'Your notifications' h2, a one-third filter aside holding the GET search form, a two-thirds column holding the results label, the GET sort form, one govuk-summary-card per notification with three rows of three cells and an action list, the empty text, and govukPagination), notification-helper.js (158 lines: the sort options and default, date display, commodity label, page-number clamping, the list query string, the pagination links and the results-range label), copy/copy.en.js and copy/copy.cy.js (61 lines each, key for key), view-model/sort-options.js (localised sort option text by index), view-model/row/index.js (toRow), view-model/row/actions.js (74 lines: the per-status action lists), dashboard.fit.spec.js (460 lines, 16 Playwright tests in 6 describes: empty state and start, rows and actions, reference search, pagination, the shared alpha phase banner, accessibility, and the amend-refused banner), and flow/notification-action-slugs.js (amend, cancel-amend, copy, delete). Read for provenance only, as they belong to other parts: shared/paths.js (the set base /live-animals and the route paths), shared/kit.js (routeOptions, surfaces, the status tag map, CYA_SLUG), shared/copy.en.js (the shared 'Copy as new', 'Delete' and status words), shared/paging.js (pageAskedFor and previousAndNextLinks), shared/trail.js (TRAIL_START), shared/layout.njk (where the success and recoverable-error banners render), flow/section-captions (the 'Dashboard' caption), engine/journey.js (listKnownJourneys) and sets/live-animals/set.js (SET_BASE). Covered: the list route and how a trader reaches it; its caption, heading and intro; the start control and both ways of opening a new notification; every cell of a row and the words of every status tag; every row action per status, verbatim, with where it leads; the keyword-or-reference search; the four sort options, the default and how sort is carried; the 20-row page size, the Previous/Next pagination and the results-range wording; the empty state; the amend-refused, notification-deleted and recoverable-error banners; every behaviour the dashboard fit spec proves; and the mechanisms in notification-helper.js and the row view model that reshape a backend notification into a row. It stops at the pages the row actions lead to (overview, notification view, delete, cancel-amend), which belong to their own parts.",
+  "structure": "Part 4, the notification list (dashboard), read on main in full: the dashboard feature's page.js (id dashboard, slug '', maturity exploring), controller.js (four routes: GET /live-animals the list, POST /live-animals/notifications/{id}/amend, POST /live-animals/notifications to start one, GET /live-animals/start the INS entry; renderDashboard builds the view from page, sort and referenceNumber query parameters), template.njk (amend-refused banner, caption, h1, body, start button form, 'Your notifications' h2, a one-third filter aside with a single reference search form, a two-thirds column with a results count and sort form, one GOV.UK summary card per notification with its actions and eight labelled values, the empty text, and Previous/Next pagination), notification-helper.js (sort options and default, date formatting, commodity label, page clamping, list query string, pagination links, results range and label), copy.en.js and copy.cy.js (61 lines each, same keys; Welsh read for parity), view-model/sort-options.js (localised sort wording by position), view-model/row/index.js (backend row to card), view-model/row/actions.js (per-status actions), flow/notification-action-slugs.js (amend, cancel-amend, copy, delete slugs) and dashboard.fit.spec.js (17 tests across empty state and start, rows and actions, reference search, pagination, the alpha banner, accessibility and the amend-refused banner). To confirm claims I also read shared/paging.js and the status map in shared/kit.js and shared/copy.en.js, which other parts own. Every earlier claim in my keeps still matches the code and is kept; the earlier status-words claim was not in my keeps, so its fact is claimed afresh from this slice. The pages the row actions lead to (view, overview, delete, cancel amend, copy) are out of this slice.",
   "claims": [
     {
       "id": "repo-frontend-p4-001",
@@ -403,15 +403,6 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p4-049",
-      "statement": "A status tag reads \"Draft\" in blue, \"Submitted\" in green, \"Amend\" in yellow or \"Deleted\" in grey.",
-      "kind": "data",
-      "ref": "src/server/app/shared/kit.js:49-67, src/server/app/shared/copy.en.js:66-71",
-      "quote": "const STRIP_STATUS = { [DRAFT]: { text: sharedCopy.journeyStrip.draft, classes: 'govuk-tag--blue' }, [SUBMITTED]: { text: sharedCopy.journeyStrip.submitted, classes: 'govuk-tag--green' }, [AMEND]: { text: sharedCopy.journeyStrip.amend, classes: 'govuk-tag--yellow' }, [DELETED]: { text: sharedCopy.journeyStrip.deleted, classes: 'govuk-tag--grey' } }; journeyStrip: { draft: 'Draft', submitted: 'Submitted', amend: 'Amend', ... deleted: 'Deleted' }",
-      "confidence": "verbatim",
-      "note": "The status words and colours come from the shared kit, so the list shows the same words as the status strip on an answering page."
-    },
-    {
       "id": "repo-frontend-p4-050",
       "statement": "Deleted notifications never appear in the list, even when the service returns them.",
       "kind": "rule",
@@ -703,6 +694,42 @@
       "quote": "const sortOptionText = [ copy.sort.options.arrivalNewest, copy.sort.options.arrivalOldest, copy.sort.options.createdNewest, copy.sort.options.createdOldest ] export const sortOptions = NOTIFICATION_SORT_OPTIONS.map((option, index) => ({ ...option, text: sortOptionText[index] }))",
       "confidence": "verbatim",
       "note": "mechanism: pairs the sort values with their localised wording. The English wording is held twice, once beside the values in notification-helper.js and once in the copy file."
+    },
+    {
+      "id": "repo-frontend-p4-085",
+      "statement": "A card's status tag shows the same word and colour as the notification's status strip, and the list proves it reads \"Draft\" for a draft, \"Submitted\" for a submitted notification and \"Amend\" for one being amended.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/index.js:12, dashboard.fit.spec.js:36,170,225-227, src/server/app/shared/kit.js:57-74",
+      "quote": "status: journeyStrip(journey).status; await expect(page.getByText('Submitted', { exact: true })).toBeVisible(); await expect(page.getByText('Draft', { exact: true })).toBeVisible(); await expect(page.locator('.govuk-tag', { hasText: 'Amend' })).toHaveText('Amend')",
+      "confidence": "verbatim",
+      "note": "The words and colours (Draft blue, Submitted green, Amend yellow, Deleted grey) live in the shared kit's status map, which another part owns; a Deleted card never shows because the list drops deleted rows."
+    },
+    {
+      "id": "repo-frontend-p4-086",
+      "statement": "The browser tab title of the list page is \"Import notification service\", the same words as its heading.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:92, copy/copy.en.js:2",
+      "quote": "pageTitle: copy.title; title: 'Import notification service'",
+      "confidence": "inferred",
+      "note": "Inferred because the shared layout, another part's, turns pageTitle into the document title."
+    },
+    {
+      "id": "repo-frontend-p4-087",
+      "statement": "The dashboard helpers hold a way to read a notification's arrival date from its transport answers or its top-level arrival date, but nothing on the list uses it.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:59-60",
+      "quote": "export const getArrivalDateIso = (notification) => notification.transport?.arrivalDate ?? notification.arrivalDate ?? null",
+      "confidence": "inferred",
+      "note": "mechanism: reads the arrival date from a notification. A search of src finds no caller outside this file; the card reads journey.arrivalDate directly."
+    },
+    {
+      "id": "repo-frontend-p4-088",
+      "statement": "\"Copy as new\" posts to /live-animals/notifications/<id>/copy.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:25, flow/notification-action-slugs.js:7",
+      "quote": "postAction: pagePath(journey.journeyId, notificationActionSlugs.copy); copy: 'copy'",
+      "confidence": "verbatim",
+      "note": "The copy handler and the page it leads to belong to the notification-actions part."
     }
   ]
 }

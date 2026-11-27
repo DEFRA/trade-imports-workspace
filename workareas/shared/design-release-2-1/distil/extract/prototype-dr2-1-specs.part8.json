@@ -1,0 +1,684 @@
+{
+  "source": "prototype:dr2-1-specs",
+  "structure": "Part 8, Templates. Read in full: e2e/templates.fit.spec.js (206 lines, 12 tests in 3 describes: 'manage templates' 2 tests, 'a saved template' 6 tests, 'create a new template' 4 tests, the first of which has 5 steps), e2e/support/journey.js (283 lines) and e2e/support/fixtures.js (48 lines, which only records each test's navigations into test-results/meta and asserts nothing). Covered: the manage templates list at /templates and the dashboard's Use template button; a saved template's view page (/templates/<slug>), its use (/use), edit (/edit), change-one-section (/change/<page>), delete confirmation (/delete), the POST-reloads and unknown-slug redirects; creating a template (notification type, /templates/create name page, origin and commodity in template mode, the documents and declaration redirects, review and save), saving with no name (/templates/save) and discarding (/templates/discard) inside and outside a template journey. Shared journey.js assertions these tests call and that are claimed here: the /design-release-2.1 mount (url, urlFor), expectHeading (first h1), expectBackLink (.govuk-back-link href), saveAndContinue (button action=continue), submitForm (named main button), answerOrigin and answerCommodity with SPECIES.cattle. The rest of journey.js belongs to other parts.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-specs-p8-001",
+      "statement": "Every Design Release 2.1 route the templates tests visit is mounted under the /design-release-2.1 path prefix.",
+      "kind": "constraint",
+      "ref": "e2e/support/journey.js:3-5",
+      "quote": "// Design Release 2.1 is a mirror mount of the root route table.\nconst BASE = '/design-release-2.1'\nconst url = (p = '') => `${BASE}${p}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-002",
+      "statement": "The manage templates page is at /templates and its page title is 'Manage templates - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:15-16 (manage templates › lists the saved templates with view and use actions)",
+      "quote": "await page.goto(url('/templates'))\n    await expect(page).toHaveTitle('Manage templates - Import notification service - GOV.UK')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-003",
+      "statement": "The manage templates page's main heading is 'Manage templates'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:17",
+      "quote": "await expectHeading(page, 'Manage templates')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-004",
+      "statement": "The manage templates page says 'Select, manage or create new notification templates'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:19",
+      "quote": "await expect(main).toContainText('Select, manage or create new notification templates')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-005",
+      "statement": "The manage templates page has a 'Create new template' link to /templates/create?new=1.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:20",
+      "quote": "await expect(main.locator('a', { hasText: 'Create new template' })).toHaveAttribute('href', url('/templates/create?new=1'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-006",
+      "statement": "The manage templates page has a 'My templates' heading over the list of saved templates.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:21",
+      "quote": "await expect(main.getByRole('heading', { name: 'My templates' })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-007",
+      "statement": "The template list shows a results count, which reads 'Show 1-15 of 15 results' for the 15 saved templates the prototype starts with.",
+      "kind": "data",
+      "ref": "e2e/templates.fit.spec.js:22",
+      "quote": "await expect(main).toContainText('Show 1-15 of 15 results')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-008",
+      "statement": "The saved templates listed include Arena Aintree, Rice Lane City Farm, Monk Park Farm, Acorn Farm and Glen Keen Farm.",
+      "kind": "data",
+      "ref": "e2e/templates.fit.spec.js:11, :23",
+      "quote": "const TEMPLATE_NAMES = ['Arena Aintree', 'Rice Lane City Farm', 'Monk Park Farm', 'Acorn Farm', 'Glen Keen Farm']",
+      "confidence": "verbatim",
+      "note": "Only 5 of the 15 template names are asserted; the other 10 are not named in the suite."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-009",
+      "statement": "Each listed template has a 'View template' link to /templates/<template slug>; the first, Arena Aintree, links to /templates/arena-aintree.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:24",
+      "quote": "await expect(main.locator('a', { hasText: 'View template' }).first()).toHaveAttribute('href', url('/templates/arena-aintree'))",
+      "confidence": "verbatim",
+      "note": "Only the first row's link is asserted; the per-row pattern is read from the slug form of the name."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-010",
+      "statement": "Each listed template has a 'Use template' link to /templates/<template slug>/use; the first links to /templates/arena-aintree/use.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:25",
+      "quote": "await expect(main.locator('a', { hasText: 'Use template' }).first()).toHaveAttribute('href', url('/templates/arena-aintree/use'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-011",
+      "statement": "On the manage templates page the active service navigation item is 'Templates'.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:26",
+      "quote": "await expect(page.locator('.govuk-service-navigation__item--active')).toContainText('Templates')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-012",
+      "statement": "The dashboard has a 'Use template' button that opens the manage templates page at /templates.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:30-34 (manage templates › the dashboard \"Use template\" button opens manage templates)",
+      "quote": "await page.goto(url())\n    await page.locator('main').getByRole('button', { name: 'Use template' }).click()\n    await expect(page).toHaveURL(urlFor('/templates'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-013",
+      "statement": "Following 'View template' from the list opens the template's view page at /templates/arena-aintree, headed with the template's name, 'Arena Aintree'.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:38-42 (a saved template › view: the template answers with a change link per section)",
+      "quote": "await page.locator('main a', { hasText: 'View template' }).first().click()\n    await expect(page).toHaveURL(urlFor('/templates/arena-aintree'))\n    await expectHeading(page, 'Arena Aintree')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-014",
+      "statement": "The template view page shows the word 'Templates' in its main content, likely as a caption above the name.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:44",
+      "quote": "await expect(main).toContainText('Templates')",
+      "confidence": "inferred",
+      "note": "The test asserts only that the text appears in main; that it is a caption is inferred."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-015",
+      "statement": "The template view page shows the date the template was created, as 'Date created: 15 April 2026' for Arena Aintree.",
+      "kind": "data",
+      "ref": "e2e/templates.fit.spec.js:45",
+      "quote": "await expect(main).toContainText('Date created: 15 April 2026')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-016",
+      "statement": "The template view page has a 'Use template' link to /templates/arena-aintree/use.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:46",
+      "quote": "await expect(main.locator('a', { hasText: 'Use template' })).toHaveAttribute('href', url('/templates/arena-aintree/use'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-017",
+      "statement": "The template view page has a link with the text 'Delete' to /templates/arena-aintree/delete.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:47",
+      "quote": "await expect(page.locator(`a[href=\"${url('/templates/arena-aintree/delete')}\"]`)).toHaveText('Delete')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-018",
+      "statement": "The template view page shows the template's answers with a 'Change' link per section; the first goes to /templates/arena-aintree/change/origin-of-the-import.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:48 (test title: 'the template answers with a change link per section')",
+      "quote": "await expect(main.getByRole('link', { name: 'Change' }).first()).toHaveAttribute('href', url('/templates/arena-aintree/change/origin-of-the-import'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-019",
+      "statement": "The template view page groups its answers under numbered section headings, starting with '1. About the consignment'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:49",
+      "quote": "await expect(main).toContainText('1. About the consignment')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-020",
+      "statement": "The template view page's back link goes to /templates.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:50",
+      "quote": "await expectBackLink(page, url('/templates'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-021",
+      "statement": "Using a template (/templates/arena-aintree/use) starts a new draft notification and redirects to the notification hub at /notification-hub.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:54-56 (a saved template › use: starts a new draft notification from the template)",
+      "quote": "await page.goto(url('/templates/arena-aintree/use'))\n    await expect(page).toHaveURL(urlFor('/notification-hub'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-022",
+      "statement": "A notification started from a template shows a 'Draft' status with a live animals reference in the form 'Live animals - GBN-AG-26-<code>'.",
+      "kind": "data",
+      "ref": "e2e/templates.fit.spec.js:58",
+      "quote": "await expect(main).toContainText(/Draft\\s+Live animals - GBN-AG-26-[A-Z0-9]+/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-023",
+      "statement": "The notification hub for a notification started from a template has the heading 'Notification tasklist'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:59",
+      "quote": "await expect(main.getByRole('heading', { name: 'Notification tasklist' })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-024",
+      "statement": "The suite does not prove which answers a notification started from a template carries over: it asserts only that the hub's text contains the character '2'.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:60",
+      "quote": "await expect(main).toContainText('2')",
+      "confidence": "gap",
+      "note": "The intent of the '2' assertion (a count of completed sections, or a reference digit) is not stated. Which answers are copied from the template into the draft is unproven."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-025",
+      "statement": "A template's section Change link opens the section's journey page in template review mode: the first Change link goes to /origin-of-the-import?from=template-review.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:64-67 (a saved template › change one section: save and return goes back to the template)",
+      "quote": "await page.locator('main').getByRole('link', { name: 'Change' }).first().click()\n    await expect(page).toHaveURL(url('/origin-of-the-import?from=template-review').replace(/\\./g, '.'))",
+      "confidence": "verbatim",
+      "note": "The link's href is /templates/arena-aintree/change/origin-of-the-import (p8-018), so that route redirects to the journey page with from=template-review."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-026",
+      "statement": "A journey page opened to change one template section shows a single action button, 'Save and return'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:68",
+      "quote": "await expect(page.locator('button[name=\"action\"]')).toHaveText(['Save and return'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-027",
+      "statement": "A journey page opened to change one template section shows a 'Cancel' link.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:69",
+      "quote": "await expect(page.locator('main a', { hasText: /^Cancel$/ })).toBeVisible()",
+      "confidence": "verbatim",
+      "note": "Where Cancel leads is not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-028",
+      "statement": "The 'Save and return' button on a template section edit submits the action value 'continue'.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:72; e2e/support/journey.js:17-22",
+      "quote": "const saveAndContinue = (page) => clickAction(page, 'continue')",
+      "confidence": "inferred",
+      "note": "mechanism: the test clicks button[name=action][value=continue] while the only action button reads 'Save and return' (p8-026), so that button carries value continue."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-029",
+      "statement": "Saving a changed template section returns to the template's view page at /templates/arena-aintree.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:71-73",
+      "quote": "await page.locator('#internal-reference').fill('AINTREE-2026')\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/templates/arena-aintree'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-030",
+      "statement": "After a template section is saved, the template view page shows a notification banner '<template name> has been updated', such as 'Arena Aintree has been updated'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:74",
+      "quote": "await expect(page.locator('.govuk-notification-banner')).toContainText('Arena Aintree has been updated')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-031",
+      "statement": "The template keeps the changed answer: after the internal reference is changed to AINTREE-2026 the template view page shows AINTREE-2026.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:71, :75",
+      "quote": "await expect(page.locator('main')).toContainText('AINTREE-2026')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-032",
+      "statement": "A template's origin section includes the internal reference field (#internal-reference).",
+      "kind": "data",
+      "ref": "e2e/templates.fit.spec.js:71",
+      "quote": "await page.locator('#internal-reference').fill('AINTREE-2026')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-033",
+      "statement": "A POST to a template's view page (/templates/arena-aintree) changes nothing and redirects (302) back to the same page.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:79-83 (a saved template › posting to a template page just reloads it, and an unknown template returns to the list)",
+      "quote": "const response = await page.request.post(url('/templates/arena-aintree'), { maxRedirects: 0 })\n    expect(response.status()).toBe(302)\n    expect(response.headers().location).toBe(url('/templates/arena-aintree'))",
+      "confidence": "verbatim",
+      "note": "'changes nothing' is from the test title 'just reloads it'; the test asserts only the 302 and location."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-034",
+      "statement": "Opening a template that does not exist (/templates/no-such-template) redirects to the manage templates list at /templates.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:84-85",
+      "quote": "await page.goto(url('/templates/no-such-template'))\n    await expect(page).toHaveURL(urlFor('/templates'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-035",
+      "statement": "Editing a template (/templates/arena-aintree/edit) opens it on its own task list at /notification-hub.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:88-90 (a saved template › edit: opens the template on its own task list)",
+      "quote": "await page.goto(url('/templates/arena-aintree/edit'))\n    await expect(page).toHaveURL(urlFor('/notification-hub'))",
+      "confidence": "verbatim",
+      "note": "No link to /edit is asserted on any page; how a user reaches it is not shown."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-036",
+      "statement": "A template's task list shows 'Template' followed by the template's name, such as 'Template Arena Aintree', in place of a notification status and reference.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:92",
+      "quote": "await expect(main).toContainText(/Template\\s+Arena Aintree/)",
+      "confidence": "verbatim",
+      "note": "'in place of a status and reference' is inferred from the Draft strip on a notification hub (p8-022)."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-037",
+      "statement": "A template's task list has the heading 'Template tasklist'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:93",
+      "quote": "await expect(main.getByRole('heading', { name: 'Template tasklist' })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-038",
+      "statement": "A template has no documents section: its task list has no 'Upload documents' link.",
+      "kind": "rule",
+      "ref": "e2e/templates.fit.spec.js:94-96",
+      "quote": "// Templates have no documents section.\n    await expect(main.getByRole('heading', { name: '4. Addresses' })).toBeVisible()\n    await expect(main.getByRole('link', { name: 'Upload documents' })).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-039",
+      "statement": "A template's task list has a section headed '4. Addresses'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:95",
+      "quote": "await expect(main.getByRole('heading', { name: '4. Addresses' })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-040",
+      "statement": "A template's task list has a 'Review template' link to /review-notification.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:97",
+      "quote": "await expect(main.locator('a', { hasText: 'Review template' })).toHaveAttribute('href', url('/review-notification'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-041",
+      "statement": "A template's task list has a 'Return to manage templates' link to /templates.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:98",
+      "quote": "await expect(main.locator('a', { hasText: 'Return to manage templates' })).toHaveAttribute('href', url('/templates'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-042",
+      "statement": "The template's Delete link opens a confirmation page at /templates/arena-aintree/delete titled 'Delete this template? - Import notification service - GOV.UK'.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:102-106 (a saved template › delete: confirm, then the list says it was deleted)",
+      "quote": "await expect(page).toHaveURL(urlFor('/templates/arena-aintree/delete'))\n    await expect(page).toHaveTitle('Delete this template? - Import notification service - GOV.UK')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-043",
+      "statement": "The delete template confirmation page's heading is 'Delete this template?'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:107",
+      "quote": "await expectHeading(page, 'Delete this template?')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-044",
+      "statement": "The delete template confirmation page shows the template's name as 'Name' followed by the name, such as 'Name Arena Aintree'.",
+      "kind": "data",
+      "ref": "e2e/templates.fit.spec.js:109",
+      "quote": "await expect(main).toContainText(/Name\\s+Arena Aintree/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-045",
+      "statement": "The delete template confirmation page says 'Confirm that you want to delete this template.'",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:110",
+      "quote": "await expect(main).toContainText('Confirm that you want to delete this template.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-046",
+      "statement": "The delete template confirmation page warns 'This action cannot be undone.'",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:111",
+      "quote": "await expect(main).toContainText('This action cannot be undone.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-047",
+      "statement": "The delete template confirmation page's back link goes to the template's view page, /templates/arena-aintree.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:112",
+      "quote": "await expectBackLink(page, url('/templates/arena-aintree'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-048",
+      "statement": "Pressing 'Yes, delete' on the delete template confirmation page deletes the template and returns to /templates.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:114-115",
+      "quote": "await submitForm(page, 'Yes, delete')\n    await expect(page).toHaveURL(urlFor('/templates'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-049",
+      "statement": "After a template is deleted the manage templates page shows a notification banner '<template name> has been deleted', such as 'Arena Aintree has been deleted'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:116",
+      "quote": "await expect(page.locator('.govuk-notification-banner')).toContainText('Arena Aintree has been deleted')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-050",
+      "statement": "A deleted template leaves the list: the count drops to 'Show 1-14 of 14 results'.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:117",
+      "quote": "await expect(main).toContainText('Show 1-14 of 14 results')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-051",
+      "statement": "No cancel or 'No' option on the delete template confirmation page is asserted; only the back link and 'Yes, delete' are proven.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:102-119",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through the delete and discard tests; neither asserts a way to decline other than the back link."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-052",
+      "statement": "Creating a new template asks the notification type first: 'Create new template' leads to /notification-type.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:124-127 (create a new template › type, name, answers, review, save)",
+      "quote": "await page.locator('main a', { hasText: 'Create new template' }).click()\n    await expect(page).toHaveURL(urlFor('/notification-type'))",
+      "confidence": "verbatim",
+      "note": "The link's href is /templates/create?new=1 (p8-005), so that route redirects to the notification type page."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-053",
+      "statement": "In template creation, choosing a notification type (live-animals) and continuing goes to the template name page at /templates/create.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:128-133",
+      "quote": "await page.locator('input[name=\"notificationType\"][value=\"live-animals\"]').check()\n      await saveAndContinue(page)\n    })\n\n    await test.step('then the template name', async () => {\n      await expect(page).toHaveURL(urlFor('/templates/create'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-054",
+      "statement": "The template name page's title is 'Enter template name - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:134",
+      "quote": "await expect(page).toHaveTitle('Enter template name - Import notification service - GOV.UK')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-055",
+      "statement": "The template name page shows 'Create a new template'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:135",
+      "quote": "await expect(page.locator('main')).toContainText('Create a new template')",
+      "confidence": "verbatim",
+      "note": "Whether this is the heading or a caption is not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-056",
+      "statement": "The template name page has one text field labelled 'Enter template name'.",
+      "kind": "data",
+      "ref": "e2e/templates.fit.spec.js:136, :140",
+      "quote": "await expect(page.getByLabel('Enter template name')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-057",
+      "statement": "The template name page has a 'Cancel and return to manage templates' link to /templates.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:137",
+      "quote": "await expect(page.locator('main a', { hasText: 'Cancel and return to manage templates' })).toHaveAttribute('href', url('/templates'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-058",
+      "statement": "The template name page's back link goes to /notification-type.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:138",
+      "quote": "await expectBackLink(page, url('/notification-type'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-059",
+      "statement": "Entering a template name and pressing 'Save and continue' goes to the first journey page, /origin-of-the-import.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:140-142",
+      "quote": "await page.getByLabel('Enter template name').fill('Weekly Irish cattle')\n      await submitForm(page, 'Save and continue')\n      await expect(page).toHaveURL(urlFor('/origin-of-the-import'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-060",
+      "statement": "A template is built from the same journey questions as a notification: the origin page (country of origin search, region of origin) and the commodity search are answered as in a notification.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:146-147; e2e/support/journey.js:130-143",
+      "quote": "await answerOrigin(page, { search: 'Irel', country: 'Republic of Ireland' })\n      await answerCommodity(page, SPECIES.cattle)",
+      "confidence": "inferred",
+      "note": "Inferred because the test drives the template through the shared notification helpers: country 'Republic of Ireland' from the search 'Irel', region of origin 'No', species cattle-bos-taurus from the search 'cattle'."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-061",
+      "statement": "After the commodity page in a template journey, continuing returns to the template's task list at /notification-hub rather than to the next question.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:145-148 (step 'origin and commodity, after which the template returns to its task list')",
+      "quote": "await answerCommodity(page, SPECIES.cattle)\n      await expect(page).toHaveURL(urlFor('/notification-hub'))",
+      "confidence": "verbatim",
+      "note": "Which page follows origin in template mode is not asserted, only that the commodity page's continue ends on the hub."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-062",
+      "statement": "The task list of a template being created shows 'Template' and the new template's name, such as 'Template Weekly Irish cattle'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:149",
+      "quote": "await expect(page.locator('main')).toContainText(/Template\\s+Weekly Irish cattle/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-063",
+      "statement": "Documents are not part of a template: opening /upload-documents during a template journey redirects to the task list at /notification-hub.",
+      "kind": "rule",
+      "ref": "e2e/templates.fit.spec.js:153-155 (step 'documents and declaration are not part of a template')",
+      "quote": "await page.goto(url('/upload-documents'))\n      await expect(page).toHaveURL(urlFor('/notification-hub'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-064",
+      "statement": "The declaration is not part of a template: opening /declaration during a template journey redirects to /review-notification.",
+      "kind": "rule",
+      "ref": "e2e/templates.fit.spec.js:156-157",
+      "quote": "await page.goto(url('/declaration'))\n      await expect(page).toHaveURL(urlFor('/review-notification'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-065",
+      "statement": "The 'Review template' link on a new template's task list opens /review-notification, which shows the template's name.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:161-164 (step 'review the template and save it')",
+      "quote": "await page.locator('main a', { hasText: 'Review template' }).click()\n      await expect(page).toHaveURL(urlFor('/review-notification'))\n      await expect(page.locator('main')).toContainText('Weekly Irish cattle')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-066",
+      "statement": "A template can be saved from review with sections unanswered: the test answers only origin and commodity before saving.",
+      "kind": "rule",
+      "ref": "e2e/templates.fit.spec.js:145-171",
+      "quote": "await answerOrigin(page, { search: 'Irel', country: 'Republic of Ireland' })\n      await answerCommodity(page, SPECIES.cattle)",
+      "confidence": "inferred",
+      "note": "Inferred: no other section is answered before the review form's submit saves the template."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-067",
+      "statement": "Submitting the template review form saves the template and returns to /templates.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:166-167",
+      "quote": "await page.locator('main form[action$=\"/review-notification\"] button[type=\"submit\"]').first().click()\n      await expect(page).toHaveURL(urlFor('/templates'))",
+      "confidence": "verbatim",
+      "note": "The submit button's text on the template review page is not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-068",
+      "statement": "After a new template is saved, the manage templates page shows a notification banner '<template name> saved to templates', such as 'Weekly Irish cattle saved to templates'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:168",
+      "quote": "await expect(page.locator('.govuk-notification-banner')).toContainText('Weekly Irish cattle saved to templates')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-069",
+      "statement": "A saved new template joins the list: the count rises to 'Show 1-16 of 16 results'.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:169",
+      "quote": "await expect(page.locator('main')).toContainText('Show 1-16 of 16 results')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-070",
+      "statement": "Opening /templates/create?new=1 directly starts a new template at the notification type question.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:175-177, :186-188",
+      "quote": "await page.goto(url('/templates/create?new=1'))\n    await page.locator('input[name=\"notificationType\"][value=\"live-animals\"]').check()",
+      "confidence": "inferred",
+      "note": "Inferred: the test checks a notificationType radio right after going to the URL, so it lands on the type page as p8-052 shows."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-071",
+      "statement": "The template name is optional: pressing 'Save and continue' with no name moves on to /origin-of-the-import with no error.",
+      "kind": "rule",
+      "ref": "e2e/templates.fit.spec.js:174-179 (create a new template › a template with no name is saved as \"Untitled template\")",
+      "quote": "await saveAndContinue(page)\n    await submitForm(page, 'Save and continue')\n    await expect(page).toHaveURL(urlFor('/origin-of-the-import'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-072",
+      "statement": "Opening /templates/save during a template journey saves the template and returns to /templates.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:180-181",
+      "quote": "await page.goto(url('/templates/save'))\n    await expect(page).toHaveURL(urlFor('/templates'))",
+      "confidence": "verbatim",
+      "note": "No page link to /templates/save is asserted; the review form submit (p8-067) may post there."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-073",
+      "statement": "A template saved with no name is called 'Untitled template', and the banner reads 'Untitled template saved to templates'.",
+      "kind": "rule",
+      "ref": "e2e/templates.fit.spec.js:174, :182",
+      "quote": "await expect(page.locator('.govuk-notification-banner')).toContainText('Untitled template saved to templates')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-074",
+      "statement": "No validation error is proven for the template name page: no test asserts a rule such as a maximum length or a duplicate name.",
+      "kind": "rule",
+      "ref": "e2e/templates.fit.spec.js:132-143, :174-183",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked at every test that fills or skips the name field; none uses expectErrorSummary or expectInlineError."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-075",
+      "statement": "During a template journey, /templates/discard shows a discard confirmation headed 'Delete this template?'.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:185-193 (create a new template › discard a template being created)",
+      "quote": "await page.goto(url('/templates/discard'))\n    await expect(page).toHaveURL(urlFor('/templates/discard'))\n    await expectHeading(page, 'Delete this template?')",
+      "confidence": "verbatim",
+      "note": "No page link to /templates/discard is asserted; how a user reaches it is not shown."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-076",
+      "statement": "The discard confirmation shows the name of the template being created, such as 'Name Throwaway'.",
+      "kind": "data",
+      "ref": "e2e/templates.fit.spec.js:194",
+      "quote": "await expect(page.locator('main')).toContainText(/Name\\s+Throwaway/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-077",
+      "statement": "The discard confirmation's back link goes to /review-notification.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:195",
+      "quote": "await expectBackLink(page, url('/review-notification'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-078",
+      "statement": "Pressing 'Yes, delete' on the discard confirmation discards the template being created and returns to /templates.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:197-198",
+      "quote": "await submitForm(page, 'Yes, delete')\n    await expect(page).toHaveURL(urlFor('/templates'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-079",
+      "statement": "After a template being created is discarded, the manage templates page shows a banner '<template name> has been deleted', such as 'Throwaway has been deleted'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:199",
+      "quote": "await expect(page.locator('.govuk-notification-banner')).toContainText('Throwaway has been deleted')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-080",
+      "statement": "Opening /templates/discard outside a template journey redirects to the manage templates page at /templates.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:202-205 (create a new template › the discard page outside a template journey returns to manage templates)",
+      "quote": "await page.goto(url('/templates/discard'))\n    await expect(page).toHaveURL(urlFor('/templates'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-081",
+      "statement": "Only a live animals template is proven: every template test chooses the live-animals notification type, and no other type's template is exercised.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:128, :176, :187",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Whether templates for germinal products or other types behave the same is not shown."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p8-082",
+      "statement": "Only the first section's Change link (origin) is exercised; the template review mode of other sections' pages, and where their Save and return leads, is unproven.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:64-77",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

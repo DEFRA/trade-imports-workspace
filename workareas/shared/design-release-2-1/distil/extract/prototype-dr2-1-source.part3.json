@@ -1,12 +1,12 @@
 {
   "source": "prototype:dr2-1-source",
-  "structure": "Part 3 read, at commit 04a073b (checkout HEAD), in full: app/views/design-release-2.1/consignment-details.html (223 lines) and app/views/design-release-2.1/additional-animal-details.html (97 lines); app/routes.js lines 824-1010 (getPackagingFields, isGerminalProductCommodity, getSelectedCommodityRows, buildSpeciesConsignmentEntry, getConsignmentCommodityGroups), 1038-1219 (parse/validate number of animals, packages, net weight, storage temperature; buildRadioItems), 1372-1494 (getUnweanedOptions, getAdditionalAnimalDetailsConfig, requiresAdditionalAnimalDetailsPage, showsGerminalTemperatureQuestion, hasConsignmentDetails, hasAdditionalAnimalDetailsComplete, no-op redirect guards), 1604-1615 (getPostConsignmentDetailsPath, getAdditionalAnimalDetailsBackLink), 10676-10726 (renderConsignmentDetailsPage, renderAdditionalAnimalDetailsPage) and 11309-11522 (GET/POST /consignment-details and /additional-animal-details). To resolve values those lines use, it also read app/data/commodities.js and app/data/commodities-germinal-products.js (packaging fields, unweaned options, germinal flag), app/data/certification-purposes.js (the 16 certification purpose options), routes.js line 60 (germinalTemperatureOptions), getJourneySteps and getNextJourneyPath/getJourneySaveRedirect/getSectionContinueRedirect (1495-1602), hasAnimalIdentifiersRequired (1796), hasGerminalProductsOnly (4448) and the shared partial partials/design-release-2.1/journey-form-actions.html; those are claimed only as far as these two pages use them. Pages covered: /design-release-2.1/consignment-details (page title and heading 'Commodity details', caption 'Description of the goods': selected-commodities summary table with Remove buttons and 'Add another commodity' link, then one section per commodity group and one sub-section per species, with Number of animals plus an optional packages field for live animals, or Total gross weight (kg) and Number of packages for germinal products, and a Temperature radio question with Ambient/Chilled/Frozen when every selected species is a germinal product) and /design-release-2.1/additional-animal-details (heading 'Additional details', caption 'Commodity details': 'What are the animals certified for?' unless the consignment is germinal products only, and 'Does the consignment contain any unweaned animals?' when a selected commodity carries unweaned options and not all are 01061900). Validation, error messages, persistence, journey ordering, back links and the soft-save buttons are claimed for each.",
+  "structure": "Part 3 read, at commit c2078fb (checkout HEAD), in full: app/views/design-release-2.1/consignment-details.html (222 lines), consignment-gross-weight.html (71 lines) and additional-animal-details.html (96 lines); app/routes.js lines 946-1138 (getPackagingFields, isGerminalProductCommodity, formatCommodityGroupHeading, getSelectedCommodityRows, buildSpeciesConsignmentEntry, getConsignmentCommodityGroups, getConsignmentSpeciesEntries), 1166-1427 (parse and validate number of animals, number of packages, germinal packages, net weight, gross weight and storage temperature; getTotalGerminalPackageCount, getGrossWeightValue, showsGerminalGrossWeightField, buildRadioItems), 1582-1710 (getUnweanedOptions, getAdditionalAnimalDetailsConfig, requiresAdditionalAnimalDetailsPage, showsGerminalTemperatureQuestion, hasConsignmentDetails, hasGrossWeightComplete, hasAdditionalAnimalDetailsComplete, no-op redirect guards), 1826-1853 (getPostConsignmentDetailsPath and the gross weight, animal identification and additional details back links), 12221-12292 (the three render functions) and 12927-13202 (GET and POST /consignment-details, /consignment-gross-weight and /additional-animal-details). To resolve values those lines use, it also read app/data/commodities.js, commodity-curated.js, commodities-germinal-products.js, generated/commodities-germinal.json (listed with jq) and certification-purposes.js; routes.js lines 16, 82-83 (certificationPurposeOptions, germinalTemperatureOptions, GERMINAL_QUANTITY_LABEL), 802-828 (species labels, isOtherLiveMammalsCommodityCode), 1711-1824 (getJourneySteps, getNextJourneyPath, the soft-save and section-continue redirects), 2081-2085 (hasAnimalIdentifiersRequired), 2224-2237 (getIdentificationSpeciesLabel), 5167-5179 (hasGerminalProductsOnly), 10352-10393 (allowsBlankJourneyAnswers, applyJourneyValidation, keyValuesBySpecies), the guard stubs at 544, 1162 and 2001, and partials/design-release-2.1/journey-form-actions.html; those are claimed only as far as these three pages use them. Pages covered: /design-release-2.1/consignment-details (title and heading 'Commodity details', caption 'Description of the goods'; a 'Selected commodities' summary with Remove buttons and an 'Add another commodity' link; one section per commodity and one sub-section per species, asking Number of animals plus an optional 'Number of packages (when required)' for live animals, or 'Quantity (unit/pieces)' and an optional 'Number of packages' for germinal products; and a Temperature question with Ambient, Chilled and Frozen when every selected species is a germinal product), /design-release-2.1/consignment-gross-weight (new: shown only for a germinal-only consignment, one 'What is the total gross weight of the consignment?' field in kg) and /design-release-2.1/additional-animal-details (heading 'Additional details', caption 'Commodity details': the certification purpose question unless the consignment is germinal products only, and the unweaned question for cattle or pig). Validation, error messages, saving, journey order, back links, completeness and the save buttons are claimed for each. The earlier extract's per-species 'Total gross weight' claims (p3-030 to p3-033) are dropped, because that field is no longer on the consignment details page.",
   "claims": [
     {
       "id": "prototype-dr2-1-source-p3-001",
       "statement": "The consignment details page is served at /design-release-2.1/consignment-details and its form posts back to the same path.",
       "kind": "behaviour",
-      "ref": "app/views/design-release-2.1/consignment-details.html:41; app/routes.js:11309,11327",
+      "ref": "app/views/design-release-2.1/consignment-details.html:41; app/routes.js:12927,12945",
       "quote": "<form method=\"post\" action=\"/design-release-2.1/consignment-details\" novalidate class=\"app-consignment-details-form\">",
       "confidence": "verbatim"
     },
@@ -30,7 +30,7 @@
       "id": "prototype-dr2-1-source-p3-004",
       "statement": "The consignment details page shows an Alpha phase banner with a feedback link and a Back link.",
       "kind": "copy",
-      "ref": "app/views/design-release-2.1/consignment-details.html:12-22",
+      "ref": "app/views/design-release-2.1/consignment-details.html:11-22",
       "quote": "tag: { text: \"Alpha\" }, html: 'This is a new service. Help us improve it and <a class=\"govuk-link\" href=\"#\">give your feedback by email</a>.'",
       "confidence": "verbatim"
     },
@@ -38,16 +38,16 @@
       "id": "prototype-dr2-1-source-p3-005",
       "statement": "The consignment details page's Back link goes to the journey back link, which falls back to /what-are-you-importing (the commodity page), not the reason for import page that precedes it in the journey step order.",
       "kind": "behaviour",
-      "ref": "app/routes.js:10686; app/routes.js:1496-1501",
+      "ref": "app/routes.js:12231; app/routes.js:1711-1717",
       "quote": "backLink: getJourneyBackLink(req, '/what-are-you-importing'),",
       "confidence": "verbatim",
-      "note": "getJourneySteps orders origin, what-are-you-importing, reason-for-import, consignment-details; the linear fallback skips reason-for-import. getJourneyBackLink (routes.js:488) is another part's and may override the fallback from the referer or hub context."
+      "note": "getJourneySteps orders origin, what-are-you-importing, reason-for-import, consignment-details; the fallback skips reason-for-import. getJourneyBackLink is another part's and may override the fallback from the referer or hub context."
     },
     {
       "id": "prototype-dr2-1-source-p3-006",
       "statement": "The consignment details page shows the notification status partial (notification reference and status) above the form.",
       "kind": "behaviour",
-      "ref": "app/views/design-release-2.1/consignment-details.html:32; app/routes.js:10689",
+      "ref": "app/views/design-release-2.1/consignment-details.html:32; app/routes.js:12234",
       "quote": "{% include \"partials/notification-status.html\" %} ... notificationReference: sessionData.notificationReference || PROTOTYPE_NOTIFICATION_REFERENCE,",
       "confidence": "verbatim"
     },
@@ -60,46 +60,46 @@
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p3-008",
-      "statement": "When at least one commodity is selected, the consignment details page shows a 'Selected commodities' summary with columns 'Commodity code', 'Common name' and 'Species'.",
+      "id": "prototype-dr2-1-source-p3-079",
+      "statement": "When at least one commodity is selected, the consignment details page shows a 'Selected commodities' summary with the columns 'Commodity code', 'Commodity' and 'Species'.",
       "kind": "copy",
       "ref": "app/views/design-release-2.1/consignment-details.html:53-64",
-      "quote": "Selected commodities ... <div class=\"app-consignment-details-page__summary-key\">Commodity code</div> <div class=\"app-consignment-details-page__summary-value\">Common name</div> <div class=\"app-consignment-details-page__summary-species\">Species</div>",
+      "quote": "Selected commodities ... <div class=\"app-consignment-details-page__summary-key\">Commodity code</div> <div class=\"app-consignment-details-page__summary-value\">Commodity</div> <div class=\"app-consignment-details-page__summary-species\">Species</div>",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p3-009",
       "statement": "The selected commodities summary has one row per selected commodity, showing its code, its name and every selected species of that commodity.",
       "kind": "behaviour",
-      "ref": "app/routes.js:908-922; app/views/design-release-2.1/consignment-details.html:66-74",
+      "ref": "app/routes.js:1032-1046; app/views/design-release-2.1/consignment-details.html:66-74",
       "quote": "rows.push({ commodityId: commodity.id, speciesId: null, code: commodity.code, name: commodity.name, species: speciesLabels, ... removeBy: 'commodity' })",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p3-010",
-      "statement": "For the 'other live mammals' style commodity code 01061900, the selected commodities summary shows one row per selected species instead of one per commodity, with the species' common name as the Common name.",
+      "id": "prototype-dr2-1-source-p3-080",
+      "statement": "For a commodity with code 01061900 (cat, dog, ferret and other live mammals), the selected commodities summary shows one row per selected species instead of one per commodity; in Design Release 2.1 the Commodity column shows the commodity name and the Species column shows that species' label.",
       "kind": "behaviour",
-      "ref": "app/routes.js:864-885",
-      "quote": "if (isOtherLiveMammalsCommodityCode(commodity)) { speciesIds.forEach((speciesId) => { ... name: getSpeciesCommonName(match), species: getSelectedSpeciesLabels([speciesId]), ... removeBy: 'species'",
+      "ref": "app/routes.js:826-828,986-1009; app/data/generated/commodities-live.json (cat, dog, ferret, other-live-mammals have code 01061900)",
+      "quote": "name: hasJourneyUpdates(sessionData) ? commodity.name : getSpeciesCommonName(match), species: getSelectedSpeciesLabels([speciesId], hasJourneyUpdates(sessionData) ? sessionData : null),",
       "confidence": "verbatim",
-      "note": "isOtherLiveMammalsCommodityCode is defined at routes.js:712, outside this part; the reading that it matches code 01061900 is from its name."
+      "note": "hasJourneyUpdates is true for Design Release 2.1. isOtherLiveMammalsCommodityCode matches commodity.code === '01061900'."
     },
     {
       "id": "prototype-dr2-1-source-p3-011",
       "statement": "A germinal product commodity has a single summary row for the commodity listing all its selected species.",
       "kind": "behaviour",
-      "ref": "app/routes.js:888-905",
-      "quote": "if (isGerminalProductCommodity(commodity)) { ... rows.push({ commodityId: commodity.id, speciesId: null, code: commodity.code, name: commodity.name, species: speciesLabels, ... quantityLabel: 'Number of packages', isGerminalProduct: true, removeBy: 'commodity' })",
+      "ref": "app/routes.js:1012-1028",
+      "quote": "if (isGerminalProductCommodity(commodity)) { ... rows.push({ commodityId: commodity.id, speciesId: null, code: commodity.code, name: commodity.name, species: speciesLabels, ... isGerminalProduct: true, removeBy: 'commodity' })",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p3-012",
-      "statement": "Each selected commodities row carries a total quantity (sum of number of animals, or sum of number of packages for germinal products) that the consignment details view does not display.",
+      "id": "prototype-dr2-1-source-p3-082",
+      "statement": "Each selected commodities row carries a total quantity (the sum of number of animals, or for germinal products the sum of the 'Quantity (unit/pieces)' values) with a quantity label, which the consignment details view does not display.",
       "kind": "data",
-      "ref": "app/routes.js:889-899,908-918; app/views/design-release-2.1/consignment-details.html:66-91",
-      "quote": "numberOfAnimals: totalAnimals > 0 ? String(totalAnimals) : '', quantityLabel: 'Number of animals',",
+      "ref": "app/routes.js:83,1013-1024,1032-1043; app/views/design-release-2.1/consignment-details.html:66-91",
+      "quote": "numberOfAnimals: totalPackages > 0 ? String(totalPackages) : '', quantityLabel: GERMINAL_QUANTITY_LABEL,",
       "confidence": "inferred",
-      "note": "The row model computes the totals and quantityLabel, but the DR2.1 consignment-details view renders only code, name, species and Remove; the totals may be used by another page that shares getSelectedCommodityRows."
+      "note": "GERMINAL_QUANTITY_LABEL is 'Quantity (unit/pieces)'. The row model computes the totals, but the view renders only code, name, species and Remove; another page sharing getSelectedCommodityRows may show them."
     },
     {
       "id": "prototype-dr2-1-source-p3-013",
@@ -113,7 +113,7 @@
       "id": "prototype-dr2-1-source-p3-014",
       "statement": "Removing a commodity on the consignment details page removes it from the notification, clears any errors and reloads the consignment details page without validating the other fields.",
       "kind": "behaviour",
-      "ref": "app/routes.js:11345-11355",
+      "ref": "app/routes.js:12963-12973",
       "quote": "if (removeCommodityId && getCommodityById(removeCommodityId)) { removeCommodityFromSession(req.session.data, removeCommodityId) req.session.data.errorList = null req.session.data.errors = null ... return res.redirect('/consignment-details')",
       "confidence": "verbatim"
     },
@@ -121,7 +121,7 @@
       "id": "prototype-dr2-1-source-p3-015",
       "statement": "Removing a single species on the consignment details page removes it from the notification, clears any errors and reloads the consignment details page without validating the other fields.",
       "kind": "behaviour",
-      "ref": "app/routes.js:11357-11367",
+      "ref": "app/routes.js:12975-12985",
       "quote": "if (removeSpeciesId) { removeSpeciesFromSession(req.session.data, removeSpeciesId) req.session.data.errorList = null req.session.data.errors = null ... return res.redirect('/consignment-details')",
       "confidence": "verbatim"
     },
@@ -129,7 +129,7 @@
       "id": "prototype-dr2-1-source-p3-016",
       "statement": "If removing a commodity or species leaves no commodity selected, the user is sent to the 'what are you importing' page instead.",
       "kind": "behaviour",
-      "ref": "app/routes.js:11350-11352,11362-11364",
+      "ref": "app/routes.js:12968-12970,12980-12982",
       "quote": "if (!hasCommoditySelection(req.session.data)) { return res.redirect('/what-are-you-importing') }",
       "confidence": "verbatim"
     },
@@ -145,16 +145,16 @@
       "id": "prototype-dr2-1-source-p3-018",
       "statement": "The consignment details fields are grouped by commodity: each selected commodity gets an h2 heading in the form '<commodity name> (<commodity code>)', with a section break between groups.",
       "kind": "copy",
-      "ref": "app/routes.js:840-842,987-992; app/views/design-release-2.1/consignment-details.html:101-108",
+      "ref": "app/routes.js:962-964,1115-1120; app/views/design-release-2.1/consignment-details.html:101-108",
       "quote": "return `${commodity.name} (${commodity.code})`",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p3-019",
-      "statement": "Within each commodity group, each selected species of that commodity gets an h3 heading showing the species label (its scientific name, such as 'Bos taurus').",
+      "id": "prototype-dr2-1-source-p3-081",
+      "statement": "Within each commodity group, each selected species gets an h3 heading; in Design Release 2.1 it reads '<common name> (<Latin name>)', or only the Latin name when the species has no common name or its common name repeats the commodity name or the Latin name.",
       "kind": "copy",
-      "ref": "app/routes.js:943; app/views/design-release-2.1/consignment-details.html:115-117",
-      "quote": "speciesName: species.label, ... <h3 class=\"app-consignment-details-page__species-name\">{{ species.speciesName }}</h3>",
+      "ref": "app/routes.js:1070,2224-2237; app/views/design-release-2.1/consignment-details.html:115-117",
+      "quote": "return repeats ? latinName : `${commonName} (${latinName})`",
       "confidence": "verbatim"
     },
     {
@@ -169,7 +169,7 @@
       "id": "prototype-dr2-1-source-p3-021",
       "statement": "For each live-animal species (not a germinal product), the consignment details page asks 'Number of animals' in a text input named numberOfAnimals[<species id>], with no hint.",
       "kind": "data",
-      "ref": "app/views/design-release-2.1/consignment-details.html:153-165",
+      "ref": "app/views/design-release-2.1/consignment-details.html:151-163",
       "quote": "label: { text: \"Number of animals\" }, id: \"number-of-animals-\" + species.speciesId, name: \"numberOfAnimals[\" + species.speciesId + \"]\",",
       "confidence": "verbatim"
     },
@@ -177,7 +177,7 @@
       "id": "prototype-dr2-1-source-p3-022",
       "statement": "Number of animals is required for every live-animal species: left blank, the error is 'Enter the number of animals', linked to that species' field.",
       "kind": "rule",
-      "ref": "app/routes.js:1065-1075",
+      "ref": "app/routes.js:1193-1203",
       "quote": "if (!value) { errors[`numberOfAnimals-${speciesId}`] = { text: 'Enter the number of animals' } errorList.push({ text: 'Enter the number of animals', href: `#${errorId}` })",
       "confidence": "verbatim"
     },
@@ -185,7 +185,7 @@
       "id": "prototype-dr2-1-source-p3-023",
       "statement": "Number of animals must be a whole number of 1 or more (digits only); otherwise the error is 'Enter a whole number greater than 0'.",
       "kind": "rule",
-      "ref": "app/routes.js:1077-1083",
+      "ref": "app/routes.js:1205-1211",
       "quote": "if (!/^\\d+$/.test(value) || Number(value) < 1) { errors[`numberOfAnimals-${speciesId}`] = { text: 'Enter a whole number greater than 0' }",
       "confidence": "verbatim"
     },
@@ -193,7 +193,7 @@
       "id": "prototype-dr2-1-source-p3-024",
       "statement": "Number of animals is not asked or validated for germinal product species.",
       "kind": "rule",
-      "ref": "app/routes.js:1061-1063; app/views/design-release-2.1/consignment-details.html:119,153",
+      "ref": "app/routes.js:1189-1191; app/views/design-release-2.1/consignment-details.html:119,151",
       "quote": "if (match && isGerminalProductCommodity(match.commodity)) { return }",
       "confidence": "verbatim"
     },
@@ -201,7 +201,7 @@
       "id": "prototype-dr2-1-source-p3-025",
       "statement": "Submitted values on the consignment details page are trimmed of surrounding whitespace before validation and saving.",
       "kind": "rule",
-      "ref": "app/routes.js:1048,1099,1115,11373",
+      "ref": "app/routes.js:1176,1227,1250,12992",
       "quote": "values[speciesId] = value != null ? String(value).trim() : ''",
       "confidence": "verbatim"
     },
@@ -209,122 +209,125 @@
       "id": "prototype-dr2-1-source-p3-026",
       "statement": "For a live-animal species whose commodity has packaging fields (cattle, horse, pig, sheep, goat, cat, dog, ferret and other live mammals), the consignment details page also shows 'Number of packages (when required)' with the hint 'Such as crates, bags or boxes'.",
       "kind": "data",
-      "ref": "app/data/commodities.js:21-23 (and the same entry for horse, pig, sheep, goat, cat, dog, ferret, other-live-mammals); app/routes.js:948-958; app/views/design-release-2.1/consignment-details.html:167-183",
+      "ref": "app/data/commodity-curated.js:3-7,34-76; app/routes.js:1076-1086; app/views/design-release-2.1/consignment-details.html:165-181",
       "quote": "{ id: 'number-of-packages', label: 'Number of packages (when required)', type: 'number', hint: 'Such as crates, bags or boxes' }",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p3-027",
-      "statement": "Commodities with no packaging fields (chicken, turkey, duck, goose, guinea fowl, rabbit, camel, ostrich, parrot, reptile, bees, ornamental fish) show only Number of animals on the consignment details page.",
+      "id": "prototype-dr2-1-source-p3-083",
+      "statement": "Every other live-animal commodity in the catalogue (39 of the 48 generated live commodities, those with no curated fields) shows only Number of animals on the consignment details page, with no packages field.",
       "kind": "behaviour",
-      "ref": "app/data/commodities.js:100-290; app/routes.js:824-830,948",
-      "quote": "showPackaging: !isGerminalProduct && packagingFields.length > 0,",
+      "ref": "app/data/commodities.js:4-10; app/data/commodity-curated.js:38-77; app/routes.js:946-952,1076",
+      "quote": "...(curatedFieldsById[commodity.id] || { identifiers: [] }), ... showPackaging: !isGerminalProduct && packagingFields.length > 0,",
       "confidence": "inferred",
-      "note": "Follows from those commodity entries having no packagingFields, so getPackagingFields returns []."
+      "note": "Follows from only the nine curated commodity ids getting packagingFields; the rest get { identifiers: [] }, so getPackagingFields returns []."
     },
     {
       "id": "prototype-dr2-1-source-p3-028",
       "statement": "The live-animal 'Number of packages (when required)' field is optional: it is not validated for live-animal species, so it may be blank or hold any value.",
       "kind": "rule",
-      "ref": "app/routes.js:1125-1130",
+      "ref": "app/routes.js:1303-1308",
       "quote": "if (!match || !isGerminalProductCommodity(match.commodity)) { return }",
       "confidence": "verbatim",
       "note": "validateNumberOfPackages skips every non-germinal species, so a non-numeric live-animal packages value is saved unchecked. The '(when required)' label implies a condition the code does not enforce."
     },
     {
-      "id": "prototype-dr2-1-source-p3-029",
-      "statement": "The live-animal packages field and the germinal Number of packages field both save into the same per-species numberOfPackages value.",
+      "id": "prototype-dr2-1-source-p3-084",
+      "statement": "The live-animal packages field and the germinal 'Quantity (unit/pieces)' field both save into the same per-species numberOfPackages value; the germinal 'Number of packages' field saves separately, as germinalPackages.",
       "kind": "data",
-      "ref": "app/routes.js:951; app/views/design-release-2.1/consignment-details.html:145",
-      "quote": "name: `numberOfPackages[${speciesId}]`,",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p3-030",
-      "statement": "For each germinal product species, the consignment details page asks 'Total gross weight' in a narrow text input with the suffix 'kg', named netWeight[<species id>].",
-      "kind": "data",
-      "ref": "app/views/design-release-2.1/consignment-details.html:123-138",
-      "quote": "label: { text: \"Total gross weight\" }, id: \"net-weight-\" + species.speciesId, name: \"netWeight[\" + species.speciesId + \"]\", ... suffix: { text: \"kg\" },",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p3-031",
-      "statement": "The germinal 'Total gross weight' field is labelled gross weight but stored and validated as net weight (netWeight).",
-      "kind": "data",
-      "ref": "app/views/design-release-2.1/consignment-details.html:120-128; app/routes.js:1105-1119",
-      "quote": "label: { text: \"Total gross weight\" }, id: \"net-weight-\" + species.speciesId,",
+      "ref": "app/routes.js:1057-1059,1079; app/views/design-release-2.1/consignment-details.html:127,143",
+      "quote": "// Germinal products: numberOfPackages holds \"Quantity (unit/pieces)\" and // germinalPackages holds \"Number of packages\"",
       "confidence": "verbatim",
-      "note": "Ambiguity: label says gross, field name says net. Recorded, not resolved."
+      "note": "mechanism: field names numberOfPackages[<species>] and germinalPackages[<species>]."
     },
     {
-      "id": "prototype-dr2-1-source-p3-032",
-      "statement": "Total gross weight is required for every germinal product species: left blank, the error is 'Enter the total gross weight', linked to that species' field.",
-      "kind": "rule",
-      "ref": "app/routes.js:1167-1177",
-      "quote": "if (!value) { errors[`netWeight-${speciesId}`] = { text: 'Enter the total gross weight' }",
-      "confidence": "verbatim"
+      "id": "prototype-dr2-1-source-p3-091",
+      "statement": "The consignment details page asks no weight for any species: the consignment's total gross weight is asked on its own page after it.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/consignment-details.html:119-182; app/routes.js:1719-1721,12987-13046",
+      "quote": "if (showsGerminalGrossWeightField(sessionData)) { steps.push('/consignment-gross-weight') }",
+      "confidence": "inferred",
+      "note": "The view has no netWeight input and the POST handler no longer parses or saves netWeight; parseNetWeight (routes.js:1283) is still defined but this handler does not call it."
     },
     {
-      "id": "prototype-dr2-1-source-p3-033",
-      "statement": "Total gross weight must be a number greater than 0, digits with an optional decimal part (no sign, no commas, no units); otherwise the error is 'Enter a number greater than 0'.",
-      "kind": "rule",
-      "ref": "app/routes.js:1179-1185",
-      "quote": "if (!/^\\d+(\\.\\d+)?$/.test(value) || Number(value) <= 0) { errors[`netWeight-${speciesId}`] = { text: 'Enter a number greater than 0' }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p3-034",
-      "statement": "For each germinal product species, the consignment details page asks 'Number of packages' (no hint), after Total gross weight.",
+      "id": "prototype-dr2-1-source-p3-085",
+      "statement": "For each germinal product species, the consignment details page asks 'Quantity (unit/pieces)' in a text input with no hint.",
       "kind": "data",
-      "ref": "app/views/design-release-2.1/consignment-details.html:140-152",
-      "quote": "label: { text: \"Number of packages\" }, id: \"number-of-packages-\" + species.speciesId, name: \"numberOfPackages[\" + species.speciesId + \"]\",",
+      "ref": "app/views/design-release-2.1/consignment-details.html:119-134",
+      "quote": "label: { text: \"Quantity (unit/pieces)\" }, id: \"quantity-\" + species.speciesId, name: \"numberOfPackages[\" + species.speciesId + \"]\",",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p3-035",
-      "statement": "Number of packages is required for every germinal product species: left blank, the error is 'Enter the number of packages'.",
+      "id": "prototype-dr2-1-source-p3-086",
+      "statement": "Quantity (unit/pieces) is required for every germinal product species: left blank, the error is 'Enter the quantity', linked to that species' quantity field.",
       "kind": "rule",
-      "ref": "app/routes.js:1132-1142",
-      "quote": "if (!value) { errors[`numberOfPackages-${speciesId}`] = { text: 'Enter the number of packages' }",
+      "ref": "app/routes.js:1310-1320",
+      "quote": "const errorId = `quantity-${speciesId}` if (!value) { errors[`numberOfPackages-${speciesId}`] = { text: 'Enter the quantity' }",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p3-036",
-      "statement": "For germinal products, Number of packages must be a whole number of 1 or more; otherwise the error is 'Enter a whole number greater than 0'.",
+      "id": "prototype-dr2-1-source-p3-087",
+      "statement": "Quantity (unit/pieces) must be a whole number of 1 or more; otherwise the error is 'Enter a whole number greater than 0'.",
       "kind": "rule",
-      "ref": "app/routes.js:1144-1150",
+      "ref": "app/routes.js:1322-1328",
       "quote": "if (!/^\\d+$/.test(value) || Number(value) < 1) { errors[`numberOfPackages-${speciesId}`] = { text: 'Enter a whole number greater than 0' }",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p3-037",
-      "statement": "Germinal product commodities are the 15 embryos/ova and semen commodities (cat, cattle, dog, goat, horse, pig, sheep embryos/ova and semen, and rabbit/rodent semen), all flagged isGerminalProduct with no packaging fields.",
+      "id": "prototype-dr2-1-source-p3-088",
+      "statement": "For each germinal product species, the consignment details page asks 'Number of packages' (no hint) after Quantity (unit/pieces).",
       "kind": "data",
-      "ref": "app/data/commodities-germinal-products.js:9-147",
-      "quote": "function germinalCommodity (entry) { return { isGerminalProduct: true, identifiers: [], certificationPurposeOptions: germinalCertificationPurposeOptions, packagingFields: [], ...entry } }",
+      "ref": "app/views/design-release-2.1/consignment-details.html:136-150",
+      "quote": "label: { text: \"Number of packages\" }, id: \"number-of-packages-\" + species.speciesId, name: \"germinalPackages[\" + species.speciesId + \"]\",",
       "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-089",
+      "statement": "The germinal 'Number of packages' is optional, but a value entered must be a whole number of 1 or more; otherwise the error is 'Number of packages must be a whole number greater than 0', linked to that species' field.",
+      "kind": "rule",
+      "ref": "app/routes.js:1233-1234,1256-1273",
+      "quote": "// \"Number of packages\" for germinal products. Optional, like the live animals // field, but a value that is entered must be a whole number greater than 0. ... errors[`germinalPackages-${speciesId}`] = { text: 'Number of packages must be a whole number greater than 0' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-122",
+      "statement": "A total of the germinal 'Number of packages' values across species is worked out, counting only positive numbers.",
+      "kind": "data",
+      "ref": "app/routes.js:1275-1281",
+      "quote": "return Object.values(sessionData.germinalPackages || {}).reduce((total, value) => { const count = Number(value) return Number.isFinite(count) && count > 0 ? total + count : total }, 0)",
+      "confidence": "verbatim",
+      "note": "mechanism: sums germinalPackages for display elsewhere (used outside this part's pages)."
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-090",
+      "statement": "Germinal product commodities are the 18 embryos/ova and semen entries in the generated germinal catalogue (cat, cattle, dog, goat, horse, pig and sheep embryos/ova and semen; rabbit/rodent semen; amphibian, arachnid and reptile embryos/ova), all flagged as germinal products with no packaging fields.",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:9-21; app/data/generated/commodities-germinal.json",
+      "quote": "function germinalCommodity (entry) { return { isGerminalProduct: true, identifiers: [], certificationPurposeOptions: germinalCertificationPurposeOptions, packagingFields: [], ...entry } }",
+      "confidence": "verbatim",
+      "note": "Codes are 05119985, except Cattle, Semen which is 05111000."
     },
     {
       "id": "prototype-dr2-1-source-p3-038",
       "statement": "The storage temperature question is shown on the consignment details page only when every selected species is a germinal product (none when the consignment mixes germinal products and live animals, or has only live animals).",
       "kind": "rule",
-      "ref": "app/routes.js:1419-1421,4448-4460,10680; app/views/design-release-2.1/consignment-details.html:188",
+      "ref": "app/routes.js:1629-1631,5167-5179,12225; app/views/design-release-2.1/consignment-details.html:186",
       "quote": "function showsGerminalTemperatureQuestion (sessionData) { return hasGerminalProductsOnly(sessionData) }",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p3-039",
-      "statement": "The storage temperature question is a radio group with the legend 'Temperature' (label-sized, not a heading) and the hint 'How will the products be stored', shown once after all commodity groups.",
+      "id": "prototype-dr2-1-source-p3-092",
+      "statement": "The storage temperature question is a radio group with the legend 'Temperature' (label-sized, not a heading) and the hint 'How the products will be stored.', shown once after all commodity groups behind a section break.",
       "kind": "copy",
-      "ref": "app/views/design-release-2.1/consignment-details.html:188-209",
-      "quote": "legend: { text: \"Temperature\", classes: \"govuk-label\" } ... hint: { text: \"How will the products be stored\" },",
+      "ref": "app/views/design-release-2.1/consignment-details.html:186-210",
+      "quote": "legend: { text: \"Temperature\", classes: \"govuk-label\" } ... hint: { text: \"How the products will be stored.\" },",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p3-040",
       "statement": "The storage temperature options are 'Ambient', 'Chilled' and 'Frozen', each with the same value as its label.",
       "kind": "data",
-      "ref": "app/routes.js:60,1210-1216,10693-10695",
+      "ref": "app/routes.js:82,1420-1426,12238-12240",
       "quote": "const germinalTemperatureOptions = ['Ambient', 'Chilled', 'Frozen']",
       "confidence": "verbatim"
     },
@@ -332,40 +335,50 @@
       "id": "prototype-dr2-1-source-p3-041",
       "statement": "When shown, storage temperature is required: with no option (or an unknown value) chosen, the error is 'Select a temperature', linked to #storage-temperature.",
       "kind": "rule",
-      "ref": "app/routes.js:1191-1208",
+      "ref": "app/routes.js:1401-1418",
       "quote": "if (!germinalTemperatureOptions.includes(value)) { errors.storageTemperature = { text: 'Select a temperature' } errorList.push({ text: 'Select a temperature', href: '#storage-temperature' })",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p3-042",
-      "statement": "The error summary on the consignment details page lists errors in this order: number of animals, total gross weight, number of packages, then temperature (all species for one field type before the next).",
+      "id": "prototype-dr2-1-source-p3-093",
+      "statement": "The error summary on the consignment details page lists errors in this order: number of animals, quantity, germinal number of packages, then temperature (all species for one field type before the next).",
       "kind": "behaviour",
-      "ref": "app/routes.js:11385-11390",
-      "quote": "const errorList = [ ...animalValidation.errorList, ...netWeightValidation.errorList, ...packagingValidation.errorList, ...temperatureValidation.errorList ]",
+      "ref": "app/routes.js:13015-13020",
+      "quote": "const errorList = [ ...animalValidation.errorList, ...packagingValidation.errorList, ...germinalPackagesValidation.errorList, ...temperatureValidation.errorList ]",
       "confidence": "verbatim",
       "note": "Ordering is grouped by field type, not by page order per species, so with several germinal species the summary does not follow the on-page order."
     },
     {
-      "id": "prototype-dr2-1-source-p3-043",
-      "statement": "When the consignment details form has errors, the page is re-shown with the entered values kept (number of animals, packages, weight and the chosen temperature) and the field-level errors beside each field.",
-      "kind": "behaviour",
-      "ref": "app/routes.js:11392-11406",
-      "quote": "if (errorList.length > 0) { req.session.data.errorList = errorList req.session.data.errors = errors req.session.data.numberOfAnimals = numberOfAnimals ... return renderConsignmentDetailsPage(req, res, { selectedStorageTemperature: storageTemperature })",
-      "confidence": "verbatim"
+      "id": "prototype-dr2-1-source-p3-097",
+      "statement": "While a template is being created in Design Release 2.1, the consignment details and gross weight pages drop the error for any answer left blank, so blank fields pass and only entered values that are not valid are flagged.",
+      "kind": "rule",
+      "ref": "app/routes.js:10352-10382,12994-13008,13082-13086",
+      "quote": "function allowsBlankJourneyAnswers (sessionData) { return hasJourneyUpdates(sessionData) && isCreatingTemplateJourney(sessionData) } ... if (value != null && String(value).trim() !== '') { errors[key] = validation.errors[key] }",
+      "confidence": "verbatim",
+      "note": "The germinal 'Number of packages' check is not passed through applyJourneyValidation, but it only flags entered values anyway."
     },
     {
-      "id": "prototype-dr2-1-source-p3-044",
-      "statement": "On a valid submit, the consignment details page saves number of animals, number of packages and net weight per species, and saves storage temperature only when the temperature question applies (otherwise it is cleared).",
+      "id": "prototype-dr2-1-source-p3-094",
+      "statement": "When the consignment details form has errors, the page is re-shown with the entered values kept (number of animals, packages, quantity, germinal number of packages and the chosen temperature) and the field-level errors beside each field.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:13022-13036",
+      "quote": "if (errorList.length > 0) { req.session.data.errorList = errorList req.session.data.errors = errors req.session.data.numberOfAnimals = numberOfAnimals req.session.data.numberOfPackages = numberOfPackages req.session.data.germinalPackages = germinalPackages ... return renderConsignmentDetailsPage(req, res, { selectedStorageTemperature: storageTemperature })",
+      "confidence": "verbatim",
+      "note": "mechanism: the entered values are written to the session even when the page has errors."
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-095",
+      "statement": "On a valid submit, the consignment details page saves number of animals, number of packages (live packages or germinal quantity) and germinal number of packages per species, and saves storage temperature only when the temperature question applies (otherwise it is cleared).",
       "kind": "data",
-      "ref": "app/routes.js:11408-11416",
-      "quote": "req.session.data.numberOfAnimals = numberOfAnimals req.session.data.numberOfPackages = numberOfPackages req.session.data.netWeight = netWeight req.session.data.packageType = {} req.session.data.storageTemperature = showsGerminalTemperatureQuestion(req.session.data) ? storageTemperature : null",
+      "ref": "app/routes.js:13038-13046",
+      "quote": "req.session.data.numberOfAnimals = numberOfAnimals req.session.data.numberOfPackages = numberOfPackages req.session.data.germinalPackages = germinalPackages req.session.data.packageType = {} req.session.data.storageTemperature = showsGerminalTemperatureQuestion(req.session.data) ? storageTemperature : null",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p3-045",
       "statement": "Saving the consignment details page always clears any previously saved package type.",
       "kind": "data",
-      "ref": "app/routes.js:11398,11413",
+      "ref": "app/routes.js:13028,13043",
       "quote": "req.session.data.packageType = {}",
       "confidence": "verbatim",
       "note": "No package type field is asked on the DR2.1 page; the reset suggests package type was dropped from this design."
@@ -374,50 +387,59 @@
       "id": "prototype-dr2-1-source-p3-046",
       "statement": "The consignment details page is validated in full even when the user chooses 'Save and return to overview'; the soft save only happens after the page is valid.",
       "kind": "rule",
-      "ref": "app/routes.js:11392-11420",
+      "ref": "app/routes.js:13022-13050",
       "quote": "if (errorList.length > 0) { ... return renderConsignmentDetailsPage(...) } ... if (isJourneySoftSaveAction(getJourneyFormAction(req))) { return res.redirect(getJourneySaveRedirect(getJourneyFormAction(req), '/notification-hub', req.session.data)) }",
       "confidence": "verbatim",
-      "note": "Contrast with the additional animal details page, where the soft save skips validation."
+      "note": "Contrast with the gross weight and additional animal details pages, where the soft save skips validation."
     },
     {
       "id": "prototype-dr2-1-source-p3-047",
       "statement": "The consignment details and additional animal details pages use the shared journey form actions: 'Save and continue' and 'Save and return to overview' buttons and a 'Cancel and return to overview' link by default.",
       "kind": "copy",
-      "ref": "app/views/design-release-2.1/consignment-details.html:212-213; app/views/design-release-2.1/additional-animal-details.html:91-92; app/views/partials/design-release-2.1/journey-form-actions.html",
+      "ref": "app/views/design-release-2.1/consignment-details.html:212-213; app/views/design-release-2.1/additional-animal-details.html:91-92; app/views/partials/design-release-2.1/journey-form-actions.html:34-36",
       "quote": "{% set continueText = options.continueText if options.continueText else 'Save and continue' %} {% set hubText = options.hubText if options.hubText else 'Save and return to overview' %} {% set cancelText = options.cancelText if options.cancelText else 'Cancel and return to overview' %}",
       "confidence": "verbatim",
-      "note": "The partial's amend and template-review variants are claimed by the part that owns the shell; both pages pass empty options so they get the defaults."
+      "note": "The partial's amend, template-create and template-review variants are claimed by the part that owns the shell; both pages pass empty options so they get the defaults."
     },
     {
       "id": "prototype-dr2-1-source-p3-048",
       "statement": "'Save and return to overview' on the consignment details or additional animal details page saves a draft notification and goes to the notification hub; in amend mode 'Save and return' goes to the review page instead.",
       "kind": "behaviour",
-      "ref": "app/routes.js:1564-1586,11418-11420,11496-11506",
+      "ref": "app/routes.js:1786-1808,13048-13050,13176-13186",
       "quote": "function isJourneySoftSaveAction (action) { return action === 'hub' || action === 'review' } ... persistDraftNotification(sessionData) ... if (action === 'review') { return '/review-notification' } if (action === 'hub') { return '/notification-hub' }",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p3-049",
-      "statement": "'Save and continue' on the consignment details page goes to the next journey step: animal identification details if any selected species needs identifiers, else additional animal details if that page applies, else arrival details.",
+      "id": "prototype-dr2-1-source-p3-098",
+      "statement": "'Save and continue' on the consignment details page goes to the next journey step: the gross weight page if every selected species is a germinal product, else animal identification details if any selected species needs identifiers, else additional animal details if that page applies, else arrival details.",
       "kind": "behaviour",
-      "ref": "app/routes.js:1495-1512,1604-1606,11422",
-      "quote": "const steps = [ '/origin-of-the-import', '/what-are-you-importing', '/reason-for-import', '/consignment-details' ] if (hasAnimalIdentifiersRequired(sessionData)) { steps.push('/animal-identification-details') } if (requiresAdditionalAnimalDetailsPage(sessionData)) { steps.push('/additional-animal-details') } steps.push('/arrival-details')",
+      "ref": "app/routes.js:1711-1731,1826-1828,13052",
+      "quote": "'/consignment-details' ] if (showsGerminalGrossWeightField(sessionData)) { steps.push('/consignment-gross-weight') } if (hasAnimalIdentifiersRequired(sessionData)) { steps.push('/animal-identification-details') } if (requiresAdditionalAnimalDetailsPage(sessionData)) { steps.push('/additional-animal-details') } steps.push('/arrival-details')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p3-050",
       "statement": "When the consignment details page was reached from the notification hub, the review page or template review, 'Save and continue' returns there instead of the next journey step.",
       "kind": "behaviour",
-      "ref": "app/routes.js:1588-1602,11422; app/views/design-release-2.1/consignment-details.html:43-45",
+      "ref": "app/routes.js:1810-1824,13052; app/views/design-release-2.1/consignment-details.html:43-45",
       "quote": "if (isFromHub(req)) { return '/notification-hub' } if (isFromReview(req)) { return '/review-notification' } return linearPath",
       "confidence": "verbatim",
       "note": "The page keeps the hub origin through a hidden input from=hub."
     },
     {
+      "id": "prototype-dr2-1-source-p3-124",
+      "statement": "The consignment details and additional animal details forms carry only a hidden from=hub marker; unlike the gross weight page, they have no hidden marker for the review page or template review.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/consignment-details.html:43-45; app/views/design-release-2.1/additional-animal-details.html:43-45; app/views/design-release-2.1/consignment-gross-weight.html:37-45",
+      "quote": "{% if fromHub %} <input type=\"hidden\" name=\"from\" value=\"hub\"> {% endif %}",
+      "confidence": "verbatim",
+      "note": "renderConsignmentDetailsPage and renderAdditionalAnimalDetailsPage pass fromTemplateReview, but neither view uses it; whether the review origin survives the POST depends on isFromReview, owned by another part."
+    },
+    {
       "id": "prototype-dr2-1-source-p3-051",
       "statement": "In this journey the consignment (commodity) details page comes after the reason for import page and before animal identification, additional details and arrival details.",
       "kind": "behaviour",
-      "ref": "app/routes.js:1496-1511",
+      "ref": "app/routes.js:1711-1731",
       "quote": "'/reason-for-import', '/consignment-details' ]",
       "confidence": "verbatim"
     },
@@ -425,32 +447,205 @@
       "id": "prototype-dr2-1-source-p3-052",
       "statement": "The consignment details and additional animal details pages do not redirect a user who has skipped earlier steps: the origin, commodity, import reason, consignment details and identifier guards all do nothing.",
       "kind": "behaviour",
-      "ref": "app/routes.js:1461-1463,1487-1493,11312-11322,11428-11446",
+      "ref": "app/routes.js:544-546,1162-1164,2001-2003,1677-1679,1707-1709,12930-12940,13108-13126",
       "quote": "function redirectIfNoConsignmentDetails (req, res) { return false }",
       "confidence": "verbatim",
-      "note": "redirectIfNoOrigin (436), redirectIfNoCommodity (1034) and redirectIfNoImportReason (1753) also return false."
+      "note": "redirectIfNoOrigin, redirectIfNoCommodity and redirectIfNoImportReason also return false."
     },
     {
-      "id": "prototype-dr2-1-source-p3-053",
-      "statement": "The consignment details section counts as complete only when every selected species has valid values (number of animals of 1 or more for live animals; weight above 0 and whole packages of 1 or more for germinal products) and, for a germinal-only consignment, a valid storage temperature.",
+      "id": "prototype-dr2-1-source-p3-099",
+      "statement": "The consignment details section counts as complete only when every selected species has a valid value (a whole number of animals of 1 or more for live animals; a whole quantity of 1 or more for germinal products) and, for a germinal-only consignment, a valid storage temperature; the germinal number of packages does not count.",
       "kind": "rule",
-      "ref": "app/routes.js:1423-1459",
-      "quote": "if (isGerminalProductCommodity(match.commodity)) { ... return /^\\d+(\\.\\d+)?$/.test(netWeight) && Number(netWeight) > 0 && /^\\d+$/.test(numberOfPackages) && Number(numberOfPackages) >= 1 } ... if (showsGerminalTemperatureQuestion(sessionData)) { return germinalTemperatureOptions.includes(sessionData.storageTemperature) }",
+      "ref": "app/routes.js:1633-1667",
+      "quote": "if (isGerminalProductCommodity(match.commodity)) { const numberOfPackages = String((sessionData.numberOfPackages || {})[speciesId] || '').trim() return /^\\d+$/.test(numberOfPackages) && Number(numberOfPackages) >= 1 } ... if (showsGerminalTemperatureQuestion(sessionData)) { return germinalTemperatureOptions.includes(sessionData.storageTemperature) }",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p3-054",
       "statement": "The consignment details section is incomplete when no species is selected.",
       "kind": "rule",
-      "ref": "app/routes.js:1424-1428",
+      "ref": "app/routes.js:1634-1638",
       "quote": "if (!speciesIds.length) { return false }",
       "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-100",
+      "statement": "Fields on the consignment details page are pre-filled with previously saved per-species number of animals, number of packages (or germinal quantity) and germinal number of packages.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:1072-1075,1082",
+      "quote": "numberOfAnimals: numberOfAnimals[speciesId] != null ? String(numberOfAnimals[speciesId]) : '', ... numberOfPackages: numberOfPackages[speciesId] != null ? String(numberOfPackages[speciesId]) : '', germinalPackages: germinalPackages[speciesId] != null ? String(germinalPackages[speciesId]) : '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-102",
+      "statement": "The gross weight page is served at /design-release-2.1/consignment-gross-weight and its form posts back to the same path under the journey's base path.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/consignment-gross-weight.html:36; app/routes.js:13055,13065",
+      "quote": "<form method=\"post\" action=\"{{ (journeyBasePath + '/consignment-gross-weight') if journeyBasePath else '/consignment-gross-weight' }}\" novalidate>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-103",
+      "statement": "The gross weight page is shown only when every selected species is a germinal product; otherwise visiting it (GET or POST) redirects to the journey step after consignment details.",
+      "kind": "rule",
+      "ref": "app/routes.js:1368-1370,13058-13060,13068-13070",
+      "quote": "if (!showsGerminalGrossWeightField(req.session.data)) { return res.redirect(getNextJourneyPath('/consignment-details', req.session.data)) }",
+      "confidence": "verbatim",
+      "note": "showsGerminalGrossWeightField returns hasGerminalProductsOnly, which is false when no species is selected."
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-104",
+      "statement": "The gross weight page's title and heading are 'What is the total gross weight of the consignment?'; the heading is the field's large label.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/consignment-gross-weight.html:8,47-52",
+      "quote": "label: { text: \"What is the total gross weight of the consignment?\", classes: \"govuk-label--l\", isPageHeading: true },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-105",
+      "statement": "The gross weight page shows the caption 'Description of the goods' above the heading.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/consignment-gross-weight.html:34",
+      "quote": "<span class=\"govuk-caption-l\">Description of the goods</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-106",
+      "statement": "The gross weight field's hint is 'This includes the weight of all the commodities in the consignment and their packaging.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/consignment-gross-weight.html:53-55",
+      "quote": "hint: { text: \"This includes the weight of all the commodities in the consignment and their packaging.\" },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-107",
+      "statement": "The gross weight page asks for one value for the whole consignment, in a narrow input with the suffix 'kg'.",
+      "kind": "data",
+      "ref": "app/views/design-release-2.1/consignment-gross-weight.html:56-65",
+      "quote": "id: \"gross-weight\", name: \"grossWeight\", value: grossWeight, classes: \"govuk-input--width-5\", ... suffix: { text: \"kg\" },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-108",
+      "statement": "The gross weight is required: left blank, the error is 'Enter the total gross weight', linked to #gross-weight.",
+      "kind": "rule",
+      "ref": "app/routes.js:1380-1388",
+      "quote": "if (!value) { errors.grossWeight = { text: 'Enter the total gross weight' } errorList.push({ text: 'Enter the total gross weight', href: '#gross-weight' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-109",
+      "statement": "The gross weight must be a number greater than 0, digits with an optional decimal part (no sign, no commas, no units); otherwise the error is 'Enter a number greater than 0'.",
+      "kind": "rule",
+      "ref": "app/routes.js:1360-1362,1390-1396",
+      "quote": "return /^\\d+(\\.\\d+)?$/.test(value) && Number(value) > 0 ... errors.grossWeight = { text: 'Enter a number greater than 0' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-110",
+      "statement": "The submitted gross weight is trimmed of surrounding whitespace before it is validated and saved.",
+      "kind": "rule",
+      "ref": "app/routes.js:1364-1366,13072",
+      "quote": "return body && body.grossWeight != null ? String(body.grossWeight).trim() : ''",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-111",
+      "statement": "The gross weight page uses the journey layout, with an Alpha phase banner, a Back link, the notification status partial and an error summary titled 'There is a problem' when errors are present.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/consignment-gross-weight.html:1,10-32",
+      "quote": "{% extends \"layouts/journey.html\" %} ... {% include \"partials/notification-status.html\" %} ... titleText: \"There is a problem\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-112",
+      "statement": "The gross weight page's Back link falls back to the consignment details page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:1830-1832,12256",
+      "quote": "function getGrossWeightPageBackLink () { return '/consignment-details' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-117",
+      "statement": "The gross weight page uses the shared journey form actions with their defaults: 'Save and continue', 'Save and return to overview' and 'Cancel and return to overview'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/consignment-gross-weight.html:69; app/views/partials/design-release-2.1/journey-form-actions.html:19,34-36",
+      "quote": "{% include \"partials/design-release-2.1/journey-form-actions.html\" %}",
+      "confidence": "inferred",
+      "note": "The view sets no journeyFormActionOptions, so the partial falls back to {} and its default texts."
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-113",
+      "statement": "'Save and continue' on the gross weight page saves the weight and goes to the next journey step (animal identification details when identifiers are needed, else additional animal details when it applies, else arrival details), or back to the hub, review page or template review when the page was reached from there.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:1711-1731,1810-1824,13095-13102; app/views/design-release-2.1/consignment-gross-weight.html:37-45",
+      "quote": "req.session.data.grossWeight = grossWeight ... return res.redirect(getSectionContinueRedirect( req, getNextJourneyPath('/consignment-gross-weight', req.session.data) ))",
+      "confidence": "verbatim",
+      "note": "The view keeps the origin in hidden from=hub, from=review or from=template-review inputs."
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-114",
+      "statement": "'Save and return to overview' on the gross weight page saves whatever was entered without validating it, saves a draft notification and goes to the notification hub (in amend mode 'Save and return' goes to the review page).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:13074-13080,1790-1808",
+      "quote": "if (isJourneySoftSaveAction(getJourneyFormAction(req))) { req.session.data.grossWeight = grossWeight req.session.data.errorList = null req.session.data.errors = null return res.redirect(getJourneySaveRedirect(getJourneyFormAction(req), '/notification-hub', req.session.data)) }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-115",
+      "statement": "When the gross weight is not valid, the page is re-shown with the entered value kept and the error beside the field.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:13088-13093; app/views/design-release-2.1/consignment-gross-weight.html:66",
+      "quote": "if (validation.errorList.length) { req.session.data.errorList = validation.errorList req.session.data.errors = validation.errors return renderConsignmentGrossWeightPage(req, res, { grossWeight }) }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-116",
+      "statement": "The gross weight field is pre-filled with the saved gross weight or, when there is none, with the first saved per-species net weight.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:1334-1358,12251-12253",
+      "quote": "if (direct) { return direct } const netWeight = sessionData && sessionData.netWeight ... if (values.length) { return values[0] }",
+      "confidence": "verbatim",
+      "note": "mechanism: falls back to the per-species netWeight values earlier versions of the consignment details page saved."
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-119",
+      "statement": "The gross weight counts as complete when the consignment is not germinal products only; otherwise it is complete only when the saved gross weight is a number greater than 0.",
+      "kind": "rule",
+      "ref": "app/routes.js:1669-1675",
+      "quote": "function hasGrossWeightComplete (sessionData) { if (!showsGerminalGrossWeightField(sessionData)) { return true } return isValidGrossWeight(getGrossWeightValue(sessionData)) }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-120",
+      "statement": "The animal identification page's Back link falls back to the gross weight page for a germinal-only consignment, otherwise to the consignment details page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:1834-1840",
+      "quote": "if (showsGerminalGrossWeightField(sessionData)) { return '/consignment-gross-weight' } return '/consignment-details'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-118",
+      "statement": "Visiting the gross weight page (GET or POST) makes sure a prototype notification reference exists for the notification.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:13056,13066",
+      "quote": "ensurePrototypeNotificationReference(req.session.data)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p3-121",
+      "statement": "The source does not ask a total gross weight for a consignment of live animals, or one that mixes live animals and germinal products.",
+      "kind": "rule",
+      "ref": "app/routes.js:1368-1370,1719-1721,1376-1378",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The gross weight page and its check apply only when hasGerminalProductsOnly is true; the source is silent on gross weight for other consignments. Recorded as a gap, not a decision."
     },
     {
       "id": "prototype-dr2-1-source-p3-055",
       "statement": "The additional animal details page is served at /design-release-2.1/additional-animal-details and posts back to the same path.",
       "kind": "behaviour",
-      "ref": "app/views/design-release-2.1/additional-animal-details.html:41; app/routes.js:11425,11460",
+      "ref": "app/views/design-release-2.1/additional-animal-details.html:41; app/routes.js:13105,13140",
       "quote": "<form method=\"post\" action=\"/design-release-2.1/additional-animal-details\" novalidate class=\"app-additional-animal-details-form\">",
       "confidence": "verbatim"
     },
@@ -474,7 +669,7 @@
       "id": "prototype-dr2-1-source-p3-058",
       "statement": "The additional animal details page is shown only when it has at least one question to ask: the certification purpose question or the unweaned question.",
       "kind": "rule",
-      "ref": "app/routes.js:1413-1417",
+      "ref": "app/routes.js:1623-1627",
       "quote": "return config.showCertificationPurposeQuestion || config.showUnweanedQuestion",
       "confidence": "verbatim"
     },
@@ -482,7 +677,7 @@
       "id": "prototype-dr2-1-source-p3-059",
       "statement": "If the additional animal details page does not apply, visiting it (GET or POST) redirects to the journey step after animal identification details (when identifiers are required) or after consignment details.",
       "kind": "behaviour",
-      "ref": "app/routes.js:11448-11455,11483-11490",
+      "ref": "app/routes.js:13128-13135,13163-13170",
       "quote": "if (!requiresAdditionalAnimalDetailsPage(req.session.data)) { return res.redirect(getNextJourneyPath( hasAnimalIdentifiersRequired(req.session.data) ? '/animal-identification-details' : '/consignment-details', req.session.data ))",
       "confidence": "verbatim"
     },
@@ -490,7 +685,7 @@
       "id": "prototype-dr2-1-source-p3-060",
       "statement": "The certification purpose question is shown on the additional animal details page unless every selected species is a germinal product.",
       "kind": "rule",
-      "ref": "app/routes.js:1403-1406; app/views/design-release-2.1/additional-animal-details.html:47",
+      "ref": "app/routes.js:1611-1616; app/views/design-release-2.1/additional-animal-details.html:47",
       "quote": "showCertificationPurposeQuestion: !isGerminalOnly,",
       "confidence": "verbatim",
       "note": "Because hasGerminalProductsOnly returns false with no species selected, the question (and so the page) also applies when nothing is selected."
@@ -507,7 +702,7 @@
       "id": "prototype-dr2-1-source-p3-062",
       "statement": "The certification purpose options are, in order: Further keeping; Slaughter; Confined establishment; Germinal products; Registered equine animal; Travelling circus/animal act; Exhibition; Event or activity near borders; Release into the wild; Dispatch centre; Relaying area / purification centre; Ornamental aquaculture establishment; Technical use; Quarantine or similar establishment; Live aquatic animals for human consumption; Other.",
       "kind": "data",
-      "ref": "app/data/certification-purposes.js:3-20; app/routes.js:14,1408",
+      "ref": "app/data/certification-purposes.js:3-20; app/routes.js:16,1618",
       "quote": "'Further keeping', 'Slaughter', 'Confined establishment', 'Germinal products', 'Registered equine animal', 'Travelling circus/animal act', 'Exhibition', 'Event or activity near borders', 'Release into the wild', 'Dispatch centre', 'Relaying area / purification centre', 'Ornamental aquaculture establishment', 'Technical use', 'Quarantine or similar establishment', 'Live aquatic animals for human consumption', 'Other'",
       "confidence": "verbatim"
     },
@@ -515,7 +710,7 @@
       "id": "prototype-dr2-1-source-p3-063",
       "statement": "The same 16 certification purpose options are offered whatever the commodity; the per-commodity certification purpose lists in the commodity data (such as cattle's 'Approved bodies', 'Breeding and/or production', 'Slaughter') are not used by this page.",
       "kind": "behaviour",
-      "ref": "app/routes.js:1401-1411; app/data/commodities.js:15-19; app/data/commodities-germinal-products.js:3-7",
+      "ref": "app/routes.js:1611-1621; app/data/commodity-curated.js:9-15; app/data/commodities-germinal-products.js:3-7",
       "quote": "certificationPurposeOptions, unweanedOptions",
       "confidence": "inferred",
       "note": "getAdditionalAnimalDetailsConfig returns the module-level certificationPurposeOptions (required from data/certification-purposes) rather than any commodity's own list."
@@ -524,10 +719,10 @@
       "id": "prototype-dr2-1-source-p3-064",
       "statement": "The unweaned question is shown when at least one selected commodity has unweaned options (cattle or pig), unless every selected commodity code is 01061900.",
       "kind": "rule",
-      "ref": "app/routes.js:1372-1399; app/data/commodities.js:20,54",
+      "ref": "app/routes.js:1582-1609; app/data/commodity-curated.js:42,60",
       "quote": "if (commodityCodes.length > 0 && commodityCodes.every((code) => code === '01061900')) { return [] } const hasUnweanedCommodity = commodityCodes.some((code) => { const commodity = getCommodityByCode(code) return commodity && Array.isArray(commodity.unweanedOptions) && commodity.unweanedOptions.length > 0 })",
       "confidence": "verbatim",
-      "note": "Only cattle (0102) and pig (0103) carry unweanedOptions in commodities.js. With no species selected, the code falls back to the session commodityCode or commodityId."
+      "note": "Only cattle (0102) and pig (0103) carry unweanedOptions. With no species selected, the code falls back to the session commodityCode or commodityId."
     },
     {
       "id": "prototype-dr2-1-source-p3-065",
@@ -541,7 +736,7 @@
       "id": "prototype-dr2-1-source-p3-066",
       "statement": "The unweaned question's options are 'Yes' and 'No'.",
       "kind": "data",
-      "ref": "app/routes.js:1398",
+      "ref": "app/routes.js:1608",
       "quote": "return ['Yes', 'No']",
       "confidence": "verbatim"
     },
@@ -557,7 +752,7 @@
       "id": "prototype-dr2-1-source-p3-068",
       "statement": "The additional animal details page does not validate its answers: 'Save and continue' with either question unanswered saves it as empty and moves on, so no error message is ever shown.",
       "kind": "rule",
-      "ref": "app/routes.js:11508-11520",
+      "ref": "app/routes.js:13188-13200",
       "quote": "req.session.data.errorList = null req.session.data.errors = null req.session.data.certificationPurpose = config.showCertificationPurposeQuestion ? (certificationPurpose || null) : null",
       "confidence": "verbatim",
       "note": "The view wires data.errors.certificationPurpose and data.errors.unweanedAnimals into the radios, but the handler never sets them."
@@ -566,16 +761,16 @@
       "id": "prototype-dr2-1-source-p3-069",
       "statement": "The additional animal details page has no error messages for an unanswered certification purpose or unweaned question; the view expects them but the source never defines the wording.",
       "kind": "copy",
-      "ref": "app/views/design-release-2.1/additional-animal-details.html:60,82; app/routes.js:11460-11521",
+      "ref": "app/views/design-release-2.1/additional-animal-details.html:60,82; app/routes.js:13140-13201",
       "quote": "",
       "confidence": "gap",
-      "note": "Looked in the POST handler and the config/completeness helpers (routes.js:1372-1494); no error text exists for either question."
+      "note": "Looked in the POST handler and the config and completeness helpers (routes.js:1582-1710); no error text exists for either question."
     },
     {
       "id": "prototype-dr2-1-source-p3-070",
       "statement": "'Save and continue' on the additional animal details page saves the answers it asked and clears the answer to any question that does not apply.",
       "kind": "data",
-      "ref": "app/routes.js:11510-11515",
+      "ref": "app/routes.js:13190-13195",
       "quote": "req.session.data.unweanedAnimals = config.showUnweanedQuestion ? (unweanedAnimals || null) : null",
       "confidence": "verbatim",
       "note": "A submitted value is saved as given (trimmed); it is not checked against the option list on this path."
@@ -584,7 +779,7 @@
       "id": "prototype-dr2-1-source-p3-071",
       "statement": "'Save and return to overview' on the additional animal details page saves each answer only if it is one of the offered options, keeps any earlier answer otherwise, and goes to the notification hub without validating.",
       "kind": "behaviour",
-      "ref": "app/routes.js:11496-11506",
+      "ref": "app/routes.js:13176-13186",
       "quote": "if (config.showCertificationPurposeQuestion && certificationPurposeOptions.includes(certificationPurpose)) { req.session.data.certificationPurpose = certificationPurpose }",
       "confidence": "verbatim"
     },
@@ -592,23 +787,24 @@
       "id": "prototype-dr2-1-source-p3-072",
       "statement": "'Save and continue' on the additional animal details page goes to the next journey step (arrival details), or back to the hub, review or template review when the page was reached from there.",
       "kind": "behaviour",
-      "ref": "app/routes.js:11517-11520,1507-1511",
+      "ref": "app/routes.js:13197-13200,1727-1731",
       "quote": "return res.redirect(getSectionContinueRedirect( req, getNextJourneyPath('/additional-animal-details', req.session.data) ))",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p3-073",
-      "statement": "The additional animal details page's Back link falls back to animal identification details when any selected species needs identifiers, otherwise to consignment details.",
+      "id": "prototype-dr2-1-source-p3-101",
+      "statement": "The additional animal details page's Back link falls back to animal identification details when any selected species needs identifiers, else to the gross weight page for a germinal-only consignment, otherwise to consignment details.",
       "kind": "behaviour",
-      "ref": "app/routes.js:1608-1614,10708",
-      "quote": "if (hasAnimalIdentifiersRequired(sessionData)) { return '/animal-identification-details' } return '/consignment-details'",
-      "confidence": "verbatim"
+      "ref": "app/routes.js:1842-1852,12274",
+      "quote": "if (hasAnimalIdentifiersRequired(sessionData)) { return '/animal-identification-details' } if (showsGerminalGrossWeightField(sessionData)) { return '/consignment-gross-weight' } return '/consignment-details'",
+      "confidence": "verbatim",
+      "note": "For a germinal-only consignment the page itself does not apply unless it has an unweaned question, so the gross weight fallback is rarely reached."
     },
     {
       "id": "prototype-dr2-1-source-p3-074",
       "statement": "The additional animal details section counts as complete when the page does not apply, or when each question it asks has an answer from its option list.",
       "kind": "rule",
-      "ref": "app/routes.js:1465-1485",
+      "ref": "app/routes.js:1681-1701",
       "quote": "if (!requiresAdditionalAnimalDetailsPage(sessionData)) { return true } ... if (!certificationPurposeOptions.includes(sessionData.certificationPurpose)) { return false } ... if (!config.unweanedOptions.includes(sessionData.unweanedAnimals)) { return false }",
       "confidence": "verbatim",
       "note": "So a user can continue past the page without answering, and the section then shows as incomplete."
@@ -617,31 +813,24 @@
       "id": "prototype-dr2-1-source-p3-075",
       "statement": "Previously saved answers are pre-selected on the additional animal details radios and on the storage temperature radios.",
       "kind": "behaviour",
-      "ref": "app/routes.js:1210-1216,10714-10721,10681-10695",
+      "ref": "app/routes.js:1420-1426,12280-12287,12226-12240",
       "quote": "checked: selectedValue === option",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p3-076",
-      "statement": "Fields on the consignment details page are pre-filled with previously saved per-species number of animals, number of packages and weight.",
-      "kind": "behaviour",
-      "ref": "app/routes.js:945-947,954",
-      "quote": "numberOfAnimals: numberOfAnimals[speciesId] != null ? String(numberOfAnimals[speciesId]) : '', netWeight: netWeight[speciesId] != null ? String(netWeight[speciesId]) : '',",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p3-077",
       "statement": "Visiting either page makes sure a prototype notification reference exists for the notification.",
       "kind": "behaviour",
-      "ref": "app/routes.js:11310,11328,11426,11461",
+      "ref": "app/routes.js:12928,12946,13106,13141",
       "quote": "ensurePrototypeNotificationReference(req.session.data)",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "'Either page' is the consignment details and additional animal details pages; the gross weight page is claimed separately."
     },
     {
       "id": "prototype-dr2-1-source-p3-078",
       "statement": "The consignment details page has no mixed-consignment question for germinal products alongside live animals: storage temperature is not asked at all when germinal products are mixed with live animals.",
       "kind": "rule",
-      "ref": "app/routes.js:1419-1421,4455-4459",
+      "ref": "app/routes.js:1629-1631,5167-5179",
       "quote": "return speciesIds.every((speciesId) => { const match = getSpeciesMatch(speciesId) return match && isGerminalProductCommodity(match.commodity) })",
       "confidence": "gap",
       "note": "The source is silent on how germinal products in a mixed consignment are to be stored; recorded as a gap rather than a decision."

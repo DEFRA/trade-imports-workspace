@@ -1,0 +1,596 @@
+{
+  "source": "repo:addressbook",
+  "structure": "Part 1, the address record, roles and request validation. Read in full: address/Address.java (the stored Mongo document, 69 lines), AddressRequest.java (the create and replace body with every Bean Validation constraint and message), AddressResponse.java (the wire shape and its null guards), AddressStatus.java (ACTIVE / DELETED tombstone), AddressRole.java (5 roles, each with its group and OpenAPI description), RoleGroup.java (SENDING, RECEIVING), RolesHeldTogether.java and its validator (the one-group class-level rule), AddressRoleNames.java and its validator (role names must be known enum names), AddressMapper.java (MapStruct: toResponse, toEntity, updateEntity), the shared ClassLevelViolations.java (keys a class-level violation to a property), the unit tests AddressRequestValidationTest (26 invalid-field cases, 8 at-maximum cases, the country, role-combination, unknown-role, repeat-collapse and free-phone tests), AddressMapperTest (8 tests), AddressResponseTest (3 tests), and the helpers AddressTestSupport, RecordNullGuards and ValidatorSupport; plus README.md's 'API overview' wire conventions and create example, 'Role rules', and the 'Design notes' bullets on AddressResponse, AddressRequest, @AddressRoleNames, @RolesHeldTogether and AddressMapper. Covered: every stored field and whether it is on the wire, every request field's constraints and messages verbatim, the 5 roles and 2 groups, the one-group rule, unknown, lower-case, null and blank role names, repeat collapse, the stray type and role fields, addressType, country being unrestricted and presence-only, the response fields with deleted and no status, the response null guards, and what create and update map. Two places where README and code differ are recorded as separate claims, not settled: README says countryCode is a 2-character ISO code, but the request only requires it to be non-blank and a test accepts a 50-character value; README says an addressType is ignored, while the request rejects fields named type and role.",
+  "claims": [
+    {
+      "id": "repo-addressbook-p1-001",
+      "statement": "An address is stored as a document in the MongoDB collection named addresses, owned by one organisation.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:18-19",
+      "quote": "/** An organisation-owned address-book entry. {@code roles} can be null or empty. */\n@Document(collection = \"addresses\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-002",
+      "statement": "The stored address holds these fields: id, name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email (all strings), roles (a list of address roles), organisationId (string), status (ACTIVE or DELETED), createdAt, modifiedAt and expireAt (instants), and version (a number).",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:30-67",
+      "quote": "private String name;\n\n  private String addressLine1;\n\n  private String addressLine2;\n\n  private String townOrCity;\n\n  private String county;\n\n  private String postcode;\n\n  private String countryCode;\n\n  private String phone;\n\n  private String email;\n\n  private List<AddressRole> roles;\n\n  private String organisationId;\n\n  private AddressStatus status;",
+      "confidence": "verbatim",
+      "note": "The stored record has no address type field: roles replaced it."
+    },
+    {
+      "id": "repo-addressbook-p1-003",
+      "statement": "A stored address's roles may be null or empty: the record itself does not require a role, only the request does.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:18",
+      "quote": "{@code roles} can be null or empty.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-004",
+      "statement": "The address's createdAt is set by the database auditing when it is first saved, and modifiedAt each time it is saved.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:58-62",
+      "quote": "@CreatedDate\n  private Instant createdAt;\n\n  @LastModifiedDate\n  private Instant modifiedAt;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-005",
+      "statement": "A stored address carries a version number, which inferred from the Spring Data @Version annotation gives optimistic locking: a save against a stale version is refused.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:66-67",
+      "quote": "@Version\n  private Long version;",
+      "confidence": "inferred",
+      "note": "mechanism: version counter on the stored address. How a conflict answers over HTTP is part 2's."
+    },
+    {
+      "id": "repo-addressbook-p1-006",
+      "statement": "Addresses are indexed by organisation, then status, then newest created first (index org_status_created).",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:20-22",
+      "quote": "@CompoundIndex(\n    name = \"org_status_created\",\n    def = \"{'organisationId': 1, 'status': 1, 'createdAt': -1}\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-007",
+      "statement": "Two addresses are the same address when their ids are equal, whatever their other fields hold.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:24-32",
+      "quote": "@EqualsAndHashCode(onlyExplicitlyIncluded = true)\n...\n  @EqualsAndHashCode.Include\n  @Id\n  private String id;",
+      "confidence": "verbatim",
+      "note": "mechanism: identity of the stored address."
+    },
+    {
+      "id": "repo-addressbook-p1-008",
+      "statement": "An address's status is ACTIVE or DELETED; DELETED is a soft-delete tombstone that is left out of lists but can still be read by id.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressStatus.java:3-10",
+      "quote": "Soft-delete tombstone status. {@code DELETED} addresses are excluded from lists but remain\n * readable by id. The enum is never on the wire.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-009",
+      "statement": "The status value is never sent on the wire; a read shows a deleted boolean instead.",
+      "kind": "rule",
+      "ref": "README.md, API overview, Wire conventions",
+      "quote": "Soft-deleted addresses expose `deleted: true` on read; the internal `status` enum is not on the wire.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-010",
+      "statement": "The create and replace request body has the fields name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email and roles, all camelCase under their Java names.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:15-27",
+      "quote": "Create/update request body. Every field is camelCase on the wire, under its Java name.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-011",
+      "statement": "A request body that echoes server-assigned fields (id, organisationId, deleted, status, createdAt, modifiedAt) is accepted, and those values are dropped rather than saved.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:18-19; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapperTest.java:116-155",
+      "quote": "Server-assigned fields ({@code id}, {@code organisationId}, {@code deleted}, timestamps) are\n * not components, so a body that echoes them is accepted and they are dropped.",
+      "confidence": "verbatim",
+      "note": "The test request_deserialisesFromCamelCaseAndMapsOntoAnEntityIgnoringServerFields sends id, organisationId 'OTHER-ORG', status 'DELETED', deleted true and both timestamps and proves each is null on the entity."
+    },
+    {
+      "id": "repo-addressbook-p1-012",
+      "statement": "name is required: a blank or missing name is refused with 'Enter a name or organisation'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:28",
+      "quote": "@NotBlank(message = \"Enter a name or organisation\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-013",
+      "statement": "name may be at most 255 characters; a longer one is refused with 'Name must be 255 characters or less'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:29",
+      "quote": "@Size(max = 255, message = \"Name must be 255 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-014",
+      "statement": "The API describes name as the 'Display name for the address', example 'Highland Livestock Ltd'.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:30-35",
+      "quote": "description = \"Display name for the address\",\n            requiredMode = Schema.RequiredMode.REQUIRED,\n            minLength = 1,\n            maxLength = 255,\n            example = \"Highland Livestock Ltd\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-015",
+      "statement": "addressLine1 is required: a blank or missing one is refused with 'Enter address line 1'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:37",
+      "quote": "@NotBlank(message = \"Enter address line 1\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-016",
+      "statement": "addressLine1 may be at most 255 characters; a longer one is refused with 'Address line 1 must be 255 characters or less'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:38",
+      "quote": "@Size(max = 255, message = \"Address line 1 must be 255 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-017",
+      "statement": "The API describes addressLine1 as the 'First line of the postal address', example '14 Drover's Way'.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:39-44",
+      "quote": "description = \"First line of the postal address\",\n            requiredMode = Schema.RequiredMode.REQUIRED,\n            minLength = 1,\n            maxLength = 255,\n            example = \"14 Drover's Way\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-018",
+      "statement": "addressLine2 is optional and may be at most 255 characters; a longer one is refused with 'Address line 2 must be 255 characters or less'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:46-48",
+      "quote": "@Size(max = 255, message = \"Address line 2 must be 255 characters or less\")\n        @Schema(description = \"Second line of the postal address\", maxLength = 255)\n        String addressLine2,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-019",
+      "statement": "townOrCity is required: a blank or missing one is refused with 'Enter a town or city'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:49",
+      "quote": "@NotBlank(message = \"Enter a town or city\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-020",
+      "statement": "townOrCity may be at most 100 characters; a longer one is refused with 'Town or city must be 100 characters or less'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:50",
+      "quote": "@Size(max = 100, message = \"Town or city must be 100 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-021",
+      "statement": "The API describes townOrCity as 'Town or city', example 'Inverness'.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:51-56",
+      "quote": "description = \"Town or city\",\n            requiredMode = Schema.RequiredMode.REQUIRED,\n            minLength = 1,\n            maxLength = 100,\n            example = \"Inverness\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-022",
+      "statement": "county is optional and may be at most 100 characters; a longer one is refused with 'County must be 100 characters or less'. The API describes it as 'County or region'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:58-60",
+      "quote": "@Size(max = 100, message = \"County must be 100 characters or less\")\n        @Schema(description = \"County or region\", maxLength = 100)\n        String county,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-023",
+      "statement": "postcode is required: a blank or missing one is refused with 'Enter a postcode or Zip code'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:61",
+      "quote": "@NotBlank(message = \"Enter a postcode or Zip code\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-024",
+      "statement": "postcode may be at most 12 characters; a longer one is refused with 'Postcode must be 12 characters or less'. Its format is not checked.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:62",
+      "quote": "@Size(max = 12, message = \"Postcode must be 12 characters or less\")",
+      "confidence": "verbatim",
+      "note": "No @Pattern on postcode: the format-free part is read from the absence of any other constraint."
+    },
+    {
+      "id": "repo-addressbook-p1-025",
+      "statement": "The API describes postcode as 'Postal or ZIP code', example 'IV2 3JH'.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:63-68",
+      "quote": "description = \"Postal or ZIP code\",\n            requiredMode = Schema.RequiredMode.REQUIRED,\n            minLength = 1,\n            maxLength = 12,\n            example = \"IV2 3JH\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-026",
+      "statement": "countryCode is required: a blank or missing one is refused with 'Select a country'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:70",
+      "quote": "@NotBlank(message = \"Select a country\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-027",
+      "statement": "countryCode is checked for presence only and stored as given: the request has no length or format rule on it, and a test proves a 50-character value is accepted for every role.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:70-75; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:196-203",
+      "quote": "description = \"Country code (stored as given)\"",
+      "confidence": "verbatim",
+      "note": "Conflicts with the README's '2-character ISO code' (repo-addressbook-p1-028) and the response schema's 'ISO 3166-1 alpha-2 country code' (repo-addressbook-p1-062). Recorded, not settled."
+    },
+    {
+      "id": "repo-addressbook-p1-028",
+      "statement": "The README says countryCode is stored and returned as a 2-character ISO code, and that country display names come from reference data or the frontend.",
+      "kind": "rule",
+      "ref": "README.md, API overview, Wire conventions",
+      "quote": "`countryCode` is stored and returned as a **2-character ISO code**; display names come from\n  reference-data / the frontend.",
+      "confidence": "verbatim",
+      "note": "The code enforces no 2-character rule (see repo-addressbook-p1-027); this is the README's statement of intent."
+    },
+    {
+      "id": "repo-addressbook-p1-029",
+      "statement": "An address with roles from either group may be in any country: country is not restricted by role.",
+      "kind": "rule",
+      "ref": "README.md, Role rules; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:196-203",
+      "quote": "An address in any group can be in any country.",
+      "confidence": "verbatim",
+      "note": "The test countryCodeIsPresenceOnlyAndAcceptsAnyNonBlankValue runs for each of the 5 roles."
+    },
+    {
+      "id": "repo-addressbook-p1-030",
+      "statement": "phone is required: a blank or missing one is refused with 'Enter a phone number'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:76",
+      "quote": "@NotBlank(message = \"Enter a phone number\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-031",
+      "statement": "phone may be at most 20 characters; a longer one is refused with 'Telephone number must be 20 characters or less'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:77",
+      "quote": "@Size(max = 20, message = \"Telephone number must be 20 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-032",
+      "statement": "phone's format is not checked: any free text, such as 'call the office', is accepted.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:231-236",
+      "quote": "void phoneIsNotFormatValidatedSoAFreeStringIsAccepted() {\n    AddressRequest request = validRequest().phone(\"call the office\").build();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-033",
+      "statement": "The API describes phone as 'Contact telephone number', example '+44 1463 234567'.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:78-83",
+      "quote": "description = \"Contact telephone number\",\n            requiredMode = Schema.RequiredMode.REQUIRED,\n            minLength = 1,\n            maxLength = 20,\n            example = \"+44 1463 234567\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-034",
+      "statement": "email is required: a blank or missing one is refused with 'Enter an email address'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:85",
+      "quote": "@NotBlank(message = \"Enter an email address\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-035",
+      "statement": "email must be a well-formed email address; a malformed one such as 'not-an-email' is refused with 'Enter an email address in the correct format'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:86; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:112-116",
+      "quote": "@Email(message = \"Enter an email address in the correct format\")",
+      "confidence": "verbatim",
+      "note": "The format is Bean Validation's standard @Email check; the repo adds no pattern of its own."
+    },
+    {
+      "id": "repo-addressbook-p1-036",
+      "statement": "email may be at most 254 characters; a longer, otherwise well-formed one is refused with 'Email address must be 254 characters or less', and one of exactly 254 characters is accepted.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:87; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:21-27,107-111,187",
+      "quote": "@Size(max = 254, message = \"Email address must be 254 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-037",
+      "statement": "The API describes email as 'Contact email address', example 'exports@highlandlivestock.example.com'.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:88-93",
+      "quote": "description = \"Contact email address\",\n            requiredMode = Schema.RequiredMode.REQUIRED,\n            minLength = 1,\n            maxLength = 254,\n            example = \"exports@highlandlivestock.example.com\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-038",
+      "statement": "roles is required on create and on update: a missing or empty roles list is refused with 'Select what this address can be used for'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:95; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:117-126",
+      "quote": "@NotEmpty(message = \"Select what this address can be used for\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-039",
+      "statement": "A missing roles list is read as an empty list, so it fails the required-roles rule rather than erroring.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:21-22,115-117",
+      "quote": "{@code roles} is never null: a missing list reads as empty, and repeated roles collapse to\n * their first occurrence.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-040",
+      "statement": "A role repeated in the request collapses to its first occurrence, keeping the order the caller sent: CONSIGNOR, PLACE_OF_ORIGIN, CONSIGNOR becomes CONSIGNOR, PLACE_OF_ORIGIN.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:116; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:223-229",
+      "quote": "roles = roles == null ? List.of() : roles.stream().distinct().toList();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-041",
+      "statement": "Every role in the request must be one of the five role names exactly; an unknown name (such as TRANSPORTER), a lower-case name (such as consignor), a null entry or a blank entry is refused with 'Select valid roles', keyed by roles.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:96; src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRoleNamesValidator.java:16-20; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:127-146",
+      "quote": "@AddressRoleNames(message = \"Select valid roles\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-042",
+      "statement": "An unknown role name is reported as a field error on roles beside the other field errors, rather than failing the whole body before validation, so every other field error is still shown.",
+      "kind": "behaviour",
+      "ref": "README.md, Design notes, AddressRequest bullet",
+      "quote": "An unknown enum constant would make Jackson throw before validation, which answers as a `bad-request` problem with no `errors` map and hides every other field error. A string component fails Bean Validation, so the `validation-error` problem names `roles` beside the other field errors.",
+      "confidence": "verbatim",
+      "note": "mechanism: roles carried as strings in the request and checked by name. The error key is roles, never roles[1]."
+    },
+    {
+      "id": "repo-addressbook-p1-043",
+      "statement": "A request whose only role is unknown gets exactly one violation, on roles: the one-group rule ignores names that are not roles.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:214-221; README.md, Design notes, @RolesHeldTogether bullet",
+      "quote": "It skips role names that are not roles; `@AddressRoleNames` reports those.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-044",
+      "statement": "There are five address roles: PLACE_OF_ORIGIN, CONSIGNOR, PLACE_OF_DESTINATION, CONSIGNEE and IMPORTER, each a party or a place a notification can choose the address for.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRole.java:5-19",
+      "quote": "/** A role a notification can choose this address for: a party, or a place. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-045",
+      "statement": "The API describes each role: PLACE_OF_ORIGIN 'Where the animals or goods start their journey', CONSIGNOR 'The party sending the consignment', PLACE_OF_DESTINATION 'Where the animals or goods are unloaded in Great Britain', CONSIGNEE 'The party receiving the consignment', IMPORTER 'The party importing the consignment'.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRole.java:10-19",
+      "quote": "@Schema(description = \"Where the animals or goods start their journey\")\n  PLACE_OF_ORIGIN(RoleGroup.SENDING),\n  @Schema(description = \"The party sending the consignment\")\n  CONSIGNOR(RoleGroup.SENDING),\n  @Schema(description = \"Where the animals or goods are unloaded in Great Britain\")\n  PLACE_OF_DESTINATION(RoleGroup.RECEIVING),\n  @Schema(description = \"The party receiving the consignment\")\n  CONSIGNEE(RoleGroup.RECEIVING),\n  @Schema(description = \"The party importing the consignment\")\n  IMPORTER(RoleGroup.RECEIVING);",
+      "confidence": "verbatim",
+      "note": "The address book holds no display labels for roles; labels are the caller's copy (README Design notes)."
+    },
+    {
+      "id": "repo-addressbook-p1-046",
+      "statement": "Each role belongs to one of two groups: sending (PLACE_OF_ORIGIN, CONSIGNOR) or receiving (CONSIGNEE, IMPORTER, PLACE_OF_DESTINATION).",
+      "kind": "data",
+      "ref": "README.md, Role rules table; src/main/java/uk/gov/defra/trade/imports/addressbook/address/RoleGroup.java:3-6",
+      "quote": "| Sending | `PLACE_OF_ORIGIN`, `CONSIGNOR` |\n| Receiving | `CONSIGNEE`, `IMPORTER`, `PLACE_OF_DESTINATION` |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-047",
+      "statement": "The role groups are internal: they are not part of the API, and a caller only sees them as a refusal. A new role cannot be added without a group.",
+      "kind": "constraint",
+      "ref": "README.md, Role rules",
+      "quote": "Each `AddressRole` names its one group (`RoleGroup`), so a new\nrole cannot be added without a group. The grouping is internal: it is not part of the API, and a\ncaller only sees it as a refusal.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-048",
+      "statement": "An address's roles must all come from one group; a request mixing sending and receiving roles (such as PLACE_OF_ORIGIN with CONSIGNEE) is refused with 'An address can only have roles from one group', keyed by roles, on both create and update.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/RolesHeldTogether.java:11-20; src/main/java/uk/gov/defra/trade/imports/addressbook/address/RolesHeldTogetherValidator.java:12-21; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:147-151",
+      "quote": "String message() default \"An address can only have roles from one group\";",
+      "confidence": "verbatim",
+      "note": "README: 'The rule belongs to the address book.' The class-level violation is attached to the roles property so it sits beside the field errors."
+    },
+    {
+      "id": "repo-addressbook-p1-049",
+      "statement": "An address may hold every role of one group together: PLACE_OF_ORIGIN with CONSIGNOR, or CONSIGNEE with IMPORTER and PLACE_OF_DESTINATION, is accepted.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressTestSupport.java:74-78; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:205-212",
+      "quote": "List.of(\"PLACE_OF_ORIGIN\", \"CONSIGNOR\"),\n        List.of(\"CONSIGNEE\", \"IMPORTER\", \"PLACE_OF_DESTINATION\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-050",
+      "statement": "The API describes the request's roles as 'The roles a notification can choose this address for. Duplicates collapse. Every role must come from one group: sending (PLACE_OF_ORIGIN, CONSIGNOR) or receiving (CONSIGNEE, IMPORTER, PLACE_OF_DESTINATION)'.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:97-106",
+      "quote": "\"The roles a notification can choose this address for. Duplicates\"\n                            + \" collapse. Every role must come from one group: sending\"\n                            + \" (PLACE_OF_ORIGIN, CONSIGNOR) or receiving (CONSIGNEE, IMPORTER,\"\n                            + \" PLACE_OF_DESTINATION)\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-051",
+      "statement": "A request carrying a field named type is refused with 'type is not a supported field', and one carrying a field named role is refused with 'role is not a supported field'; neither field appears in the API document.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:108-113; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:152-161",
+      "quote": "@Null(message = \"type is not a supported field\")\n        @Schema(hidden = true)\n        Object type,\n    @Null(message = \"role is not a supported field\")\n        @Schema(hidden = true)\n        Object role) {",
+      "confidence": "verbatim",
+      "note": "Guards against callers still sending the old single type or role in place of roles."
+    },
+    {
+      "id": "repo-addressbook-p1-052",
+      "statement": "An addressType sent in a request body is ignored, and no address type is stored.",
+      "kind": "behaviour",
+      "ref": "README.md, API overview, Wire conventions; src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:30-67",
+      "quote": "An `addressType` in a body is ignored.",
+      "confidence": "verbatim",
+      "note": "addressType is not a request component, so it is dropped like the server fields in repo-addressbook-p1-011; unlike type and role it is not refused."
+    },
+    {
+      "id": "repo-addressbook-p1-053",
+      "statement": "A request with no errors, including the optional addressLine2 and county, passes validation, and each field at exactly its maximum length passes.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:29-34,176-194",
+      "quote": "void aFullyPopulatedValidRequestHasNoViolations() {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-054",
+      "statement": "Each invalid field produces only its own declared message on that field, and validation reports every missing field at once rather than stopping at the first.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:164-174; README.md, Design notes, AddressResponse bullet",
+      "quote": "`AddressRequest` has no null guards, so Bean Validation can report every missing field at once.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-055",
+      "statement": "A validation failure answers 400 application/problem+json with a camelCase errors map, and nothing is saved.",
+      "kind": "behaviour",
+      "ref": "README.md, API overview, Wire conventions",
+      "quote": "Validation failures return **400** `application/problem+json` with a camelCase `errors` map.",
+      "confidence": "verbatim",
+      "note": "The problem body's shape is part 2's; claimed here as the outcome of the request rules."
+    },
+    {
+      "id": "repo-addressbook-p1-056",
+      "statement": "The response shows an address with the fields id, name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email, roles, organisationId, deleted, createdAt and modifiedAt, and no others: status, version and expireAt are never on the wire.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressResponse.java:22-73; src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapper.java:17; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapperTest.java:80-113",
+      "quote": "@BeanMapping(ignoreUnmappedSourceProperties = {\"status\", \"version\", \"expireAt\"})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-057",
+      "statement": "The response's deleted is true when the stored status is DELETED and false when it is ACTIVE.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapper.java:18; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapperTest.java:37-63",
+      "quote": "@Mapping(target = \"deleted\", expression = \"java(address.getStatus() == AddressStatus.DELETED)\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-058",
+      "statement": "In the response every field except addressLine2 and county is required; addressLine2 and county are null when the address has none.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressResponse.java:16-18; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapperTest.java:65-78; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressResponseTest.java:52-58",
+      "quote": "Every field except {@code addressLine2} and {@code county} is required",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-059",
+      "statement": "Building a response with a required field null fails loudly as a server fault naming the field, rather than sending a partial address.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressResponse.java:75-88; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressResponseTest.java:29-50; src/test/java/uk/gov/defra/trade/imports/addressbook/RecordNullGuards.java:11-47",
+      "quote": "`AddressResponse` null-guards every required field, so a null is a server fault that fails loudly.",
+      "confidence": "verbatim",
+      "note": "mechanism: null guards on id, name, addressLine1, townOrCity, postcode, countryCode, phone, email, organisationId, createdAt and modifiedAt."
+    },
+    {
+      "id": "repo-addressbook-p1-060",
+      "statement": "The response's roles is always a list, empty when the address has no roles; it is described as 'The roles a notification can choose this address for; empty when it has none'.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressResponse.java:47-55,87; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressResponseTest.java:60-65",
+      "quote": "\"The roles a notification can choose this address for; empty when it has\"\n                            + \" none\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-061",
+      "statement": "The response's id is an opaque identifier, example '665f1c2ab3e4d51a2c9d0e77'.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressResponse.java:23-27",
+      "quote": "description = \"Opaque address identifier\",\n            requiredMode = Schema.RequiredMode.REQUIRED,\n            example = \"665f1c2ab3e4d51a2c9d0e77\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-062",
+      "statement": "The response describes countryCode as an 'ISO 3166-1 alpha-2 country code', example 'GB'.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressResponse.java:38-42",
+      "quote": "description = \"ISO 3166-1 alpha-2 country code\",",
+      "confidence": "verbatim",
+      "note": "The request schema says 'Country code (stored as given)' and enforces no format (repo-addressbook-p1-027)."
+    },
+    {
+      "id": "repo-addressbook-p1-063",
+      "statement": "The response describes organisationId as the 'Organisation that owns this address', deleted as 'True when the address has been soft-deleted', and createdAt and modifiedAt as creation and last modification timestamps in UTC.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressResponse.java:56-73",
+      "quote": "description = \"Organisation that owns this address\",\n...\n            description = \"True when the address has been soft-deleted\",\n...\n            description = \"Creation timestamp (UTC)\",\n...\n            description = \"Last modification timestamp (UTC)\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-064",
+      "statement": "On the wire, timestamps are ISO-8601 UTC strings such as '2026-07-01T09:00:00Z', and roles are their enum names in stored order.",
+      "kind": "data",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapperTest.java:106-111",
+      "quote": "assertThat(json.get(\"createdAt\").asText()).isEqualTo(\"2026-07-01T09:00:00Z\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-065",
+      "statement": "A create copies name, both address lines, townOrCity, county, postcode, countryCode, phone, email and roles from the request into a new address, mapping each role name to its role in the order sent; id, organisationId, status, timestamps, version and expiry are left for the service to set.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapper.java:21-29; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapperTest.java:115-166",
+      "quote": "@Mapping(target = \"id\", ignore = true)\n  @Mapping(target = \"organisationId\", ignore = true)\n  @Mapping(target = \"status\", ignore = true)\n  @Mapping(target = \"createdAt\", ignore = true)\n  @Mapping(target = \"modifiedAt\", ignore = true)\n  @Mapping(target = \"version\", ignore = true)\n  @Mapping(target = \"expireAt\", ignore = true)\n  Address toEntity(AddressRequest request);",
+      "confidence": "verbatim",
+      "note": "mechanism: request to stored address mapping. Who sets organisationId, status and expiry is parts 2 and 5's."
+    },
+    {
+      "id": "repo-addressbook-p1-066",
+      "statement": "An update is a full replace of the mutable fields: every request field overwrites the stored one, and an optional field left out (addressLine2, county) is cleared.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapper.java:31-32; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapperTest.java:168-190",
+      "quote": "void updateEntity_replacesAllMutableFieldsAndClearsOmittedOptionals() {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-067",
+      "statement": "An update never changes the address's id, owning organisation, status, createdAt, modifiedAt, version or expiry from the request.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapper.java:31-32; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapperTest.java:184-189",
+      "quote": "assertThat(existing.getId()).isEqualTo(\"665f1c2ab3e4d51a2c9d0e77\");\n    assertThat(existing.getOrganisationId()).isEqualTo(\"ORG-001\");\n    assertThat(existing.getStatus()).isEqualTo(AddressStatus.ACTIVE);",
+      "confidence": "verbatim",
+      "note": "modifiedAt is then refreshed by auditing when the update is saved (repo-addressbook-p1-004)."
+    },
+    {
+      "id": "repo-addressbook-p1-068",
+      "statement": "An update replaces the stored roles list with the request's roles, rather than adding to it.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapperTest.java:192-202; README.md, API overview, Wire conventions",
+      "quote": "An update replaces the roles.",
+      "confidence": "verbatim",
+      "note": "mechanism: README Design notes say updateEntity assigns a new roles list (TARGET_IMMUTABLE) because clearing and refilling an immutable stored list would throw."
+    },
+    {
+      "id": "repo-addressbook-p1-069",
+      "statement": "The README's create example sends name, addressLine1, townOrCity, postcode, countryCode, phone, email and roles [CONSIGNEE, IMPORTER] with the organisation identity header, leaving out the optional addressLine2 and county.",
+      "kind": "data",
+      "ref": "README.md, API overview, Example — create an address",
+      "quote": "\"name\": \"Highland Livestock Ltd\",\n    \"addressLine1\": \"14 Drover'\\''s Way\",\n    \"townOrCity\": \"Inverness\",\n    \"postcode\": \"IV2 3JH\",\n    \"countryCode\": \"GB\",\n    \"phone\": \"+44 1463 234567\",\n    \"email\": \"exports@example.com\",\n    \"roles\": [\"CONSIGNEE\", \"IMPORTER\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-070",
+      "statement": "The mapping between request, stored address and response is checked at build time so that a field added to one and not mapped to the other fails the build.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapper.java:11-14",
+      "quote": "unmappedTargetPolicy = ReportingPolicy.ERROR,\n    unmappedSourcePolicy = ReportingPolicy.ERROR,",
+      "confidence": "inferred",
+      "note": "mechanism: MapStruct reporting policy on the address mapper; inferred because ERROR policies fail compilation on any unmapped property."
+    },
+    {
+      "id": "repo-addressbook-p1-071",
+      "statement": "The request enforces no allowed list for countryCode values, so the address book does not itself check a code against reference data.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:70-75",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in AddressRequest, its validators and the README wire conventions: nothing checks countryCode against a list of countries or a 2-letter shape, though README and the response schema describe it as an ISO alpha-2 code."
+    }
+  ]
+}

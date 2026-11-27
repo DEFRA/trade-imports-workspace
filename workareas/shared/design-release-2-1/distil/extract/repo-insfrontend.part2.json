@@ -1,0 +1,674 @@
+{
+  "source": "repo:insfrontend",
+  "structure": "Part 2, the INS home dashboard. Read in full: features/dashboard/page.js (page id and maturity), controller.js (the GET route at '/', query parsing, the calls to countries and ins-backend, the view model and the outage branch), template.njk (heading, Create new button, search form, sort form, empty, no-results, results label, clear search, table and pagination), view-model/list.js (the four sort options, query string building, row mapping, the link rule by status, arrival date formatting), copy/copy.en.js and copy/copy.cy.js (every string, English and machine-draft Welsh), fit/dashboard.js (the fit helpers), dashboard.fit.spec.js (8 tests), and services/ins-backend client.js, index.js and stub.js (the GET /notifications request, the organisation guard and the four seeded stub notifications). To check what the code does, I also looked at shared/paths.js, shared/list-page.js, the recoverable-error banner lines of shared/layout.njk and shared/kit.js, lib/validate/calendar.js's display date format, common/helpers/set-base-url.js and services/stub-seed.js. I claim only what those files do on this page. The page has no status tags, no filters other than search and sort, and no summary counts or cards. Those are recorded as gaps where the scope expects them.",
+  "claims": [
+    {
+      "id": "repo-insfrontend-p2-001",
+      "statement": "The INS home dashboard is served at the root path '/' by a GET route.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:1; src/server/app/features/dashboard/controller.js:128",
+      "quote": "export const dashboardPath = () => '/'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-002",
+      "statement": "The dashboard page is registered with the page id 'dashboard' at maturity 'exploring', so it is not a signed-off page.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/dashboard/page.js:1",
+      "quote": "export const dashboardPage = { id: 'dashboard', maturity: 'exploring' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-003",
+      "statement": "The dashboard's page title and h1 heading is 'Dashboard', shown in the extra-large heading style.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/copy/copy.en.js:2; template.njk:9",
+      "quote": "title: 'Dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-004",
+      "statement": "The dashboard has no caption above its heading.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/template.njk:9",
+      "quote": "<h1 class=\"govuk-heading-xl\">{{ copy.title }}</h1>",
+      "confidence": "inferred",
+      "note": "The template renders the h1 with no caption span before it."
+    },
+    {
+      "id": "repo-insfrontend-p2-005",
+      "statement": "The dashboard uses the wide 'display' content column rather than the two-thirds form column.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/dashboard/controller.js:72",
+      "quote": "contentColumnClass: kit.surfaceClass('display'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-006",
+      "statement": "The dashboard shows a 'Create new' button directly under the heading.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/template.njk:11-14; copy.en.js:3",
+      "quote": "createNew: 'Create new',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-007",
+      "statement": "The 'Create new' button is a link to the notification type page at '/notification-type'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/controller.js:79; shared/paths.js:2",
+      "quote": "createNewHref: notificationTypePath(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-008",
+      "statement": "The 'Create new' button is shown in every state of the dashboard: with notifications, with no notifications, with no search results and during an outage.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/template.njk:11-14",
+      "quote": "{{ govukButton({\n    text: copy.createNew,\n    href: createNewHref\n  }) }}",
+      "confidence": "inferred",
+      "note": "The button sits outside every conditional block in the template."
+    },
+    {
+      "id": "repo-insfrontend-p2-009",
+      "statement": "The dashboard has a search form under the Create new button that submits by GET back to the dashboard.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/template.njk:16",
+      "quote": "<form method=\"get\" action=\"{{ listHref }}\" class=\"govuk-!-margin-bottom-6\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-010",
+      "statement": "The search field is labelled 'Search by notification reference', is a search-type input named 'referenceNumber', two-thirds wide, and has no hint.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/template.njk:18-27; copy.en.js:5",
+      "quote": "label: 'Search by notification reference',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-011",
+      "statement": "The search field keeps the reference the user searched for after the page reloads.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/template.njk:25",
+      "quote": "value: referenceNumber,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-012",
+      "statement": "The search form's button reads 'Search'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/template.njk:28-31; copy.en.js:6",
+      "quote": "button: 'Search',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-013",
+      "statement": "The search form carries the current sort order in a hidden field, so searching keeps the chosen sort.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/template.njk:17",
+      "quote": "<input type=\"hidden\" name=\"sort\" value=\"{{ sort }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-014",
+      "statement": "The searched reference has spaces trimmed from both ends, and a blank search counts as no search.",
+      "kind": "rule",
+      "ref": "src/server/app/features/dashboard/controller.js:86-87",
+      "quote": "const referenceNumber = request.query.referenceNumber?.trim() ?? ''\n  const hasSearch = Boolean(referenceNumber)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-015",
+      "statement": "The search box has no validation and shows no error message: whatever is entered is passed to the backend as a reference search.",
+      "kind": "rule",
+      "ref": "src/server/app/features/dashboard/controller.js:83-96",
+      "quote": "referenceNumber: hasSearch ? referenceNumber : undefined",
+      "confidence": "inferred",
+      "note": "The controller has no validation step for the query, and the template has no error message."
+    },
+    {
+      "id": "repo-insfrontend-p2-016",
+      "statement": "A sort form with a 'Sort by' select and an 'Update sort' secondary button is shown only when the list has at least one row.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/template.njk:34-50; copy.en.js:11-12",
+      "quote": "{% if tableRows.length %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-017",
+      "statement": "The sort select is labelled 'Sort by' and its button reads 'Update sort'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/copy/copy.en.js:11-12",
+      "quote": "label: 'Sort by',\n    update: 'Update sort',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-018",
+      "statement": "The sort select offers four options, in this order: 'Arrival date (newest first)', 'Arrival date (oldest first)', 'Last updated (newest first)', 'Last updated (oldest first)'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/copy/copy.en.js:13-18; view-model/list.js:12-17",
+      "quote": "arrivalNewest: 'Arrival date (newest first)',\n      arrivalOldest: 'Arrival date (oldest first)',\n      updatedNewest: 'Last updated (newest first)',\n      updatedOldest: 'Last updated (oldest first)'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-019",
+      "statement": "The sort options map to the backend sort values arrivalDate,desc, arrivalDate,asc, lastUpdated,desc and lastUpdated,asc.",
+      "kind": "data",
+      "ref": "src/server/app/features/dashboard/view-model/list.js:12-17",
+      "quote": "{ value: 'arrivalDate,desc', copyKey: 'arrivalNewest' },\n  { value: 'arrivalDate,asc', copyKey: 'arrivalOldest' },\n  { value: 'lastUpdated,desc', copyKey: 'updatedNewest' },\n  { value: 'lastUpdated,asc', copyKey: 'updatedOldest' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-020",
+      "statement": "The default sort is arrival date, newest first. A sort value that is missing or not one of the four options falls back to that default.",
+      "kind": "rule",
+      "ref": "src/server/app/features/dashboard/controller.js:29-33",
+      "quote": "const parseSort = (querySort) =>\n  SORT_VALUES.has(querySort) ? querySort : DEFAULT_SORT",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-021",
+      "statement": "The sort select shows the current sort as selected.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/controller.js:38-43",
+      "quote": "selected: value === sort",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-022",
+      "statement": "The sort form carries the current search reference in a hidden field, so changing the sort keeps the search.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/template.njk:36",
+      "quote": "<input type=\"hidden\" name=\"referenceNumber\" value=\"{{ referenceNumber }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-023",
+      "statement": "Sorting needs a button press: the page has no JavaScript that re-sorts as the select changes.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/dashboard/template.njk:35-49",
+      "quote": "{{ govukButton({\n        text: copy.sort.update,\n        classes: \"govuk-button--secondary\"\n      }) }}",
+      "confidence": "inferred",
+      "note": "Search and sort are plain GET forms with submit buttons, so the page works without JavaScript."
+    },
+    {
+      "id": "repo-insfrontend-p2-024",
+      "statement": "When the organisation has no notifications and no search is entered, the dashboard shows 'There are no notifications yet.' and no table.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/template.njk:52-53; controller.js:109; copy.en.js:32",
+      "quote": "text: 'There are no notifications yet.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-025",
+      "statement": "When a search finds nothing, the dashboard shows 'No notifications found' and a 'Clear search' link back to the unfiltered dashboard.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/template.njk:54-58; copy.en.js:7-8",
+      "quote": "clear: 'Clear search',\n    noResults: 'No notifications found'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-026",
+      "statement": "When a search finds rows, a 'Clear search' link back to the unfiltered dashboard is shown above the table.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/template.njk:66-70",
+      "quote": "{% if hasSearch %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-027",
+      "statement": "Above the table the dashboard shows a results label reading 'Showing <from>-<to> of <total>'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/copy/copy.en.js:20; template.njk:60-64",
+      "quote": "results: (from, to, total) => `Showing ${from}-${to} of ${total}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-028",
+      "statement": "The results label's range is worked out from the page and page size, with the page held between the first and the last page, and it is left out when there are no results.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/list-page.js buildResultsLabel",
+      "quote": "if (totalItems < 1) {\n    return null\n  }",
+      "confidence": "verbatim",
+      "note": "mechanism: works out the from and to numbers of the results label from the backend's page, size and total"
+    },
+    {
+      "id": "repo-insfrontend-p2-029",
+      "statement": "The notification list is a table with a visually hidden caption 'Notifications'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/template.njk:72-74; copy.en.js:22",
+      "quote": "caption: 'Notifications',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-030",
+      "statement": "The table has six columns, in this order: 'Reference number', 'Status', 'Origin country', 'Commodity', 'Arrival date', and a last column whose heading 'Action' is visually hidden.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/template.njk:75-82; copy.en.js:23-28",
+      "quote": "reference: 'Reference number',\n    status: 'Status',\n    origin: 'Origin country',\n    commodity: 'Commodity',\n    arrival: 'Arrival date',\n    action: 'Action',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-031",
+      "statement": "The reference number cell shows the notification's reference as the backend sends it, such as GBN-AG-26-000001.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/controller.js:50; view-model/list.js:56",
+      "quote": "{ text: notificationRow.referenceNumber },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-032",
+      "statement": "The status cell shows the backend's raw status code as plain text, such as SUBMITTED, DRAFT or AMEND, with no status tag and no friendly wording.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/controller.js:51; view-model/list.js:57",
+      "quote": "{ text: notificationRow.status },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-033",
+      "statement": "The dashboard has no status tags and no wording that turns a status code into words a user reads.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/controller.js:48-56; copy/copy.en.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the controller, view model, template and both copy files: no status labels or govukTag."
+    },
+    {
+      "id": "repo-insfrontend-p2-034",
+      "statement": "The origin country cell shows the country's name from the countries reference list. Where the code is not in the list it shows the code, and where there is no country it is blank.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/view-model/list.js:58-61; controller.js:35-36,91",
+      "quote": "originCountry:\n      countryNames[notification.originCountry] ??\n      notification.originCountry ??\n      '',",
+      "confidence": "verbatim",
+      "note": "mechanism: turns the backend's country code into a name from the countries list"
+    },
+    {
+      "id": "repo-insfrontend-p2-035",
+      "statement": "The commodity cell shows the commodity text the backend sends, and is blank when there is none.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/view-model/list.js:62",
+      "quote": "commodity: notification.commodity ?? '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-036",
+      "statement": "The arrival date cell shows the date as day, three-letter month and year, such as '10 Sep 2026'.",
+      "kind": "rule",
+      "ref": "src/server/app/features/dashboard/view-model/list.js:63,71-80; lib/validate/calendar.test.js:26",
+      "quote": "expect(formatDisplayCalendarDate('2026-09-10')).toBe('10 Sep 2026')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-037",
+      "statement": "When the backend's arrival date is not a real YYYY-MM-DD date, the arrival date cell is blank and a warning is logged with the reference number.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/view-model/list.js:71-80",
+      "quote": "'Arrival date from the backend is not a calendar date, showing it blank'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-038",
+      "statement": "The last column of each row has a 'View' link, with the reference number added as visually hidden text so screen readers hear which notification it opens.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/controller.js:45-46; copy.en.js:29",
+      "quote": "`<a class=\"govuk-link\" href=\"${notificationRow.href}\">${copy.table.view}<span class=\"govuk-visually-hidden\"> ${escapeHtml(notificationRow.referenceNumber)}</span></a>`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-039",
+      "statement": "A submitted notification's View link opens its notification view in the animals frontend, at <animals base URL>/live-animals/notifications/<reference>/notification-view.",
+      "kind": "integration",
+      "ref": "src/server/app/features/dashboard/view-model/list.js:43-52; common/helpers/set-base-url.js:27-28",
+      "quote": "return status === 'SUBMITTED'\n    ? `${notificationUrl}/notification-view`\n    : notificationUrl",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-040",
+      "statement": "Every notification that is not submitted (such as a draft or an amendment) links to its journey hub in the animals frontend, at <animals base URL>/live-animals/notifications/<reference>.",
+      "kind": "integration",
+      "ref": "src/server/app/features/dashboard/view-model/list.js:43-52",
+      "quote": "SET_FRONTEND_BASE_URL_KEYS[SET_BASES.LIVE_ANIMALS],\n    SET_BASES.LIVE_ANIMALS,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-041",
+      "statement": "Every dashboard row links into the live-animals set, whatever the notification is: there is no route to germinal products or plants notifications from the INS dashboard.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/dashboard/view-model/list.js:44-48",
+      "quote": "buildNotificationUrl(\n    SET_FRONTEND_BASE_URL_KEYS[SET_BASES.LIVE_ANIMALS],",
+      "confidence": "inferred",
+      "note": "The link builder takes only the status and reference; the set is fixed to live animals."
+    },
+    {
+      "id": "repo-insfrontend-p2-042",
+      "statement": "When there is more than one page, the dashboard shows GOV.UK pagination under the table, with Previous and Next links where they apply and numbered page links.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/template.njk:86-88; shared/list-page.js buildPaginationLinks",
+      "quote": "if (totalPages <= 1) {\n    return null\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-043",
+      "statement": "The pagination shows the first page, the last page, the current page and the page either side of it, with ellipses where pages are skipped.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/list-page.js numbersToShow, itemsWithEllipses",
+      "quote": "const pagesEitherSideOfCurrent = 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-044",
+      "statement": "Page links keep the search reference and the sort. The query string leaves out the default sort and page 1.",
+      "kind": "rule",
+      "ref": "src/server/app/features/dashboard/view-model/list.js:21-41",
+      "quote": "if (sort && sort !== DEFAULT_SORT) {\n    params.set('sort', sort)\n  }\n  if (page && page > 1) {\n    params.set('page', String(page))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-045",
+      "statement": "A page number in the query that is missing, not a number or below 1 is read as page 1.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/list-page.js parsePage",
+      "quote": "return Number.isNaN(page) || page < FIRST_PAGE ? FIRST_PAGE : page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-046",
+      "statement": "The dashboard has no filters other than reference search and sort: no status filter, no type filter and no tabs.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/template.njk",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the template and controller: only referenceNumber, sort and page are read from the query."
+    },
+    {
+      "id": "repo-insfrontend-p2-047",
+      "statement": "The dashboard shows no summary information: no counts, glance cards, status-change cards or drill-downs.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/template.njk",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The programme goal names these as blocked until the INS dashboard's requirements firm up; the repo has none of them."
+    },
+    {
+      "id": "repo-insfrontend-p2-048",
+      "statement": "When loading the countries or the notification list fails with anything other than an HTTP error response, the dashboard still renders with a 500 status, an empty list, no results label and no pagination, and shows the shared recoverable-error banner. The failure is logged.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/controller.js:112-125; shared/layout.njk:75-81",
+      "quote": "logger.error({ err }, 'Failed to load dashboard')",
+      "confidence": "verbatim",
+      "note": "The banner's title and body are shared copy (sharedCopy.recoverableError), claimed by the shared-layout part."
+    },
+    {
+      "id": "repo-insfrontend-p2-049",
+      "statement": "An HTTP error response from a backend (a Boom error) is not handled by the dashboard. It goes on to the app's error pages.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/controller.js:113-115",
+      "quote": "if (Boom.isBoom(err)) {\n      throw err\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-050",
+      "statement": "In the outage state the dashboard shows neither the empty-state message nor the no-results message, and no table.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/controller.js:117-123",
+      "quote": "isEmpty: false,\n      noSearchResults: false,\n      recoverableError: true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-051",
+      "statement": "The dashboard loads the countries reference list on every visit, to show country names in the origin column.",
+      "kind": "integration",
+      "ref": "src/server/app/features/dashboard/controller.js:91",
+      "quote": "const countries = await getCountries()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-052",
+      "statement": "The dashboard lists notifications for the signed-in user's organisation only, from the INS backend's read model.",
+      "kind": "integration",
+      "ref": "src/server/app/features/dashboard/controller.js:92-96",
+      "quote": "const response = await listNotifications(organisationIdOf(request), {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-053",
+      "statement": "The notification list is refused when the signed-in session has no organisation.",
+      "kind": "rule",
+      "ref": "src/server/app/services/ins-backend/index.js:9-13; common/helpers/organisation-scoped-headers.js:7-8",
+      "quote": "'Cannot reach the notification list without an organisation: the signed-in session carries none'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-054",
+      "statement": "The INS frontend asks the INS backend for the list with GET <ins backend base URL>/notifications, sending page always, and sort and referenceNumber only when set.",
+      "kind": "integration",
+      "ref": "src/server/app/services/ins-backend/client.js:7-18",
+      "quote": "const url = new URL(`${insBackendUrl}/notifications`)\n  url.searchParams.set('page', String(page))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-055",
+      "statement": "The request to the INS backend carries organisation-scoped headers, so the backend scopes the list to that organisation.",
+      "kind": "integration",
+      "ref": "src/server/app/services/ins-backend/client.js:20-23",
+      "quote": "headers: organisationScopedHeaders(organisationId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-056",
+      "statement": "An error status from the INS backend is thrown rather than read as a list.",
+      "kind": "integration",
+      "ref": "src/server/app/services/ins-backend/client.js:25",
+      "quote": "await throwOnError(response)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-057",
+      "statement": "The dashboard reads a paged response from the INS backend: content (the notifications), page, size, totalElements and totalPages.",
+      "kind": "data",
+      "ref": "src/server/app/features/dashboard/controller.js:58-63,99; services/ins-backend/stub.js:79-86",
+      "quote": "page: response.page,\n  pageSize: response.size,\n  totalItems: response.totalElements,\n  totalPages: response.totalPages",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-058",
+      "statement": "Each notification in the list carries referenceNumber, status, originCountry (a country code), commodity, arrivalDate (YYYY-MM-DD) and lastUpdated. The stub also carries aggregateId and aggregateVersion, which the dashboard does not show.",
+      "kind": "data",
+      "ref": "src/server/app/services/ins-backend/stub.js:6-15; view-model/list.js:55-68",
+      "quote": "aggregateId: 'agg-stub-1',\n    aggregateVersion: 3,\n    referenceNumber: 'GBN-AG-26-000001',\n    status: 'SUBMITTED',\n    originCountry: 'FR',\n    commodity: 'Cattle',\n    arrivalDate: '2026-09-10',\n    lastUpdated: '2026-09-03T09:00:00Z'",
+      "confidence": "verbatim",
+      "note": "The stub's values are demo fixtures; only the field shape is evidence."
+    },
+    {
+      "id": "repo-insfrontend-p2-059",
+      "statement": "In stub mode the list comes from a built-in stub, not the INS backend.",
+      "kind": "integration",
+      "ref": "src/server/app/services/ins-backend/index.js:14-16",
+      "quote": "return isStubMode()\n    ? stub.listNotifications(organisationId, search)\n    : client.listNotifications(organisationId, search)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-060",
+      "statement": "The stub seeds four notifications: GBN-AG-26-000001 (SUBMITTED, FR, Cattle), GBN-AG-26-000002 (DRAFT, IE), GBN-AG-26-000003 (AMEND, DE) and GBN-AG-26-000004 (DELETED, GB).",
+      "kind": "data",
+      "ref": "src/server/app/services/ins-backend/stub.js:5-46",
+      "quote": "referenceNumber: 'GBN-AG-26-000004',\n    status: DELETED_STATUS,",
+      "confidence": "verbatim",
+      "note": "Demo fixtures for the stub; the statuses show which codes the list is built to show."
+    },
+    {
+      "id": "repo-insfrontend-p2-061",
+      "statement": "The stub leaves deleted notifications out of the list.",
+      "kind": "rule",
+      "ref": "src/server/app/services/ins-backend/stub.js:63-65",
+      "quote": "(notification) => notification.status !== DELETED_STATUS",
+      "confidence": "verbatim",
+      "note": "mechanism: stub-only filter on status; whether the real backend hides deleted notifications is not shown in this repo"
+    },
+    {
+      "id": "repo-insfrontend-p2-062",
+      "statement": "The stub matches a reference search exactly, on the whole reference.",
+      "kind": "rule",
+      "ref": "src/server/app/services/ins-backend/stub.js:67-70",
+      "quote": "(notification) => notification.referenceNumber === referenceNumber",
+      "confidence": "verbatim",
+      "note": "mechanism: stub-only search on referenceNumber"
+    },
+    {
+      "id": "repo-insfrontend-p2-063",
+      "statement": "The stub sorts by arrival date or last updated, ascending or descending, defaulting to arrival date newest first. A search result is not sorted.",
+      "kind": "rule",
+      "ref": "src/server/app/services/ins-backend/stub.js:48-54,67-71",
+      "quote": "const [field, direction] = (sort ?? 'arrivalDate,desc').split(',')",
+      "confidence": "verbatim",
+      "note": "mechanism: stub-only sort on arrivalDate or lastUpdated"
+    },
+    {
+      "id": "repo-insfrontend-p2-064",
+      "statement": "The stub returns 25 notifications a page.",
+      "kind": "data",
+      "ref": "src/server/app/services/ins-backend/stub.js:73",
+      "quote": "const pageSize = 25",
+      "confidence": "verbatim",
+      "note": "The page size is the backend's (size in the response); the frontend sets none."
+    },
+    {
+      "id": "repo-insfrontend-p2-065",
+      "statement": "In stub mode an organisation whose id ends in '-empty' has no notifications, which shows the empty state.",
+      "kind": "rule",
+      "ref": "src/server/app/services/ins-backend/stub.js:56-57; services/stub-seed.js:1-2",
+      "quote": "Boolean(organisationId?.endsWith('-empty'))",
+      "confidence": "verbatim",
+      "note": "mechanism: stub seeding by organisation id"
+    },
+    {
+      "id": "repo-insfrontend-p2-066",
+      "statement": "The dashboard's Welsh copy is a machine draft that has not been reviewed by a translator, and must not ship to users without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/dashboard/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-067",
+      "statement": "In Welsh the dashboard title is 'Dangosfwrdd' and the button 'Creu newydd'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/copy/copy.cy.js:3-4",
+      "quote": "title: 'Dangosfwrdd',\n  createNew: 'Creu newydd',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-068",
+      "statement": "In Welsh the search label is 'Chwilio yn ôl cyfeirnod yr hysbysiad', the button 'Chwilio', the clear link 'Clirio’r chwiliad' and the no-results message 'Ni chanfuwyd unrhyw hysbysiadau'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/copy/copy.cy.js:5-10",
+      "quote": "label: 'Chwilio yn ôl cyfeirnod yr hysbysiad',\n    button: 'Chwilio',\n    clear: 'Clirio’r chwiliad',\n    noResults: 'Ni chanfuwyd unrhyw hysbysiadau'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-069",
+      "statement": "In Welsh the sort label is 'Trefnu yn ôl', the button 'Diweddaru’r drefn', and the four options 'Dyddiad cyrraedd (mwyaf newydd yn gyntaf)', 'Dyddiad cyrraedd (hynaf yn gyntaf)', 'Diweddarwyd ddiwethaf (mwyaf newydd yn gyntaf)' and 'Diweddarwyd ddiwethaf (hynaf yn gyntaf)'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/copy/copy.cy.js:11-20",
+      "quote": "label: 'Trefnu yn ôl',\n    update: 'Diweddaru’r drefn',\n    options: {\n      arrivalNewest: 'Dyddiad cyrraedd (mwyaf newydd yn gyntaf)',\n      arrivalOldest: 'Dyddiad cyrraedd (hynaf yn gyntaf)',\n      updatedNewest: 'Diweddarwyd ddiwethaf (mwyaf newydd yn gyntaf)',\n      updatedOldest: 'Diweddarwyd ddiwethaf (hynaf yn gyntaf)'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-070",
+      "statement": "In Welsh the results label reads 'Yn dangos <from>-<to> o <total>'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/copy/copy.cy.js:21",
+      "quote": "results: (from, to, total) => `Yn dangos ${from}-${to} o ${total}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-071",
+      "statement": "In Welsh the table caption is 'Hysbysiadau' and the columns are 'Cyfeirnod', 'Statws', 'Gwlad tarddiad', 'Nwydd', 'Dyddiad cyrraedd' and 'Cam gweithredu', with the row link 'Gweld'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/copy/copy.cy.js:22-31",
+      "quote": "caption: 'Hysbysiadau',\n    reference: 'Cyfeirnod',\n    status: 'Statws',\n    origin: 'Gwlad tarddiad',\n    commodity: 'Nwydd',\n    arrival: 'Dyddiad cyrraedd',\n    action: 'Cam gweithredu',\n    view: 'Gweld'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-072",
+      "statement": "In Welsh the empty-state message is 'Nid oes unrhyw hysbysiadau eto.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/dashboard/copy/copy.cy.js:32-34",
+      "quote": "text: 'Nid oes unrhyw hysbysiadau eto.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-073",
+      "statement": "A fit test proves the dashboard shows the three visible stub notifications in the default sort order (GBN-AG-26-000002, then 000001, then 000003), with SUBMITTED, DRAFT and AMEND status cells.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js:24-38 'shows the three visible notifications, in the default sort order, with enough to identify the consignment'",
+      "quote": "await expect(referenceCells(page)).toHaveText([\n      OTHER_REFERENCE_NUMBER,\n      REFERENCE_NUMBER,\n      THIRD_REFERENCE_NUMBER\n    ])",
+      "confidence": "verbatim",
+      "note": "This also proves the deleted stub notification is not listed."
+    },
+    {
+      "id": "repo-insfrontend-p2-074",
+      "statement": "A fit test proves Create new sits under the heading and above the search field, links to the notification type page, and opens that page with no type chosen.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js:40-60 'offers Create new under the heading and above the search, and opens the question with nothing chosen'",
+      "quote": "expect(headingBox.y).toBeLessThan(buttonBox.y)\n    expect(buttonBox.y).toBeLessThan(searchBox.y)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-075",
+      "statement": "A fit test proves the dashboard has no serious or critical axe accessibility violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js:62-66 'has no serious or critical axe violations'",
+      "quote": "await expectNoSeriousOrCriticalViolations(page, 'dashboard')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-076",
+      "statement": "A fit test proves a submitted notification's View link goes to its notification view in the animals frontend's live-animals set.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js:68-84 'Should link a submitted notification to its notification view'",
+      "quote": "`${ANIMALS_BASE_URL}/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-077",
+      "statement": "A fit test proves a draft notification's View link goes to its journey hub in the animals frontend's live-animals set.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js:86-98 'Should link a draft notification to its journey hub'",
+      "quote": "`${ANIMALS_BASE_URL}/live-animals/notifications/${OTHER_REFERENCE_NUMBER}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-078",
+      "statement": "A fit test proves searching by a complete reference lists only the matching notification.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js:100-108 'searching by complete reference returns only the matching notification'",
+      "quote": "await expect(referenceCells(page)).toHaveText([REFERENCE_NUMBER])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-079",
+      "statement": "A fit test proves a search with no match shows 'No notifications found' and still offers Create new, which opens the notification type page with no type chosen.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js:110-121 'no matching notification shows \"No notifications found\" and still offers Create new, opening the question with nothing chosen'",
+      "quote": "await expect(page.getByText('No notifications found')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-080",
+      "statement": "A fit test proves an organisation with no notifications sees 'There are no notifications yet.', no rows, and still has Create new, which opens the notification type page with no type chosen.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js:123-136 'an organisation with no notifications sees the empty state and still offers Create new, opening the question with nothing chosen'",
+      "quote": "await expect(\n      page.getByText('There are no notifications yet.')\n    ).toBeVisible()\n    await expect(referenceCells(page)).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-081",
+      "statement": "No fit test covers sorting, pagination, the results label, the clear search link or the outage banner on the dashboard.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Read all 8 tests in the spec; none of them uses the sort select, page links, results label, Clear search or a failing backend."
+    }
+  ]
+}

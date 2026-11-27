@@ -1,6 +1,6 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 11, the high-risk plants journey's endings, read in full: the four feature folders under src/server/app/sets/high-risk-plants/journeys/linear/features/ named declaration (page.js, controller.js, controller.test.js, template.njk, declaration.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js), confirmation (the same eight files), delete-notification (the same eight files) and cancel-amend (the same eight files, its page.js carrying id but no slug), plus review/lateness.js and src/server/app/shared/kit.js for context only (parts 10 and 13 claim those), and src/server/app/shared/paths.js and src/server/app/shared/copy.en.js's notificationActions block read only far enough to resolve the paths and the delete success banner the slice's files reference, and fit/high-risk-plants-journey.js lines 985-1024 for the two declaration helpers the fit specs drive the pages through. It covers four served pages: the declaration at /notifications/{journeyId}/declaration (GET and POST), the confirmation at /notifications/{journeyId}/confirmation (GET only), the delete confirmation at /notifications/{journeyId}/delete (GET and POST) and the cancel-amendment confirmation at /notifications/{journeyId}/cancel-amend (GET and POST); every copy key of the four features in English and in machine-draft Welsh; each page's heading, body, components, buttons, links, back link, status strip, hidden form fields and where each outcome leads; the declaration's single required checkbox with its error message, the lateness flag written at first submission and the submission and refusal outcomes; the confirmation's panel, dated receipt, conditional late banner and two exit links; the delete page's deletable states, soft delete and dashboard success banner; the cancel-amendment page's restore of the submitted snapshot; and all 26 fit tests (8 declaration, 2 confirmation, 4 delete-notification, 12 cancel-amend) with what each proves, the no-JavaScript cancel-amend path and the axe checks among them. It stops at check your answers (notification-view), the review foot controls' own feature, the dashboard feature and the shared kit, which other parts claim; where a fit spec in this slice reaches those pages the claim records only what the slice's test asserts.",
+  "structure": "Part 11, the high-risk plants journey's endings, read in full: the four feature folders under src/server/app/sets/high-risk-plants/journeys/linear/features/ named declaration (page.js, controller.js, controller.test.js, template.njk, declaration.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js), confirmation (the same eight files), delete-notification (the same eight files) and cancel-amend (the same eight files, its page.js carrying id but no slug), plus src/server/app/shared/kit.js for context only (part 13 claims it; read at lines 78-110, 256-281 and 330-363 to resolve the slugs, the status strip, the caption and the stale-change guard the slice's controllers use) and src/server/app/shared/copy.en.js's notificationActions.delete block (lines 55-59) for the delete success banner the slice's fit spec asserts. review/lateness.js is named for context only and part 10 claims it; the slice records only how the declaration calls it. It covers four served pages: the declaration at /notifications/{journeyId}/declaration (GET and POST), the confirmation at /notifications/{journeyId}/confirmation (GET only), the delete confirmation at /notifications/{journeyId}/delete (GET and POST) and the cancel-amendment confirmation at /notifications/{journeyId}/cancel-amend (GET and POST); every copy key of the four features in English and in machine-draft Welsh; each page's heading, body, components, buttons, links, back link, status strip, hidden form fields and where each outcome leads; the declaration's single required checkbox with its error message, the lateness flag written at first submission and the submission and refusal outcomes; the confirmation's panel, dated receipt, conditional late banner and two exit links; the delete page's deletable states, soft delete and dashboard success banner; the cancel-amendment page's restore of the submitted snapshot; and all 26 fit tests (8 declaration, 2 confirmation, 4 delete-notification, 12 cancel-amend) with what each proves, the no-JavaScript cancel-amend path and the axe checks among them. It stops at check your answers (notification-view), the review foot controls' own feature, the dashboard feature and the shared kit, which other parts claim; where a fit spec in this slice reaches those pages the claim records only what the slice's test asserts.",
   "claims": [
     {
       "id": "repo-plantsfrontend-p11-001",
@@ -209,15 +209,15 @@
       "statement": "A late-or-on-time indicator posted in the form is ignored: the stored indicator is the one the service works out.",
       "kind": "rule",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.test.js:102-120",
-      "quote": "    'Should commit %s as %s before finalising and ignore forged system input',\n…\n      request.payload = {\n        declaration: 'confirmed',\n        lateNotificationIndicator: 'forged'\n      }",
+      "quote": "    'Should commit %s as %s before submitting and ignore forged system input',\n…\n      request.payload = {\n        declaration: 'confirmed',\n        lateNotificationIndicator: 'forged'\n      }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p11-027",
-      "statement": "The late-or-on-time indicator is written before the notification is finalised, so the submitted record already carries it.",
+      "statement": "The late-or-on-time indicator is written before the notification is submitted, so the submitted record already carries it.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:100-110 and controller.test.js:114-119",
-      "quote": "      const finalise = async (...args) => {\n        expect((await store.get(id)).answers.lateNotificationIndicator).toBe(\n          expected\n        )\n        return recordsStub.finalise(...args)\n      }",
+      "quote": "      const submit = async (...args) => {\n        expect((await store.get(id)).answers.lateNotificationIndicator).toBe(\n          expected\n        )\n        return recordsStub.submit(...args)\n      }",
       "confidence": "verbatim"
     },
     {
@@ -225,7 +225,7 @@
       "statement": "Confirming the declaration on an amendment leaves the indicator recorded at first submission untouched, so a notification submitted on time stays on time however late the amendment is made.",
       "kind": "rule",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:102 and controller.test.js:186-200",
-      "quote": "  it('Should preserve first-submission lateness when finalising an amendment', async () => {\n…\n    expect((await store.get(id)).answers.lateNotificationIndicator).toBe(\n      'on-time'\n    )",
+      "quote": "  it('Should preserve first-submission lateness when submitting an amendment', async () => {\n…\n    expect((await store.get(id)).answers.lateNotificationIndicator).toBe(\n      'on-time'\n    )",
       "confidence": "verbatim"
     },
     {
@@ -288,18 +288,19 @@
       "id": "repo-plantsfrontend-p11-036",
       "statement": "A declaration posted against a notification that changed since the page was shown is sent back to the declaration page with a staleAction marker rather than overwriting the change.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:132 and src/server/app/shared/kit.js:322-355",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:132 and src/server/app/shared/kit.js:330-361",
       "quote": "export const routes = kit.pageRoutes(page, { get, post })\n…\nconst redirectOnStaleAction = (post) => async (request, h) => {\n…\n      query.set('staleAction', '1')\n      return h.redirect(`${request.path}?${query.toString()}`)",
       "confidence": "inferred",
       "note": "The declaration builds its routes with kit.pageRoutes, which wraps every POST in the stale-token redirect. The delete and cancel-amend pages in this slice build their routes by hand and so do not get it."
     },
     {
-      "id": "repo-plantsfrontend-p11-037",
-      "statement": "A notifier reaches the declaration page by pressing Continue at the foot of the notification view.",
+      "id": "repo-plantsfrontend-p11-115",
+      "statement": "A notifier reaches the declaration page by pressing Continue on the notification view, and pressing the declaration's Continue with the checkbox ticked opens the confirmation page.",
       "kind": "behaviour",
-      "ref": "fit/high-risk-plants-journey.js:991-1000",
-      "quote": "export const openDeclaration = async (page, options) => {\n  const reference = await completePotatoNotification(page, options)\n  await page\n    .getByRole('button', { name: checkAnswersCopy.continue, exact: true })\n    .click()\n  await expect(page).toHaveURL(\n    new RegExp(`${BASE}/notifications/${reference}/declaration$`)\n  )",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:40-48",
+      "quote": "  const reference = await completePotatoNotification(page)\n  await page.getByRole('button', { name: copy.continue, exact: true }).click()\n  await page\n    .getByRole('checkbox', { name: declarationCopy.declarationLabel })\n    .check()\n  await page\n    .getByRole('button', { name: declarationCopy.continueButton, exact: true })\n    .click()\n  await expect(page).toHaveURL(/\\/confirmation$/)",
+      "confidence": "verbatim",
+      "note": "The declaration fit specs reach the page through the openDeclaration helper in fit/high-risk-plants-journey.js, outside this part's read; this claim rests on the cancel-amend spec's set-up, which drives the same path inline."
     },
     {
       "id": "repo-plantsfrontend-p11-038",
@@ -334,6 +335,15 @@
       "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.\nexport const copy = {\n  title: 'Datganiad',\n…\n  itHoldsCopyAtEveryLeaf(en, cy)",
       "confidence": "verbatim",
       "note": "The Welsh leaves are title 'Datganiad', three body statements, declarationLabel, declarationLegend 'Cadarnhau’r datganiad', dateOfDeclaration 'Dyddiad y datganiad:', continueButton 'Parhau' and errors.declarationRequired 'Cadarnhewch fod yr wybodaeth yn wir ac yn gywir cyn cyflwyno'."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-117",
+      "statement": "The declaration's Welsh strings are: title 'Datganiad'; the three statements 'Rwy’n hysbysu’r awdurdod cymwys am y llwyth hwn fel sy’n ofynnol o dan y Cynllun Hysbysu Cenedlaethol Iechyd Planhigion.', 'Rwy’n deall y gall yr awdurdod iechyd planhigion perthnasol (APHA, y Comisiwn Coedwigaeth neu Lywodraeth yr Alban) gynnal hapwiriad ar y llwyth hwn, heb rybudd ymlaen llaw, yn ei gyrchfan neu lle mae’n cael ei gadw ar hyn o bryd.' and 'Rwy’n deall y gall methu â hysbysu, hysbysu’n hwyr neu roi manylion anghywir gael ei drin fel diffyg cydymffurfio.'; checkbox label 'Rwy’n cadarnhau fy mod wedi adolygu’r datganiad hwn a’m bod yn cydymffurfio ag ef, a bod yr wybodaeth a gyflwynwyd yn yr hysbysiad hwn yn wir ac yn gywir.'; legend 'Cadarnhau’r datganiad'; date line 'Dyddiad y datganiad:'; button 'Parhau'; and error 'Cadarnhewch fod yr wybodaeth yn wir ac yn gywir cyn cyflwyno'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/copy/copy.cy.js:3-16",
+      "quote": "  title: 'Datganiad',\n  body: [\n    'Rwy’n hysbysu’r awdurdod cymwys am y llwyth hwn fel sy’n ofynnol o dan y Cynllun Hysbysu Cenedlaethol Iechyd Planhigion.',\n    'Rwy’n deall y gall yr awdurdod iechyd planhigion perthnasol (APHA, y Comisiwn Coedwigaeth neu Lywodraeth yr Alban) gynnal hapwiriad ar y llwyth hwn, heb rybudd ymlaen llaw, yn ei gyrchfan neu lle mae’n cael ei gadw ar hyn o bryd.',\n    'Rwy’n deall y gall methu â hysbysu, hysbysu’n hwyr neu roi manylion anghywir gael ei drin fel diffyg cydymffurfio.'\n  ],\n  declarationLabel:\n    'Rwy’n cadarnhau fy mod wedi adolygu’r datganiad hwn a’m bod yn cydymffurfio ag ef, a bod yr wybodaeth a gyflwynwyd yn yr hysbysiad hwn yn wir ac yn gywir.',\n  declarationLegend: 'Cadarnhau’r datganiad',\n  dateOfDeclaration: 'Dyddiad y datganiad:',\n  continueButton: 'Parhau',\n  errors: {\n    declarationRequired:\n      'Cadarnhewch fod yr wybodaeth yn wir ac yn gywir cyn cyflwyno'",
+      "confidence": "verbatim",
+      "note": "Machine-draft Welsh, unreviewed by a translator."
     },
     {
       "id": "repo-plantsfrontend-p11-042",
@@ -524,6 +534,15 @@
       "note": "The Welsh leaves are title 'Hysbysiad wedi’i gyflwyno', reference 'Cyfeirnod eich hysbysiad', body, dateOfNotification 'Dyddiad yr hysbysiad:', late.title 'Pwysig', late.heading, late.accepted, both late rule sentences, viewNotification 'Gweld eich hysbysiad' and returnToDashboard 'Dychwelyd i’r dangosfwrdd'. Unlike the English file its header omits the Welsh Language Standards sign-off warning the other three features carry."
     },
     {
+      "id": "repo-plantsfrontend-p11-118",
+      "statement": "The confirmation's Welsh strings are: title 'Hysbysiad wedi’i gyflwyno'; reference label 'Cyfeirnod eich hysbysiad'; body 'Mae eich hysbysiad wedi’i gyflwyno. Cadwch y cyfeirnod ar gyfer eich cofnodion.'; date line 'Dyddiad yr hysbysiad:'; late banner title 'Pwysig', heading 'Gwnaed eich hysbysiad y tu allan i’r amser gofynnol' and 'Mae wedi cael ei dderbyn a’i gofnodi o hyd.'; the potato rule 'Rhaid gwneud hysbysiadau am datws o leiaf <days> diwrnod cyn y dyddiad cyrraedd disgwyliedig.'; the plants and wood rule 'Rhaid gwneud hysbysiadau am blanhigion i’w plannu a phren heb fod yn hwyrach na <days> diwrnod ar ôl y dyddiad cyrraedd.'; and the links 'Gweld eich hysbysiad' and 'Dychwelyd i’r dangosfwrdd'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/copy/copy.cy.js:3-17",
+      "quote": "  title: 'Hysbysiad wedi’i gyflwyno',\n  reference: 'Cyfeirnod eich hysbysiad',\n  body: 'Mae eich hysbysiad wedi’i gyflwyno. Cadwch y cyfeirnod ar gyfer eich cofnodion.',\n  dateOfNotification: 'Dyddiad yr hysbysiad:',\n  late: {\n    title: 'Pwysig',\n    heading: 'Gwnaed eich hysbysiad y tu allan i’r amser gofynnol',\n    accepted: 'Mae wedi cael ei dderbyn a’i gofnodi o hyd.',\n    potatoes: (days) =>\n      `Rhaid gwneud hysbysiadau am datws o leiaf ${days} diwrnod cyn y dyddiad cyrraedd disgwyliedig.`,\n    plantsAndWood: (days) =>\n      `Rhaid gwneud hysbysiadau am blanhigion i’w plannu a phren heb fod yn hwyrach na ${days} diwrnod ar ôl y dyddiad cyrraedd.`\n  },\n  viewNotification: 'Gweld eich hysbysiad',\n  returnToDashboard: 'Dychwelyd i’r dangosfwrdd'",
+      "confidence": "verbatim",
+      "note": "Machine-draft Welsh, unreviewed by a translator. Unlike the other three features' Welsh files, this one's header omits the 'Do not ship user-facing without Welsh Language Standards sign-off' warning."
+    },
+    {
       "id": "repo-plantsfrontend-p11-065",
       "statement": "The confirmation page tells the notifier nothing about what happens next: beyond the one-sentence receipt and the dated line it offers no next-steps heading, no guidance on checks or timing, and no contact details.",
       "kind": "copy",
@@ -601,7 +620,7 @@
       "id": "repo-plantsfrontend-p11-074",
       "statement": "The delete confirmation page shows the journey status strip, so the notification's reference and its status tag identify what is about to be deleted.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:31-42 and src/server/app/shared/kit.js:252-280",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:31-42 and src/server/app/shared/kit.js:259-281",
       "quote": "const render = (h, journey, { recoverableError = false } = {}) =>\n  h.view(view, {\n    ...kit.base(copy.title, {\n      backLink: dashboardPath(),\n      journey,\n      recoverableError\n    }),",
       "confidence": "inferred",
       "note": "The render passes the journey and leaves the shared chrome's showJourneyStrip at its default of true, so the strip renders with the reference and the status tag. Neither the unit tests nor the fit spec asserts it, so the page's own heading and body name no reference."
@@ -686,7 +705,7 @@
       "id": "repo-plantsfrontend-p11-084",
       "statement": "The cancel-amendment confirmation page is served at /notifications/{journeyId}/cancel-amend and answers both GET and POST.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:19 and 85-98, src/server/app/shared/kit.js:73",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:19 and 85-98, src/server/app/shared/kit.js:80",
       "quote": "const { CANCEL_AMEND_SLUG } = kit\n…\n    path: pageRoutePath(CANCEL_AMEND_SLUG),\n…\nexport const CANCEL_AMEND_SLUG = 'cancel-amend'",
       "confidence": "verbatim"
     },
@@ -887,12 +906,13 @@
       "note": "The list's own row actions are another part's; this records the route the cancel-amendment fit spec drives to reach an amendment."
     },
     {
-      "id": "repo-plantsfrontend-p11-109",
-      "statement": "A recoverable backend failure while cancelling an amendment shows the cancel-amendment page again at 500 with the recoverable-failure banner, and the failure is logged once at warn with the journey id and the error.",
+      "id": "repo-plantsfrontend-p11-116",
+      "statement": "A recoverable backend failure while cancelling an amendment shows the cancel-amendment page again at 500 with the recoverable-failure banner, and the save fallback is logged once with the journey id.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:68-78 and controller.test.js:137-158",
-      "quote": "    expect(response.statusCode).toBe(500)\n    expect(response.context.recoverableError).toBe(true)\n…\n    expectOneSaveFallbackLogged(request.logger, { journeyId, err: failure })",
-      "confidence": "verbatim"
+      "quote": "    expect(response.statusCode).toBe(500)\n    expect(response.context.recoverableError).toBe(true)\n…\n    expectOneSaveFallbackLogged(request.logger, { journeyId })",
+      "confidence": "verbatim",
+      "note": "Replaces the earlier claim that the log also carries the error: the test now asserts only the journey id. The log level and fields come from kit.recoverableSave, which part 13 claims."
     },
     {
       "id": "repo-plantsfrontend-p11-110",
@@ -905,12 +925,12 @@
     },
     {
       "id": "repo-plantsfrontend-p11-111",
-      "statement": "A declaration or cancel-amendment page posted against a notification that changed since the page was shown has no stale-change guard of its own, unlike the declaration, because the delete and cancel-amendment features declare their routes directly instead of through the shared page-route helper.",
+      "statement": "A delete or cancel-amendment confirmation posted against a notification that changed since the page was shown has no stale-change guard of its own, unlike the declaration, because the delete and cancel-amendment features declare their routes directly instead of through the shared page-route helper.",
       "kind": "constraint",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:85-98 and delete-notification/controller.js:78-91",
       "quote": "export const routes = [\n  {\n    method: 'GET',\n    path: pageRoutePath(CANCEL_AMEND_SLUG),\n    options: kit.pageRouteOptions(cancelAmendPage),\n    handler: get\n  },\n  {\n    method: 'POST',\n    path: pageRoutePath(CANCEL_AMEND_SLUG),\n    options: kit.pageRouteOptions(cancelAmendPage),\n    handler: post\n  }\n]",
       "confidence": "inferred",
-      "note": "mechanism: works on the posted concurrency token. Both templates render a hidden concurrencyToken field, but neither handler reads it and neither route is wrapped in the shared stale-action redirect, so the field is sent and ignored. The statement's first clause names the pages whose POST lacks the guard: delete and cancel-amendment."
+      "note": "The earlier wording of this claim began 'A declaration or cancel-amendment page', a slip its own 'unlike the declaration' contradicts; the fact is unchanged. Inferred from the route declarations: kit.pageRoutes wraps POST in redirectOnStaleAction (kit.js:350-361) and these two features do not use it."
     },
     {
       "id": "repo-plantsfrontend-p11-112",
@@ -934,7 +954,7 @@
       "id": "repo-plantsfrontend-p11-114",
       "statement": "Neither the delete confirmation nor the cancel-amendment confirmation shows a section caption, so each heading stands alone under the status strip.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:31-42, cancel-amend/controller.js:35-47 and src/server/app/shared/kit.js:268",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:31-42, cancel-amend/controller.js:35-47 and src/server/app/shared/kit.js:275",
       "quote": "    caption: journeySectionCaption(page?.id),",
       "confidence": "inferred",
       "note": "mechanism: both renders call the shared chrome without a page descriptor, so the caption is worked out from an undefined page id and nothing is shown. The cancel-amendment fit spec confirms it by asserting exactly one element, the status strip, precedes the H1."

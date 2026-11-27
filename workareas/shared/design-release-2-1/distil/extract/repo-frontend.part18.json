@@ -1,6 +1,6 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 18, \"Document scan status and the client-side enhancements\", read the whole of the animals frontend's document scan layer and the browser JavaScript over the Upload documents page, in repos/trade-imports-animals-frontend on main at src/server/app/sets/live-animals/journeys/linear/features/documents/. Read in full: scan/status.js and scan/summary-errors.js (the two non-test files under scan/); scan-poll.js (the status vocabulary, poll interval, attempt cap and poll decision shared by server and browser); download-content-type.js; client/index.js, client/dom.js, client/restored-page.js, client/scan-status/{page.js,poll.js,status-cell.js,announce.js} and client/oversize-validation/{submit.js,control.js,error-summary.js,field-error.js,markers.js} (every non-test file under client/); fit/scan-status.fit.spec.js (4 tests in 2 describes) and fit/drop-zone.fit.spec.js (6 tests); and copy/copy.en.js and copy/copy.cy.js, from which only the keys this layer uses are claimed. The *.test.js unit tests beside these files were left unread, as the part says. To name the status word, tag colour and announcement each scan state shows, and to say where the browser's hooks come from, this part also read view-model/fragments/status.js, the parts of template.njk that carry the client hooks (lines 15-17, 54-56, 107-120, 146-190), view-model/refresh.js, the MAX_FILE_SIZE and ALLOWED_TYPES block of upload-config.js, handlers/reads/download.js, the getStatus handler and the route list of controller.js (lines 173-180, 406-439) and the oversizeMessage row of form/errors.js; the documents page itself, its add form and its table are part 17's and are not claimed here. Covered: the three scan statuses and the seven tag presentations; the GET <page>/status route, what it returns, the 3-second interval, the 10-attempt cap and the three ways polling ends; the five screen-reader announcements verbatim; the no-JavaScript refresh link and the timeout hint; the status cell and actions cell the poll rebuilds; the rejected-document error summary; the govuk-frontend drop zone and its copy; the in-browser oversize check, its wording and the server check behind it; the back/forward-cache reopen; and the download content type. The fit proof of the oversize check itself lives in fit/upload.fit.spec.js, which is part 17's file and is not claimed here.",
+  "structure": "Part 18, Document scan status and the client-side enhancements. Read in full on main: documents/scan/status.js (54 lines: reading each upload's scan status from the document upload service, the pending fallback, the scanned list the status route returns, the rejected-by-scan helpers) and scan/summary-errors.js (15 lines: one error-summary entry per rejected document); documents/scan-poll.js (36 lines: the three scan states, the 3-second interval, the 10-try limit and the settled, retry or give-up decision); documents/download-content-type.js (24 lines: the content type and presentation a downloaded file is served with); all 12 files under documents/client/ (430 lines): index.js (drop zone set-up order), dom.js (element builder), restored-page.js (reopen on back/forward), scan-status/page.js, poll.js, status-cell.js and announce.js (the poll, the in-place row rewrite and the live-region announcements), and oversize-validation/control.js, submit.js, error-summary.js, field-error.js and markers.js (the in-browser 50MB check, its error summary and field error); the fit specs fit/scan-status.fit.spec.js (4 tests: settles on return, virus found until removed, axe on the settled table, in-place polling update) and fit/drop-zone.fit.spec.js (6 tests: button and instruction, no file chosen live region, drop reaches the input, single input named file, failed attachment drawn on the zone, axe); and copy/copy.en.js and copy.cy.js, claiming only the scan-status, announcement, drop-zone, view-file, refresh, still-checking, oversize, rejected and later-step scan keys, with the Welsh read for key parity. The *.test.js unit tests were not read, as the scope says. The code is unchanged from the earlier extract for the claims kept; the status tag colours, the status route's handler, the template's no-JavaScript fallbacks, the 50MB constant and the server-side oversize error now sit in files part 17 reads, so their earlier claims moved to part 17 and this part claims only the wording and behaviour its own files show.",
   "claims": [
     {
       "id": "repo-frontend-p18-001",
@@ -9,87 +9,6 @@
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/scan-poll.js:1-5",
       "quote": "export const SCAN_STATUS = {\n  COMPLETE: 'COMPLETE',\n  PENDING: 'PENDING',\n  REJECTED: 'REJECTED'\n}",
       "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p18-002",
-      "statement": "A document whose scan has completed shows the status \"Check completed\" in a green tag.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:11-15, copy/copy.en.js:98",
-      "quote": "COMPLETE: {\n    text: copy.scanTags.complete,\n    classes: 'govuk-tag--green',\n    announcement: copy.announce.safe\n  }",
-      "confidence": "verbatim",
-      "note": "copy.scanTags.complete is 'Check completed'."
-    },
-    {
-      "id": "repo-frontend-p18-003",
-      "statement": "A document still being scanned shows the status \"Scanning for virus\" in a blue tag.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:36, copy/copy.en.js:103",
-      "quote": "PENDING: { text: copy.scanTags.scanning, classes: 'govuk-tag--blue' }",
-      "confidence": "verbatim",
-      "note": "copy.scanTags.scanning is 'Scanning for virus'."
-    },
-    {
-      "id": "repo-frontend-p18-004",
-      "statement": "A document the upload service rejected for a reason the page has no wording for shows the status \"Rejected\" in a red tag.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:8,16-20, copy/copy.en.js:99",
-      "quote": "const REFUSED_TAG_CLASSES = 'govuk-tag--red'\n...\n  REJECTED: {\n    text: copy.scanTags.rejected,\n    classes: REFUSED_TAG_CLASSES,\n    announcement: copy.announce.rejected\n  }",
-      "confidence": "verbatim",
-      "note": "copy.scanTags.rejected is 'Rejected'."
-    },
-    {
-      "id": "repo-frontend-p18-005",
-      "statement": "A document rejected because the file contains a virus shows the status \"Virus found\" in a red tag.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:21-25, copy/copy.en.js:100",
-      "quote": "REJECTED_FILE_VIRUS: {\n    text: copy.scanTags.virusFound,\n    classes: REFUSED_TAG_CLASSES,\n    announcement: copy.announce.virusFound\n  }",
-      "confidence": "verbatim",
-      "note": "copy.scanTags.virusFound is 'Virus found'."
-    },
-    {
-      "id": "repo-frontend-p18-006",
-      "statement": "A document rejected because the file could not be uploaded shows the status \"Upload failed\" in a red tag.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:26-30, copy/copy.en.js:101",
-      "quote": "REJECTED_FILE_UPLOAD_FAILED: {\n    text: copy.scanTags.uploadFailed,\n    classes: REFUSED_TAG_CLASSES,\n    announcement: copy.announce.uploadFailed\n  }",
-      "confidence": "verbatim",
-      "note": "copy.scanTags.uploadFailed is 'Upload failed'."
-    },
-    {
-      "id": "repo-frontend-p18-007",
-      "statement": "A document rejected because the file could not be downloaded shows the status \"Download failed\" in a red tag.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:31-35, copy/copy.en.js:102",
-      "quote": "REJECTED_FILE_DOWNLOAD_FAILED: {\n    text: copy.scanTags.downloadFailed,\n    classes: REFUSED_TAG_CLASSES,\n    announcement: copy.announce.downloadFailed\n  }",
-      "confidence": "verbatim",
-      "note": "copy.scanTags.downloadFailed is 'Download failed'."
-    },
-    {
-      "id": "repo-frontend-p18-008",
-      "statement": "A document whose scan state the page has no tag for shows the status \"Unknown\" in a grey tag.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:51-54,64, copy/copy.en.js:104",
-      "quote": "export const UNKNOWN_TAG = {\n  text: copy.scanTags.unknown,\n  classes: 'govuk-tag--grey'\n}\n...\n  const tag = SCAN_STATUS_TAGS[tagKey] ?? UNKNOWN_TAG",
-      "confidence": "verbatim",
-      "note": "copy.scanTags.unknown is 'Unknown'."
-    },
-    {
-      "id": "repo-frontend-p18-009",
-      "statement": "Which status a rejected document shows is chosen by the reason the upload service gave, falling back to the plain rejection wording when the page has no wording for that reason.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:46-49",
-      "quote": "export const tagKeyFor = ({ scanStatus, rejectionReason }) => {\n  const perReason = `${scanStatus}_${rejectionReason}`\n  return SCAN_STATUS_TAGS[perReason] ? perReason : scanStatus\n}",
-      "confidence": "verbatim",
-      "note": "mechanism: maps a backend scan result (status plus rejection reason) to the tag key the status cell shows."
-    },
-    {
-      "id": "repo-frontend-p18-010",
-      "statement": "Every status tag is preceded by a visually hidden label reading \"Virus check status for\" and the document's reference, so a screen-reader user hears which document a status belongs to.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:61-69, copy/copy.en.js:106",
-      "quote": "// The hidden label sits outside the tag the client rewrites in place, so it\n// survives a polled status change and names the document for every state.\nexport const statusTagHtml = (tagKey, reference) => {\n  const tag = SCAN_STATUS_TAGS[tagKey] ?? UNKNOWN_TAG\n  return (\n    `<span class=\"govuk-visually-hidden\">${escapeHtml(copy.scanStatusHidden(reference))}</span>` +",
-      "confidence": "verbatim",
-      "note": "copy.scanStatusHidden is `Virus check status for ${reference}`."
     },
     {
       "id": "repo-frontend-p18-011",
@@ -114,31 +33,6 @@
       "kind": "integration",
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/scan/status.js:10-15,30-36",
       "quote": "    const { scanStatus, rejectionReason } = await documentUploads.scanStatus({\n      uploadId: entry.uploadId,\n      filename: entry.filename,\n      refresh\n    })",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p18-014",
-      "statement": "The page asks for each document's scan status under its own path with \"/status\" on the end.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:419-424, client/scan-status/page.js:1-2",
-      "quote": "    path: pageRoutePath(`${page.slug}/status`),\n...\nexport const pagePath = () => window.location.pathname\nexport const STATUS_ENDPOINT = `${pagePath()}/status`",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p18-015",
-      "statement": "The scan-status request answers with a list of the notification's uploaded documents, each as its upload identifier, its scan status and the status wording key it should show.",
-      "kind": "integration",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:173-180, scan/status.js:38-45",
-      "quote": "  return h.response({ documents: scanned(documents) })\n...\nexport const scanned = (documents) =>\n  documents\n    .filter(({ entry }) => entry.uploadId)\n    .map((item) => ({\n      uploadId: item.entry.uploadId,\n      scanStatus: item.scanStatus,\n      tagKey: tagKeyFor(item)\n    }))",
-      "confidence": "verbatim",
-      "note": "mechanism: documents with no upload identifier are left out of the answer."
-    },
-    {
-      "id": "repo-frontend-p18-016",
-      "statement": "Each scan-status request re-reads every document's status from the upload service rather than using a cached one.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:175-178",
-      "quote": "  const documents = await withScanStatus(\n    state.collectionView(answers, ['documents'], evaluation),\n    { refresh: true, request }\n  )",
       "confidence": "verbatim"
     },
     {
@@ -191,23 +85,6 @@
       "note": "copy.stillChecking is 'Still checking some documents. Refresh again in a moment.'"
     },
     {
-      "id": "repo-frontend-p18-023",
-      "statement": "The still-checking hint is rendered by the server on every load of the page and is hidden unless the page has already been refreshed 10 times with a document still scanning.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:166, view-model/render.js:118-119",
-      "quote": "<p id=\"js-timeout-message\" class=\"govuk-hint\" {% if not timedOut %}hidden{% endif %}>{{ copy.stillChecking }}</p>\n...\n      anyPending,\n      timedOut: anyPending && attempt >= MAX_POLL_ATTEMPTS,",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p18-024",
-      "statement": "Without JavaScript the documents page offers a \"Refresh virus scan status\" link whenever a document is still being scanned, so a trader can see the scan finish.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:161-165, copy/copy.en.js:94",
-      "quote": "          {% if anyPending %}\n            <p id=\"js-refresh-fallback\" class=\"govuk-body\">\n              <a href=\"{{ refreshHref }}\" class=\"govuk-link\">{{ copy.refreshStatus }}</a>\n            </p>\n          {% endif %}",
-      "confidence": "verbatim",
-      "note": "copy.refreshStatus is 'Refresh virus scan status'."
-    },
-    {
       "id": "repo-frontend-p18-025",
       "statement": "When the browser starts asking for statuses itself, the \"Refresh virus scan status\" link is hidden, so only one way of refreshing is offered at a time.",
       "kind": "behaviour",
@@ -222,15 +99,6 @@
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/client/scan-status/poll.js:64-67, client/scan-status/status-cell.js:8-11",
       "quote": "export const startPolling = () => {\n  if (pendingCells().length === 0) {\n    return\n  }\n...\nexport const pendingCells = () =>\n  document.querySelectorAll(\n    `[data-upload-id][data-scan-status=\"${SCAN_STATUS.PENDING}\"]`\n  )",
       "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p18-027",
-      "statement": "The refresh link and the page the browser returns to carry a count of how many refreshes have happened, so the service knows when to show the still-checking hint.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/refresh.js:6-30, view-model/render.js:120",
-      "quote": "export const getAttempt = (request) => {\n  const parsed = Number.parseInt(request.query?.attempt ?? '0', 10)\n  return Number.isNaN(parsed) ? 0 : parsed\n}\n...\n      refreshHref: refreshHref(request, attempt + 1, extra.uploadSession),",
-      "confidence": "verbatim",
-      "note": "mechanism: an unreadable count is read as nought, and the refresh href also carries the handle of an open upload session so a part-filled add form is not lost."
     },
     {
       "id": "repo-frontend-p18-028",
@@ -273,38 +141,12 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p18-033",
-      "statement": "Status announcements are made through one visually hidden polite live region at the foot of the page that is read out whole each time it changes.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:179-184, client/scan-status/announce.js:1-14",
-      "quote": "  <div id=\"js-scan-status-announcer\"\n       class=\"govuk-visually-hidden\"\n       aria-live=\"polite\"\n       aria-atomic=\"true\"\n       data-settled-href=\"{{ refreshHref }}\"\n       data-scan-copy=\"{{ scanCopyJson }}\"></div>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p18-034",
-      "statement": "Entering the scanning state announces nothing, because only settled states carry an announcement.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:36, client/scan-status/announce.js:9-14",
-      "quote": "PENDING: { text: copy.scanTags.scanning, classes: 'govuk-tag--blue' }\n...\nexport const announce = (message) => {\n  const region = announcer()\n  if (region && message) {\n    region.textContent = message\n  }\n}",
-      "confidence": "inferred",
-      "note": "Follows because the pending presentation has no announcement property and announce() does nothing without a message."
-    },
-    {
       "id": "repo-frontend-p18-035",
       "statement": "A status is announced only when it has actually changed, so a repeated answer does not repeat the announcement.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/client/scan-status/status-cell.js:60-67",
       "quote": "export const applyStatusUpdates = (documents, scanCopy) => {\n  documents.forEach(({ uploadId, scanStatus, tagKey }) => {\n    const cell = document.querySelector(`[data-upload-id=\"${uploadId}\"]`)\n    if (cell && cell.dataset.tagKey !== tagKey) {\n      applyStatus(cell, uploadId, scanStatus, tagKey, scanCopy)\n    }\n  })\n}",
       "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p18-036",
-      "statement": "The status wording, tag colour and announcement for every state are handed to the browser with the page, so a status that changes without a reload reads exactly as a server-rendered one does.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:56-59, template.njk:184, client/scan-status/announce.js:4-7",
-      "quote": "export const scanCopyJson = JSON.stringify({\n  ...SCAN_STATUS_TAGS,\n  UNKNOWN: UNKNOWN_TAG\n})",
-      "confidence": "verbatim",
-      "note": "mechanism: the browser reads the wording from the announcer's data attribute rather than holding its own copy."
     },
     {
       "id": "repo-frontend-p18-037",
@@ -373,15 +215,6 @@
       "quote": "export const isRejectedByScan = (item) =>\n  item.scanStatus === SCAN_STATUS.REJECTED\n\nexport const hasRejectedDocuments = (documents) =>\n  documents.some(isRejectedByScan)\n\nexport const rejectedScans = (documents) =>\n  scanned(documents.filter(isRejectedByScan))",
       "confidence": "verbatim",
       "note": "mechanism: these are read by the documents page and by the check-your-answers refusal, which part 17 and the check-answers part claim."
-    },
-    {
-      "id": "repo-frontend-p18-045",
-      "statement": "The file field on the documents page is a drop zone: a trader can drop a file onto it as well as choose one.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:107-118, client/index.js:1-9",
-      "quote": "            {{ govukFileUpload({\n              id: \"file\",\n              name: \"file\",\n              label: { text: copy.file.label, classes: \"govuk-label--s\" },\n              hint: { html: fileHintHtml },\n              attributes: { accept: acceptAttribute },\n              javascript: true,",
-      "confidence": "verbatim",
-      "note": "The drop zone is the govuk-frontend FileUpload component, enhanced by createAll(FileUpload); no bespoke drop handling is written."
     },
     {
       "id": "repo-frontend-p18-046",
@@ -477,14 +310,6 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p18-057",
-      "statement": "The file-size limit is 50MB, counted as 50,000,000 bytes.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:40-44",
-      "quote": "const MAX_FILE_SIZE_MB = 50\nconst BYTES_PER_MEGABYTE = 1_000_000\nexport const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * BYTES_PER_MEGABYTE\nexport const MAX_FILE_SIZE_LABEL = `${MAX_FILE_SIZE_MB}MB`",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-frontend-p18-058",
       "statement": "A file over the limit is refused with the message \"The selected file must be smaller than 50MB\".",
       "kind": "copy",
@@ -527,14 +352,6 @@
       "note": "mechanism: a summary inserted after page load is initialised on the spot so its link focuses the field, with auto-focus left off because the page focuses the heading itself."
     },
     {
-      "id": "repo-frontend-p18-063",
-      "statement": "The error summary the browser builds carries the service-wide error summary heading, taken from the page rather than written in the script.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:15-17, client/oversize-validation/error-summary.js:66-70",
-      "quote": "      <div id=\"js-error-summary-container\"\n           data-error-summary-title=\"{{ sharedCopy.errorSummary.title }}\"\n           data-error-prefix=\"{{ copy.errors.hiddenPrefix }}\">",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-frontend-p18-064",
       "statement": "The oversize message on the field is read out with the hidden prefix \"Error:\" before it, as a server-rendered error message is.",
       "kind": "copy",
@@ -575,22 +392,6 @@
       "kind": "behaviour",
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/client/oversize-validation/submit.js:74-85",
       "quote": "  if (!form || !container || !form.dataset.oversizeError) {\n    return\n  }\n  const maxFileSize = Number.parseInt(form.dataset.maxFileSize, 10)\n  if (!Number.isFinite(maxFileSize) || maxFileSize <= 0) {\n    return\n  }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p18-069",
-      "statement": "The service refuses an oversize file on the server as well, with the same \"The selected file must be smaller than 50MB\" message, so the limit holds without JavaScript.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/form/errors.js:17,34, upload-config.js:45-46",
-      "quote": "import { fileTypeMessage, oversizeMessage } from '../upload-config.js'\n...\n  [FILE_TOO_LARGE]: oversizeMessage(copy),",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p18-070",
-      "statement": "The size limit and the oversize wording the browser checks against are carried on the add-document form, so the browser and the server work to one limit and one message.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:54-56, view-model/render.js:60,63",
-      "quote": "  <form method=\"post\" novalidate\n        data-max-file-size=\"{{ maxFileSize }}\"\n        data-oversize-error=\"{{ oversizeFileMessage }}\">",
       "confidence": "verbatim"
     },
     {
@@ -686,15 +487,6 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p18-082",
-      "statement": "A document the trader downloads is sent with instructions to the browser not to guess its type.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/handlers/reads/download.js:7-12",
-      "quote": "export const fileResponse = (h, streamed) =>\n  h\n    .response(Readable.fromWeb(streamed.body))\n    .header('Content-Type', resolveDownloadContentType(streamed.headers))\n    .header('Content-Disposition', resolveContentDisposition(streamed.headers))\n    .header('X-Content-Type-Options', 'nosniff')",
-      "confidence": "verbatim",
-      "note": "mechanism: how a download's content type and presentation are chosen; claimed in general terms as the handling of uploaded files a trader fetches back."
-    },
-    {
       "id": "repo-frontend-p18-083",
       "statement": "Every status word, announcement, drop-zone label and scan error the documents page shows has a Welsh counterpart under the same key.",
       "kind": "copy",
@@ -746,6 +538,173 @@
       "quote": "",
       "confidence": "gap",
       "note": "Looked in both fit specs this part reads: neither uses the browser's Back button on the documents page. The scan-status spec leaves and returns by the overview instead."
+    },
+    {
+      "id": "repo-frontend-p18-089",
+      "statement": "The browser asks the scan-status route for JSON.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/client/scan-status/poll.js:6-10",
+      "quote": "    const response = await fetch(STATUS_ENDPOINT, {\n      headers: { Accept: 'application/json' }\n    })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p18-090",
+      "statement": "Every usable answer the browser gets updates the rows it names straight away, before the browser decides whether to stop asking.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/client/scan-status/poll.js:39-44",
+      "quote": "  const documents = await readStatuses()\n  if (documents) {\n    applyStatusUpdates(documents, scanCopy)\n  }\n  const decision = pollDecision({ attempt, documents })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p18-091",
+      "statement": "After each try the poll does one of three things: stops because every scan has settled, tries again, or gives up.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/scan-poll.js:10-14,24-36",
+      "quote": "export const POLL_ACTION = {\n  settled: 'settled',\n  retry: 'retry',\n  giveUp: 'giveUp'\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: the decision the browser makes after each scan-status answer, from the attempt number and the documents returned."
+    },
+    {
+      "id": "repo-frontend-p18-092",
+      "statement": "Opening the documents page again once every scan has settled, or when the browser restores it from history, replaces the current history entry, so Back does not return to the stale copy of the page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/client/scan-status/poll.js:32-37, client/restored-page.js:1-2",
+      "quote": "    globalThis.location.replace(href)\n...\nconst openThisPageByGet = () =>\n  globalThis.location.replace(globalThis.location.href)",
+      "confidence": "inferred",
+      "note": "Follows because both use location.replace rather than assigning the location, which does not add a history entry."
+    },
+    {
+      "id": "repo-frontend-p18-093",
+      "statement": "When the page is opened again after the scans settle, it goes to the page's own GET address rather than reloading, because the page can also have been reached by a refused Continue post.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/client/scan-status/poll.js:29-37",
+      "quote": "// The page is also reachable by POST (a blocked\n// Continue), so navigate to its GET href rather than reloading.",
+      "confidence": "verbatim",
+      "note": "The address is read from the announcer's data-settled-href; with none set, the page is not reopened."
+    },
+    {
+      "id": "repo-frontend-p18-094",
+      "statement": "A status the page has no wording for falls back, in the browser, to the \"Unknown\" presentation, and a row with no status tag or no presentation is left unchanged apart from its stored status and actions.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/client/scan-status/status-cell.js:6,46-54",
+      "quote": "const UNKNOWN_STATUS = 'UNKNOWN'\n...\n  const presentation = scanCopy[tagKey] ?? scanCopy[UNKNOWN_STATUS]\n  const tag = cell.querySelector('.govuk-tag')\n  if (!tag || !presentation) {\n    return\n  }",
+      "confidence": "verbatim",
+      "note": "mechanism: how a polled scan result becomes the tag shown in a status cell."
+    },
+    {
+      "id": "repo-frontend-p18-095",
+      "statement": "The \"View file\" link and its hidden suffix take their words from the row's own data attributes, so the browser shows the same wording, in the page's language, as a server-rendered row.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/client/scan-status/status-cell.js:15-29",
+      "quote": "const actionsCellOf = (statusCell) =>\n  statusCell.closest('tr')?.querySelector('[data-view-file-text]')\n...\n        text: ` ${actionsCell.dataset.viewFileHidden}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p18-096",
+      "statement": "The \"View file\" link reads \"View file\" with a visually hidden suffix \"for document\" and the document's number in the list.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:92-93, fit/scan-status.fit.spec.js:62-66",
+      "quote": "  viewFile: 'View file',\n  viewFileHidden: (documentNumber) => `for document ${documentNumber}`,",
+      "confidence": "verbatim",
+      "note": "The fit spec asserts the accessible name 'View file for document 1'."
+    },
+    {
+      "id": "repo-frontend-p18-097",
+      "statement": "A fit spec proves the hidden label \"Virus check status for\" and the document reference is in the status cell both while the document scans and after it settles.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js:41-43,59-61, copy/copy.en.js:106",
+      "quote": "    await expect(statusCell).toContainText(\n      copy.scanStatusHidden(document.accompanyingDocumentReference)\n    )",
+      "confidence": "verbatim",
+      "note": "copy.scanStatusHidden is `Virus check status for ${reference}`."
+    },
+    {
+      "id": "repo-frontend-p18-098",
+      "statement": "The scan state words are \"Check completed\", \"Rejected\", \"Virus found\", \"Upload failed\", \"Download failed\", \"Scanning for virus\" and \"Unknown\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:97-105",
+      "quote": "  scanTags: {\n    complete: 'Check completed',\n    rejected: 'Rejected',\n    virusFound: 'Virus found',\n    uploadFailed: 'Upload failed',\n    downloadFailed: 'Download failed',\n    scanning: 'Scanning for virus',\n    unknown: 'Unknown'\n  },",
+      "confidence": "verbatim",
+      "note": "Which tag colour goes with each word is set in view-model/fragments/status.js, which part 17 reads."
+    },
+    {
+      "id": "repo-frontend-p18-099",
+      "statement": "When a document is still being scanned at a later step, the service says \"One or more of your documents are still being scanned. Wait a moment and try again.\"",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:149-150",
+      "quote": "    someStillScanning:\n      'One or more of your documents are still being scanned. Wait a moment and try again.',",
+      "confidence": "verbatim",
+      "note": "The key lives in the documents copy and is used by the check-your-answers refusal (check-answers/refusal.js), which another part reads."
+    },
+    {
+      "id": "repo-frontend-p18-100",
+      "statement": "When a document was rejected by the scan, a later step says \"One or more of your documents were rejected. Return to Documents to remove and re-upload.\"",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:151-152",
+      "quote": "    someRejected:\n      'One or more of your documents were rejected. Return to Documents to remove and re-upload.'",
+      "confidence": "verbatim",
+      "note": "The key lives in the documents copy and is used by the check-your-answers refusal (check-answers/refusal.js), which another part reads."
+    },
+    {
+      "id": "repo-frontend-p18-101",
+      "statement": "The Welsh name for a rejected file whose name is not known reads \"Mae’r ffeil\" (\"The file is\"), so the Welsh rejection error would read \"Ni allwch ddefnyddio Mae’r ffeil\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js:146-148",
+      "quote": "    fileFallbackName: 'Mae’r ffeil',\n    rejected: (filename) =>\n      `Ni allwch ddefnyddio ${filename}. Tynnwch hi a rhowch gynnig arall arni gyda ffeil wahanol.`,",
+      "confidence": "inferred",
+      "note": "Inferred from joining the two strings as scan/summary-errors.js does; the Welsh is machine-drafted, so this looks like a drafting slip for a translator to check."
+    },
+    {
+      "id": "repo-frontend-p18-102",
+      "statement": "The browser's oversize message replaces any message the server already rendered on the file field, so the field shows one error at a time.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/client/oversize-validation/field-error.js:38-55",
+      "quote": "  group.querySelector(`#${control.id}-error`)?.remove()",
+      "confidence": "verbatim",
+      "note": "mechanism: the field's description is rebuilt without the removed error's id, so no reference to a missing element is left."
+    },
+    {
+      "id": "repo-frontend-p18-103",
+      "statement": "The error summary the browser builds is announced as an alert.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/client/oversize-validation/error-summary.js:24-33",
+      "quote": "  const alert = createEl('div', {\n    attrs: { role: 'alert' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p18-104",
+      "statement": "If the browser cannot set up the GOV.UK behaviour on the error summary it built, the summary is still shown.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/client/oversize-validation/error-summary.js:48-54",
+      "quote": "  try {\n    return new ErrorSummary(summary, { disableAutoFocus: true })\n  } catch {\n    return null\n  }",
+      "confidence": "verbatim",
+      "note": "mechanism: the failure is swallowed with nothing logged."
+    },
+    {
+      "id": "repo-frontend-p18-105",
+      "statement": "The client-side layer is set up only once the page loads its bundle; without JavaScript, the documents page has no polling, no in-place status change, no drop zone and no in-browser size check, and the server-rendered refresh link, field and server checks remain.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/client/index.js:1-13",
+      "quote": "createAll(FileUpload)\n\nreopenWhenRestoredFromHistory()\nstartPolling()\ninitUploadForm()",
+      "confidence": "inferred",
+      "note": "Follows because every enhancement is started from this one client entry point; the no-JavaScript fallbacks themselves are in the template, which part 17 reads."
+    },
+    {
+      "id": "repo-frontend-p18-106",
+      "statement": "No fit spec proves the scan-status poll gives up and shows the still-checking hint after 10 tries.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The polling test leaves a still-scanning row in place but asserts only that it reads 'Scanning for virus'; nothing asserts copy.stillChecking or js-timeout-message."
+    },
+    {
+      "id": "repo-frontend-p18-107",
+      "statement": "No fit spec proves the announcement for a rejected document, or for a failed upload or download.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Only copy.announce.safe is asserted on #js-scan-status-announcer; the virus test checks the tag and error summary, not the live region."
     }
   ]
 }

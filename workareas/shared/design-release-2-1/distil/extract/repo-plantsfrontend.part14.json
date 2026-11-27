@@ -1,7 +1,15 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 14 read the whole repo-root `fit/` folder of repos/trade-imports-plants-frontend in full, which holds exactly five files (confirmed with `find fit -type f`): `journey-smoke.fit.spec.js` (225 lines), `high-risk-plants-journey.js` (1,596 lines), `set-base.js` (125 lines), `sign-in.js` (9 lines) and `seed-fields.js` (10 lines). `journey-smoke.fit.spec.js` holds four `test(...)` declarations, two of them in loops, giving nine test instances: one smoke test per shape of the flow's `happy-path.json` fixture (five shapes - warePotatoes, warePotatoesLate, seedPotatoes, plantsForPlanting, woodWithoutBark), each walking the whole journey from the dashboard to confirmation and asserting every step's URL and trail; one Back test per shape in `BACK_TARGETS_BY_PAGE_ON_FORWARD_WALK` (warePotatoes, woodWithoutBark); and two standalone Back tests on the seed-potato walk. The spec reads its answers from the fixture (another part's file; read here only to say what the walk enters and asserts) and every label, button and message from the features' own `copy/copy.en.js` and `shared/copy.en.js`. `high-risk-plants-journey.js` is the page-by-page harness every fit spec in the repo drives the journey with: walk constants (POTATO_WALK, the review URLs and the Change-link trail), save-control and Back locators, the whole dashboard-to-confirmation walk as composable helpers (startNotification, chooseCommodityType, addCommodityLine, saveOrigin, startPotatoNotification, startPotatoNotificationAtContact, completePotatoNotification, openDeclaration, submitDeclarationFromCheckAnswers, the wood variants and startNotificationAtOverview/startNotificationAtOrigin), the shared axe gate, the no-JavaScript reopener, the type-ahead chooser, and three shared test factories that declare whole suites for every address picker (describeAddressPicker, describeSubmittedSearchPicker) and every MOJ date picker (describeDatePickerLook). `set-base.js`, `sign-in.js` and `seed-fields.js` are the set-up mechanisms: the set's mount prefix and the trail-aware URL matchers, the stub sign-in, and the resolution of relative fixture dates. Covered: the four smoke tests and their nine instances; the journey walked page by page in order (commodity-type, commodities/details, commodities, origin, arrival-status, arrival-details, destinations/select, consignors/select, identification-numbers, consignment/contact/select, notification-view, declaration, confirmation) with the answers entered and the headings, labels and messages asserted; the commodity-type and arrival-status branches and the late branch; the shared picker, date-picker, save-control, axe and no-JavaScript suites the harness declares; and the three set-up files as mechanism claims. Amend and copy are a gap: the harness carries no helper for either.",
+  "structure": "Part 14 read the repo-root fit folder's journey smoke spec and its harness in full: fit/journey-smoke.fit.spec.js (225 lines), fit/high-risk-plants-journey.js (1596 lines), fit/set-base.js (125), fit/sign-in.js (9) and fit/seed-fields.js (10), plus the copy modules and the happy-path fixture they import, only to resolve the words and steps the specs assert. The smoke spec declares 4 tests: (1) a loop over the five happy-path shapes, each walked from the dashboard to confirmation with the trail asserted on every step, the draft review checked, the declaration submitted, the confirmation heading, reference and late heading asserted, and axe run; (2) a loop over the ware-potato and wood shapes proving Back on the commodities list, arrival details, identification numbers and contact opens the step Save and continue came from; (3) Back then Save and continue carries on to the next step; (4) Back twice from arrival details reaches origin then the commodities list. The harness holds the potato walk in order (commodity type, commodity details, commodities list, origin, arrival details, place of destination, identification numbers, consignment contact, review, declaration, confirmation), the wood walk's branch through arrival status, the draft-review, declaration and confirmation helpers, the three save controls, the type-ahead and calendar helpers, the axe check, and the shared address-picker suites (listing, search, paging, row lines and disclosure, saving, refusing an id not in the book). Branches covered: by commodity type (potatoes vs plants and wood: arrival status and consignor asked only for the latter; identification numbers differ), by arrival status and lateness. Amend and copy are not walked here (a gap). set-base.js, sign-in.js and seed-fields.js are claimed as mechanisms: URL matchers anchored on the /high-risk-plants mount and the application's own trail encoding, stub sign-in as organisation stub-org-1, and relative arrival dates. The files are unchanged since the earlier extract's commit, so every earlier p14 claim and p11-037 is kept; three new claims add the plants and wood walk order, the trail-less direct page address and the late after-arrival case.",
   "claims": [
+    {
+      "id": "repo-plantsfrontend-p11-037",
+      "statement": "A notifier reaches the declaration page by pressing Continue at the foot of the notification view.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:991-1000",
+      "quote": "export const openDeclaration = async (page, options) => {\n  const reference = await completePotatoNotification(page, options)\n  await page\n    .getByRole('button', { name: checkAnswersCopy.continue, exact: true })\n    .click()\n  await expect(page).toHaveURL(\n    new RegExp(`${BASE}/notifications/${reference}/declaration$`)\n  )",
+      "confidence": "verbatim"
+    },
     {
       "id": "repo-plantsfrontend-p14-001",
       "statement": "A signed-in trader can take a high-risk plants notification from the dashboard through to confirmation, and this is proven for five use cases: ware potatoes from Spain notified before arrival, ware potatoes from Portugal notified after arrival, seed potatoes from the Netherlands, spruce (Picea) from Germany with species and EPPO code, and conifer wood without bark from Italy with phytosanitary treatments.",
@@ -910,6 +918,33 @@
       "quote": "import { TRAIL_START, withTrail } from '../src/server/app/shared/trail.js'",
       "confidence": "inferred",
       "note": "Follows from the fit folder reusing the application's own trail module rather than a copy; the rule itself is stated in shared/trail.js, which belongs to the shared-kit part. Recorded here only because this part's matchers rest on it."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-108",
+      "statement": "A plants-for-planting or wood-without-bark notification is walked in this order: commodity type, commodity details (category, then the line), commodities list, origin, arrival status, arrival details, place of destination, consignor, identification numbers, consignment contact.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:119-131, walking the plantsForPlanting and woodWithoutBark shapes of src/server/app/sets/high-risk-plants/journeys/linear/flow/fixtures/happy-path.json",
+      "quote": "for (const step of shape.steps) {\n      await test.step(step.slug, async () => {\n        await expect(page).toHaveURL(stepUrl(reference, step, walked))",
+      "confidence": "verbatim",
+      "note": "The two shapes' step slugs are, in order: commodity-type, commodities/details, commodities/details, commodities, origin, arrival-status, arrival-details, destinations/select, consignors/select, identification-numbers, consignment/contact/select. The three potato shapes hold the same list without arrival-status and consignors/select. The fixture belongs to the flow part; it is read here only for the order the smoke walk asserts."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-109",
+      "statement": "A journey page opened straight by its address, such as /notifications/{reference}/origin, carries no trail in its address.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:60,800-803",
+      "quote": "const ORIGIN_URL = setUrl('/notifications/[^/]+/origin$')\n...\nconst openOrigin = async (page, reference) => {\n  await page.goto(`${BASE}/notifications/${reference}/origin`)\n  await expect(page).toHaveURL(ORIGIN_URL)",
+      "confidence": "verbatim",
+      "note": "setUrl anchors the whole URL, so any trail or other query on the origin page would fail the assertion (fit/set-base.js:53-69)."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-110",
+      "statement": "A ware-potato notification notified after arrival, with its expected arrival date yesterday, is late, and its confirmation page shows the late heading.",
+      "kind": "rule",
+      "ref": "fit/journey-smoke.fit.spec.js:144-146, with the warePotatoesLate shape of src/server/app/sets/high-risk-plants/journeys/linear/flow/fixtures/happy-path.json",
+      "quote": "await expect(\n      page.getByRole('heading', { name: confirmationCopy.late.heading })\n    ).toHaveCount(shape.late ? 1 : 0)",
+      "confidence": "verbatim",
+      "note": "The warePotatoesLate shape's useCase is \"Ware potatoes from Portugal, notified after arrival\" and it sets \"late\": true; its arrival date is given as daysFromToday -1, which fit/seed-fields.js turns into yesterday's date."
     }
   ]
 }

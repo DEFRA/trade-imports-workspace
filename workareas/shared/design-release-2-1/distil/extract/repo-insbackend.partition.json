@@ -1,0 +1,90 @@
+{
+  "source": "repo:insbackend",
+  "structure": "repos/trade-imports-ins-backend (on main) is a small Java / Spring Boot service, about 7,700 lines of Java in all. It consumes notification events from SQS and holds a cross-journey read model in one MongoDB collection, `notifications` (AggregatedNotification: aggregateId, aggregateVersion, referenceNumber, organisationId, status, originCountry, originCountrySubdivisionCode, commodity, arrivalDate, lastUpdated), with a compound index on organisationId, status, arrivalDate and lastUpdated. It serves one read-only endpoint, GET /notifications, paginated by `page`, sorted by `sort` (arrivalDate or lastUpdated, asc or desc, default arrivalDate,desc), filtered by an exact `referenceNumber`, and scoped to the organisation in the Trade-Imports-Organisation-Id header. Layout: src/main/java/.../notification (11 files, about 560 lines: ingest, upsert, event types, document, index maintenance, query, sort, controller, page response), filter/ (trader organisation header, tracing, health), exceptions/ and support/ (problem details), configuration/ (Mongo, SQS, AWS, metrics, TLS, proxy, REST client), addresslookup/ (11 files, an address lookup proxy), and matching tests under src/test/java (unit and Testcontainers integration tests, about 3,800 lines), plus README.md, AGENTS.md, docs/architecture.md, src/main/resources/application.yml and the workspace page docs/repos/trade-imports-ins-backend.md. There is no rulings ledger. The scope, the notification read model behind the dashboard (fields, statuses, filters, sort and search it serves), takes in the notification package, the organisation header filter, the error handling the endpoint returns, the Mongo and SQS config that shapes the model, and their tests and docs. It leaves out the address lookup package and its tests (the INS address lookup, adopted but blocked elsewhere), TLS, proxy, AWS client, metrics, logging and tracing plumbing, CI workflows and build files. Cut into 2 parts along the model's own seam: how the read model is written (events in, document stored) and how it is read (the query API).",
+  "parts": [
+    {
+      "part": 1,
+      "title": "Read model ingest and storage",
+      "scope": "How notification events reach the read model and what is stored: the SQS listener, event types, upsert and versioning rules, error classification, the AggregatedNotification document, its indexes and their maintenance, and the Mongo and SQS config that shapes them. Stops at the query API, which is part 2.",
+      "read": [
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationSqsListener.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/OutboxEventType.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationErrorHandler.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/SqsRetryableException.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/SqsNonRetryableException.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotification.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationIndexMaintenance.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/configuration/MongoConfig.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/configuration/NotificationSqsConfig.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/configuration/LocalDateStringConverters.java",
+        "src/main/resources/application.yml",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationSqsListenerTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertServiceTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/OutboxEventTypeTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationErrorHandlerTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationIndexMaintenanceTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/NotificationSqsListenerIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationIndexMaintenanceIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/MongoConfigIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/testsupport/NotificationEventEnvelope.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/configuration/NotificationSqsConfigTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/configuration/LocalDateStringConvertersTest.java",
+        "docs/architecture.md",
+        "README.md",
+        "AGENTS.md",
+        "compose/mongo/10-init.js",
+        "docs/repos/trade-imports-ins-backend.md (workspace root, not the repo)"
+      ],
+      "covers": [
+        "Every field of the AggregatedNotification document (the 10 fields: aggregateId, aggregateVersion, referenceNumber, organisationId, status, originCountry, originCountrySubdivisionCode, commodity, arrivalDate, lastUpdated): what it holds, where it comes from in the event, and its type",
+        "Every event type OutboxEventType names, and what each does to the read model",
+        "Every status value the model stores or derives, and where it comes from",
+        "Every upsert rule: insert versus update, aggregateVersion ordering, stale or duplicate events, missing fields",
+        "Every error classification (retryable versus non-retryable) and what happens to the message in each case",
+        "Every index (the organisation_status_sort_fields compound index and the referenceNumber index) and the index maintenance behaviour",
+        "The notification collection, queue and date-storage config values in application.yml, MongoConfig, NotificationSqsConfig and LocalDateStringConverters",
+        "What README.md, AGENTS.md, docs/architecture.md and the workspace repo page say about the read model and its cross-service constraints",
+        "Every test in the 10 listed test files that proves an ingest or storage behaviour, one claim each"
+      ],
+      "prefix": "repo-insbackend-p1"
+    },
+    {
+      "part": 2,
+      "title": "Notification query API",
+      "scope": "What the dashboard can ask the read model for: GET /notifications, its pagination, sort, reference number search, organisation scoping by header, the page response shape and every error it returns. Stops at how documents are written, which is part 1.",
+      "read": [
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSort.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationRepository.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationPageResponse.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/filter/TraderOrganisationHeaderFilter.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandler.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/exceptions/NotFoundException.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/exceptions/ConflictException.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/support/ProblemDetailsFactory.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationControllerTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryServiceTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSortTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/IntegrationBase.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/filter/TraderOrganisationHeaderFilterTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandlerTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/support/ProblemDetailsFactoryTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/OpenApiDateFormatTest.java"
+      ],
+      "covers": [
+        "The GET /notifications endpoint: every request parameter (page, sort, referenceNumber) and header (Trade-Imports-Organisation-Id), its default, limits and validation",
+        "Every sort option AggregatedNotificationSort accepts (arrivalDate,desc default, arrivalDate,asc, lastUpdated,desc, lastUpdated,asc), tie-breaks and what an unknown sort does",
+        "The reference number search: exact match, what a partial or unknown reference returns",
+        "Organisation scoping: which paths the header filter guards, and the response to a missing or blank header",
+        "The page size, page numbering and every field of the page response, including each notification field it returns and the date format",
+        "Every filter the API offers, and every dashboard filter it does not (status, origin, commodity, date range), recorded as a gap where the scope expects it",
+        "Every error response the handler returns for this endpoint, with status and detail text verbatim",
+        "Every test in the 9 listed test files that proves a query behaviour, one claim each"
+      ],
+      "prefix": "repo-insbackend-p2"
+    }
+  ]
+}

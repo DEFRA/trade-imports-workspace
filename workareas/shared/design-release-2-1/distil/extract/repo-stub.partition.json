@@ -1,0 +1,114 @@
+{
+  "source": "repo:stub",
+  "structure": "repos/trade-imports-stub is a Java / Spring Boot stub service (port 8087) standing in for third-party integrations: the Trade Platform OAuth token endpoint and MDM reference data through APIM (both called by trade-imports-reference-data), and AWS STS, Entra and the address lookup gateway (called by trade-imports-ins-backend). Code is in src/main/java/uk/gov/defra/trade/imports/: stubs/federated (AddressLookupSimulatorController 163 lines, plus the STS and Entra simulators), stubs/mdm (MdmStubResponses 14 lines; countries/CountriesController 52 lines; poe/PortsOfEntryController 34 lines; product/ProductController 128 lines), utils/FileUtils (30 lines), and the latency, faults, configuration, filter and exception plumbing. Saved MDM responses are in src/main/resources/responses/: countriesResponse.json (10,530 lines, a JSON array of 250 country records ordered by MDM id, not by name; each carries id, countryUUID, ISONumeric, alpha2, alpha3, independent, system, systemAlias, systemAlpha2, systemAlpha3, effectiveAlias, effectiveAlpha2, effectiveAlpha3, subDivisions and blocks; 32 records carry the GBNAG_SPS_EX block, and 4 carry a subdivision or a system alias), portsOfEntryResponse.json (1,252 lines, {result: [...]} holding 78 port records with id, activeFrom, activeTo, code, name, townCity, county, postCode, countryCode, traffic and status), and three product files (mdmProductSearchResponses 11,215 lines, mdmProductCommoditiesResponses 7,542, mdmProductSpeciesResponses 3,153). Tests in src/test/java mirror each controller, with FileUtilsTest and the MdmStub* test helpers. The scope takes in only the address lookup simulator (its searches, addresses and postcodes) and the MDM countries and ports endpoints with their saved records, the blocks parameter and the shared MDM response plumbing. It is cut into 6 parts: the address lookup simulator; the countries endpoint with the shared MDM code and tests; the 250 country records in three consecutive runs of the JSON file cut on record boundaries; and the ports endpoint with its 78 records. Left out by the scope: the MDM product endpoints and their three saved files (the commodity catalogue waits on MDM), the STS and Entra simulators, the trade token stub, latency profiles, fault injection, metrics, proxy, TLS, Mongo, logging and CI config.",
+  "parts": [
+    {
+      "part": 1,
+      "title": "Address lookup simulator",
+      "scope": "The address lookup gateway simulator that trade-imports-ins-backend calls: its route, the postcode and find parameters, the reserved search terms and the addresses, postcodes and errors each answers, and its expected-audience check. Stops at the STS and Entra simulators, which only issue the tokens.",
+      "read": [
+        "src/main/java/uk/gov/defra/trade/imports/stubs/federated/AddressLookupSimulatorController.java",
+        "src/test/java/uk/gov/defra/trade/imports/stubs/federated/AddressLookupSimulatorControllerTest.java",
+        "src/main/resources/application.yml (the address-lookup-simulator block, lines 103 to 104)",
+        "src/main/resources/application-local.yml",
+        "README.md (the Federated-credential simulators section, lines 67 to 74)"
+      ],
+      "covers": [
+        "GET /simulator/address-lookup/v2.1/addresses: the postcode and find parameters, that they behave identically, and the 400 answered when neither is given, with its message verbatim",
+        "the 400 for a postcode that is not valid, with its message verbatim, and which terms trigger it",
+        "every reserved search term or postcode and what it answers: the three-addresses fixture (each of its 3 addresses with addressLine, subBuildingName, buildingName, buildingNumber, street, town, postcode, country, uprn, match, matchDescription and language), the no-results fixture, and any other fixture or error the controller holds",
+        "what any other term answers",
+        "the token and audience check the simulator makes, and the expected-audience default",
+        "every test in AddressLookupSimulatorControllerTest, as what it proves"
+      ],
+      "prefix": "repo-stub-p1"
+    },
+    {
+      "part": 2,
+      "title": "MDM countries endpoint and shared MDM plumbing",
+      "scope": "How the stub answers GET /mdm/geo/countries: the subscription-key header, the system and blocks parameters, the filter on blocks, the trace header, how the saved file is loaded, and the tests that prove it. Also the MDM latency config and the README's MDM countries section. The country records themselves are parts 3 to 5; the ports endpoint is part 6.",
+      "read": [
+        "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/countries/CountriesController.java",
+        "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/MdmStubResponses.java",
+        "src/main/java/uk/gov/defra/trade/imports/utils/FileUtils.java",
+        "src/test/java/uk/gov/defra/trade/imports/stubs/mdm/countries/CountriesControllerTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/stubs/mdm/MdmStubWebMvcTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/stubs/mdm/MdmStubRequests.java",
+        "src/test/java/uk/gov/defra/trade/imports/stubs/mdm/MdmStubResponseMatchers.java",
+        "src/test/java/uk/gov/defra/trade/imports/utils/FileUtilsTest.java",
+        "src/main/resources/application.yml (the stub-latency mdm block, lines 121 to 137)",
+        "README.md (the MDM countries and border control posts section, lines 82 to 86, and the integrations table, lines 11 to 16)"
+      ],
+      "covers": [
+        "GET /mdm/geo/countries: the Ocp-Apim-Subscription-Key header it requires, the system parameter (accepted and ignored), and the whole saved list answered when blocks is absent or blank",
+        "the blocks parameter: keeps the records carrying a block of that name whatever includeCountry says, and an unknown block answers an empty list",
+        "the trace header every MDM answer carries (MdmStubResponses)",
+        "how FileUtils loads a saved response and what it does with a missing or unreadable file, as FileUtilsTest proves",
+        "every test in CountriesControllerTest and FileUtilsTest, as what it proves",
+        "the MDM integration's paths, interface name, owner and latency defaults in application.yml"
+      ],
+      "prefix": "repo-stub-p2"
+    },
+    {
+      "part": 3,
+      "title": "Country records 1 to 83",
+      "scope": "Lines 1 to 3418 of src/main/resources/responses/countriesResponse.json: the first 83 country records in file order, from Aruba (the first) to Martinique (the 83rd). Stops before the Philippines record at line 3419.",
+      "read": [
+        "src/main/resources/responses/countriesResponse.json, lines 1 to 3418"
+      ],
+      "covers": [
+        "the 83 country records from Aruba to Martinique: for each, its effectiveAlias, effectiveAlpha2, effectiveAlpha3, alpha2, alpha3, ISONumeric, independent, system, and any systemAlias, systemAlpha2 or systemAlpha3",
+        "every subdivision any of these records carries, with its fields",
+        "every block membership any of these records carries (name, includeCountry, tags), named country by country",
+        "the scheme and list ids the records use (MDM-COUNTRY, DEFRA, ISO-3166-3, listVersionId)"
+      ],
+      "prefix": "repo-stub-p3"
+    },
+    {
+      "part": 4,
+      "title": "Country records 84 to 166",
+      "scope": "Lines 3419 to 7053 of src/main/resources/responses/countriesResponse.json: country records 84 to 166 in file order, from Philippines (the) to Saint Martin (French part). Stops before the Timor-Leste record at line 7054.",
+      "read": [
+        "src/main/resources/responses/countriesResponse.json, lines 3419 to 7053"
+      ],
+      "covers": [
+        "the 83 country records from Philippines (the) to Saint Martin (French part): for each, its effectiveAlias, effectiveAlpha2, effectiveAlpha3, alpha2, alpha3, ISONumeric, independent, system, and any systemAlias, systemAlpha2 or systemAlpha3",
+        "every subdivision any of these records carries, with its fields",
+        "every block membership any of these records carries (name, includeCountry, tags), named country by country"
+      ],
+      "prefix": "repo-stub-p4"
+    },
+    {
+      "part": 5,
+      "title": "Country records 167 to 250",
+      "scope": "Lines 7054 to 10530 of src/main/resources/responses/countriesResponse.json: country records 167 to 250 in file order, from Timor-Leste to Austria (the last), to the end of the file.",
+      "read": [
+        "src/main/resources/responses/countriesResponse.json, lines 7054 to 10530"
+      ],
+      "covers": [
+        "the 84 country records from Timor-Leste to Austria: for each, its effectiveAlias, effectiveAlpha2, effectiveAlpha3, alpha2, alpha3, ISONumeric, independent, system, and any systemAlias, systemAlpha2 or systemAlpha3",
+        "every subdivision any of these records carries, with its fields",
+        "every block membership any of these records carries (name, includeCountry, tags), named country by country"
+      ],
+      "prefix": "repo-stub-p5"
+    },
+    {
+      "part": 6,
+      "title": "MDM ports of entry",
+      "scope": "How the stub answers GET /mdm/trade/bcp/poes and the 78 port records it returns, with the controller's tests. The shared MDM plumbing (subscription key, trace header, FileUtils) is part 2's to claim.",
+      "read": [
+        "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryController.java",
+        "src/test/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryControllerTest.java",
+        "src/main/resources/responses/portsOfEntryResponse.json",
+        "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/MdmStubResponses.java"
+      ],
+      "covers": [
+        "GET /mdm/trade/bcp/poes: its header and system parameter, and that it answers the saved records whole, in MDM's order, wrapped in result",
+        "the 78 port records: for each, its code, name, townCity, county, postCode, countryCode, traffic, status code and description, and any activeFrom or activeTo",
+        "the traffic types and statuses the records hold, counted",
+        "every test in PortsOfEntryControllerTest, as what it proves"
+      ],
+      "prefix": "repo-stub-p6"
+    }
+  ]
+}

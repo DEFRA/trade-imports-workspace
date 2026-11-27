@@ -185,6 +185,15 @@ so the next major has less to do.
 Merges are squash merges: `gh pr merge <number> --squash`. A job deletes the
 branch only after the merge.
 
+When every check is green, the branch is up to date and the merge is still
+refused with "the base branch policy prohibits the merge", the job pushes an
+empty commit (`git commit --allow-empty`) to the branch, waits for the checks
+again and merges on green. It does not rerun runs or close and reopen the
+pull request.
+
+A job that cannot merge leaves the pull request as a draft, with the reason in
+its description, and reports it in the digest.
+
 ### One merge at a time in a repo that deploys
 
 A repo deploys on merge when `DEFRA/cdp-app-deployments` has a file for it
@@ -219,15 +228,6 @@ job merges there on green without waiting: this workspace (tim),
 `trade-imports-ins-tests`, `trade-imports-performance-tests` and
 `trade-imports-schemas`. The tests repo publishes the test-suite image CDP
 runs, but CDP does not deploy it as a service.
-
-When every check is green, the branch is up to date and the merge is still
-refused with "the base branch policy prohibits the merge", the job pushes an
-empty commit (`git commit --allow-empty`) to the branch, waits for the checks
-again and merges on green. It does not rerun runs or close and reopen the
-pull request.
-
-A job that cannot merge leaves the pull request as a draft, with the reason in
-its description, and reports it in the digest.
 
 ## Red tests
 

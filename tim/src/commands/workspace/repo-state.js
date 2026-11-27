@@ -4,19 +4,11 @@ import { z } from 'zod'
 import { run } from '../../exec/exec.js'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { TimError } from '../../errors.js'
+import { fetchOrigin } from '../../git/fetch-origin.js'
 import { makeRunAction } from '../_run-action.js'
 import { parseOptions } from '../backlog/shared.js'
 
 const git = (dir, args) => run('git', ['-C', dir, ...args])
-
-const succeeds = async (dir, args) => (await git(dir, args)).exitCode === 0
-
-/**
- * @param {string} dir
- * @returns {Promise<boolean>} Whether `git fetch origin` succeeded in `dir`
- */
-export const fetchOrigin = (dir) =>
-  succeeds(dir, ['fetch', '--quiet', 'origin'])
 
 const REPO_ENTRY = /^([a-z][a-z0-9-]*):(.+)$/
 

@@ -1,9 +1,9 @@
 import { TimError } from '../errors.js'
 import {
-  assertReposInScope,
+  assertHoldReposInScope,
   holdSchema,
+  holdScopesOf,
   loadDependencySets,
-  reposInScope,
   writeHolds
 } from './dependency-sets.js'
 
@@ -64,7 +64,9 @@ export const localDateOf = (moment) =>
 
 /**
  * Add the hold for a package to `config/dependency-sets.json`, or replace
- * the one it has.
+ * the one it has. The package is an npm name, held in repos in scope for
+ * the sets, or a Maven `groupId:artifactId`, held in repos whose Maven
+ * updates are generated.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -79,7 +81,7 @@ export const holdPackage = ({ workspaceRoot, request, today }) => {
   const hold = holdOf(request, today)
   assertValidHold(hold)
   const dependencySets = loadDependencySets(workspaceRoot)
-  assertReposInScope(hold.repos, reposInScope(workspaceRoot, dependencySets))
+  assertHoldReposInScope(hold, holdScopesOf(workspaceRoot, dependencySets))
   const replaced =
     dependencySets.holds.find(
       (existing) => existing.package === hold.package

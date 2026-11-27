@@ -1,4 +1,10 @@
-import { DEPENDENCY_SETS_FILE } from './dependency-sets.js'
+import { DEPENDENCY_SETS_FILE, holdEcosystemOf } from './dependency-sets.js'
+
+const holdsOn = (holds, { repo, ecosystem }) =>
+  holds.filter(
+    (hold) =>
+      hold.repos.includes(repo) && holdEcosystemOf(hold.package) === ecosystem
+  )
 
 const appendWord = (lines, word, room) => {
   const last = lines.at(-1)
@@ -99,16 +105,22 @@ const ignoreComment = (ignoredSets, repoHolds) => [
     : [])
 ]
 
+const ignoreLines = (ignoredSets, repoHolds) =>
+  ignoredSets.length === 0 && repoHolds.length === 0
+    ? []
+    : [
+        ...wrapComment(ignoreComment(ignoredSets, repoHolds).join(' '), '    '),
+        '    ignore:',
+        ...ignoredSets.flatMap(ignoredSetLines),
+        ...repoHolds.flatMap(heldPackageLines)
+      ]
+
 const npmIgnores = (crossRepoSets, repoHolds) => {
-  const ignoredSets = crossRepoSets.filter((set) => set.members.length > 0)
-  if (ignoredSets.length === 0 && repoHolds.length === 0) return []
-  return [
-    '',
-    ...wrapComment(ignoreComment(ignoredSets, repoHolds).join(' '), '    '),
-    '    ignore:',
-    ...ignoredSets.flatMap(ignoredSetLines),
-    ...repoHolds.flatMap(heldPackageLines)
-  ]
+  const lines = ignoreLines(
+    crossRepoSets.filter((set) => set.members.length > 0),
+    repoHolds
+  )
+  return lines.length === 0 ? [] : ['', ...lines]
 }
 
 const cooldownLines = (cooldownDays) => [
@@ -142,7 +154,7 @@ const npmUpdate = (repo, npmDirectory, { defaults, sets, holds }) => [
   ...npmGroups(sets.filter((set) => set.scope === 'repo')),
   ...npmIgnores(
     sets.filter((set) => set.scope === 'cross-repo'),
-    holds.filter((hold) => hold.repos.includes(repo))
+    holdsOn(holds, { repo, ecosystem: 'npm' })
   ),
   '',
   ...cooldownLines(defaults.cooldownDays),
@@ -156,22 +168,102 @@ const npmUpdate = (repo, npmDirectory, { defaults, sets, holds }) => [
   '      - dependency-type: direct'
 ]
 
-const githubActionsUpdate = (actionsDirectories, { defaults }) => [
-  '  # Update GitHub Actions',
-  '  - package-ecosystem: github-actions',
-  ...directoryLines(actionsDirectories),
-  '',
+const blankLineBetween = (...blocks) =>
+  blocks
+    .filter((block) => block.length > 0)
+    .flatMap((block, index) => (index === 0 ? block : ['', ...block]))
+
+const actionsGroupLines = (policyOwner) => [
   ...wrapComment(
-    'Same policy as npm: one rolling PR for patch and minor bumps, majors raised one at a time. Action majors change inputs or runtime, so they are the ones worth reading.',
+    `Same policy as ${policyOwner}: one rolling PR for patch and minor bumps, majors raised one at a time. Action majors change inputs or runtime, so they are the ones worth reading.`,
     '    '
   ),
   '    groups:',
-  ...patchAndMinorGroup,
-  '',
-  ...cooldownLines(defaults.cooldownDays),
-  '',
-  ...scheduleLines(defaults.dependabot.schedule)
+  ...patchAndMinorGroup
 ]
+
+const githubActionsUpdate = (
+  actionsDirectories,
+  { policyOwner, groupPatchAndMinor, cooldownDays, schedule }
+) =>
+  blankLineBetween(
+    [
+      '  # Update GitHub Actions',
+      '  - package-ecosystem: github-actions',
+      ...directoryLines(actionsDirectories)
+    ],
+    groupPatchAndMinor ? actionsGroupLines(policyOwner) : [],
+    cooldownDays === undefined ? [] : cooldownLines(cooldownDays),
+    scheduleLines(schedule)
+  )
+
+const npmActionsSettings = ({ defaults }) => ({
+  policyOwner: 'npm',
+  groupPatchAndMinor: true,
+  cooldownDays: defaults.cooldownDays,
+  schedule: defaults.dependabot.schedule
+})
+
+const mavenActionsSettings = ({ maven: { dependabot } }) => ({
+  policyOwner: 'Maven',
+  groupPatchAndMinor: dependabot.groupPatchAndMinor,
+  cooldownDays: dependabot.cooldownDays,
+  schedule: dependabot.schedule
+})
+
+const mavenGroupLines = [
+  ...wrapComment(
+    'One rolling PR for every patch and minor bump. Majors match no group, so Dependabot raises each one on its own.',
+    '    '
+  ),
+  '    groups:',
+  ...patchAndMinorGroup
+]
+
+const mavenUpdate = (repo, mavenDirectory, { maven, holds }) =>
+  blankLineBetween(
+    [
+      '  # Update Maven packages',
+      '  - package-ecosystem: maven',
+      `    directory: ${mavenDirectory}`,
+      `    open-pull-requests-limit: ${maven.dependabot.openPullRequestsLimit}`
+    ],
+    maven.dependabot.groupPatchAndMinor ? mavenGroupLines : [],
+    ignoreLines([], holdsOn(holds, { repo, ecosystem: 'maven' })),
+    maven.dependabot.cooldownDays === undefined
+      ? []
+      : cooldownLines(maven.dependabot.cooldownDays),
+    scheduleLines(maven.dependabot.schedule),
+    [
+      '    allow:',
+      '      # Include direct pom.xml updates',
+      '      - dependency-type: direct'
+    ]
+  )
+
+const updatesOf = (repo, ecosystem, directories, dependencySets) =>
+  ecosystem === 'maven'
+    ? [
+        ...mavenUpdate(repo, directories.maven, dependencySets),
+        '',
+        ...githubActionsUpdate(
+          directories.actions,
+          mavenActionsSettings(dependencySets)
+        )
+      ]
+    : [
+        ...npmUpdate(repo, directories.npm, dependencySets),
+        '',
+        ...githubActionsUpdate(
+          directories.actions,
+          npmActionsSettings(dependencySets)
+        )
+      ]
+
+const DEFAULT_DIRECTORIES = {
+  npm: { npm: '/', actions: ['/'] },
+  maven: { maven: '/', actions: ['/'] }
+}
 
 /**
  * The text of a repo's `.github/dependabot.yml`, generated from the
@@ -180,14 +272,16 @@ const githubActionsUpdate = (actionsDirectories, { defaults }) => [
  *
  * @param {object} args
  * @param {string} args.repo - Named in the header's regenerate command; only the holds that list it are ignored
- * @param {{defaults: object, sets: object[], holds: object[]}} args.dependencySets - From `loadDependencySets`
- * @param {{npm: string, actions: string[]}} [args.directories] - Folders relative to the GitHub repo's root: the npm project's, and those holding the workflows and composite actions to update
+ * @param {{defaults: object, maven: object, sets: object[], holds: object[]}} args.dependencySets - From `loadDependencySets`
+ * @param {'npm'|'maven'} [args.ecosystem='npm'] - The package manager to update beside GitHub Actions. npm takes the sets, `defaults` and npm holds; Maven takes `maven` and Maven holds
+ * @param {{npm?: string, maven?: string, actions: string[]}} [args.directories] - Folders relative to the GitHub repo's root: the project's, keyed by its package manager, and those holding the workflows and composite actions to update
  * @returns {string}
  */
 export const renderDependabotConfig = ({
   repo,
   dependencySets,
-  directories = { npm: '/', actions: ['/'] }
+  ecosystem = 'npm',
+  directories = DEFAULT_DIRECTORIES[ecosystem]
 }) =>
   [
     `# Generated by \`tim deps dependabot ${repo} --write\` from`,
@@ -196,8 +290,6 @@ export const renderDependabotConfig = ({
     'version: 2',
     '',
     'updates:',
-    ...npmUpdate(repo, directories.npm, dependencySets),
-    '',
-    ...githubActionsUpdate(directories.actions, dependencySets),
+    ...updatesOf(repo, ecosystem, directories, dependencySets),
     ''
   ].join('\n')

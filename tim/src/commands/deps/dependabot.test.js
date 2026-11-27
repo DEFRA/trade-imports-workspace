@@ -104,14 +104,50 @@ describe('tim deps dependabot', () => {
     })
   })
 
+  test("Should write a Java repo's config with Maven updates and pass --check after it", async () => {
+    const javaRepo = 'trade-imports-animals-backend'
+    root = createDepsWorkspace({ cloned: [javaRepo] })
+
+    const write = await runTimInWorkspace(root, [
+      'deps',
+      'dependabot',
+      javaRepo,
+      '--write',
+      '--json'
+    ])
+    const check = await runTimInWorkspace(root, [
+      'deps',
+      'dependabot',
+      javaRepo,
+      '--check',
+      '--json'
+    ])
+
+    const written = yaml.load(
+      readFileSync(
+        join(root, 'repos', javaRepo, '.github', 'dependabot.yml'),
+        'utf8'
+      )
+    )
+    expect({
+      writeExitCode: write.exitCode,
+      ecosystems: written.updates.map((update) => update['package-ecosystem']),
+      checkExitCode: check.exitCode
+    }).toEqual({
+      writeExitCode: 0,
+      ecosystems: ['maven', 'github-actions'],
+      checkExitCode: 0
+    })
+  })
+
   test('Should refuse a repo outside the sets as a usage error', async () => {
     root = createDepsWorkspace()
-    mkdirSync(join(root, 'repos', 'trade-imports-animals-backend'))
+    mkdirSync(join(root, 'repos', 'trade-imports-plants-prototype'))
 
     const run = await runTimInWorkspace(root, [
       'deps',
       'dependabot',
-      'trade-imports-animals-backend',
+      'trade-imports-plants-prototype',
       '--json'
     ])
 

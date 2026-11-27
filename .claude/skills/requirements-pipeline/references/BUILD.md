@@ -583,8 +583,11 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    run's own lease returns `stackDown`: the loop takes the lease again, which
    brings the stack back, and runs that stage once more. A stack somebody brought up by
    hand, with no lease, counts as somebody else's: it is never reused and never
-   taken down, and so does a stack restarted by hand under a lease (its container
-   ids no longer match the lease's). The lease file is per machine
+   taken down, and so does a stack restarted by hand under a lease (it runs a
+   container id the lease never started). A stack that has merely **lost** a
+   container, which is what an OOM kill looks like, is still the run's own: the
+   acquire starts it again under the same lease rather than refusing, so one
+   dead service no longer stops every end-to-end rung. The lease file is per machine
    (`tim docker lease status` shows it), and while it is held `tim docker up`,
    `dev`, `down`, `restart` and `bounce-backend` refuse unless given `--force`,
    which the loop never passes.

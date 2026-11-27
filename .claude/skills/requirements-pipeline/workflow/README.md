@@ -1107,10 +1107,12 @@ not run.
 
 `acquire` starts a stack that is down and records its container ids in the lease. It reuses a
 stack the same holder leases only when that start finished and the containers are still the
-ones it recorded; a start of its own that died part-way is taken down and started again. It
+ones it recorded; a start of its own that died part-way is taken down and started again, and
+so is one that has lost a container since (an OOM kill, say), because a stack running fewer of
+the ids it recorded is still its own. It
 refuses a stack leased to anybody else, up with no lease at all (one somebody started by
-hand), or restarted by hand under the lease (other container ids), naming the holder, its
-mode and its branches, and never takes such a stack down. A stale lease is taken over under
+hand), or restarted by hand under the lease (a container id the lease never started), naming
+the holder, its mode and its branches, and never takes such a stack down. A stale lease is taken over under
 a lock, so two processes never both start the stack. While a lease is held,
 `tim docker up|dev|down|restart|bounce-backend` refuse unless given `--force`, which the loop
 never passes.

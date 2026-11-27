@@ -484,6 +484,28 @@ describe('acquireStack', () => {
     })
   })
 
+  test('starts its own stack again when a container it started has exited, and keeps the lease', async () => {
+    const env = fakeStack()
+    markUp('c1')
+    writeLease({ holder: HOLDER, containers: ['c1', 'mssql-container'] })
+
+    const outcome = await acquire(env)
+
+    expect({
+      acquired: outcome.acquired,
+      refused: outcome.refused,
+      calls: calls(),
+      up: stackIsUp(),
+      leaseHolder: readLease(leasePath()).holder
+    }).toEqual({
+      acquired: true,
+      refused: undefined,
+      calls: ['docker compose down', 'tim docker dev'],
+      up: true,
+      leaseHolder: HOLDER
+    })
+  })
+
   test('does not take over a stale lease while another takeover holds the lock', async () => {
     const env = fakeStack()
     writeLease({ holder: OTHER })
@@ -703,6 +725,28 @@ describe('releaseStack', () => {
       foreign: true,
       calls: [],
       up: true,
+      lease: null
+    })
+  })
+
+  test('takes down its own stack that lost a container, and releases the lease', async () => {
+    const env = fakeStack()
+    markUp('c1')
+    writeLease({ holder: HOLDER, containers: ['c1', 'mssql-container'] })
+
+    const outcome = await release(env)
+
+    expect({
+      released: outcome.released,
+      foreign: outcome.foreign,
+      stoppedStack: outcome.stoppedStack,
+      up: stackIsUp(),
+      lease: readLease(leasePath())
+    }).toEqual({
+      released: true,
+      foreign: undefined,
+      stoppedStack: true,
+      up: false,
       lease: null
     })
   })
@@ -1224,5 +1268,45 @@ describe('#acquireDecision with domains', () => {
 
   test('Should restart a narrowed stack that is missing a domain', () => {
     expect(decisionFor(['plants'], ['plants', 'animals'])).toBe('restart')
+  })
+})
+
+describe('#acquireDecision when the holder’s own stack lost a container', () => {
+  const decisionFor = (recorded, running) =>
+    acquireDecision({
+      up: true,
+      lease: {
+        holder: 'run-1',
+        state: 'up',
+        workspace: '/w',
+        containers: recorded
+      },
+      holder: 'run-1',
+      workspaceRoot: '/w',
+      containers: running
+    })
+
+  test('Should restart a stack whose container exited, rather than refuse it', () => {
+    expect(decisionFor(['c1', 'c2', 'c3'], ['c1', 'c3'])).toBe('restart')
+  })
+
+  test('Should restart a stack that lost every container but one', () => {
+    expect(decisionFor(['c1', 'c2', 'c3'], ['c2'])).toBe('restart')
+  })
+
+  test('Should call a stack replaced when it runs a container the lease never started', () => {
+    expect(decisionFor(['c1', 'c2'], ['c1', 'c9'])).toBe('replaced')
+  })
+
+  test('Should call a stack replaced when one container was swapped for another', () => {
+    expect(decisionFor(['c1', 'c2'], ['c1', 'c2-restarted'])).toBe('replaced')
+  })
+
+  test('Should reuse a stack still running every container the lease started', () => {
+    expect(decisionFor(['c1', 'c2'], ['c2', 'c1'])).toBe('reuse')
+  })
+
+  test('Should call a stack replaced when the lease recorded no containers', () => {
+    expect(decisionFor(undefined, ['c1'])).toBe('replaced')
   })
 })

@@ -239,6 +239,10 @@ const sameContainers = (recorded, running) =>
   recorded.length === running.length &&
   [...recorded].sort().join('\n') === [...running].sort().join('\n')
 
+const runsOnlyWhatTheLeaseStarted = (recorded, running) =>
+  Array.isArray(recorded) &&
+  running.every((container) => recorded.includes(container))
+
 /**
  * What an acquire does, given whether the stack is up, which containers it
  * runs and who holds it: reuse it, start it, restart it, or refuse.
@@ -250,9 +254,11 @@ const sameContainers = (recorded, running) =>
  *   are still the ones it recorded. A start of its own still running is
  *   refused (`starting`). A start that died part-way (a Bash timeout killing
  *   the acquire, say) left containers nobody finished: they are its own, so
- *   they are taken down and started again (`restart`). Containers other than
- *   the ones it recorded mean somebody restarted the stack by hand
- *   (`replaced`): never reused, never taken down.
+ *   they are taken down and started again (`restart`). A stack running fewer
+ *   of the ids it recorded has lost a container, which is still its own
+ *   stack, so it is started again too (`restart`). A container id it never
+ *   recorded means somebody restarted the stack by hand (`replaced`): never
+ *   reused, never taken down.
  *
  * - The same holder name taken from another clone of the workspace is
  *   refused like another holder (`otherClone`), unless `force` is set.
@@ -280,7 +286,10 @@ export const acquireDecision = ({
   if (!up) return 'start'
   if (lease.state !== UP) return 'restart'
   if (!coversDomains(lease, domains)) return 'restart'
-  return sameContainers(lease.containers, containers) ? 'reuse' : 'replaced'
+  if (sameContainers(lease.containers, containers)) return 'reuse'
+  return runsOnlyWhatTheLeaseStarted(lease.containers, containers)
+    ? 'restart'
+    : 'replaced'
 }
 
 const REFUSALS = {
@@ -684,7 +693,10 @@ export const releaseStack = async ({
     rmSync(leasePath, { force: true })
     return { released: true, stoppedStack: false, holder, log: null }
   }
-  if (lease.state === UP && !sameContainers(lease.containers, containers)) {
+  if (
+    lease.state === UP &&
+    !runsOnlyWhatTheLeaseStarted(lease.containers, containers)
+  ) {
     rmSync(leasePath, { force: true })
     return {
       released: false,

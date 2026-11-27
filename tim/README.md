@@ -1319,13 +1319,17 @@ tim docker lease status --json                                                  
   is, but only when that start finished and the containers are still the ones
   recorded. A start of the holder's own that died part-way (a timeout killing
   `acquire`, say) is taken down and started again; one still running is
-  refused.
+  refused. A stack that has lost a container since it started, which is what
+  an OOM kill leaves behind, is taken down and started again too: it runs fewer
+  of the ids the lease recorded and none it did not, so it is still the
+  holder's own stack.
 - `acquire` on a stack leased to anyone else, up with no lease at all (one
   somebody started by hand with `tim docker dev`), or restarted by hand under
-  a lease (other container ids), refuses with `STACK_HELD`, naming the holder,
-  its mode, its branches and when it took the lease. It never reuses or takes
-  down such a stack.
-- `release` takes down the stack its holder started, then clears the lease.
+  a lease (a container id the lease never started), refuses with `STACK_HELD`,
+  naming the holder, its mode, its branches and when it took the lease. It
+  never reuses or takes down such a stack.
+- `release` takes down the stack its holder started, then clears the lease,
+  including one a container short.
   It refuses a lease somebody else holds (`NOT_HOLDER`) and never touches a
   stack nobody leases. A stack restarted by hand under the lease is left up and
   the lease cleared (`FOREIGN_STACK`). When `docker compose down` fails the lease is

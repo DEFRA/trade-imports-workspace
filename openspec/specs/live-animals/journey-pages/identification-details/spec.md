@@ -200,7 +200,7 @@ The system MUST refuse a card's save button when every identifier field on that 
 - **GIVEN** one species' card holds a filled identifier field and another species' card holds none
 - **WHEN** the blank card's own save button is pressed
 - **THEN** that card's save is refused, with that species' first identifier field focused when the resulting error is followed
-- **AND** the filled card has no animal saved and its identifier field is shown empty again
+- **AND** the filled card has no animal saved and its identifier field keeps its value
 
 #### Scenario: A page with every identifier blank passes Save and continue and Save and return to overview
 **ID**: SCN-IDENT-009-C
@@ -356,16 +356,16 @@ The system MUST show identification as one section per commodity code, headed wi
 - **WHEN** the user opens the identification details page
 - **THEN** the summary lists that species and no card or entry form is shown for it
 
-### Requirement: A card's button saves only its own species, Enter saves every species typed in, and the page's save buttons save only species of one animal
+### Requirement: A card's button and Enter save every species typed in, and the page's save buttons save only species of one animal
 **ID**: REQ-IDENT-021
-The system MUST, when a card's button is pressed, validate and save only its species' current animal and reload with its form empty, leaving other forms alone. The system MUST, when Enter is pressed, validate and save every species form holding a value, and return the user to identification details when a species with more than one animal was saved. The system MUST, on Save and continue or Save and return to overview, validate and save only the forms of species with one animal.
+The system MUST, when a card's button is pressed, validate every species form and save each one holding a value, so that a value typed into another species' form is never dropped, and reload with the saved forms empty. The system MUST, when any form fails validation, save nothing and keep every typed value in its field. The system MUST, when Enter is pressed, validate and save every species form holding a value, and return the user to identification details when a species with more than one animal was saved. The system MUST, on Save and continue or Save and return to overview, validate and save only the forms of species with one animal.
 
-#### Scenario: A card button saves only its own species and shows no error for another
+#### Scenario: A card button saves every species typed in
 **ID**: SCN-IDENT-021-A
-- **GIVEN** a valid ear tag is typed into one species' form and an over-length ear tag into another species' form
+- **GIVEN** a valid ear tag is typed into one species' form and a different valid ear tag into another species' form
 - **WHEN** the user presses the first species' card button
-- **THEN** the first species' animal is saved and no error summary is shown
-- **AND** the first species' form reloads empty and the second species' typed value is not saved
+- **THEN** both species' animals are saved and no error summary is shown
+- **AND** both forms reload empty
 
 #### Scenario: Save and continue saves a species of one animal and not a species of several
 **ID**: SCN-IDENT-021-B
@@ -394,6 +394,13 @@ The system MUST, when a card's button is pressed, validate and save only its spe
 - **WHEN** a valid identifier is typed into the first species' form and Enter is pressed in that field
 - **THEN** the first species' saved-animals table lists both its original animal and the new one
 - **AND** the second species' saved-animals table still lists only its own original animal, unchanged
+
+#### Scenario: A card button with an over-length identifier in another species' form is blocked and keeps both values
+**ID**: SCN-IDENT-021-F
+- **GIVEN** an over-length ear tag is typed into one species' form and a valid ear tag into another species' form
+- **WHEN** the user presses the second species' card button
+- **THEN** nothing is saved and the first species' field shows its error
+- **AND** both typed values stay in their fields
 
 ### Requirement: The identifier fields are labelled Microchip, Passport, Tattoo, Ear tag, Horse name, Identification details and Description, with no hint text
 **ID**: REQ-IDENT-022

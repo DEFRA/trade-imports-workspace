@@ -5,6 +5,7 @@ import { editNotes } from './row-notes.js'
 import { followRef } from './schema-ref.js'
 import { pickUpAwaiting, splitOffOf } from './split-off.js'
 import {
+  BUILT_STATUSES,
   externalDependenciesDone,
   externalDependencyProblems,
   themeProblems
@@ -368,13 +369,13 @@ export const nextBuildable = (
   { readWorkareaBacklog = NO_OTHER_BACKLOGS } = {}
 ) => {
   const rows = backlog.increments ?? []
-  const done = new Set(
-    rows.filter((row) => row.status === 'done').map((row) => row.id)
+  const built = new Set(
+    rows.filter((row) => BUILT_STATUSES.has(row.status)).map((row) => row.id)
   )
   const next = rows.find(
     (row) =>
       !WITHHELD_STATUSES.has(row.status) &&
-      (row.dependsOn ?? []).every((id) => done.has(id)) &&
+      (row.dependsOn ?? []).every((id) => built.has(id)) &&
       externalDependenciesDone(row, readWorkareaBacklog)
   )
   return next ? next.id : null

@@ -494,16 +494,27 @@ const builtStatusOf = (readWorkareaBacklog, workarea, id) => {
 }
 
 /**
- * Whether every row a row depends on in another workarea is `done` where it
- * is built: in that workarea's backlog, or, for a row of a themed parent
- * whose theme has been split, in that theme's split.
+ * The statuses that satisfy a dependency, because the work is on the branch.
+ * `done` is the row that built it. `merged-into` is a row whose work was
+ * combined into another in its own backlog and built there, so waiting for
+ * this one to turn `done` waits for a row that no longer exists as a unit of
+ * work. Every other withheld status means the work is not there.
+ */
+export const BUILT_STATUSES = new Set(['done', 'merged-into'])
+
+/**
+ * Whether every row a row depends on in another workarea has been built where
+ * it is built: in that workarea's backlog, or, for a row of a themed parent
+ * whose theme has been split, in that theme's split. Built means `done`, or
+ * `merged-into` — a row combined into another in its own backlog, which built
+ * the work, so waiting for this one to turn `done` waits for a row that no
+ * longer exists as a unit of work.
  *
  * @param {object} row
  * @param {(workarea: string) => object|null} readWorkareaBacklog
  * @returns {boolean}
  */
 export const externalDependenciesDone = (row, readWorkareaBacklog) =>
-  externalDependenciesOf(row).every(
-    ({ workarea, id }) =>
-      builtStatusOf(readWorkareaBacklog, workarea, id) === 'done'
+  externalDependenciesOf(row).every(({ workarea, id }) =>
+    BUILT_STATUSES.has(builtStatusOf(readWorkareaBacklog, workarea, id))
   )

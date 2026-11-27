@@ -754,7 +754,15 @@ died whenever the session did.
 
 **Buildability is status and dependencies. Nothing else.** A dependency is a
 `dependsOn` id in the same backlog, or an `externalDependsOn` row in another
-workarea's backlog, which must be `done` there ([Building one theme](#building-one-theme)).
+workarea's backlog ([Building one theme](#building-one-theme)). It is met by
+`done`, and by **`merged-into`** — a row whose work was combined into another
+in its own backlog and built there. Waiting for such a row to turn `done`
+waits for a row that no longer exists as a unit of work, which withholds its
+dependants for ever: `inc-120` and `inc-124` of Design Release 2.1's
+manage-notifications theme sat unbuildable behind `inc-112` of
+overview-and-review, which had merged into `inc-111` and shipped inside it on
+13 November. No other withheld status meets a dependency, because the work is
+not on the branch.
 The six withheld
 statuses (`done`, `deferred`, `dropped`, `blocked`, `rejected`, `merged-into`)
 are named explicitly and everything else counts as buildable, so an
@@ -1428,7 +1436,8 @@ conflict.
   start at once; a later theme can start once the rows it waits for are `done`. `tim backlog next` on its workarea
   prints NONE until then.
 - **`externalDependsOn` is a wait on another workarea.** A row with one is buildable only when each row it names is
-  `done` in that workarea's own `backlog.json`. `tim backlog next` and `tim build start` both read it there, so the
+  built in that workarea's own `backlog.json` — `done`, or `merged-into` by a row that built the work there.
+  `tim backlog next` and `tim build start` both read it there, so the
   other theme's landed state must be on this machine: pull the workspace repo before you launch. The loop never
   commits its `backlog.json` writes, so after a theme lands rows another theme waits for, commit and push that
   theme's `backlog.json`.

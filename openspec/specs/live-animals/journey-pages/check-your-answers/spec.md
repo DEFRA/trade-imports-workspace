@@ -134,7 +134,7 @@ The system MUST return the user from the back link of a draft or amendment revie
 
 #### Scenario: The submitted view shown after an amendment is cancelled has a back link to the dashboard
 **ID**: SCN-CYA-003-D
-- **GIVEN** the user has just cancelled an amendment and the submitted notification's view is shown with its cancelled message
+- **GIVEN** the user has just cancelled an amendment and the submitted notification's view is shown, with nothing above its reference heading
 - **WHEN** they follow the back link
 - **THEN** the dashboard is shown
 

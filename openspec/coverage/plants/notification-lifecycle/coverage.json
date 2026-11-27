@@ -148,17 +148,17 @@
           "name": "Choosing to cancel asks for confirmation before discarding anything",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "full", "notes": "Cancel this amendment? confirmation page before Yes" },
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "renders accessible confirmation copy, actions and a bare heading", "strength": "full", "notes": "confirm and reject actions" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "full", "notes": "Are you sure you want to cancel this amendment? confirmation page before Yes" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "the whole content is the question, the confirm button and Go back, with nothing above the heading", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Cancel amend on the Overview opens the confirmation page", "strength": "full", "notes": "" }
           ]
         },
         {
           "id": "SCN-PLANTS-LIFECYCLE-007-C",
-          "name": "Declining the confirmation keeps the amendment in progress",
+          "name": "Selecting Go back keeps the amendment in progress",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "No preserves the amendment and its changes after reload", "strength": "full", "notes": "still Amend; DiscardMe99 intact" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Go back preserves the amendment and its changes after reload", "strength": "full", "notes": "still Amend; DiscardMe99 intact" }
           ]
         },
         {
@@ -166,8 +166,8 @@
           "name": "Confirming the cancellation restores the submitted answers",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "full", "notes": "Submitted again; edit reverted; no Change links; cancelled banner" },
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "confirmation restores the submitted snapshot and an accessible success view", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "full", "notes": "Submitted again; edit reverted; no Change links; no banner above the reference" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "confirmation opens the notification view showing it Submitted with its submitted answer restored, no banner above the reference, and no accessibility violations", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -176,7 +176,7 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from question page restores submitted answers and read-only CYA", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Cancel amend in the strip of a question page opens the confirmation page and No keeps the amendment", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Cancel amend in the strip of a question page opens the confirmation page and Go back keeps the amendment", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -195,6 +195,17 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/start.spec.ts", "test": "the Overview shows the journey strip, the Draft status, the four group captions and each task row state", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js", "test": "shows the draft tag and the notification reference", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should show no link in the strip without a Cancel amend control", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-007-H",
+          "name": "A notification nobody is amending refuses the cancel-amendment address",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.test.js", "test": "Should send every non-amend state to the notification list without attempting the transition", "strength": "full", "notes": "Probed: redirecting the refusal to check-your-answers and dropping its log turns this red; restoring dashboardPath() and the log turns it green" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.test.js", "test": "Should log the refusal once with the journey id, its status and the reason", "strength": "partial", "notes": "proves the refusal is logged once with the journey id, its status and the reason; asserts no redirect target or record state" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "opening the cancel-amendment address again once the amendment has been cancelled opens the notification list", "strength": "full", "notes": "Probed: redirecting the refusal to check-your-answers and dropping its log turns this red; restoring dashboardPath() and the log turns it green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "opening the cancel-amendment address for a submitted notification changes nothing and opens the notification list", "strength": "partial", "notes": "GET half only; no plants form client to drive the POST half end to end. Probed: redirecting the refusal to check-your-answers and dropping its log turns this red; restoring dashboardPath() and the log turns it green" }
           ]
         }
       ]

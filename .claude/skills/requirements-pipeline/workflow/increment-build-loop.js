@@ -4371,7 +4371,7 @@ const UNRESOLVED_CHECK = `\`git -C ${TILDE}/<repoPath> diff --name-only --diff-f
 
 const BRANCH_ROW_SCHEMA = {
   type: 'object',
-  required: ['ok', 'repos', 'merge', 'resumeAt', 'summary'],
+  required: ['ok', 'repos', 'merge', 'resumeAt', 'attempt', 'summary'],
   properties: {
     ok: {
       type: 'boolean',
@@ -4414,7 +4414,8 @@ const BRANCH_ROW_SCHEMA = {
     resumeAt: { type: 'string', enum: [...RESUME_FROM_VALUES, 'pr', 'ci'] },
     attempt: {
       type: ['object', 'null'],
-      description: "The row's `attempt` object exactly as written, or null when it has none",
+      description:
+        "The row's `attempt` object exactly as written, or null when it has none. Always report it, beside resumeAt: a resumeAt of implement, review or ladder is read FROM this object, so returning one without the other is a contradiction the loop cannot act on",
       additionalProperties: true
     },
     summary: { type: 'string' }
@@ -6609,6 +6610,13 @@ while (stopped === null) {
     }
 
     let enterAt = forcedResumeFor(id) ?? resumeAt
+
+    if (enterAt !== 'build' && !rowAttempt) {
+      log(
+        `${id}: resuming at ${enterAt} needs an attempt record, and none came back — building it from the top`
+      )
+      enterAt = 'build'
+    }
 
     if (enterAt !== 'build') {
       phase('Resume')

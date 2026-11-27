@@ -134,6 +134,19 @@ Where the work is not on this machine, or will not go green, the row drops back
 on its own — to the top, or to the implementor. `resumeFrom: 'build'` is for the
 case where you want the record ignored anyway.
 
+**A resume stage with no attempt record behind it builds from the top.** The
+stage that reads the row reports the record and the stage to resume at
+together, and the two have to agree: the resume stage is read *from* the
+record. When one comes back without the other, the loop logs
+`resuming at <stage> needs an attempt record, and none came back — building it
+from the top` and builds the row from the plan stage, rather than entering the
+restore stage with nothing to restore. Expect that line to be rare: the
+reporting stage's schema requires both. It cost Design Release 2.1's
+manage-notifications theme a run on 27 November, when the record was optional
+and a light agent returned `resumeAt: ladder` without the attempt it had read
+that from — the restore stage then died on it and took the whole run with it,
+with no stop reason, so none of the recovery below applied.
+
 Record `resumeFrom` in `build-args.json` with the rest, but **default it back to
 null on a relaunch** rather than carrying last time's value over, which is the
 opposite of what `e2e` does. `e2e` is a property of the machine; a forced

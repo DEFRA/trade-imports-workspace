@@ -943,6 +943,17 @@ reason that ended it, the time, whether `plans/<id>.md` had passed its lint and 
 the work is: a pushed `wip` commit under the full lifecycle, or patch files under `logs/` on the
 branch lifecycle, whose branch is shared and may carry nothing from a failed attempt.
 
+**`resumeAt` and the record come back together, and the loop refuses to act on one without the
+other.** Every `resumeAt` of `implement`, `review` or `ladder` is read *from* the `attempt` object,
+so a stage that reports one and not the other has contradicted itself. Both are `required` in the
+branch stage's schema for that reason. When it happens anyway, the loop logs `resuming at <stage>
+needs an attempt record, and none came back — building it from the top` and sets the row to
+`build`, so the restore stage is never entered with nothing to restore. Before 27 November 2026
+`attempt` was optional, and a haiku branch stage returned `resumeAt: 'ladder'` with no `attempt`
+after reading one — its summary said "resuming at ladder stage per attempt record". The restore
+stage then dereferenced null and threw, which ended the run with `status: failed` and no `stopped`
+reason, so no stop condition and no preserve applied.
+
 The stage comes from the phase the preserve ran in, so nothing has to be decided twice:
 `Implement` records `implement`, `Review`, `Verify findings` and `Fix` all record `review`, and
 `Land` records `ladder` — the ladder's own failure is preserved under `Land`, because `phase('Land')`

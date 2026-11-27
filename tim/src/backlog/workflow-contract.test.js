@@ -7562,6 +7562,37 @@ describe('increment-build-loop', () => {
         )
       })
 
+      test('requires the branch stage to report the attempt beside the stage it resumes at', async () => {
+        const { schema } = optionsOf(
+          await runResumed('ladder'),
+          'inc-900 branch'
+        )
+
+        expect({
+          required: schema.required.includes('attempt'),
+          allowsNull: schema.properties.attempt.type
+        }).toEqual({ required: true, allowsNull: ['object', 'null'] })
+      })
+
+      test('builds from the top when the branch stage names a resume stage but carries no attempt', async () => {
+        const run = await runBranch(
+          {},
+          { ...ROW, resumeAt: 'ladder' },
+          BASELINE,
+          PLAN,
+          ...AFTER_RESTORE.implement
+        )
+
+        expect({
+          status: run.status,
+          planned: labelsOf(run).includes('inc-900 plan'),
+          restored: labelsOf(run).includes('inc-900 restore')
+        }).toEqual({ status: 'returned', planned: true, restored: false })
+        expect(run.logs).toContain(
+          'inc-900: resuming at ladder needs an attempt record, and none came back — building it from the top'
+        )
+      })
+
       test('sends restored work that will not go green to the implementor, not to the reviewers', async () => {
         const run = await runResumed('ladder', {
           restored: { ...RESTORED, green: false },

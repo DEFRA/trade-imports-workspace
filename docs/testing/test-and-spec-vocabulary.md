@@ -23,6 +23,27 @@ The e2e tests describe what a user sees, so each lives with the frontend that sh
 
 A domain is also the unit of what the stack must start (`DOMAIN_SERVICES` in `tim/src/stack/definition.js`), so specs that reach a service the rest of their frontend's specs do not get a domain of their own. `animals-dlq` is the admin app's two DLQ specs: the DLQ page calls the dynamics gateway, and with it the Service Bus emulator, mssql and toxiproxy, which no other admin spec touches. Keeping them in `animals-admin` meant every row that merely touched the animals backend started those four, because the backend owns the admin suites.
 
+## Adding a domain
+
+A domain's name is held in several places, and a spec under a folder no
+registry knows fails at collection, before any test runs. All of these, in
+one change:
+
+| Where | What |
+|---|---|
+| `trade-imports-ins-tests` | `DOMAINS` in `utils/playwright/domain-base-urls.ts`, and because that type keys them: the base-URL maps in `playwright.config.ts` and `playwright.docker-compose.config.ts` |
+| `trade-imports-ins-tests` | `AUTH_TARGETS` in `fixtures/auth-state.ts` — a worker mints a session per domain and looks it up by name |
+| `trade-imports-ins-tests` | `ZAP_SCOPE_CONTEXTS` in `config/zap.ts`, for any `:security:active` script that sets `ZAP_SCOPE` |
+| `trade-imports-ins-tests` | `test:docker-compose:<domain>` in `package.json`, which `tim docker domain verify` runs |
+| workspace | `DOMAIN_SERVICES` in `tim/src/stack/definition.js`, then prove it with `tim docker domain verify <domain> --against-full` |
+| workspace | `config/e2e-tests-pr-scope.json`, so the repos that own the specs run them on their pull requests |
+| workspace | the coverage links in `openspec/coverage/**` for any spec that moved, the roster in `CLAUDE.md`, and the tables here |
+
+`npm run lint` in the tests repo is eslint plus the suite-tag check: it does
+**not** typecheck. Run `npm run typecheck` as well, because `tsc --noEmit` is
+what rejects a base-URL map missing a domain. Adding `animals-dlq` without it
+took an E2E run on every pull request red.
+
 ## Domain to spec prefix
 
 The test domain and the spec prefix cover the same ground under two names.

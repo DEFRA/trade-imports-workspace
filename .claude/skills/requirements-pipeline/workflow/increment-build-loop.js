@@ -1359,10 +1359,12 @@ const acquireRunLease = () =>
 its first increment. That is your whole job.
 ${leaseGuardrails('acquire')}
 Run exactly one command, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
-\`tim docker lease acquire --holder "${RUN_HOLDER}" --mode dev --workspace ${TILDE} --for-workarea ${WORKAREA_REL} --e2e ${E2E} --json --logs ${RUN_LEASE_LOGS}\`
-It works the domains out from the backlog itself: only the services the rows left to build put in play, which under
-\`--e2e targeted\` leaves out the domains whose specs run on the pull request rather than in this run's gate. A
-backlog needing every domain, or no stack, starts the whole stack as before. You pass no \`--domain\`.
+\`tim docker lease acquire --holder "${RUN_HOLDER}" --mode dev --workspace ${TILDE} --for-workarea ${WORKAREA_REL} --e2e ${E2E} --next-row --json --logs ${RUN_LEASE_LOGS}\`
+It works the domains out from the backlog itself: the services the NEXT BUILDABLE ROW puts in play, which under
+\`--e2e targeted\` leaves out the domains whose specs run on the pull request rather than in this run's gate. Each
+row's own gate then asks for the domains its specs run in, and a stack missing one is started again for that row, so
+the run never holds services no row needs. A backlog needing every domain, or no stack, starts the whole stack as
+before. You pass no \`--domain\`.
 It prints one JSON line. Report acquired:true only when it exited 0 and printed ok:true, whether it started the stack
 or found it already leased to \`${RUN_HOLDER}\`. When it printed ok:false, report acquired:false with \`errors[0].message\`
 word for word as summary; set refused:true only when \`errors[0].code\` is STACK_HELD, and copy \`result.holder\` into

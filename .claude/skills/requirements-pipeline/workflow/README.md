@@ -1086,13 +1086,19 @@ took the unit rung red twice on 5000ms timeouts in files that pass in 2.85s alon
 20-container stack no row needed competing for 12 CPUs.
 
 1. **At the start**, after the preflight and before the first increment, a light agent runs
-   `tim docker lease acquire --holder "<run id>" --mode dev --for-workarea <workarea> --e2e <e2e>`,
-   which starts the stack from local source for the domains the backlog's unbuilt rows put in
-   play between them, as `tim build stack-plan` reports them. Under `--e2e targeted` that leaves
+   `tim docker lease acquire --holder "<run id>" --mode dev --for-workarea <workarea> --e2e <e2e> --next-row`,
+   which starts the stack from local source for the domains the **next buildable row** puts in
+   play, as `tim build stack-plan --next-row` reports them. Under `--e2e targeted` that leaves
    out the domains a repo reaches only through its service tags, because the gate runs the row's
    changed specs alone and those tagged specs run on the pull request. A backlog that needs every
    domain, or no stack, starts the whole stack. The agent passes no `--domain`: tim derives them,
    so no relay can garble the list.
+1b. **Each row's gate sizes the stack to its own specs.** `runE2e` reads the spec files its
+   planned E2E rungs will run, maps each to the `tests/<domain>/` it sits in, and passes those
+   domains to its acquire. A stack that already covers them is reused; one missing a domain is
+   taken down and started again under the same lease, for that row. No specs (a whole-suite run)
+   asks for nothing in particular; a spec in no known domain asks for every domain. This is what
+   stops one row's needs — the Service Bus services, say — from being up for every other row.
 2. **Every increment reuses it.** The stack stays up across every increment. Every gate
    command — baseline, implementor, fixer, ladder and the Codex unit phase — passes
    `--holder "<run id>"`, so the gate's E2E phase uses the stack the run holds and rebuilds

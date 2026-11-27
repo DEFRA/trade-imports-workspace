@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest'
+import { DOMAIN_NAMES } from '../stack/definition.js'
 import {
   domainsForFolders,
+  domainsOfSpecs,
   PERF_FOLDER,
   stackPlanFor,
   stackPlanLines,
@@ -180,6 +182,46 @@ describe('#domainsForFolders under a targeted run', () => {
       'animals-admin',
       'ins'
     ])
+  })
+})
+
+describe('#domainsOfSpecs', () => {
+  test('Should ask for no domain in particular when no spec is named', () => {
+    expect(domainsOfSpecs([])).toEqual([])
+  })
+
+  test('Should take each spec’s own domain from its path', () => {
+    expect(
+      domainsOfSpecs([
+        'tests/animals/e2e/features/cancel-amend-ui.spec.ts',
+        'tests/plants/e2e/features/review.spec.ts',
+        'tests/animals/a11y/notification-lifecycle-states.spec.ts'
+      ])
+    ).toEqual(['animals', 'plants'])
+  })
+
+  test('Should ask for the admin domain when a spec runs in it', () => {
+    expect(
+      domainsOfSpecs([
+        'tests/animals/e2e/features/amend.spec.ts',
+        'tests/animals-admin/e2e/features/frontend-seed-context.spec.ts'
+      ])
+    ).toEqual(['animals', 'animals-admin'])
+  })
+
+  test('Should ask for every domain when a spec sits in none of them', () => {
+    expect(domainsOfSpecs(['fit/live-animals-journey.fit.spec.js'])).toEqual([
+      ...DOMAIN_NAMES
+    ])
+  })
+
+  test('Should ask for every domain when one spec of several cannot be placed', () => {
+    expect(
+      domainsOfSpecs([
+        'tests/plants/e2e/features/review.spec.ts',
+        'tests/somewhere-new/e2e/features/odd.spec.ts'
+      ])
+    ).toEqual([...DOMAIN_NAMES])
   })
 })
 

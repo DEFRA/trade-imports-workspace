@@ -153,6 +153,59 @@ describe('#domainsToStart', () => {
     ).toEqual(['plants'])
   })
 
+  test('Should size for the next buildable row alone, not every row left', () => {
+    givenBacklog(
+      [
+        { id: 'inc-001', repos: ['frontend'], status: 'todo' },
+        { id: 'inc-002', repos: ['perftests'], status: 'todo' }
+      ],
+      {
+        ...FRONTEND_ONLY,
+        perftests: {
+          path: 'repos/trade-imports-performance-tests',
+          github: 'DEFRA/trade-imports-performance-tests'
+        }
+      }
+    )
+
+    expect(
+      domainsFor({
+        forWorkarea: 'shared/theme',
+        e2e: 'targeted',
+        nextRow: true
+      })
+    ).toEqual(['animals'])
+  })
+
+  test('Should leave a row waiting on a dependency out of the next row’s domains', () => {
+    givenBacklog(
+      [
+        {
+          id: 'inc-001',
+          repos: ['perftests'],
+          status: 'todo',
+          dependsOn: ['inc-002']
+        },
+        { id: 'inc-002', repos: ['frontend'], status: 'todo' }
+      ],
+      {
+        ...FRONTEND_ONLY,
+        perftests: {
+          path: 'repos/trade-imports-performance-tests',
+          github: 'DEFRA/trade-imports-performance-tests'
+        }
+      }
+    )
+
+    expect(
+      domainsFor({
+        forWorkarea: 'shared/theme',
+        e2e: 'targeted',
+        nextRow: true
+      })
+    ).toEqual(['animals'])
+  })
+
   test('Should refuse --domain and --for-workarea together', () => {
     expect(() =>
       domainsFor({ domain: ['plants'], forWorkarea: 'shared/theme' })

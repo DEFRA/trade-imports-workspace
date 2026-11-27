@@ -1,6 +1,7 @@
 import {
   fakeComposeDownLine,
   fakeComposeStartLines,
+  STACK_SERVICES,
   writeStackInitSources
 } from '../test-support/fake-docker.js'
 import { markWorkspaceRoot } from '../test-support/workspace-marker.js'
@@ -87,6 +88,7 @@ const workspaceWith = ({ gates, repos, parallelRepos, stackAfterLocal }) => {
     [
       fakeComposeStartLines({
         callsPath: calls,
+        services: STACK_SERVICES,
         onUp: `if [ -f '${root}/up-fails' ]; then echo boom; exit 9; fi; echo up > '${state}'`
       }),
       fakeComposeDownLine({ statePath: state, callsPath: calls }),
@@ -1811,6 +1813,72 @@ describe('runGate — a narrowed e2e run', () => {
     await expect(
       gate(env, { phase: 'e2e', e2e: 'targeted', base: 'origin/nope' })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+
+  test('reuses a narrowed stack that already covers the domains its specs run in', async () => {
+    const env = workspaceWith(narrowedGates)
+    await commitBaseIn('frontend')
+    const testsDir = await commitBaseIn('tests')
+    specIn(testsDir, 'tests/animals/amend.spec.ts')
+    writeFileSync(stackStatePath(), 'up\n')
+    writeLease({ holder: GATE_HOLDER, domains: ['animals', 'plants'] })
+
+    const outcome = await gate(env, {
+      phase: 'e2e',
+      e2e: 'targeted',
+      base: 'HEAD'
+    })
+
+    expect({
+      green: outcome.green,
+      calls: stackCalls(),
+      domains: leaseOnDisk().domains
+    }).toEqual({ green: true, calls: [], domains: ['animals', 'plants'] })
+  })
+
+  test('starts the stack again for a domain its specs need that the lease does not cover', async () => {
+    const env = workspaceWith(narrowedGates)
+    await commitBaseIn('frontend')
+    const testsDir = await commitBaseIn('tests')
+    specIn(testsDir, 'tests/animals-admin/seed.spec.ts')
+    writeFileSync(stackStatePath(), 'up\n')
+    writeLease({ holder: GATE_HOLDER, domains: ['animals', 'plants'] })
+
+    const outcome = await gate(env, {
+      phase: 'e2e',
+      e2e: 'targeted',
+      base: 'HEAD'
+    })
+
+    expect({
+      green: outcome.green,
+      calls: stackCalls(),
+      domains: leaseOnDisk().domains
+    }).toEqual({
+      green: true,
+      calls: ['docker compose down', 'tim docker dev'],
+      domains: ['animals-admin']
+    })
+  })
+
+  test('asks nothing of a stack started for every domain, so it is reused as it is', async () => {
+    const env = workspaceWith(narrowedGates)
+    await commitBaseIn('frontend')
+    const testsDir = await commitBaseIn('tests')
+    specIn(testsDir, 'tests/animals/amend.spec.ts')
+    writeFileSync(stackStatePath(), 'up\n')
+    writeLease({ holder: GATE_HOLDER, domains: [] })
+
+    const outcome = await gate(env, {
+      phase: 'e2e',
+      e2e: 'targeted',
+      base: 'HEAD'
+    })
+
+    expect({ green: outcome.green, calls: stackCalls() }).toEqual({
+      green: true,
+      calls: []
+    })
   })
 })
 

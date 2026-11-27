@@ -139,6 +139,12 @@ export const STACK_SERVICES_BY_PROFILE = {
   monitoring: ['grafana', 'prometheus']
 }
 
+/** Every service the stack's default profiles define, sorted. */
+export const STACK_SERVICES = Object.entries(STACK_SERVICES_BY_PROFILE)
+  .filter(([profile]) => !['security', 'monitoring'].includes(profile))
+  .flatMap(([, services]) => services)
+  .sort()
+
 const DEFAULT_FAKE_CONFIG = {
   serverArch: 'arm64',
   servicesByProfile: STACK_SERVICES_BY_PROFILE,
@@ -264,17 +270,19 @@ export const writeStackInitSources = (root) => {
  * @param {string} [opts.onUp] - Shell run when the stack comes up
  * @param {boolean} [opts.fails=false]
  * @param {string} [opts.recordAlso] - Shell words added to the recorded line, such as ' STUB_PROFILE=$STUB_PROFILE'
+ * @param {string[]} [opts.services] - What `compose config --services` answers. Give the whole stack's services to a test that starts it for named domains, which refuses a domain naming a service no profile defines
  * @returns {string}
  */
 export const fakeComposeStartLines = ({
   callsPath,
   onUp = '',
   fails = false,
-  recordAlso = ''
+  recordAlso = '',
+  services = ['mongodb', 'trade-imports-stub']
 }) =>
   [
     'case " $* " in',
-    `  *" compose "*" config --services "*) printf 'mongodb\\ntrade-imports-stub\\n'; exit 0 ;;`,
+    `  *" compose "*" config --services "*) printf '${services.map((service) => `${service}\\n`).join('')}'; exit 0 ;;`,
     '  *" compose "*" pull "*) exit 0 ;;',
     '  *" compose "*" up "*" always mongodb ") exit 0 ;;',
     '  *" compose "*" up "*)',

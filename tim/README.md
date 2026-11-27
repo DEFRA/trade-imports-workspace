@@ -1317,7 +1317,10 @@ tim docker lease status --json                                                  
   backlog's unbuilt rows put in play, as `tim build stack-plan` reports them;
   give the run's `--e2e` with it, because under `targeted` the gate runs only
   the specs a row changed, so the specs a repo reaches through its service
-  tags run on the pull request and their domains are left out. The two are
+  tags run on the pull request and their domains are left out. Add
+  `--next-row` for the next buildable row alone, which is how a build run
+  takes its lease: each row's gate then asks for the domains its own specs
+  run in, and a stack missing one is started again for that row. The two are
   alternatives, not a pair. A backlog needing every domain, or no stack,
   starts the whole stack.
 

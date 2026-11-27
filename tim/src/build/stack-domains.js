@@ -35,6 +35,22 @@ const everyDomain = (reason) => ({
 /** The `--e2e` mode whose gate runs only the specs a row changed. */
 const CHANGED_SPECS_ONLY = 'targeted'
 
+/**
+ * The domains a stack must cover to run these spec files: each one's own, by
+ * the `tests/<domain>/` folder it sits in. No specs asks for no domain in
+ * particular, which any stack covers — that is a whole-suite run, whose
+ * domains come from its repos instead. A spec in no domain this knows asks
+ * for every domain, because narrowing on a reach it cannot place would run
+ * it against services that are not there.
+ *
+ * @param {string[]} specs - Repo-relative spec paths an E2E rung will run
+ * @returns {string[]}
+ */
+export const domainsOfSpecs = (specs) => {
+  const placed = specs.map(domainOfSuite)
+  return placed.every(Boolean) ? sorted(placed) : [...DOMAIN_NAMES]
+}
+
 const narrowedToOwnSuites = ({ signalling, fromSuites, tags, tagDomains }) => {
   const leftToPullRequest = sorted(
     tags.flatMap((tag) => tagDomains[tag] ?? [])

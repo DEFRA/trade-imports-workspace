@@ -26,6 +26,7 @@ import {
 } from './gates.js'
 import { TimError } from '../errors.js'
 import { isSpecFile } from './changed-scope.js'
+import { domainsOfSpecs } from './stack-domains.js'
 import { assertBaseExists, changedFilesSince } from './duplication.js'
 import { isPortHeld, portHolder, describeHolder } from './ports.js'
 import {
@@ -112,10 +113,13 @@ const SPEC_ARG = /\.spec\.[cm]?[jt]sx?$/
 // What the planned rungs will actually run, not what the change touched: a
 // frontend's *.fit.spec.js is a changed spec no e2e rung can run, so counting
 // changed specs would credit a row with end-to-end proof it never had.
-const plannedSpecCount = (e2eRungs) =>
-  new Set(
+const plannedSpecs = (e2eRungs) => [
+  ...new Set(
     e2eRungs.flatMap(({ scope }) => scope.filter((arg) => SPEC_ARG.test(arg)))
-  ).size
+  )
+]
+
+const plannedSpecCount = (e2eRungs) => plannedSpecs(e2eRungs).length
 
 const targetedE2e = (e2eRungs) => {
   const specs = plannedSpecCount(e2eRungs)
@@ -436,7 +440,7 @@ const failAll = (rungs, reason) => rungs.map((rung) => failed(rung, reason))
 
 const messageOf = (error) => error.message ?? String(error)
 
-const takeLease = async (context) => {
+const takeLease = async (context, domains) => {
   try {
     return await acquireStack({
       workspaceRoot: context.workspaceRoot,
@@ -444,7 +448,8 @@ const takeLease = async (context) => {
       mode: 'dev',
       leasePath: context.leasePath,
       logPath: logIn(context, 'gate-stack-up.log'),
-      env: context.env
+      env: context.env,
+      domains
     })
   } catch (error) {
     return {
@@ -605,7 +610,7 @@ const runE2e = async (rungs, context) => {
   if (context.stackAfterLocal) await context.localDone
   const ownerRefusal = await refusalForOtherCloneOwner(context)
   if (ownerRefusal) return refusedE2e(rungs, ownerRefusal)
-  const lease = await takeLease(context)
+  const lease = await takeLease(context, domainsOfSpecs(plannedSpecs(rungs)))
   if (!lease.acquired) return refusedE2e(rungs, lease)
   const keptForHolder = lease.started && lease.heldBefore === true
   const stack = {

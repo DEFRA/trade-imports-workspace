@@ -4992,7 +4992,7 @@ describe('increment-build-loop', () => {
           const run = await runFrom(null)
 
           expect(promptOf(run, ACQUIRE_LABEL)).toContain(
-            `\`tim docker lease acquire --holder "${RUN_ID}" --mode dev --workspace ~/ws --for-workarea shared/args-fixture --e2e local --json --logs ~/ws/workareas/shared/args-fixture/logs/${RUN_ID}-lease\``
+            `\`tim docker lease acquire --holder "${RUN_ID}" --mode dev --workspace ~/ws --for-workarea shared/args-fixture --e2e local --next-row --json --logs ~/ws/workareas/shared/args-fixture/logs/${RUN_ID}-lease\``
           )
         })
 

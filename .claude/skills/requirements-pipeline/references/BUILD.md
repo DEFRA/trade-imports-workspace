@@ -549,29 +549,34 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
 
    **You choose nothing here, and pass no `--domain`.** The loop works the
    domains out itself from the same plan, under the run's own `e2e`
-   ([step 2](#2-launch-it)). Read the plan so you can tell the user what the
-   run will start and what it leaves to the pull request, and say which rows
-   drove it rather than only the number. See
+   ([step 2](#2-launch-it)), and sizes the stack per row rather than for the
+   whole backlog — add `--next-row` to see what it starts with. Read the plan
+   so you can tell the user what the run will start and what it leaves to the
+   pull request, and say which rows drove it rather than only the number. See
    [`machine-tuning.md`](machine-tuning.md) and
    [`../../../../docs/analysis/local-stack-domain-subsets.md`](../../../../docs/analysis/local-stack-domain-subsets.md),
    which carries each domain's services and the runs that proved them.
 
-   **The run holds the workspace stack.** Before its first increment the loop
-   takes one lease,
-   `tim docker lease acquire --holder "<run id>" --mode dev --for-workarea <workarea> --e2e <e2e>`,
-   which derives those domains and starts the stack
-   from local source. A backlog that needs every domain, or no stack at all,
-   starts the whole stack as before. The stack stays up across every
-   increment, and every gate call passes `--holder "<run id>"`, so the gate
-   reuses it and rebuilds only what changed. **The lease covers the union of
-   every row the run has left to build**, so no increment it derives can need
-   a domain the stack is missing. The gate itself names no domains, so it
-   reuses the run's stack whatever it holds; a row that needs more than the
-   lease started would go red at its E2E rung rather than widening the stack.
-   That is reachable only by adding a row mid-run
-   ([step 3b](#3b-catch-anything-the-increments-deferred)) whose domains the
-   launch-time union did not cover — relaunch after adding one, and the fresh
-   lease covers it. A service that caches another
+   **The run holds the workspace stack, sized row by row.** Before its first
+   increment the loop takes one lease,
+   `tim docker lease acquire --holder "<run id>" --mode dev --for-workarea <workarea> --e2e <e2e> --next-row`,
+   which starts the stack from local source for **the next buildable row
+   alone** — not the whole backlog. A backlog that needs every domain, or no
+   stack at all, starts the whole stack as before. The stack stays up across
+   every increment, and every gate call passes `--holder "<run id>"`, so the
+   gate reuses it and rebuilds only what changed.
+
+   **Each row's gate asks for the domains its own specs run in**, taken from
+   the spec files its planned E2E rungs will actually run, so a stack missing
+   one of them is taken down and started again for that row, under the same
+   lease. That costs one stack restart, which the log names, and it is what
+   keeps a run from holding services no row needs: a row whose specs are all
+   in `tests/animals/` and `tests/plants/` never starts the dynamics gateway,
+   toxiproxy, the Service Bus emulator or mssql, whatever a later row needs.
+   A whole-suite run asks for no domain in particular, so it reuses whatever
+   is up. A spec in a folder that names no known domain asks for every
+   domain, because narrowing on a reach tim cannot place would run it against
+   services that are not there. A service that caches another
    service's answers names it under `x-refresh-with` in
    `docker/stack/dev.compose.yml`, and the gate restarts it whenever that
    service is rebuilt or restarted. Reference-data names the stub, because it

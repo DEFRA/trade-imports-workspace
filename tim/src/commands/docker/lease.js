@@ -52,7 +52,8 @@ const acquireSchema = z.object({
     )
     .optional(),
   forWorkarea: z.string().trim().min(1).optional(),
-  e2e: z.enum(['local', 'targeted', 'ci']).optional()
+  e2e: z.enum(['local', 'targeted', 'ci']).optional(),
+  nextRow: z.boolean().optional()
 })
 
 const releaseSchema = z.object({
@@ -174,13 +175,14 @@ const leaseAction = (run, timVersion) =>
 
 /**
  * The domains an acquire starts: the ones named with `--domain`, or the ones
- * a workarea's unbuilt rows put in play under the run's `--e2e` mode. A plan
- * that needs every domain, or no stack at all, narrows to nothing, and no
- * domains is what starts the whole stack.
+ * a workarea's rows put in play under the run's `--e2e` mode — every row left
+ * to build, or with `nextRow` only the next buildable one. A plan that needs
+ * every domain, or no stack at all, narrows to nothing, and no domains is
+ * what starts the whole stack.
  *
  * @param {object} opts
  * @param {string} opts.workspaceRoot
- * @param {{domain?: string[], forWorkarea?: string, e2e?: string}} opts.parsed
+ * @param {{domain?: string[], forWorkarea?: string, e2e?: string, nextRow?: boolean}} opts.parsed
  * @returns {string[]}
  * @throws {TimError} USAGE when both --domain and --for-workarea are given
  */
@@ -195,7 +197,8 @@ export const domainsToStart = ({ workspaceRoot, parsed }) => {
   const plan = stackPlanForWorkarea({
     workspaceRoot,
     workarea: parsed.forWorkarea,
-    e2e: parsed.e2e ?? 'local'
+    e2e: parsed.e2e ?? 'local',
+    nextRow: parsed.nextRow ?? false
   })
   return plan.needsStack && !plan.everyDomain ? plan.domains : []
 }
@@ -332,6 +335,10 @@ export const registerLease = (docker, timVersion) => {
     .option(
       '--e2e <mode>',
       "The run's --e2e mode, for --for-workarea: local (default) or targeted. Under targeted the gate runs only the specs a row changed, so a repo's tagged specs in other domains are left to the pull request and their services are not started."
+    )
+    .option(
+      '--next-row',
+      "With --for-workarea, size for the next buildable row alone rather than every row left, as tim backlog next derives it. A build run takes its lease this way: each row's gate asks for the domains its own specs run in, so a stack missing one is started again for that row."
     )
     .addHelpText(
       'after',

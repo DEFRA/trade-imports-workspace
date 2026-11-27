@@ -1,0 +1,1087 @@
+{
+  "source": "repo:insfrontend",
+  "structure": "Part 7, Transporters. Read in full: the 18 files under src/server/app/features/address-book/transporter/ (page.js; the transporter type, private add and commercial add controllers and views; the shared transporter-fields.njk macros; transporter-summary.js and transporter-return.js; the view, edit (edit.controller.js, edit-form.js, edit-private.njk, edit-commercial.njk) and delete controllers and views), the address-book helpers transporter-fields.js, transporter-navigation.js, transporter-save.js, transporter-in-progress.js and stored-transporter.js, the address-book copy.en.js and copy.cy.js (only transporter keys claimed: transporterType, privateTransporterForm, commercialTransporterForm, editTransporter, deleteTransporter, the transporter success banners, the transporter errors, plus list.transporterTypes, list.table.approvalNumber/type and view.edit/delete as the view page uses them), the transporters service (client.js, index.js, stub.js, transporter-types.js), the fit helper transporter-form.js and the 5 transporter fit specs (type 6 tests, forms 11 tests, view 4, edit 4, delete 3). Route paths were confirmed from shared/paths.js lines 3-28. Covered: the 7 transporter pages (type question at /address-book/add/transporter, private add at /private, commercial add at /commercial, view at /address-book/transporter/{id}, edit at /edit with a private and a commercial form, delete at /delete), their copy, fields, validation, navigation, session state and saving; the PRIVATE and COMMERCIAL types and the Northern Ireland country rule; the address-book transporters API client and in-memory stub; the Welsh twins; and every fit test. The list's Transporter tab itself is part 4's.",
+  "claims": [
+    {
+      "id": "repo-insfrontend-p7-001",
+      "statement": "The six transporter page ids (transporter-type, private-transporter, commercial-transporter, transporter-view, transporter-edit, transporter-delete) are all at maturity 'exploring', so none is signed off.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/address-book/transporter/page.js:1-29",
+      "quote": "id: 'transporter-type',\n  maturity: 'exploring'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-002",
+      "statement": "There are two transporter types, PRIVATE and COMMERCIAL.",
+      "kind": "data",
+      "ref": "src/server/app/services/transporters/transporter-types.js:1-4",
+      "quote": "PRIVATE: 'PRIVATE',\n  COMMERCIAL: 'COMMERCIAL'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-003",
+      "statement": "Northern Ireland is stored as the country code GB-NIR.",
+      "kind": "data",
+      "ref": "src/server/app/services/transporters/transporter-types.js:6",
+      "quote": "export const NORTHERN_IRELAND_COUNTRY_CODE = 'GB-NIR'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-004",
+      "statement": "The transporter type question is served at /address-book/add/transporter, for GET and POST.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:11; src/server/app/features/address-book/transporter/transporter-type.controller.js:90-94",
+      "quote": "export const transporterTypePath = () => `${addressAddPath()}/transporter`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-005",
+      "statement": "Choosing Transporter on the address type question opens the transporter type question at /address-book/add/transporter?start=true.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-type.fit.spec.js:60-73; src/server/app/shared/paths.js:12-14",
+      "quote": "await expect(page).toHaveURL(transporterTypeStartPath())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-006",
+      "statement": "Opening the transporter type question with start=true clears any transporter the user was part-way through adding, and logs it with the organisation id.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/transporter-type.controller.js:60-70",
+      "quote": "'Starting a new transporter, clearing the transporter being added'",
+      "confidence": "verbatim",
+      "note": "mechanism: clears the transporterAddInProgress session entry (chosen type and entered values)."
+    },
+    {
+      "id": "repo-insfrontend-p7-007",
+      "statement": "The transporter type question has the caption 'Add a new transporter'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:4,125; transporter-type.njk:9",
+      "quote": "const ADD_A_NEW_TRANSPORTER = 'Add a new transporter'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-008",
+      "statement": "The transporter type question's heading and page title are 'Choose a transporter type'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:126; transporter-type.controller.js:50",
+      "quote": "title: 'Choose a transporter type',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-009",
+      "statement": "The transporter type question shows a GOV.UK warning text above the options asking the user to check the transporter list first to avoid duplicates.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:127-128; transporter-type.njk:12-15",
+      "quote": "'Check the transporter list before adding new transporters to avoid duplicates.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-010",
+      "statement": "The transporter type question offers exactly two radio options, in the order Private then Commercial, with the visually hidden legend 'Choose a transporter type'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/transporter-type.controller.js:39-45; transporter-type.njk:20-31; fit/transporter-type.fit.spec.js:47-48",
+      "quote": "classes: \"govuk-visually-hidden\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-011",
+      "statement": "The private option is labelled 'Private transporter' and has no hint.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:130",
+      "quote": "PRIVATE: { label: 'Private transporter' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-012",
+      "statement": "The commercial option is labelled 'Commercial'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:131-132",
+      "quote": "label: 'Commercial',",
+      "confidence": "verbatim",
+      "note": "The two labels are not parallel ('Private transporter' against 'Commercial')."
+    },
+    {
+      "id": "repo-insfrontend-p7-013",
+      "statement": "The commercial option has the hint 'This can only be a commercial transporter from Northern Ireland.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:133",
+      "quote": "hint: 'This can only be a commercial transporter from Northern Ireland.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-014",
+      "statement": "The transporter type question has a 'Continue' button.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:136; transporter-type.njk:33",
+      "quote": "continue: 'Continue'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-015",
+      "statement": "The transporter type question's Back link goes to the address type question (/address-book/add/address-type).",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter-navigation.js:15; transporter-type.controller.js:51",
+      "quote": "export const transporterTypeBackHref = () => addressTypePath()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-016",
+      "statement": "Continuing with no transporter type chosen re-shows the question with status 400, the error 'Select what kind of transporter it is' inline and in a 'There is a problem' summary whose link focuses the first option.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter/transporter-type.controller.js:27-32,81-85; copy.en.js:241-243; fit/transporter-type.fit.spec.js:75-101",
+      "quote": "required: 'Select what kind of transporter it is'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-017",
+      "statement": "The chosen transporter type is remembered in the session, so coming back to the question shows it selected.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/transporter-type.controller.js:71-73,86; transporter-in-progress.js:3-10",
+      "quote": "selectedType: storedChosenTransporterType(request)",
+      "confidence": "verbatim",
+      "note": "mechanism: stores transporterType under the session key transporterAddInProgress."
+    },
+    {
+      "id": "repo-insfrontend-p7-018",
+      "statement": "Choosing Commercial goes to the commercial form at /address-book/add/transporter/commercial; choosing Private goes to the private form at /address-book/add/transporter/private.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/transporter-type.controller.js:76-79; shared/paths.js:17-19; fit/transporter-type.fit.spec.js:103-113",
+      "quote": "transporterType === TRANSPORTER_TYPES.COMMERCIAL\n    ? commercialTransporterPath()\n    : privateTransporterPath()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-019",
+      "statement": "The transporter type, add and edit pages are sent with Cache-Control: no-store, so the browser does not keep a copy of them.",
+      "kind": "non-functional",
+      "ref": "transporter-type.controller.js:58; private-transporter.controller.js:53; commercial-transporter.controller.js:55; edit.controller.js:69",
+      "quote": ".header('Cache-Control', 'no-store')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-020",
+      "statement": "Opening or posting the private or commercial form when the session holds no chosen type, or a different type, redirects to the transporter type question and logs why.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter-navigation.js:30-48; fit/transporter-forms.fit.spec.js:62-72,161-171",
+      "quote": "'No transporter type chosen that this form serves, sending the user to choose one'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-021",
+      "statement": "The private and commercial add forms have the caption 'Add a new transporter'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:139,160",
+      "quote": "caption: ADD_A_NEW_TRANSPORTER,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-022",
+      "statement": "The private add form's heading and page title are 'Add a private transporter'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:140",
+      "quote": "title: 'Add a private transporter',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-023",
+      "statement": "The commercial add form's heading and page title are 'Add a commercial transporter'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:161",
+      "quote": "title: 'Add a commercial transporter',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-024",
+      "statement": "Every transporter add and edit form groups its fields under an 'Address' heading, then a 'Contact details' heading for email and phone.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:15-16; private-transporter.njk:14,25; commercial-transporter.njk:14,30",
+      "quote": "const ADDRESS_HEADING = 'Address'\nconst CONTACT_HEADING = 'Contact details'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-025",
+      "statement": "A transporter form asks for 'Name or organisation', which is required and at most 255 characters, with the errors 'Enter a name or organisation' and 'Name must be 255 characters or fewer'.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter-fields.js:15; copy.en.js:5,253-256",
+      "quote": "name: { maxLength: 255, required: true },",
+      "confidence": "verbatim",
+      "note": "The max-length message is built from the max by fieldRuleFor, which is not in this part; the wording is copy.en.js 'Name must be ${max} characters or fewer'."
+    },
+    {
+      "id": "repo-insfrontend-p7-026",
+      "statement": "A transporter form asks for 'Address line 1', required and at most 255 characters, with the errors 'Enter address line 1' and 'Address line 1 must be 255 characters or fewer'.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter-fields.js:16; copy.en.js:6,257-260; transporter-fields.njk:33-40",
+      "quote": "addressLine1: { maxLength: 255, required: true },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-027",
+      "statement": "A transporter form asks for 'Address line 2 (optional)', not required and at most 255 characters, with the error 'Address line 2 must be 255 characters or fewer'.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter-fields.js:17; copy.en.js:7,261-263",
+      "quote": "addressLine2: { maxLength: 255, required: false },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-028",
+      "statement": "A transporter form asks for 'Town or city', required and at most 100 characters, with the errors 'Enter a town or city' and 'Town or city must be 100 characters or fewer'.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter-fields.js:18; copy.en.js:8,264-267",
+      "quote": "townOrCity: { maxLength: 100, required: true },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-029",
+      "statement": "A transporter form asks for 'County (optional)', not required and at most 100 characters, with the error 'County must be 100 characters or fewer'.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter-fields.js:19; copy.en.js:9,268-270",
+      "quote": "county: { maxLength: 100, required: false },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-030",
+      "statement": "A transporter form asks for 'Postcode or Zip code', required and at most 12 characters, with the errors 'Enter a postcode or Zip code' and 'Postcode must be 12 characters or fewer'.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter-fields.js:20; copy.en.js:10,271-274",
+      "quote": "postcode: { maxLength: 12, required: true },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-031",
+      "statement": "A transporter form asks for 'Email address', required, at most 254 characters and in email format, with the errors 'Enter an email address', 'Enter an email address in the correct format' and 'Email address must be 254 characters or fewer'.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter-fields.js:21; copy.en.js:11,282-286",
+      "quote": "email: { maxLength: 254, required: true, email: true },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-032",
+      "statement": "A transporter form asks for 'Phone number', required and at most 20 characters, with the errors 'Enter a phone number' and 'Phone number must be 20 characters or fewer'.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter-fields.js:22; copy.en.js:12,278-281",
+      "quote": "phone: { maxLength: 20, required: true }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-033",
+      "statement": "The phone number field has the hint 'For international numbers include the country code'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:13; transporter-fields.njk:137",
+      "quote": "const PHONE_HINT = 'For international numbers include the country code'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-034",
+      "statement": "Transporter form fields carry browser autocomplete hints: address-line1, address-line2, address-level2 (town), postal-code, email and tel; town, county, postcode and country are half width and phone two-thirds width.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/address-book/transporter/transporter-fields.njk:38-136",
+      "quote": "autocomplete: \"address-level2\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-035",
+      "statement": "Every value entered on a transporter form is trimmed of surrounding spaces before it is checked and saved.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter-fields.js:30-43",
+      "quote": "(payload[field] ?? '').trim()",
+      "confidence": "verbatim",
+      "note": "mechanism: trims every transporter field, the country code and the approval number."
+    },
+    {
+      "id": "repo-insfrontend-p7-036",
+      "statement": "The private transporter form has a 'Country' dropdown, after postcode, whose first option is the placeholder 'Select a country', listing the address form's countries.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/private-transporter.controller.js:39,48; copy.en.js:150,155; transporter-fields.njk:81-94",
+      "quote": "countryItems: buildCountrySelectItems(countries, copy.countryPlaceholder),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-037",
+      "statement": "A private transporter must have a country from the offered list; otherwise the error is 'Select a country'.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter-fields.js:47-51; copy.en.js:275-277",
+      "quote": "requiredOneOf('countryCode', countryCodes, errors.countryCode.required)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-038",
+      "statement": "The private transporter form does not ask for an approval number.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/private-transporter.njk:16; transporter-fields.njk:17-25",
+      "quote": "{% if params.withApprovalNumber %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-039",
+      "statement": "The commercial transporter form asks for 'Approval number' straight after the name; it is required and at most 50 characters, with the errors 'Enter the approval number' and 'Approval number must be 50 characters or fewer'.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter-fields.js:53-63; copy.en.js:167,244-246; commercial-transporter.njk:16-21",
+      "quote": "const APPROVAL_NUMBER_MAX_LENGTH = 50",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-040",
+      "statement": "On the commercial transporter form the country is fixed: a disabled 'Country' dropdown shows 'Northern Ireland' and cannot be changed, and a hidden field posts GB-NIR.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/transporter-fields.njk:96-114; commercial-transporter.controller.js:49-50; copy.en.js:164",
+      "quote": "country: 'Northern Ireland',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-041",
+      "statement": "A commercial transporter form post whose country is not GB-NIR is refused with 'A commercial transporter must be in Northern Ireland', and a warning is logged with the organisation id.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter-fields.js:64-68; commercial-transporter.controller.js:88-101; copy.en.js:249",
+      "quote": "countryFixed: 'A commercial transporter must be in Northern Ireland',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-042",
+      "statement": "A commercial transporter is always saved with country GB-NIR and type COMMERCIAL, whatever was posted.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter/commercial-transporter.controller.js:104-109",
+      "quote": "countryCode: NORTHERN_IRELAND_COUNTRY_CODE,\n      type: TRANSPORTER_TYPES.COMMERCIAL",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-043",
+      "statement": "A private transporter is saved with the country the user chose and type PRIVATE.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter/private-transporter.controller.js:97-101",
+      "quote": "transporter: { ...formValues, type: TRANSPORTER_TYPES.PRIVATE },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-044",
+      "statement": "The private and commercial add forms have a 'Save and continue' button and a secondary 'Cancel and return to address book' button.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:14,17,156-157,178-179; private-transporter.njk:29-37",
+      "quote": "const CANCEL_AND_RETURN_TO_ADDRESS_BOOK = 'Cancel and return to address book'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-045",
+      "statement": "Cancel on an add form forgets the transporter being added and returns to the address book filtered to transporters (/address-book?addressType=TRANSPORTER), creating nothing.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/private-transporter.controller.js:79-82; commercial-transporter.controller.js:81-84; transporter-navigation.js:19-20",
+      "quote": "clearTransporterAddInProgress(request)\n    return toolkit.redirect(transporterCancelHref())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-046",
+      "statement": "The add forms' Back link goes to the transporter type question.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter-navigation.js:17; fit/transporter-forms.fit.spec.js:57-59",
+      "quote": "export const transporterFormBackHref = () => transporterTypePath()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-047",
+      "statement": "What the user types on an add form is kept in the session on every post, so reopening the form shows those values again until the transporter is saved or cancelled.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/private-transporter.controller.js:65,84-85; commercial-transporter.controller.js:66,85-86; transporter-in-progress.js:12-19",
+      "quote": "const formValues = storedEnteredTransporter(request) ?? {}",
+      "confidence": "verbatim",
+      "note": "mechanism: stores formValues under the session key transporterAddInProgress, even when the post fails validation."
+    },
+    {
+      "id": "repo-insfrontend-p7-048",
+      "statement": "An add form that fails validation is shown again with status 400, the entered values kept, each error inline and in the error summary.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/private-transporter.controller.js:87-95; commercial-transporter.controller.js:88-102",
+      "quote": "return (await buildView(toolkit, { formValues, errors: fieldErrors })).code(\n      HTTP_STATUS_BAD_REQUEST",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-049",
+      "statement": "A valid add creates the transporter in the address book, forgets the in-progress entry, shows the success banner '<name> added to your address book' and returns to the address book filtered to transporters.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter-save.js:31-41; copy.en.js:83",
+      "quote": "transporterAdded: (name) => `${name} added to your address book`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-050",
+      "statement": "When the address book refuses a new transporter as invalid, its field errors are shown on the form with status 400 and a warning is logged.",
+      "kind": "integration",
+      "ref": "src/server/app/features/address-book/transporter-save.js:46-57",
+      "quote": "'Address book refused the new transporter'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-051",
+      "statement": "When creating a transporter fails for any other reason, the form is shown again with its values and a recoverable error, status 500, and the failure is logged as an error.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter-save.js:58-61",
+      "quote": "logger.error({ err, organisationId }, 'Failed to create transporter')",
+      "confidence": "verbatim",
+      "note": "An error that is already an HTTP error (Boom) is rethrown instead (line 43-45)."
+    },
+    {
+      "id": "repo-insfrontend-p7-052",
+      "statement": "A transporter's own page is at /address-book/transporter/{id}, reached from the 'View <name>' link in the Transporter tab of the address book.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:20-23; fit/transporter-view.fit.spec.js:23-26,37-42",
+      "quote": "`${addressBookPath()}/transporter/${encodeURIComponent(id)}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-053",
+      "statement": "A transporter's own page is headed and titled with the transporter's name, with no caption.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/transporter/view.controller.js:38-40; view.njk:6",
+      "quote": "heading: transporter.name,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-054",
+      "statement": "A transporter's page lists its details as a summary list in this order: name, address line 1, address line 2, town or city, county, postcode, country, approval number, type, email, phone.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/transporter-summary.js:5-17",
+      "quote": "'countryCode',\n  'approvalNumber',\n  'type',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-055",
+      "statement": "The summary rows use the form's field labels ('Name or organisation', 'Address line 2 (optional)', 'Country', etc.), except approval number and type, which use the list's 'Approval number' and 'Type'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/transporter/view.controller.js:28-31; copy.en.js:71,74,94-104",
+      "quote": "field === 'approvalNumber' || field === 'type'\n    ? copy.list.table[field]\n    : copy.form.fields[field]",
+      "confidence": "verbatim",
+      "note": "So a held address line 2 or county is listed under a label that still says '(optional)'."
+    },
+    {
+      "id": "repo-insfrontend-p7-056",
+      "statement": "Address line 2 and county are listed on the transporter's page only when the transporter holds a value for them.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter/transporter-summary.js:19,32-34",
+      "quote": "const SHOWN_ONLY_WHEN_HELD = new Set(['addressLine2', 'county'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-057",
+      "statement": "The approval number row is shown only for a commercial transporter; a private transporter's page has no approval number row.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter/transporter-summary.js:29-31; fit/transporter-view.fit.spec.js:52-63",
+      "quote": "return transporter.type === TRANSPORTER_TYPES.COMMERCIAL",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-058",
+      "statement": "The type row always shows, as 'Private' or 'Commercial' (the raw type if it is neither).",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/transporter/view.controller.js:45; copy.en.js:52-55",
+      "quote": "PRIVATE: 'Private',\n      COMMERCIAL: 'Commercial'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-059",
+      "statement": "The country row shows the country's name rather than its code; for a commercial transporter it shows 'Northern Ireland'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/view.controller.js:66-71; fit/transporter-view.fit.spec.js:65-85",
+      "quote": "copy.commercialTransporterForm.country",
+      "confidence": "inferred",
+      "note": "mechanism: transporterCountryLabelOf (view-model/list.js, not in this part) is passed 'Northern Ireland' as a fallback label; the fit test proves 'Northern Ireland' shows for a commercial transporter."
+    },
+    {
+      "id": "repo-insfrontend-p7-060",
+      "statement": "A transporter's page has a secondary 'Edit' button to its edit page and a warning-styled 'Delete' button to its delete page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/view.njk:12-23; view.controller.js:41-42; copy.en.js:212-215",
+      "quote": "edit: 'Edit',\n    delete: 'Delete'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-061",
+      "statement": "A transporter's page carries any honoured return-to destination onto its Edit and Delete links, and its Back link goes to that destination, else to the address book filtered to transporters.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/view.controller.js:38-42,53-54; transporter-return.js:8-16; fit/transporter-view.fit.spec.js:87-95",
+      "quote": "editHref: pathWithReturn(transporterEditPath(id), honouredReturn),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-062",
+      "statement": "Opening a transporter's page, edit page or delete page for a transporter that is not live (deleted or not found) redirects to the return destination or the Transporter tab, and logs it with the organisation and transporter ids.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/view.controller.js:57-64; edit.controller.js:82-89; delete.controller.js:58-66",
+      "quote": "'No transporter is live at this id, redirecting away from its view page'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-063",
+      "statement": "A transporter page address whose id is not a valid record id redirects away to the same dead-link destination instead of erroring.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/view.controller.js:94; edit.controller.js:254; delete.controller.js:135; transporter-return.js:18-22",
+      "quote": "redirectingRecordIdRouteOptions(transporterDeadLinkDestination)",
+      "confidence": "inferred",
+      "note": "redirectingRecordIdRouteOptions lives in record-id-params.js, outside this part; read from its name and the dead-link destination it is given. The fit specs show ids are 24 hex characters."
+    },
+    {
+      "id": "repo-insfrontend-p7-064",
+      "statement": "Failing to load a transporter for its page, edit or delete shows an error page and logs the failure.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/view.controller.js:80-87; edit.controller.js:98-105; delete.controller.js:83-90",
+      "quote": "'Failed to load the transporter'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-065",
+      "statement": "A transporter's edit page is at /address-book/transporter/{id}/edit.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:24-25",
+      "quote": "export const transporterEditPath = (id) => `${transporterPath(id)}/edit`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-066",
+      "statement": "The edit page's heading and title are 'Edit transporter details', with no caption.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:224-228; edit-private.njk:8",
+      "quote": "title: 'Edit transporter details',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-067",
+      "statement": "The edit page opens holding the transporter's stored values.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/edit.controller.js:90-97; fit/transporter-edit.fit.spec.js:34-47",
+      "quote": "formValues: form.formValuesOf(transporter),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-068",
+      "statement": "The edit form follows the stored transporter's type and the type cannot be changed: a private transporter gets the country dropdown with its stored country selected and no approval number; a commercial one gets the approval number and the fixed Northern Ireland country.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter/edit-form.js:18-51; edit.controller.js:189",
+      "quote": "type === TRANSPORTER_TYPES.COMMERCIAL ? COMMERCIAL_FORM : PRIVATE_FORM",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-069",
+      "statement": "The edit form uses the same field labels, hint, headings and validation as the add form of the same type, including the commercial Northern Ireland check.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter/edit-form.js:18-41; edit.controller.js:192-211",
+      "quote": "fieldCopy: bundle.commercialTransporterForm,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-070",
+      "statement": "The edit page has a 'Save changes' button and a secondary 'Cancel' button.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:226-227; edit-private.njk:28-36",
+      "quote": "save: 'Save changes',\n    cancel: 'Cancel'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-071",
+      "statement": "Cancel on the edit page saves nothing and returns to the transporter's own page; the Back link goes there too, carrying any return-to destination.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/edit.controller.js:55-58,227-231; fit/transporter-edit.fit.spec.js:90-108",
+      "quote": "pathWithReturn(transporterPath(transporterId), honouredReturn)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-072",
+      "statement": "An edit that fails validation is shown again with status 400 and the errors; a commercial edit posting a country that is not Northern Ireland also logs a warning.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/edit.controller.js:196-211",
+      "quote": "'Commercial transporter edit posted a country that is not the fixed one'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-073",
+      "statement": "A valid edit updates the transporter, keeping its stored type (and Northern Ireland for a commercial one), shows '<name> updated in your address book' and returns to the address book filtered to transporters.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/edit.controller.js:144-154; copy.en.js:87",
+      "quote": "transporterUpdated: (name) => `${name} updated in your address book`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-074",
+      "statement": "Saving an edit for a transporter that is no longer live, or is gone by the time it is updated, redirects away to the dead-link destination and logs it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/edit.controller.js:155-162,181-188",
+      "quote": "'Transporter already gone when updated'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-075",
+      "statement": "When the address book refuses a transporter update as invalid, its field errors are shown on the edit form with status 400 and a warning is logged; any other failure re-shows the form with a recoverable error and status 500.",
+      "kind": "integration",
+      "ref": "src/server/app/features/address-book/transporter/edit.controller.js:108-137",
+      "quote": "'Address book refused the transporter update'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-076",
+      "statement": "A transporter's delete page is at /address-book/transporter/{id}/delete.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:26-28",
+      "quote": "export const transporterDeletePath = (id) => `${transporterPath(id)}/delete`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-077",
+      "statement": "The delete page's heading and title are 'Delete this transporter?'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:230",
+      "quote": "title: 'Delete this transporter?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-078",
+      "statement": "The delete page summarises the transporter in one summary-list row labelled 'Transporter': its name, its address lines and its country name, one per line, or 'Not applicable' when it has none.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/delete.controller.js:38-41,72-80; delete.njk:8-13; copy.en.js:79,231",
+      "quote": "[transporter.name, ...postalLinesOf(transporter), countryLabel].filter(",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-079",
+      "statement": "The delete page says 'Confirm that you want to delete this transporter.' and 'Deletions are permanent and you cannot undo this.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:232-233; delete.njk:15-16",
+      "quote": "confirmation: 'Confirm that you want to delete this transporter.',\n    warning: 'Deletions are permanent and you cannot undo this.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-080",
+      "statement": "The delete page has a warning-styled 'Yes, delete' button and a 'No, cancel' link back to the transporter's own page; its Back link goes there too.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/delete.njk:20-26; delete.controller.js:73-81; copy.en.js:234-235",
+      "quote": "confirm: 'Yes, delete',\n    cancel: 'No, cancel'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-081",
+      "statement": "Confirming the delete removes the transporter, shows '<name> deleted from your address book' (or 'Transporter deleted from your address book' when it has no name) and returns to the address book filtered to transporters.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/delete.controller.js:43-46,111-113; copy.en.js:88-89",
+      "quote": "transporterDeleted: (name) => `${name} deleted from your address book`,\n    transporterDeletedUnnamed: 'Transporter deleted from your address book'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-082",
+      "statement": "Confirming the delete of a transporter that is not live, or is already gone when deleted, redirects to the dead-link destination and logs it; any other delete failure shows an error page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/transporter/delete.controller.js:103-128",
+      "quote": "'Transporter already gone when deleted'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-083",
+      "statement": "Transporters are read and written through the address book service's org-scoped transporters resource: list with GET, create with POST, read with GET /{id}, update with PUT /{id} and delete with DELETE /{id}.",
+      "kind": "integration",
+      "ref": "src/server/app/services/transporters/client.js:8-92",
+      "quote": "const RESOURCE = 'transporters'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-084",
+      "statement": "Listing transporters sends page and pageSize, and optionally repeated type, q (search term), countryCode and searchType query parameters.",
+      "kind": "integration",
+      "ref": "src/server/app/services/transporters/client.js:13-47",
+      "quote": "url.searchParams.set('q', searchTerm)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-085",
+      "statement": "Create and update read the address book's field-level refusals so they can be shown on the form; list, read and delete treat any error status as a failure.",
+      "kind": "integration",
+      "ref": "src/server/app/services/transporters/client.js:45,56,66,81,91",
+      "quote": "await throwOnAddressBookError(response)",
+      "confidence": "inferred",
+      "note": "mechanism: create and update use throwOnAddressBookError, the rest throwOnError (address-book-request.js and http-client.js, outside this part)."
+    },
+    {
+      "id": "repo-insfrontend-p7-086",
+      "statement": "In stub mode the transporters service uses an in-memory store per organisation instead of the address book API.",
+      "kind": "constraint",
+      "ref": "src/server/app/services/transporters/index.js:10; stub.js:13-20",
+      "quote": "const transporters = () => (isStubMode() ? stub : client)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-087",
+      "statement": "The stub refuses a commercial transporter with no approval number with 'Enter the approval number'.",
+      "kind": "rule",
+      "ref": "src/server/app/services/transporters/stub.js:66-69",
+      "quote": "return { approvalNumber: ['Enter the approval number'] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-088",
+      "statement": "The stub refuses a commercial transporter whose country is not GB-NIR with 'A commercial transporter must be in Northern Ireland'.",
+      "kind": "rule",
+      "ref": "src/server/app/services/transporters/stub.js:70-74",
+      "quote": "countryCode: ['A commercial transporter must be in Northern Ireland']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-089",
+      "statement": "The stub refuses a private transporter that has an approval number with 'A private transporter must not have an approval number'.",
+      "kind": "rule",
+      "ref": "src/server/app/services/transporters/stub.js:77-81; copy.en.js:247",
+      "quote": "approvalNumber: ['A private transporter must not have an approval number']",
+      "confidence": "verbatim",
+      "note": "The copy key errors.approvalNumber.notApplicable holds the same words, but no frontend rule in this part uses it; the private form never posts an approval number."
+    },
+    {
+      "id": "repo-insfrontend-p7-090",
+      "statement": "A private transporter may be in any country the form offers, Northern Ireland included; only a commercial one is tied to Northern Ireland.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter-fields.js:45-51; services/transporters/stub.js:65-83",
+      "quote": "a country the trader chooses from the offered list",
+      "confidence": "inferred",
+      "note": "Neither the private rules nor the stub place any country limit on a private transporter."
+    },
+    {
+      "id": "repo-insfrontend-p7-091",
+      "statement": "The stub's transporter search matches the term, ignoring case, in name, address lines, town, county, postcode or approval number, or matches a chosen country or a chosen search type; any one match is enough.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/transporters/stub.js:22-49",
+      "quote": "textMatches ||\n    countryCodes.includes(transporter.countryCode) ||\n    searchTypes.includes(transporter.type)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-092",
+      "statement": "The stub lists only live transporters, filtered by type when types are given, and pages the matches.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/transporters/stub.js:51-63",
+      "quote": ".filter(isLive)\n    .filter((transporter) => passesTypeFilter(transporter, types))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-093",
+      "statement": "In the stub a newly created transporter gets a new object id and is listed first.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/transporters/stub.js:85-90",
+      "quote": "transportersOf(organisationId).unshift(created)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-094",
+      "statement": "In the stub deleting a transporter marks it deleted rather than removing it, so it is no longer live but can still be read by id.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/transporters/stub.js:118-121",
+      "quote": "stored.deleted = true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-095",
+      "statement": "In the stub an update merges the sent fields into the stored transporter, keeping its id, after the same type and approval-number checks as create.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/transporters/stub.js:102-116",
+      "quote": "const updated = { ...stored, ...transporter, id: stored.id }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-096",
+      "statement": "The type question warns about duplicates, but nothing on the add forms or in the stub checks for or refuses a duplicate transporter.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/transporter-save.js; services/transporters/stub.js:85-90",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in transporter-save.js, both add controllers and the stub create; none compares a new transporter with existing ones."
+    },
+    {
+      "id": "repo-insfrontend-p7-097",
+      "statement": "The Welsh address-book copy is a machine draft, not reviewed by a translator, and must not ship to users without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-098",
+      "statement": "In Welsh the transporter type question reads caption 'Ychwanegu cludydd newydd', heading 'Dewiswch fath o gludydd', options 'Cludydd preifat' and 'Masnachol' with hint 'Gall hyn fod yn gludydd masnachol o Ogledd Iwerddon yn unig.', and button 'Parhau'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:5,131-144",
+      "quote": "title: 'Dewiswch fath o gludydd',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-099",
+      "statement": "In Welsh the duplicate warning on the type question reads 'Gwiriwch y rhestr gludwyr cyn ychwanegu cludwyr newydd i osgoi dyblygu.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:134-135",
+      "quote": "'Gwiriwch y rhestr gludwyr cyn ychwanegu cludwyr newydd i osgoi dyblygu.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-100",
+      "statement": "In Welsh the add forms are headed 'Ychwanegu cludydd preifat' and 'Ychwanegu cludydd masnachol', with buttons 'Cadw a pharhau' and 'Canslo a dychwelyd i’r llyfr cyfeiriadau', and the fixed country reads 'Gogledd Iwerddon'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:15,18-19,145-187",
+      "quote": "country: 'Gogledd Iwerddon',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-101",
+      "statement": "In Welsh the transporter field labels are 'Enw neu sefydliad', 'Rhif cymeradwyo', 'Llinell gyfeiriad 1', 'Llinell gyfeiriad 2 (dewisol)', 'Tref neu ddinas', 'Sir (dewisol)', 'Cod post neu god zip', 'Gwlad', 'Cyfeiriad e-bost' and 'Rhif ffôn', under the headings 'Cyfeiriad' and 'Manylion cyswllt', with the phone hint 'Ar gyfer rhifau rhyngwladol, cynhwyswch god y wlad' and placeholder 'Dewiswch wlad'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:2,6-17,150-184",
+      "quote": "approvalNumber: 'Rhif cymeradwyo',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-102",
+      "statement": "In Welsh the edit page reads 'Golygu manylion y cludwr' with 'Cadw’r newidiadau' and 'Canslo', and the delete page reads 'Dileu’r cludwr hwn?', row 'Cludwr', 'Cadarnhewch eich bod am ddileu’r cludwr hwn.', 'Mae dileadau’n barhaol ac ni allwch ddadwneud hyn.', 'Ie, dileu' and 'Na, canslo'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:231-243",
+      "quote": "title: 'Dileu’r cludwr hwn?',",
+      "confidence": "verbatim",
+      "note": "The Welsh uses two words for transporter: 'cludydd' on the type question and add forms, 'cludwr' on edit, delete and the delete banner. An ambiguity for a translator."
+    },
+    {
+      "id": "repo-insfrontend-p7-103",
+      "statement": "In Welsh the transporter banners read '<name> wedi’i ychwanegu at eich llyfr cyfeiriadau', '<name> wedi’i ddiweddaru yn eich llyfr cyfeiriadau', '<name> wedi’i ddileu o’ch llyfr cyfeiriadau' and 'Cludwr wedi’i ddileu o’ch llyfr cyfeiriadau'; the view buttons read 'Golygu' and 'Dileu', and the types 'Preifat' and 'Masnachol'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:55-58,87-96,219-222",
+      "quote": "transporterDeletedUnnamed: 'Cludwr wedi’i ddileu o’ch llyfr cyfeiriadau'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-104",
+      "statement": "In Welsh the transporter errors read 'Dewiswch pa fath o gludydd ydyw', 'Rhowch y rhif cymeradwyo', 'Rhaid i’r rhif cymeradwyo fod yn <max> nod neu lai', 'Rhaid i gludydd preifat beidio â chael rhif cymeradwyo' and 'Rhaid i gludydd masnachol fod yng Ngogledd Iwerddon'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:248-256",
+      "quote": "countryFixed: 'Rhaid i gludydd masnachol fod yng Ngogledd Iwerddon',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-105",
+      "statement": "Fit test: the transporter type question opens with the caption, heading, warning, two options (the commercial one described by its hint), Continue and a Back link to the address type question, with no serious or critical accessibility violations.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-type.fit.spec.js:37-58 'opens with the caption, heading, warning, both options with the commercial hint, Continue, and Back to the address type question'",
+      "quote": "await expect(radios).toHaveCount(2)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-106",
+      "statement": "Fit test: choosing Transporter on the address type question lands on the transporter type question at its start URL.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-type.fit.spec.js:60-73 'choosing Transporter on the address type question hands over to the transporter type question'",
+      "quote": "await expect(page).toHaveURL(transporterTypeStartPath())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-107",
+      "statement": "Fit test: Continue with nothing chosen shows 'There is a problem' and the inline error, passes the accessibility check, and the summary link focuses the Private option.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-type.fit.spec.js:75-101 'Continue with nothing chosen shows the problem summary and the inline error, and the summary link focuses the first option'",
+      "quote": "await expect(summary.getByRole('heading')).toHaveText('There is a problem')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-108",
+      "statement": "Fit test: Private opens the private form URL and Commercial the commercial form URL.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-type.fit.spec.js:103-113 'Private opens the private form and Commercial the commercial form'",
+      "quote": "await expect(page).toHaveURL(commercialTransporterPath())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-109",
+      "statement": "Fit test, without JavaScript: the type question refuses Continue with nothing chosen, then choosing Private opens the private form.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/address-book/fit/transporter-type.fit.spec.js:116-133 'refuses Continue with nothing chosen, then choosing Private opens the private form'",
+      "quote": "test.use({ javaScriptEnabled: false })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-110",
+      "statement": "Fit test, without JavaScript: saving a private transporter shows its banner, and searching the Transporter tab for its name shows 'Showing 1-1 of 1' with its row.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/address-book/fit/transporter-type.fit.spec.js:135-161 'saving a private transporter and searching the Transporter tab for it both work as plain form posts'",
+      "quote": "await expect(resultsLineOf(page)).toHaveText('Showing 1-1 of 1')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-111",
+      "statement": "Fit test: the private form shows its caption, heading, name and country fields, passes the accessibility check, and Back returns to the type question.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js:32-60 'shows its caption, heading, fields and Back to the transporter type question, with no serious or critical accessibility violations'",
+      "quote": "await expect(page).toHaveURL(transporterTypePath())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-112",
+      "statement": "Fit test: opening the private form with no type chosen returns to the type question.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js:62-72 'opening it with no transporter type chosen returns to the transporter type question'",
+      "quote": "'stub-org-private-transporter-guard',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-113",
+      "statement": "Fit test: Cancel on a filled private form returns to the Transporter tab with no row for that transporter.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js:74-89 'Cancel with values entered returns to the address book filtered to transporters, creating nothing'",
+      "quote": "page.getByRole('cell', { name: validPrivateTransporter.name })\n    ).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-114",
+      "statement": "Fit test: a valid private save shows the banner and lists the transporter with approval number 'Not applicable' and type 'Private'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js:91-111 'a valid save shows the success banner and lists the transporter, carrying the not-applicable approval number'",
+      "quote": ").toHaveText(copy.notApplicable)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-115",
+      "statement": "Fit test: a blank name on the private form refuses the save, and the error page has no serious or critical accessibility violations.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js:113-128 'a blank name refuses the save with no serious or critical accessibility violations'",
+      "quote": "await fillPrivateTransporterForm(page, { name: '' })",
+      "confidence": "verbatim",
+      "note": "The test asserts only the accessibility check, not the error text."
+    },
+    {
+      "id": "repo-insfrontend-p7-116",
+      "statement": "Fit test: the commercial form shows its caption, heading, the approval number field and a Country showing 'Northern Ireland', with no serious or critical accessibility violations.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js:132-159 'shows its caption, heading, the fixed Northern Ireland country and the approval number field, with no serious or critical accessibility violations'",
+      "quote": "await expect(page.getByLabel('Country', { exact: true })).toHaveText(",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-117",
+      "statement": "Fit test: opening the commercial form with no type chosen returns to the type question.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js:161-171 'opening it with no transporter type chosen returns to the transporter type question'",
+      "quote": "'stub-org-commercial-transporter-guard',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-118",
+      "statement": "Fit test: Cancel on a filled commercial form returns to the Transporter tab with no row for that transporter.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js:173-188 'Cancel with values entered returns to the address book filtered to transporters, creating nothing'",
+      "quote": "await cancelTransporterButton(page, copy.commercialTransporterForm).click()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-119",
+      "statement": "Fit test: a valid commercial save shows the banner and lists the transporter with its approval number and type 'Commercial'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js:190-213 'a valid save shows the success banner and lists the transporter with its approval number and type'",
+      "quote": ").toHaveText(copy.list.transporterTypes.COMMERCIAL)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-120",
+      "statement": "Fit test: a missing approval number refuses the commercial save with 'Enter the approval number' in the error summary, with no serious or critical accessibility violations.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js:215-233 'a missing approval number refuses the save with no serious or critical accessibility violations'",
+      "quote": "copy.errors.approvalNumber.required",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-121",
+      "statement": "Fit test, without JavaScript: saving a commercial transporter works as a plain form post and the Transporter tab shows 'Showing 1-1 of 1'.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js:236-252 'saving a commercial transporter works as a plain form post'",
+      "quote": "'stub-org-commercial-transporter-no-js'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-122",
+      "statement": "Fit test: a transporter's page opens from the list at /address-book/transporter/<24 hex id>, headed with its name, with no serious or critical accessibility violations.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-view.fit.spec.js:37-50 'opens from the list at its own transporter URL, headed with its name, with no serious or critical accessibility violations'",
+      "quote": "const TRANSPORTER_PAGE_PATTERN = /\\/address-book\\/transporter\\/[0-9a-fA-F]{24}/",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-123",
+      "statement": "Fit test: a private transporter's page shows no 'Approval number' text.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-view.fit.spec.js:52-63 'shows no approval number row for a private transporter'",
+      "quote": "page.getByText(copy.list.table.approvalNumber, { exact: true })\n    ).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-124",
+      "statement": "Fit test: a commercial transporter's page shows its approval number and 'Northern Ireland'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-view.fit.spec.js:65-85 'shows a commercial transporter’s approval number and its fixed Northern Ireland country'",
+      "quote": "page.getByText(copy.commercialTransporterForm.country, { exact: true })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-125",
+      "statement": "Fit test: Back on a transporter's page returns to the address book filtered to transporters.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-view.fit.spec.js:87-95 'Back returns to the address book filtered to transporters'",
+      "quote": "await backLink(page).click()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-126",
+      "statement": "Fit test: Edit on a transporter's page opens /edit headed 'Edit transporter details' with the stored name filled in, with no serious or critical accessibility violations.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-edit.fit.spec.js:34-47 'opens the form holding the stored values, with no serious or critical accessibility violations'",
+      "quote": ").toHaveValue(validPrivateTransporter.name)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-127",
+      "statement": "Fit test: saving a changed name returns to the Transporter tab, shows '<new name> updated in your address book' and lists the transporter under the new name with approval number 'Not applicable'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-edit.fit.spec.js:49-69 'saves a changed name, confirming it and listing the transporter under it'",
+      "quote": "page.getByText(`${changedName} updated in your address book`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-128",
+      "statement": "Fit test: a blank name on the edit form shows 'There is a problem', with no serious or critical accessibility violations.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-edit.fit.spec.js:71-88 'a blank name refuses the save, with no serious or critical accessibility violations'",
+      "quote": "page.getByRole('heading', { name: 'There is a problem' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-129",
+      "statement": "Fit test: Cancel on the edit form returns to the transporter's page under its old name, with the changed name nowhere on the page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-edit.fit.spec.js:90-108 'Cancel leaves the transporter as it was'",
+      "quote": "await expect(page.getByText(changedName)).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-130",
+      "statement": "No fit test edits a commercial transporter, so its edit form, fixed country and approval number on edit are not proven end to end in this repo.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-edit.fit.spec.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Every edit test opens a private transporter (openPrivateTransporterForm)."
+    },
+    {
+      "id": "repo-insfrontend-p7-131",
+      "statement": "Fit test: Delete on a transporter's page opens /delete headed 'Delete this transporter?', showing the transporter's name and the permanence warning, with no serious or critical accessibility violations.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-delete.fit.spec.js:38-53 'asks for confirmation, summarising the transporter, with no serious or critical accessibility violations'",
+      "quote": "await expect(page.getByText(copy.deleteTransporter.warning)).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-132",
+      "statement": "Fit test: 'Yes, delete' returns to the Transporter tab, shows '<name> deleted from your address book' and the transporter's row is gone.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-delete.fit.spec.js:55-74 'confirming removes it from the list and says so by name'",
+      "quote": "page.getByText(`${TRANSPORTER_NAME} deleted from your address book`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p7-133",
+      "statement": "Fit test: 'No, cancel' returns to the transporter's own page, headed with its name.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/transporter-delete.fit.spec.js:76-88 'cancelling leaves the transporter in the address book'",
+      "quote": ".getByRole('link', { name: copy.deleteTransporter.cancel, exact: true })",
+      "confidence": "verbatim"
+    }
+  ]
+}

@@ -1,37 +1,24 @@
-## Design Release 2.1: backlog report
+# Design Release 2.1: backlog report
 
 ## Summary
 
-- The backlog holds 68 increments: 40 ready to go and 11 blocked. The blocked rows wait on the INS front door dashboard's requirements (6), the authorities' outcome feed (3), the plants services publishing to the INS read model (1) and the plants backend (1). A further 11 rows are dropped, 4 are deferred and 2 are merged into others. The 4 deferred rows are the templates work Sam deferred as a theme on 25 November (inc-186, inc-196) and the two waiting-on-design rows that come back with a design: address search as concept work (inc-194) and the needs-action view's identifier warnings, which wait on the outstanding-actions banner (inc-271).
-- It builds the germinal products set end to end, reframes each animals notification list in place with plants' list beside it, builds amend, cancel amendment, copy as new and delete in both journeys, and brings the plants set's own records up to date.
-- 45 questions are open, all 45 challenged against precedence and every ruling. Precedence settled none of them this run. Each question lists the default that is built if nobody answers.
-- Before building: correct the goal in `sources.json` (see step 0). 19 of the 40 ready rows land after rows on split branches, so those branches merge first.
-- 10 adopted requirements wait on somebody outside the loop: the INS address lookup becoming a real feature, and the EUDPA-774 save and continue work merging.
-- Eleven split branches have work to pick up: `feat/NO_JIRA-design-release-2-1-type-question-and-templates`, `feat/EUDPA-691-design-release-2-1-journey-foundation`, `feat/EUDPA-693-design-release-2-1-commodities-and-reason`, `feat/EUDPA-694-design-release-2-1-arrival-and-transit`, `feat/EUDPA-695-design-release-2-1-origin-page`, `feat/EUDPA-696-design-release-2-1-overview-and-review`, `feat/EUDPA-724-design-release-2-1-documents`, `feat/EUDPA-707-design-release-2-1-address-book`, `feat/EUDPA-781-design-release-2-1-transporters`, `feat/EUDPA-796-design-release-2-1-identification-and-permanent-address` and `feat/EUDPA-805-design-release-2-1-consignment-parties`.
+- The backlog has 65 rows: 28 ready to go and 13 blocked. 4 are deferred, 10 dropped and 10 merged into others.
+- The 13 blocked rows wait on the INS dashboard's requirements (9), the authorities' outcome feed (1), the plants backend (1), the INS address lookup (1) and templates (1).
+- The 28 ready rows build the germinal products set (18), the list reframe on the live animals, plants and germinal lists (8) and the plants rulings records (2).
+- The combine review weighed 215 pairs: 29 rows became 28. The bovine semen end-to-end walk (inc-184) went into inc-183.
+- 44 questions are open for Sam, of 44 challenged. Precedence, a ruling or a blocker settled none. Each has a default, so building can start without an answer.
+- Step 0: correct the goal's commodity bullet in sources.json, and merge the split branches that 15 ready rows build on.
+- 14 split branches have work to pick up, each named under "For the split branches". Only test-hygiene has nothing.
 
 ## Before you build: step 0
 
-**Correct the goal in `sources.json`.** The rulings have moved past it on eight points. As the rulings leave it, the goal reads:
-
-- Bring the real GB notification services up to Design Release 2.1 in look and feel: content, wording, layout, components and question order.
-- In scope: the GBN-AG animals notification as two sibling sets in the animals frontend, live animals and germinal products, each with its own notification list, and the INS address book. **Changed: templates are out.**
-- Where a real service differs in look and feel, it changes to match. An owner ruling, a DR1 judgement, the V4 data fields page on data, or a real constraint overrides that.
-- Real constraints are persistence, validation, authentication, cross-service behaviour, accessibility and **new: the size of a real organisation's address book**. Organisations in test environments hold thousands of addresses, which the prototype cannot express, so every address book list and every address picker pages. No requirement serves or shows an organisation's addresses unpaginated.
-- **New: templates are parked.** The 4 November ruling de-prioritises them and leaves their rows unbuilt with no condition named for their return; the interaction designer dropped them for now on 9 November; the 9 November owner ruling calls Design Release 2.1's templates concept work. Templates are create, read, update and delete work that is built when the parking lifts, not work that goes ahead now. The templates sort is dropped outright rather than waiting on design. No list offers a "Use template" button, the INS home offers "Create new" alone, no frontend gains a Templates navigation item, and no template review, template section or "Save template" button is built. Templates are a fifth adopted-but-blocked area, waiting on the owner's decision and re-distilled once he makes it. Its one exception is the notification type question page, which the 4 November ruling splits into its own theme and sends ahead.
-- **Changed: design has answered most of the waiting-on-design questions, and an answered question is not a parked increment.** Where design has answered, the JavaScript-only addition is dropped rather than held. The search buttons and the live region code prefix were already picked up with design snagging. Amend and cancel amendment are pages, not dialogs. The county parish holding boxes follow the GOV.UK date input with no JavaScript on top. The germinal date calendars keep the Ministry of Justice date picker and are built with the germinal identification dates, germinal products following live animals rather than being a design question. Transit countries keep the "Add country" button and a page-reload Remove, with no "Added" or "Removed" announcement. The import reference numbers get no Copy buttons. The country search keeps the accessible autocomplete's own announcements. Only questions design has not answered stay in the waiting-on-design theme.
-- **Changed: no list filters as the trader types, in any journey.** A search runs when the trader presses Search or Enter and the server re-renders. That covers the party pickers, the place of origin picker, the address book list and the transporter list. A return to the idea re-enters as a new question, not as a waiting-on-design row.
-- **Changed: reference-list content leaves the backlog rather than waiting on MDM.** A reference list is MDM's content, reaching the service through `trade-imports-reference-data`, never edited in code and never a reason to block a row. The commodity catalogue's content, germinal included, is out of scope as an MDM concern in `deferred.md`, as the live-animals catalogue's content already was. Only the integration that brings MDM's lists through reference-data is blocked, on MDM itself.
-- **Changed: the commodity search is another ticket's work.** The 10 November ruling hands commodity search, live and germinal, to a separate ticket, whose design call waits on that ticket being implemented and does not come back here. A "cattle" search listing germinal codes belongs to that ticket too, so moving today's germinal lines out of the live-animals catalogue is no longer part of this programme. Only the germinal set's own pages go ahead, on the lines the catalogue holds.
-- **Changed: transporter management is decided and goes ahead in the address book.** The address book is the system of record: a transporter is its own record in its own `transporters` collection, holding no roles and a private-or-commercial type instead, reusing the service's organisation scoping, soft-delete, locking and Standard Address Block validation. Adding one mid journey uses the address book hand-off already built for addresses. A commercial transporter's country is forced to Northern Ireland with no reference-data lookup; a private transporter keeps its choice. The Transporter tab, the address type question, the add pages, the list, its search and its paging all go ahead, and the unused register page is already removed. **Parked:** approved transporters, including the eight records the service ships, which stay exactly as they are; which approved-transporter list the commercial ones come from stays open. The commercial transporter's Northern Ireland address search still waits on the INS address lookup.
-- **Changed: address search is parked as concept work**, by the 9 November ruling, rather than merely waiting on the lookup. The 13 November design ruling leaves the search-only layout deferred with it. Address search does not filter as the trader types in either frontend: the trader presses Search or Enter. Until it is planned, every add-address page offers manual entry only, with all its fields shown.
-- **New: no new notification status is added in this programme.** The statuses stay DRAFT, SUBMITTED, AMEND and DELETED. "Submitted action required" is withdrawn and "Completed" stays out until a real source of completion exists. Nothing action-required is shown on a notification or on a list until the outstanding-actions banner the dashboard designs introduce is agreed, and the animals backend stops storing the outstanding items.
-- **New: the address book stores roles, not an address type.** An address holds the roles it can play on a notification, at least one, from place of origin, consignor, place of destination, consignee, importer and branch address. The address type is the INS front door's grouping of those roles, worked out from them rather than stored.
-- **New: the prototype's own routing glue is no better a basis for data than its `app/data` files.** Neither `app/routes.js` nor `app/data` decides what data a notification captures, which values a field offers, a role vocabulary, or which commodities a rule covers. Every piece of data is either MDM content reaching the service through reference-data, or V4-specified.
-- **New: the 17 November wording decisions apply wherever the answer appears.** The exit port is "Port of exit" everywhere; the arrival date is "Arrival date at port of entry" everywhere. The notification card's own arrival-date label is still open (c-421).
-- Adopted but blocked, each re-distilled once unblocked: address search (parked as concept work, and waiting on the INS address lookup); the MDM commodity integration through reference-data; the INS dashboard's summary information; templates; and the return to the overview on save in live animals and plants, blocked until the EUDPA-774 save and continue work merges to the animals frontend's main.
-- The rest of the goal stands as written: plants takes the same change in the same increment wherever it has the same page or behaviour and keeps its own questions and data; every page works fully without JavaScript; a behaviour is built with GOV.UK Frontend first, then another tested government library; confirmations stay pages; V4 decides the data for both sets and outranks every DR1 judgement with no exception; each notification list stays in its own frontend and is reframed in place; architecture stays the real services'.
-
-**Split branches merge first.** 36 of the 68 rows carry an `externalDependsOn` on a split branch's workarea, 19 of them ready to go. The build loop cannot land those until the branch they name has merged.
+1. **Correct the goal in sources.json.** Its bullet "The commodity catalogue and commodity search, live and germinal: wait until commodities come from MDM" contradicts two rulings. Ian's 11 November ruling says a reference list is never a reason to block a row. Sam's 10 November ruling hands commodity search to a separate ticket. The goal as the rulings leave it:
+   - The species and commodity names already come from MDM through reference-data.
+   - The new catalogue content in Design Release 2.1 and V4 is MDM's content. It is out of scope, not blocked.
+   - The commodity search control is the separate commodity-search ticket's work.
+   - Only commodity types wait, on MDM serving them (req-2131, with req-1656 and req-2137).
+2. **Merge the split branches first.** 15 of the 28 ready rows build on work in a split theme: inc-017, inc-024, inc-052, inc-053, inc-105, inc-126, inc-136, inc-176, inc-177, inc-179, inc-181, inc-182, inc-185, inc-264 and inc-283.
+3. **Pick up the split-branch changes** listed under "For the split branches" before those themes merge.
 
 ## Decisions the pipeline made
 
@@ -39,358 +26,451 @@
 
 | Key | Repo | Why |
 |---|---|---|
-| `frontend` | trade-imports-animals-frontend | The GBN-AG journey, live animals and germinal products as sibling sets, and each set's own notification list |
-| `backend` | trade-imports-animals-backend | The notification record, its validation, lifecycle, list query and GBN-AG publishing |
-| `insfrontend` | trade-imports-ins-frontend | The INS front door: the home, the type question, the address book and the journey hand-off |
-| `insbackend` | trade-imports-ins-backend | The read model behind the INS dashboard's counts and drill-downs |
-| `addressbook` | trade-imports-address-book | The system of record for addresses and, since 6 November, for transporters |
-| `referencedata` | trade-imports-reference-data | The reference lists the journey reads, the port traffic type that orders the port list included |
-| `stub` | trade-imports-stub | The address lookup stub and the MDM country and port fixtures |
-| `tests` | trade-imports-ins-tests | Every service's end-to-end, accessibility and security suite |
-| `perftests` | trade-imports-performance-tests | The k6 scripts that request the live-animals set root and the INS home |
-| `plantsfrontend` | trade-imports-plants-frontend | Shares the journey engine, overview, review, declaration, confirmation, amend, delete, party pickers and notification list, and takes the same change in the same increment |
+| frontend | trade-imports-animals-frontend | The live animals and germinal products sets, their journey pages and their notification lists |
+| backend | trade-imports-animals-backend | The notification record: germinal data, category, list query and sort, copy |
+| insfrontend | trade-imports-ins-frontend | The INS home, the type question, the address book pages and the dashboard |
+| insbackend | trade-imports-ins-backend | The read model behind the INS dashboard, and the address lookup |
+| addressbook | trade-imports-address-book | The system of record for addresses and transporters |
+| referencedata | trade-imports-reference-data | The country and port lists the journey reads, and the port traffic type that orders them |
+| stub | trade-imports-stub | The address lookup stub and the MDM country and port fixtures |
+| tests | trade-imports-ins-tests | Every service's end-to-end suite |
+| perftests | trade-imports-performance-tests | The k6 suite requests the live animals set root and the INS home |
+| plantsfrontend | trade-imports-plants-frontend | Shares the journey engine, overview, review, actions, pickers and list; takes the same change in the same increment |
 
-Read but not changed: the Design Release 2.1 prototype (`~/git/defra/defra-design/GB-notification-service` at commit 04a073b), its traces and driving specs, the DR1 parity notes and backlog, and the V4 Live Animals & Germinals Data Fields Confluence page.
+No repo is read without being changed. trade-imports-plants-backend is outside the programme; inc-200 waits on it.
 
 **Which source wins a disagreement**, highest first:
 
-1. Ian's ruling of 25 November 2026 (pagination is kept everywhere)
-2. Ian's ruling of 23 November 2026 (the pickers page at eight)
-3. Sam's ruling of 19 November 2026 (the overview and review engineering review)
-4. Sam's ruling of 17 November 2026 (the review page's wording)
-5. Sam's ruling of 16 November 2026 (plants' customs code; no new status)
-6. Ian's ruling of 16 November 2026 (no EXPORTER role)
-7. Design's ruling of 13 November 2026 (transit countries, address search, copy buttons)
-8. Ian's ruling of 11 November 2026 (what settles data: V4 over every DR1 judgement)
-9. Sam's second ruling of 10 November 2026 (obligation model, return links)
-10. Sam's ruling of 10 November 2026 (germinal products, commodity search)
-11. Sam's ruling of 9 November 2026 (country search announcements; address search parked)
-12. The interaction designer's ruling of 9 November 2026 (the waiting-on-design answers)
-13. Ian's ruling of 6 November 2026 (transporter management)
-14. Paul's ruling of 5 November 2026 (what the address book stores)
-15. Sam's ruling of 4 November 2026 (the type question split; templates parked)
-16. Sam's ruling of 26 October 2026 (Save and return makes the same checks)
-17. Paul's ruling of 14 October 2026 (County on the add-details step)
-18. Sam's afternoon ruling of 9 October 2026
-19. Sam's templates ruling of 9 October 2026
-20. Sam's ruling of 9 October 2026
-21. Sam's ruling of 7 October 2026
-22. The V4 Live Animals & Germinals Data Fields page (`confluence:6497338582`, version 210)
-23. The DR1 parity notes
-24. The DR1 parity backlog
-25. The Design Release 2.1 prototype source
-26. The Design Release 2.1 prototype traces
-27. The Design Release 2.1 prototype specs
-28. trade-imports-animals-backend
-29. trade-imports-ins-backend
-30. trade-imports-address-book
-31. trade-imports-reference-data
-32. trade-imports-stub
-33. trade-imports-animals-frontend
-34. trade-imports-ins-frontend
-35. trade-imports-plants-frontend
-36. trade-imports-ins-tests
-37. trade-imports-performance-tests
-38. The animals frontend's fit traces
-39. The INS frontend's fit traces
-40. The end-to-end traces
+1. Sam, 27 November (ruling:sam-2026-11-27)
+2. Ian, 25 November, second ruling (ruling:ian-2026-11-25b)
+3. Ian, 25 November
+4. Ian, 23 November
+5. Sam, 19 November
+6. Sam, 17 November
+7. Sam, 16 November
+8. Ian, 16 November
+9. Design, 13 November
+10. Ian, 11 November
+11. Sam, 10 November, second ruling
+12. Sam, 10 November
+13. Sam, 9 November
+14. Interaction designer, 9 November
+15. Ian, 6 November
+16. Paul, 5 November
+17. Sam, 4 November
+18. Sam, 26 October
+19. Paul, 14 October
+20. Sam, 9 October afternoon
+21. Sam, 9 October templates
+22. Sam, 9 October
+23. Sam, 7 October
+24. V4: Live Animals and Germinals Data Fields, Confluence 6497338582
+25. DR1 parity notes
+26. DR1 parity backlog
+27. Design Release 2.1 prototype source, commit c2078fb (26 November)
+28. Design Release 2.1 prototype traces
+29. Design Release 2.1 prototype specs
+30. Animals backend repo
+31. INS backend repo
+32. Address book repo
+33. Reference data repo
+34. Stub repo
+35. Animals frontend repo
+36. INS frontend repo
+37. Plants frontend repo
+38. Tests repo
+39. Performance tests repo
+40. Animals fit traces
+41. INS fit traces
+42. End-to-end traces
 
 ## Questions for Sam
 
-45 questions were challenged against precedence and every ruling. None was settled and none was found to wait on a blocker, so all 45 remain. Each lists the default that will be built if nobody answers.
+44 questions were challenged against precedence and every ruling. None was settled and none waits on a blocker, so all 44 stay. Each lists the default built if nobody answers.
 
-### 1. What does the high-risk plants notification list's h1 say?
+### 1. What does the plants notification list's h1 say? (c-303)
 
-- **Default:** "Plants", the prototype's own label for plants notifications, with a Welsh machine draft that ships only after translator sign-off.
-- **Affects:** req-2029; inc-129, which reframes the live animals list and gives plants' list the same frame.
-- **Why it is open:** The frame names the category in the h1, but no source names plants' category for a list heading. Design Release 2.1 has no plants list.
+- **Default:** "Plants", the prototype's own label, with a Welsh machine draft that ships only after translator sign-off.
+- **Affects:** req-2029, inc-129.
+- **Why it is open:** the frame names the category in the h1, but nothing names plants' category.
 
-### 2. In template mode, must a journey page keep the notification's required-answer checks?
+### 2. Does a template hold every answer a notification holds? (c-318)
 
-- **Default:** Live animals and germinal products template pages keep the notification's checks. A malformed answer is refused, and an answer the page requires is refused with an error naming each one, whichever save button the trader uses, with what they entered kept. What Design Release 2.1 already does differently stands: no arrival date is asked, the template name is optional, and sections may be left unanswered. Plants has no template mode.
-- **Affects:** req-2049; inc-186, and the parked templates rows on `feat/NO_JIRA-design-release-2-1-type-question-and-templates`.
-- **Why it is open:** The 26 October ruling settles half of it: both save buttons make exactly the same checks. How high the bar is in template mode is still open, because the templates ruling hedges and the design never shows a page's checks in template mode. The checks are chosen by the mode in one place, so an answer changes them without touching the pages.
+- **Default:** a template stores answers in the notification's own shape. It never holds the arrival date or documents. A live animals template holds and seeds transit countries. Plants has no templates.
+- **Affects:** req-2112, and req-1344, req-1345, req-2048, req-2849 on the type-question-and-templates branch. Templates are parked, so nothing is built now.
+- **Why it is open:** the templates ruling hedges, and the prototype contradicts itself on transit countries.
 
-### 3. Does a template hold every answer a notification holds?
+### 3. Is the region of origin code chosen from a list, or typed? (c-322)
 
-- **Default:** In both animals sets a template stores its answers in the notification's own shape on the same pages, with no separate template data model. It never asks for or holds the arrival date or time (req-1345) or documents (req-1334). A live animals template holds the transit countries as answered and seeds them, because the design's template page offers their Change link. A germinal template holds whatever the germinal pages ask, less the arrival date. Plants has no templates.
-- **Affects:** req-1344, req-1345, req-2048, req-2112; inc-186 and the parked templates rows.
-- **Why it is open:** The templates ruling hedges, its own claims leave the differences between template mode and a notification open, and Design Release 2.1 contradicts itself on transit countries by offering a Change link for answers it never saves.
+- **Default:** typed into the five-character box after the country prefix, in both animals sets. No region list and no reference-data work.
+- **Affects:** req-2127.
+- **Why it is open:** V4's source cell reads two ways, and nothing ranks them.
 
-### 4. Does the region of origin code come from a list of regions, or stay a code the trader types?
+### 4. Does "numeric - max 10" on Number of packages mean 10 digits or 10 packages? (c-325)
 
-- **Default:** It stays a code the trader types into the five-character box after the country prefix, in both sets. No region list is built and no reference-data work is raised.
-- **Affects:** req-2127; the origin page rows on `feat/EUDPA-695-design-release-2-1-origin-page`.
-- **Why it is open:** The V4 page's source cell reads two ways and nothing ranks them: either the field's MDM source is only the country prefix, or the regions themselves come from a list.
+- **Default:** a digit count, capped at 2,147,483,647, which the service already meets. No cap of 10 packages.
+- **Affects:** req-2133.
+- **Why it is open:** V4's table writes maximums both ways, and this row's own examples (25 and 5000) fit only a digit count.
 
-### 5. Does the live-animal Number of packages allow up to 10 digits, or at most 10 packages?
+### 5. What is the maximum number of species under one commodity? (c-326)
 
-- **Default:** The digit reading. The field is capped at the largest whole number the notification stores, 2,147,483,647, which is ten digits, with an error naming that figure on that species' field. No cap of 10 packages is built, because it would refuse an example the specification itself gives.
-- **Affects:** req-2133; the Commodity details rows on `feat/EUDPA-693-design-release-2-1-commodities-and-reason`.
-- **Why it is open:** The same table writes "max 9,223,372,036,854,775,807" as a value for the number of animals, and the germinal quantity row's "max 1,000" was read as a value too, while this row's own examples of 25 and 5000 can only be digit counts.
+- **Default:** no maximum, as today. A cap is built once the number is given.
+- **Affects:** req-2134.
+- **Why it is open:** V4 says a maximum exists but not what it is.
 
-### 6. What is the agreed maximum number of species a trader may choose under one commodity?
+### 6. Must the exit date take a two-digit day and month? (c-330)
 
-- **Default:** No maximum is enforced, as today, so a trader may choose every species a commodity offers. A cap and its error are built only once the number is given.
-- **Affects:** req-2134; the commodity selection rows on `feat/EUDPA-693-design-release-2-1-commodities-and-reason`.
-- **Why it is open:** The specification states that a maximum exists but not what it is, and no ruling gives a number.
+- **Default:** hint "For example, 27/3/2026"; a day or month is accepted with or without a leading zero.
+- **Affects:** req-2139.
+- **Why it is open:** "DD/MM/YYYY" reads as a digit count or a field order. A strict rule refuses the MOJ date picker's own text.
 
-### 7. Does one number of animals and one number of packages cover every species under a commodity?
+### 7. Does a notification still capture a microchip? (c-335)
 
-- **Default:** Each chosen species keeps its own number of animals and number of packages, as today and as Design Release 2.1 shows. The real service's commodity line is one commodity plus one species, and each line's species travels downstream on its own. The germinal set's per-species packages and total gross weight stay per species for the same reason.
-- **Affects:** req-2135; the Commodity details rows on `feat/EUDPA-693`, and inc-017 and inc-177 in germinal products.
-- **Why it is open:** The specification gives the level, "Commodity Level", but never says what a commodity line holds. The two readings build different pages.
+- **Default:** keep "Microchip/transponder" on cat, dog, ferret, horse and donkey panels, after "Passport".
+- **Affects:** req-2153, req-222, and req-229 on the design-snagging branch.
+- **Why it is open:** V4's six identifier fields leave it out, but V4 never de-scopes it as it did the wing ring.
 
-### 8. Must the exit date be typed with a two-digit day and month?
+### 8. Must every animal carry an identifier before submit? (c-336)
 
-- **Default:** The field keeps the hint "For example, 27/3/2026" and accepts a day or month with or without a leading zero, because the accepted date picker fills it that way. V4's DD/MM/YYYY is read as naming the day, month and year order rather than a stricter digit count.
-- **Affects:** req-2139; the main import reason rows on `feat/EUDPA-693-design-release-2-1-commodities-and-reason`.
-- **Why it is open:** The 11 November ruling puts the format with V4 and how the field reads with the prototype. That splits the hint from the accepted form and leaves the field refusing the text its own picker writes. Neither reading of "DD/MM/YYYY" is ranked above the other. If the strict reading is chosen, the hint becomes 27/03/2026 and the picker is configured to write leading zeros.
+- **Default:** yes, the per-animal bar the frontend now applies; the hub's Identification details row uses the same bar.
+- **Affects:** req-248, req-249.
+- **Why it is open:** the 9 October ruling accepted an older, looser gate.
 
-### 9. Does the germinal products set ask for an exit date?
+### 9. Does "what a trader typed is never dropped" reach the identification page's save buttons? (c-337)
 
-- **Default:** The germinal set offers only Internal market and Transit, asks for no exit date and builds nothing for one. The live-animals set keeps its own exit date question.
-- **Affects:** req-2141; inc-024.
-- **Why it is open:** The copy rule carries every live-animals page into the germinal set, and the data page's germinal section says nothing about which live-animal fields the set drops, while Design Release 2.1's germinal journey never reaches the reason that asks for one.
+- **Default:** each save button reads only the panel it owns. Enter saves every panel holding a value.
+- **Affects:** req-203, req-204.
+- **Why it is open:** the 26 October ruling states the principle generally, but its words reach only the Enter key.
 
-### 10. Does a notification still capture a microchip identifier?
+### 10. What does Enter do in a single-animal panel, or outside any panel? (c-338)
 
-- **Default:** The microchip field stays exactly as it is today and as Design Release 2.1 shows it, first on a cat, dog, ferret or horse panel.
-- **Affects:** req-2153; the identification rows on `feat/EUDPA-796-design-release-2-1-identification-and-permanent-address`.
-- **Why it is open:** V4 outranks the prototype on which data a notification captures, and its identifier table specifies six fields without the microchip. But it never says the microchip is out of scope, and it de-scopes a field explicitly when it means to, as it did for the wing ring. Silence will not carry a user-visible field away.
+- **Default:** it submits the page as "Save and continue", as today.
+- **Affects:** req-2159.
+- **Why it is open:** the ruling settles only the panel for several animals.
 
-### 11. Must every animal of every selected species carry at least one identifier before submission?
+### 11. Is "Journey log" still a document type? (c-350)
 
-- **Default:** The per-animal bar the frontend now applies stands. Every animal of every commodity line that is identified needs a saved record holding at least one identifier, and the hub's Identification details row shows Complete on that same bar.
-- **Affects:** req-248, req-249; the identification rows on `feat/EUDPA-796` and the hub rows on `feat/EUDPA-696-design-release-2-1-overview-and-review`.
-- **Why it is open:** The 9 October ruling outranks the policy page and accepted the looser gate on the footing that it was no change. That footing has gone: the service has since moved to the per-animal bar, and the ruling expressly does not say how many records a notification needs. The germinal twin went the policy page's way (c-277). Only the owner can say whether the ruling was meant to fix the looser gate.
+- **Default:** keep it.
+- **Affects:** req-499, already in place.
+- **Why it is open:** V4's change log de-scopes it, while its October document list still names it.
 
-### 12. Does "what a trader typed is never dropped" reach the identification page's own save buttons?
+### 12. Does the same-checks rule reach plants' check answers? (c-365)
 
-- **Default:** Every save reads only the panel it owns, as the frontend now does and the prototype shows. A panel save checks and saves that panel alone, and the page's own buttons save the panels that take a single animal.
-- **Affects:** req-203, req-204; the identification rows on `feat/EUDPA-796`.
-- **Why it is open:** The 26 October ruling ranks above the prototype and states the principle in general terms, while its words reach only the Enter key. Answering it the other way would have each save sweep up every panel holding a value.
+- **Default:** no. Plants' check answers keeps "Save and return to overview" whatever is outstanding.
+- **Affects:** req-2010, already in place.
+- **Why it is open:** the review page collects no answers, so the 26 October rule reads two ways.
 
-### 13. What does pressing Enter do in a single-animal panel, or outside any panel?
+### 13. Does the address delete banner re-case the name? (c-367)
 
-- **Default:** Enter in a single-animal panel, and in any field outside a panel, submits the page as "Save and continue". Only a panel for several animals saves through its own panel save.
-- **Affects:** req-2159; the identification rows on `feat/EUDPA-796`.
-- **Why it is open:** The ruling settles the panel for several animals, which is adopted (req-2158), and says nothing about the rest of the page.
+- **Default:** no; the name shows as the trader entered it.
+- **Affects:** req-2194, and req-1148, already in place.
+- **Why it is open:** lower-casing mangles names such as "Alpine Dairy GmbH", and the prototype gives no reason.
 
-### 14. Is "Journey log" still a document type a trader may choose?
+### 14. Is the "Filter addresses" disclosure open when a filter is applied? (c-368)
 
-- **Default:** Journey log stays among the document types. The business's October list names it, Design Release 2.1 offers it and the service offers it today.
-- **Affects:** req-499; the document type rows on `feat/EUDPA-724-design-release-2-1-documents`.
-- **Why it is open:** The V4 page contradicts itself. Its change log de-scopes Journey Log in May 2026, and its document type list, replaced in October 2026, still names it. Precedence settles a disagreement between sources, never within one.
+- **Default:** open when the request carries a search or a Type, collapsed otherwise.
+- **Affects:** req-2195.
+- **Why it is open:** "collapsed when the list loads" reads two ways once the filter is server-side.
 
-### 15. Does the notification submitted page's ITAHC rule reach germinal products and plants?
+### 15. Must an address in a country without postcodes still give one? (c-369)
 
-- **Default:** The germinal copy of the confirmation page names a missing ITAHC on the same condition as the live-animals page, because the set copies that page and carries the same certificate. Plants' confirmation gains no outstanding-items list and no certificate item, because plants has no ITAHC.
-- **Affects:** req-929; inc-105 and inc-182 in germinal products, and plants' confirmation rows on `feat/EUDPA-696`.
-- **Why it is open:** The 26 October ruling gives the rule for the live-animals page and leaves the other sets unstated.
+- **Default:** yes, for every country, free text of at most 12 characters.
+- **Affects:** req-2200.
+- **Why it is open:** every source marks it mandatory, and the germinal data fields flag the gap without answering it.
 
-### 16. Does the same-checks rule reach plants' check answers, which collects no answers?
+### 16. How far does the commodity-search ticket reach? (c-379)
 
-- **Default:** Plants' check answers keeps its Save and return to the overview whatever is outstanding. The rule is applied to the pages that collect answers, where an error can be shown against each one, and the review page keeps naming what is outstanding and refusing Continue.
-- **Affects:** req-2010; the plants review rows on `feat/EUDPA-696-design-release-2-1-overview-and-review`.
-- **Why it is open:** The 26 October rule is written for pages that collect answers and show an error against each one, and the review page collects none.
+- **Default:** the narrow reading. Only the as-you-type call, the joined button and the germinal-codes search leave this programme.
+- **Affects:** req-075, req-080, req-081, req-2225, req-2585.
+- **Why it is open:** the 10 November ruling names no ticket and no boundary.
 
-### 17. Should the address book's delete banner lower-case the rest of the address's name?
+### 17. Do destination country and port of exit keep the accessible autocomplete? (c-381)
 
-- **Default:** The banner shows the name as the user entered it.
-- **Affects:** req-2194; the address book rows on `feat/EUDPA-707-design-release-2-1-address-book`.
-- **Why it is open:** The prototype wins on copy, so the wording is adopted either way. But lower-casing a name the user typed changes how their own data is shown, and the prototype's reason is not visible: its demonstration names are all Title Case, while the real book holds names such as "Alpine Dairy GmbH" that it would mangle.
+- **Default:** yes, as the animals frontend configures it today. Only placeholder, labels and order follow the prototype.
+- **Affects:** req-2237.
+- **Why it is open:** the 9 October afternoon plain-select clause reads two ways.
 
-### 18. Is the "Filter addresses" disclosure open when the list loads with a search or Type applied?
+### 18. Is a commercial transporter's country stored as XI or GB-NIR? (c-388)
 
-- **Default:** It is open when the request carries a search or a Type, and collapsed otherwise.
-- **Affects:** req-2195; the address book list rows on `feat/EUDPA-707`.
-- **Why it is open:** "Collapsed when the list loads" reads two ways once the filter is submitted to the server, and they build different pages. The prototype never reloads a filtered list, so nothing ranks them.
+- **Default:** keep what is built: GB-NIR in the address book and the INS front door, shown as "Northern Ireland".
+- **Affects:** req-2275.
+- **Why it is open:** the 6 November ruling may name a value, or only decide the code is forced rather than looked up.
 
-### 19. Must an address in a country with no postal system still give a postcode, and is 12 characters enough?
+### 19. In journey mode, does "Add a commercial transporter" know the notification? (c-390)
 
-- **Default:** Every address needs a postcode or Zip code, whatever country is chosen, free text of at most 12 characters. No country is exempted and no limit is raised.
-- **Affects:** req-2200; the address book rows on `feat/EUDPA-707` and the party add rows on `feat/EUDPA-805-design-release-2-1-consignment-parties`.
-- **Why it is open:** Every source marks the postcode mandatory, and the germinal data fields, which outrank the prototype on data, flag their own gap rather than answering it.
+- **Default:** follow the design where the hand-off can carry it: status strip on that page, banner for live animals only.
+- **Affects:** req-2278, req-2640.
+- **Why it is open:** nothing shows the hand-off carrying a notification's status or set into the front door.
 
-### 20. How far do the checks on both save buttons reach?
+### 20. Does plants' Overview take "Consignment addresses"? (c-403)
 
-- **Default:** Both buttons make the same checks, and those checks are the page's own hard stops together with any answer the data specification marks mandatory to proceed. An answer that is only mandatory to submit can still be left blank on either button, and the overview's statuses and the review page's submit hold it back. On the pages the business analyst named, upload documents refuses a part-filled document, and origin and main import reason refuse on either button whatever they refuse on "Save and continue". On the consignment addresses page and the party pickers nothing new is refused: the page saves and moves on with sections still empty, in live animals, in the germinal copy and on plants' pages, and a party picker saves with nothing chosen and no error. Completeness is still enforced by the overview task status and the review page's "Complete consignment addresses" error, and a picker still refuses an address the organisation's book does not hold.
-- **Affects:** req-581, req-603, req-1625, req-1641; inc-244, and every page with both buttons on the `commodities-and-reason`, `consignment-parties`, `documents`, `origin-page` and `overview-and-review` branches.
-- **Why it is open:** "Exactly the same checks as Save and continue" keeps each page's existing hard stops and adds nothing. "An error message for each answer that is missing or not valid" would refuse a page whenever any mandatory answer is blank, which would stop a trader leaving a part-filled page at all. Both readings are the top-ranked source's own words, so precedence ranks neither.
+- **Default:** no. "3. Addresses" satisfies the ruling, and plants keeps its three party rows.
+- **Affects:** req-2322.
+- **Why it is open:** plants has no consignment addresses page to title.
 
-### 21. Which environments must the INS-to-journey hand-over be proved in?
+### 21. Does plants' check answers take one "Consignment addresses" card? (c-414)
 
-- **Default:** Each service takes the other's address from its own configuration with no hard-coded host or port, so the hand-over works unchanged in the local Docker stack and the CI Docker stack, signing in through the Defra ID stub, and in CDP dev and test, signing in through Defra ID as each environment configures it. The end-to-end suite proves it in the two Docker stacks, and no new check is built for CDP.
-- **Affects:** req-2217; the type question rows on `feat/NO_JIRA-design-release-2-1-type-question-and-templates`, and inc-264.
-- **Why it is open:** The ruling names CDP as a whole and names neither the environment nor any evidence, while the Docker stacks sign the trader in through the stub and CDP signs them in through Defra ID.
+- **Default:** no. Plants takes the section heading "Addresses" and keeps its own party cards.
+- **Affects:** req-2337.
+- **Why it is open:** plants' review has no single addresses card.
 
-### 22. How far does the separate commodity-search ticket reach?
+### 22. Which atypical items does the review fix beyond those named? (c-415)
 
-- **Default:** The narrow reading. Only the as-you-type design call, the joined search button and the germinal-codes search leave this programme, and the search's wording, its result order and its chips' Remove names follow Design Release 2.1 here.
-- **Affects:** req-075, req-081, req-2225; the commodity search rows on `feat/EUDPA-693-design-release-2-1-commodities-and-reason`.
-- **Why it is open:** The 10 November ruling names three things but says "commodities search" generally and names no ticket. A narrow reading leaves the search's wording, order and labels in this programme; a wide one hands the whole control over. The 9 October afternoon ruling that how a search list reads follows the prototype pulls the other way. Should the owner read it widely, those three rows go out of scope and nothing here changes the commodity search.
+- **Default:** only the items the 19 November ruling names.
+- **Affects:** req-2338.
+- **Why it is open:** the engineering review the ruling answers is not one of this programme's sources.
 
-### 23. Do the destination country and port of exit questions keep the accessible autocomplete?
+### 23. Does the status filter still offer "Action required"? (c-419)
 
-- **Default:** Both keep the accessible autocomplete exactly as the animals frontend configures it today, with its "No countries found" and "No ports found" messages and its plain-select fallback without JavaScript. Only the placeholder, the option labels and the order follow the prototype.
-- **Affects:** req-2237; the main import reason rows on `feat/EUDPA-693` and the arrival rows on `feat/EUDPA-694-design-release-2-1-arrival-and-transit`.
-- **Why it is open:** The 9 October afternoon ruling's plain-select clause reads two ways: that this programme makes no component change, which leaves the autocomplete a follow-on ticket has since added; or that both questions are plain selects, which would take out a built, accessible, tested component with a no-JavaScript fallback.
+- **Default:** no. It comes back with the outstanding-actions banner.
+- **Affects:** req-2346.
+- **Why it is open:** the 16 November ruling does not name the filter.
 
-### 24. Where should a port with a missing or unexpected MDM traffic value sit in the port of entry list?
+### 24. Which environments drop their addresses when roles arrive? (c-433)
 
-- **Default:** Such a port is listed in its own group after the rail ports, A to Z by name, so no port MDM returns is left out. Airports, seaports and rail keep their order ahead of it.
-- **Affects:** req-2259; the reference list rows on `feat/EUDPA-692-design-release-2-1-reference-lists` and the arrival rows on `feat/EUDPA-694`.
-- **Why it is open:** The ruling names three groups and says MDM's traffic field gives each port's type, but never says what becomes of a port whose traffic is blank or holds some other value, and Sam has not confirmed the field is the flag he asked about.
+- **Default:** dev, test and local now; perf-test and ext-test when the change reaches them. Pre-production and production are untouched.
+- **Affects:** req-2359.
+- **Why it is open:** the ruling names only dev, test and the local stack.
 
-### 25. Is a commercial transporter's country stored as XI, or as the code the address book already uses?
+### 25. Does "every other atypical item" reach plants' recorded exceptions? (c-446)
 
-- **Default:** Keep what is built. The address book stores the fixed country as GB-NIR, its private counterpart as GB, and both the address book and the journey show it as "Northern Ireland". Nothing is rewritten.
-- **Affects:** req-2275; the transporter rows on `feat/EUDPA-781-design-release-2-1-transporters`.
-- **Why it is open:** The 6 November ruling reads two ways and nothing ranks them. Read as a value, it names XI and the records already stored as GB-NIR are rewritten. Read as a decision between an MDM lookup and a forced code, it settles only that the code is forced, and which code the service holds is the real service's own call. No trader sees either code.
+- **Default:** no. Each recorded exception keeps its reason.
+- **Affects:** req-2480.
+- **Why it is open:** the ruling's sweep refers to a list it does not carry.
 
-### 26. Which service refuses a commercial transporter whose country is not Northern Ireland?
+### 26. Which plants pages are signed off? (c-450)
 
-- **Default:** Both. The add form fixes the country, posts it in a hidden field and refuses a tampered, empty or absent value (req-455), and the address book refuses such a transporter on write, because it is the system of record and its API can be called directly (req-2277).
-- **Affects:** req-2277; the transporter rows on `feat/EUDPA-781`.
-- **Why it is open:** The ruling names the add form's hidden field and holds the code and its display name as constants, without saying which service validates on write. The two readings build different things in different repos.
+- **Default:** a page's level comes from its own page identity module; a page with none is below agreed.
+- **Affects:** req-2490.
+- **Why it is open:** plants records no level a reader can find.
 
-### 27. In journey mode, does "Add a commercial transporter" show the notification's status strip?
+### 27. Does the journey keep its trail, or go back to ?change=1? (c-451)
 
-- **Default:** Follow Design Release 2.1 where the hand-off can carry it. "Add a commercial transporter" shows the "Draft" tag and the notification reference above its heading, and neither "Choose a transporter type" nor "Add a private transporter" shows one. Where journey mode cannot carry the notification's status, none of the three pages shows one, the pages are otherwise unchanged, and the difference is recorded for design rather than worked around.
-- **Affects:** req-2278; the transporter rows on `feat/EUDPA-781`.
-- **Why it is open:** Once the add pages are the ones the INS front door serves, the notification's status has to cross services with the hand-off, and nothing in the working set shows the add-address hand-off carrying it.
+- **Default:** keep the trail both frontends have merged.
+- **Affects:** req-2521.
+- **Why it is open:** the 9 October ruling kept ?change=1, and the merged save and continue work uses a trail.
 
-### 28. Where is a party picker's page of eight cut?
+### 28. Where must the other cross-service links be proved? (c-453)
 
-- **Default:** Each picker keeps reading the role-filtered list the address book returns and cuts its page of eight in the frontend, as both frontends do today. The address book's page and pageSize parameters stay for its other callers, and its own list and the INS address book list page through the API.
-- **Affects:** req-594, req-611, req-2303; the picker rows on `feat/EUDPA-805-design-release-2-1-consignment-parties`, the list rows on `feat/EUDPA-707`, and inc-181.
-- **Why it is open:** Neither ruling settles it. Both readings give the trader the same eight rows, but they differ in what the frontend sends and in how a book of thousands behaves.
+- **Default:** configuration per service, proved in both Docker stacks. Other hand-overs are also walked by hand in CDP dev and test.
+- **Affects:** req-2533, req-2946, both already in place: the Address book item and the hand-off back to a journey.
+- **Why it is open:** the 27 November ruling reaches only the INS hand-over.
 
-### 29. Which CDP environments must the add-address hand-off be proved in?
+### 29. Does a changed plants page get accessibility and security specs? (c-454)
 
-- **Default:** Each environment gets what it can carry. The local Docker stack and the CI Docker stack are proved by the tests repo's existing hand-off specs, which run only where both frontends are up. CDP dev and test are proved by the same specs in the scheduled CDP run. CDP environments without both frontends, and the animals frontend's stub mode, are out, and the pickers there show no add control.
-- **Affects:** req-2309; the address book rows on `feat/EUDPA-707`.
-- **Why it is open:** The ruling plainly covers the hand-off, but records both the CDP environment and what counts as proof as unstated. One plain reading over-builds a CDP-only check nobody asked for; the other lets CDP go unproven.
+- **Default:** no. Plants' end-to-end and visual specs and its in-repo checks prove it.
+- **Affects:** req-2557, and req-2941, out of scope.
+- **Why it is open:** "same increment" reads as carrying the change or carrying the proof.
 
-### 30. Does the add-address page reached from the consignment contact page read "Save and select"?
+### 30. Does plants' strip name the commodity type? (c-455)
 
-- **Default:** "Save and select" on every add-address page reached from the journey, the contact route included, because that save also leaves the new branch address chosen on the page it returns to. One button on one page reads one way.
-- **Affects:** req-2310; the party add rows on `feat/EUDPA-805`.
-- **Why it is open:** The design names the add page's buttons once and never distinguishes the contact route, while the real service reads one way from a party picker and another from the contact page. Precedence cannot settle it: both labels come from the same today source describing two routes into one page.
+- **Default:** yes, once plants' commodity type page has been answered; tag and reference alone before then.
+- **Affects:** req-2568.
+- **Why it is open:** plants learns its type on its own page, not from the type question.
 
-### 31. What does the 17 November address wording ask of the plants Overview?
+### 31. Does an open reveal drop GOV.UK's border and indent? (c-464)
 
-- **Default:** The plants Overview is left as it is. The group heading "3. Addresses" satisfies the decision, the consignor, identification numbers and contact rows keep their own titles, and the "Consignment addresses" title and the "Complete consignment addresses" message are built only where plants already has an equivalent page or card.
-- **Affects:** req-2322; the plants Overview rows on `feat/EUDPA-696-design-release-2-1-overview-and-review`.
-- **Why it is open:** The ruling's ground, that plants matches animals on these pages, holds for the section heading but not for the task row: plants asks its party questions on three separate pages and has no consignment addresses page to title. Reading it as the animals structure would give plants a new page and a new row, which the 9 October afternoon ruling refuses.
+- **Default:** no. GOV.UK's standard reveal styling, with no custom CSS.
+- **Affects:** req-2610.
+- **Why it is open:** the toolbox ruling does not say whether restyling a component stays inside it.
 
-### 32. How does the addresses wording land on plants' check answers, which has no single addresses card?
+### 32. Does the saved-animals table hide unused identifier columns? (c-467)
 
-- **Default:** Plants takes the section heading "Addresses" only. Its party cards keep their own titles and their own outstanding-card messages, because plants asks for its own parties and keeps its own questions and data while mirroring animals' wording patterns.
-- **Affects:** req-2337; the plants review rows on `feat/EUDPA-696`.
-- **Why it is open:** The ruling gives plants the same wording on the ground that plants matches animals, but plants' review has no single addresses card to carry the title or its message.
+- **Default:** no. Every identifier the species is asked for has a column.
+- **Affects:** req-2620.
+- **Why it is open:** hiding columns changes how entered data is shown, for no visible reason.
 
-### 33. Which atypical items did the overview and review engineering review find?
+### 33. Does the "transporter added" banner re-case the name? (c-471)
 
-- **Default:** Only the items the ruling names are fixed: the standard page not found for a missing notification, the "Identification details" heading and its hierarchy, the review cards' accessible names, each header button's own form with Delete left a link, the live animals review tests reading cards by structure and role, the single heading on the review page object, the two shared test helpers losing their overloads, and the plants notification lifecycle specification's missing blank line. The four exceptions stay as they are.
-- **Affects:** req-2338; the rows on `feat/EUDPA-696-design-release-2-1-overview-and-review`.
-- **Why it is open:** The ruling sweeps up "every other atypical item the review found" without listing them, and the engineering review it answers is published outside this programme's sources.
+- **Default:** no; the name shows exactly as entered.
+- **Affects:** req-2639.
+- **Why it is open:** re-casing mangles "Ltd" and proper nouns.
 
-### 34. Does the notification list's status filter still offer "Action required"?
+### 34. Do the postcode lookup pages take the journey layout? (c-483)
 
-- **Default:** The select offers "Select one", "Submitted" and "Completed" only. "Action required" is added back in the same increment as the outstanding-actions banner the dashboard designs introduce.
-- **Affects:** req-2346; inc-137.
-- **Why it is open:** The 16 November ruling names the list's "Action required" tag, the view's warning and the review's error as what comes out, and does not name the status filter. Its general clause that nothing action-required is shown would take the option out, while the prototype's option list is look and feel and names three statuses.
+- **Default:** yes, strip and service title as on the add-address page. The lookup is blocked, so this costs nothing now.
+- **Affects:** req-2737, and req-647, req-648, req-2727 (inc-282).
+- **Why it is open:** the design draws them two ways.
 
-### 35. Does the notification card's date label read "Arrival date" or "Arrival date at port of entry"?
+### 35. Is a contact address asked in the animals sets? (c-484)
 
-- **Default:** The question page, check your answers and the overview task list read "Arrival date at port of entry" as the ruling says, while the notification card on the live animals, germinal products and plants lists reads "Arrival date", the words Design Release 2.1 gives the card.
-- **Affects:** req-1072; inc-130 and inc-172.
-- **Why it is open:** The ruling settles the two names the prototype uses on the question and review pages and says the chosen name holds everywhere, but names no page or component, and "Arrival date" on the card is neither of the two names it chose between.
+- **Default:** no, in live animals and germinal products. Plants keeps its contact page.
+- **Affects:** req-752 to req-769, req-771 to req-775, req-2187, req-2312, req-2313, req-2980, req-2981, req-2982.
+- **Why it is open:** V4 still lists it; the 26 November design and main have removed it.
 
-### 36. Which environments have their addresses collection dropped when the address book starts storing roles?
+### 36. Does "Save and continue" from an overview-opened page return to the overview? (c-487)
 
-- **Default:** After release, dev and test have the whole addresses collection dropped with CDP tooling and the address book restarted, and a local stack is restarted. perf-test and ext-test are dropped the same way when the change reaches them, because their addresses are test data too. Pre-production and production are not touched and no address is deleted there, the service not being live for traders yet. An address without a role found in either is left in place and no picker offers it.
-- **Affects:** req-2359; the address book rows on `feat/EUDPA-707`.
-- **Why it is open:** The ruling names dev, test and a local stack and is silent on every other environment, and a record saved before the change can still be held with no role at all.
+- **Default:** no; it goes on through the journey, as the merged EUDPA-774 work built.
+- **Affects:** req-766, req-768, req-808, req-1934.
+- **Why it is open:** the 9 October ruling and the design return to the overview; the merged work goes on.
 
-### 37. On an add reached from a notification journey, is the roles question shown with the hand-off's role ticked?
+### 37. Does the review drop the Additional details card? (c-491)
 
-- **Default:** The question is shown with the hand-off's party role ticked, so the page reads the same as the add reached from the address book, and a trader adding a consignor address that is also the place of origin can tick both before saving. The ticked role is kept whatever else the trader ticks, so the journey always gets an address it can select.
-- **Affects:** req-2360; the address book rows on `feat/EUDPA-707` and the party add rows on `feat/EUDPA-805`.
-- **Why it is open:** The tests repo says both things and proves neither, and the prototype's journey add suggests a type without reaching the roles question at all.
+- **Default:** no. The card stays in live animals; germinal shows none.
+- **Affects:** req-849, req-850, req-851.
+- **Why it is open:** the prototype builds the card but does not render it.
 
-### 38. Once the amend confirmation page exists, is "Amend this notification" a button or a link?
+### 38. Which tab words do the lists use? (c-497)
 
-- **Default:** It is a link to the notification's amend confirmation page, because nothing changes until the trader confirms there, exactly as Delete opens the delete confirmation page. Copy as new keeps a form of its own, Delete stays a link, and no action shares another action's form, in live animals, germinal products and plants alike.
-- **Affects:** req-1391, req-2364, req-2365; inc-120, inc-121, and the view header rows on `feat/EUDPA-696`.
-- **Why it is open:** The 19 November ruling describes a header in which Amend posts and starts the amendment at once, because the confirmation page is not built yet. Precedence cannot settle it: the ruling answers an engineering review of the header as built, and c-189's own rule points the other way.
+- **Default:** the 26 November prototype's: "Submitted", "Draft and Amend" and "Past", on all three lists.
+- **Affects:** req-1057 to req-1062, req-1099, req-2769 to req-2771, req-1082, req-1739; inc-135, inc-137, inc-142.
+- **Why it is open:** the 9 October afternoon ruling named the tabs as they were then.
 
-### 39. Where should the "answers differ from submitted" flag live, and is it published?
+### 39. Does "Past" hold completed notifications, or those two weeks past arrival? (c-498)
 
-- **Default:** The animals backend holds the flag on the notification record, in a name of its own choosing in its own conventions, and returns it on the fulfilments view beside the status the frontend already rehydrates from. It reads no for a notification that has never been submitted. It is not published on any notification event, so the event envelope and `trade-imports-schemas` stay as they are, as c-272 and c-296 settled for the notification's category.
-- **Affects:** req-2386; the amend review rows on `feat/EUDPA-696` and the animals backend.
-- **Why it is open:** The ruling settles that the flag is non-null and that the backend's shape owns it, but leaves the field, the never-submitted value and whether it is published open. The three choices build different things in the backend, the frontend's stub and the event schema.
+- **Default:** completed only, so the tab stays empty until a real source of completion exists.
+- **Affects:** req-2771, req-1082; inc-135, inc-137, inc-142.
+- **Why it is open:** the prototype's code and its description disagree.
 
-### 40. Does "every other atypical item" reach the exceptions the animals frontend's own record names?
+### 40. Does the address book get back its Branch tab and role? (c-499)
 
-- **Default:** Only the items the engineering review listed. Each exception the set's record names keeps its recorded reason and stays as it is, and the record goes on naming it, because each one rests on a real constraint or an accessibility need rather than on a preference.
-- **Affects:** req-2480; the animals frontend's recorded decisions. No row builds it while it is a question.
-- **Why it is open:** The ruling's sweep is defined by a list it does not carry, held in an engineering review that is not one of this programme's sources, while the frontend's own record names several departures from house rules as deliberate exceptions.
+- **Default:** no. Five roles and three tabs, as main has them since EUDPA-776.
+- **Affects:** req-2779, and req-1123, req-1124, req-1129, req-1139, req-1859, req-2040, req-2042.
+- **Why it is open:** the design draws one, but branch addresses went with the consignment contact.
 
-### 41. Does the one-form-each header rule give the plants frontend a Copy as new action?
+### 41. Does the edit banner re-case the name? (c-503)
 
-- **Default:** The park stands and each part gets what it has. In the live animals frontend Amend and Copy as new each post their own form and Delete is a link to the delete confirmation page outside both. In the plants frontend Amend posts its own form, Delete is the same link outside it, and no Copy as new is built.
-- **Affects:** req-2487; inc-120 and inc-125, and the plants view header rows on `feat/EUDPA-696`.
-- **Why it is open:** The 19 November ruling names three header actions in both frontends, but plants has only two. Reading it as introducing the action would build a capability the plants set parks under its own standing ruling; reading it as covering only what plants has leaves the later ruling partly unapplied.
+- **Default:** no; the name shows as saved.
+- **Affects:** req-2798, and req-1277 on the address-book branch.
+- **Why it is open:** the prototype's add and edit banners disagree.
 
-### 42. Which high-risk plants pages are signed off?
+### 42. Does the INS add page in journey mode read "Add an address"? (c-505)
 
-- **Default:** Each page's level is read from its own page identity module and nowhere else. A page whose module names no level is treated as below agreed, so no plants change is held as a change to a signed-off page unless that page's own module says `agreed` or `readyForLive`.
-- **Affects:** req-2490; inc-277, inc-278 and inc-279, and every row that changes a plants page.
-- **Why it is open:** An increment that changes a plants page has to know whether it is changing agreed behaviour, and the set's own records answer that for no page. The one source says both that the level decides it and that the level is not written down anywhere a reader can find it.
+- **Default:** yes, in both modes, with no caption; journey mode keeps its strip, roles question, buttons and Back link.
+- **Affects:** req-2801, and req-1209, req-1210 on the address-book branch.
+- **Why it is open:** the prototype never shows the INS add page in journey mode.
 
-### 43. Does the journey keep the trail it writes into each page's address?
+### 43. Do the confirmation pages capitalise every word of a Latin name? (c-510)
 
-- **Default:** The trail stays, in both frontends. A page's address carries the places already saved, newest last, in the service's own names. The review context is the review page's own place on that trail instead of `?change=1`, and no page of the merged save and continue work is reverted. New work specifies the return and Back rules by where the trader came from rather than by the query that records it.
-- **Affects:** req-2521; the journey rows on `feat/EUDPA-691-design-release-2-1-journey-foundation`.
-- **Why it is open:** The 9 October ruling kept `?change=1` and added no marker, and on its plain reading the trail that the save and continue work has since merged comes out. The other reading is that how a service remembers where a trader came from is its own architecture, which the ruling described rather than decided, and that the 10 November ruling deferred the return links to exactly that merged work. Nothing about where a saved page or a Back link goes turns on the answer.
+- **Default:** no; names show as the service holds them.
+- **Affects:** req-2859, and req-1443 on the manage-notifications branch.
+- **Why it is open:** the design's own review shows them as held.
 
-### 44. Which CDP environments must every link, redirect and form hand-over be proved in?
+### 44. Which delete message does the germinal list show? (c-511)
 
-- **Default:** Each hand-over resolves from the calling service's own configuration with no hard-coded host or port. It is proved in the local Docker stack and the CI Docker stack by the end-to-end suite walking the hand-over, and in CDP dev and test by one walk of the journey on the deployed services. CDP perf, pre-production and production take the same configuration and get no proof in this programme.
-- **Affects:** req-2533; the type question rows on `feat/NO_JIRA-design-release-2-1-type-question-and-templates`, and every cross-service hand-over.
-- **Why it is open:** The ruling names CDP as a whole, and the programme deploys to some CDP environments and not others, while the two Docker stacks have an end-to-end suite that can prove a link and CDP has none.
-
-### 45. Does a changed plants page get accessibility and security specs?
-
-- **Default:** Animals and INS pages keep their existing accessibility and security suites. A plants page this programme changes is proved by the plants domain's end-to-end and visual specs and by the plants frontend's own in-repo checks. No plants accessibility specs or attacking security specs are written. The full attacking run keeps failing its no-traffic gate on the plants backend context, so only per-domain attacking runs are used, and that gap goes to this report.
-- **Affects:** req-2557; every row that changes a plants page as well as an animals one.
-- **Why it is open:** The owner's rule that plants takes the same change in the same increment can be read as carrying the animals proof across, which would mean writing plants an accessibility suite and a security corpus, or as carrying only the change. Neither the rulings nor the tests repo's own documentation settles it.
+- **Default:** today's live animals message while built from main. It takes "Notification has been deleted." in inc-126, together with the live animals list.
+- **Affects:** req-2860, inc-126.
+- **Why it is open:** the 27 November ruling copies the germinal list from main, and manage-notifications changes the live animals message.
 
 ## Waiting on others
 
-Ten adopted requirements wait on somebody outside the programme. A blocker is never a question: the design is settled, and the row builds once somebody acts.
+247 adopted requirements wait on someone outside the build loop.
 
 | Requirement | Waiting for | Increment |
 |---|---|---|
-| req-051 | The EUDPA-774 save and continue work merging to the animals frontend's main. Who: that work's owners. Until then the origin page's exits stay as they are | The origin page's return-links row on `feat/EUDPA-695-design-release-2-1-origin-page` |
-| req-456 | The INS address lookup becoming a real feature. Today only the EUDPA-390 spike exists, gated to dev and local on a standalone page and not wired in. Who: the INS backend's owners. Transporter management no longer blocks it | The commercial transporter's Northern Ireland address search on `feat/EUDPA-781-design-release-2-1-transporters` |
-| req-457 | The same INS address lookup. Built with the commercial transporter's address search and re-distilled with it | The same row on `feat/EUDPA-781` |
-| req-458 | Parked as concept work by the 9 November ruling; the 13 November design ruling leaves the search-only layout deferred with it. When it is planned it needs design's answer to question 10 and the lookup as a real feature | inc-194 (deferred) |
-| req-647 | Parked as concept work (9 November), and waiting on the INS address lookup | inc-194 (deferred), with the address search rows on `feat/EUDPA-707-design-release-2-1-address-book` |
-| req-648 | The same | inc-194, with `feat/EUDPA-707` |
-| req-649 | Parked as concept work; when planned, design answers question 10 on the search-only layout, and the lookup must be real | inc-194 |
-| req-650 | Parked as concept work, and waiting on the INS address lookup | inc-194, with `feat/EUDPA-707` |
-| req-651 | The same | inc-194, with `feat/EUDPA-707` |
-| req-652 | Parked as concept work; when planned, design answers question 10, and the lookup must be real | inc-194 |
+| req-951, 954, 955, 971, 972, 980, 981, 1023, 1025, 1848, 1850, 1905, 2027 | The INS dashboard's requirements (Sam, 9 October); req-1905 also on the overall home | inc-128 |
+| req-967, 983 to 989, 993 to 996, 1014, 1015, 1019, 1022, 2766 | The INS dashboard's requirements; req-988 and req-996 also on the banner and the outstanding-items rule | inc-132 |
+| req-990, 991, 992 | The INS dashboard's requirements | inc-133 |
+| req-973, 975, 976, 978 | The INS dashboard's requirements; req-973 and req-976 also on the banner | inc-134 |
+| req-974, 997, 998, 999, 1000, 1002 | The INS dashboard's requirements | inc-143 |
+| req-977, 1001 | The authorities' inspection and delay outcomes | inc-143 |
+| req-1004 to 1010, 1012, 1013 | The INS dashboard's requirements | inc-144 |
+| req-1011 | The authorities' inspection selection feed | inc-144 |
+| req-979, 2193 | The INS dashboard's requirements; req-2193 also on the outstanding-items rule | inc-145 |
+| req-982 | Plants publishing to the INS read model | inc-146 |
+| req-1039, 1040 | The INS dashboard's requirements; req-1040 also on the banner | inc-139 |
+| req-1081, 1085 | The authorities' outcome feed (PIMS Dynamics) | inc-142 |
+| req-1082, 1739 | A real source of completion (Sam, 16 November) | inc-142 |
+| req-1735 | The INS dashboard's requirements and the outcome feed | inc-142 |
+| req-910, 2114 | A real source of completion | overview-and-review branch |
+| req-2334 | The outstanding-actions banner design | overview-and-review branch |
+| req-837, 867 | The EUDPA-774 save and continue work merging | overview-and-review branch |
+| req-051, 2124 | The EUDPA-774 save and continue work merging | origin-page branch |
+| req-2034, 2035, 2036 | The plants backend | inc-200 |
+| req-456, 457, 1819, 2641 to 2647 | The INS address lookup becoming real; address search parked | transporters branch |
+| req-2172 | Approved transporters, parked (Ian, 6 November) | transporters branch |
+| req-647, 648, 650, 651, 1217, 1218 | The INS address lookup; address search parked | address-book branch |
+| req-458, 652, 653, 654, 1214 | Address search parked; the INS address lookup | inc-194 (deferred) |
+| req-2725 to 2730, 2802 to 2829 | Address search parked; the INS address lookup | inc-282 |
+| req-1656, 2131, 2137 | MDM serving commodity types and the catalogue that adds them | commodities-and-reason branch |
+| req-167, 290, 291, 814 to 818, 1291 to 1298, 1300 to 1314, 1316 to 1334, 1336, 1338, 1340, 1343 to 1354, 1356, 1358 to 1361, 1363 to 1365, 1367 to 1382, 2048, 2049, 2052, 2107, 2202, 2632, 2633, 2842 to 2856 | Sam picking templates up again | type-question-and-templates branch |
+| req-1875, 1876 | Sam picking templates up again | inc-186 (deferred) |
 
 ## Settled without a question
 
-397 conflicts were settled by precedence. This run's challenge settled none of the 45 questions, so no question a ruling answered is written as a question here. 67 conflicts are new since the last report: c-292, c-320, c-334, c-347, c-351, c-358 to c-360, c-366, c-371, c-374 to c-378, c-380, c-382, c-383, c-385 to c-387, c-391 to c-393, c-395 to c-397, c-400 to c-413, c-416 to c-418, c-420, c-422 to c-432, c-435 to c-437, c-439 to c-442, c-444, c-445, c-448, c-449 and c-452. c-372 moved the other way: it was settled before and is now question 20.
+The challenge settled no question this run. Every row below was settled by precedence.
 
-Settled-by key: dates are rulings (7 Oct and 9 Oct are Sam's; 9 Oct pm is Sam's afternoon ruling; 9 Oct tpl is Sam's templates ruling; 14 Oct is Paul's; 5 Nov is Paul's; 6 Nov, 11 Nov, 16 Nov (Ian), 23 Nov and 25 Nov are Ian's; 9 Nov ID is the interaction designer's; 13 Nov is design's; the rest are Sam's). DR2.1 is the prototype and its traces and specs; DR1 is the parity notes and backlog; V4 is the data fields page; repo is a service's own code over a stale trace.
+Settled-by key: dates are rulings (Sam unless named). DR2.1 is the 26 November prototype. DR1 is the DR1 parity judgements. V4 is the data fields page. "Repo" is the named repo's own code. "tpl" is the 9 October templates ruling; "pm" the 9 October afternoon ruling; "9 Nov ID" the interaction designer.
+
+### New in this run
+
+| Decision | Settled by | Conflict |
+|---|---|---|
+| Germinal total gross weight is asked per species on Commodity details; no consignment weight page is built | 27 Nov | c-461 |
+| The germinal list stays a copy of today's live animals list; each animals-dashboard reframe row changes the germinal copy in the same increment | 27 Nov | c-496 |
+| Cancelling an amendment is confirmed on its own page, not a dialog | 9 Nov ID | c-521 |
+
+### Settled at the 27 November re-distil
+
+| Decision | Settled by | Conflict |
+|---|---|---|
+| Template mode checks an entered answer and accepts a blank | 26 Oct, 27 Nov, tpl | c-308 |
+| Germinal counts are per species | 27 Nov | c-327 |
+| No germinal exit date | 27 Nov | c-331 |
+| The germinal confirmation names the ITAHC; plants names none | 27 Nov | c-364 |
+| Same checks reach hard stops plus mandatory-to-proceed answers | 27 Nov | c-372 |
+| The INS hand-over is configured per service and proved in the Docker stacks | 27 Nov | c-373 |
+| Other ports sit in their own group after rail | 9 Oct | c-384 |
+| Both guards refuse a commercial transporter outside Northern Ireland | 6 Nov, repo | c-389 |
+| The picker cuts its page of eight in the frontend | 27 Nov | c-394 |
+| The add-address hand-off is proved as the INS hand-over is | 27 Nov | c-398 |
+| No contact route; the button reads "Save and select" | DR2.1 | c-399 |
+| The card reads "Arrival date" | 27 Nov | c-421 |
+| Journey add asks "What else should this address be used for?" | INS front door | c-434 |
+| Amend is a link once its confirmation page exists | 25 Nov b | c-438 |
+| The answersDifferFromSubmitted flag sits on the record, unpublished | 19 Nov, repo | c-443 |
+| Plants gains Copy as new | 25 Nov b | c-447 |
+| Health certificate wording sits in the inset | DR2.1 | c-456 |
+| "Opens in new tab" text sits inside the link | Accessibility | c-457 |
+| Commodity names come from MDM | 11 Nov | c-458 |
+| Packages are asked per V4's list | 11 Nov | c-459 |
+| "Error: " title prefix | Rulings | c-460 |
+| Germinal temperature is optional | V4 | c-462 |
+| Reveals are open without JavaScript | pm | c-463 |
+| V4's identifiers only | 11 Nov | c-465 |
+| "Equine name" and "Microchip/transponder" labels | 11 Nov | c-466 |
+| "Error: " title prefix | Rulings | c-468 |
+| Germinal transit countries are asked | 10 Nov | c-469 |
+| "Save and return to template" goes to the template review | tpl | c-470 |
+| The commercial transporter is stored as XI, over the tests repo | 6 Nov | c-472 |
+| A document's Remove opens a confirmation page | DR2.1 | c-473 |
+| Remove names the document by its reference | DR2.1 | c-474 |
+| The health certificate sentence | DR2.1 | c-475 |
+| "Error: " title prefix | c-006 | c-476 |
+| The document delete page sits in the service's own path | 9 Oct | c-477 |
+| Remove on consignment address rows | DR2.1 | c-478 |
+| The permanent address list is per animal | DR2.1 | c-479 |
+| Fraud warning on the place of destination picker | DR2.1 | c-480 |
+| Separate find-an-address pages | DR2.1 | c-481 |
+| "Consignor" caption | Repo | c-482 |
+| The plants strip uses plants' own labels | pm | c-485 |
+| No germinal gross weight row on the overview | 27 Nov | c-486 |
+| Five review sections | DR2.1, repo | c-488 |
+| An "Actions" menu built with the MoJ button menu | DR2.1 | c-489 |
+| "Draft" tag grey, "Submitted" blue | DR2.1 | c-490 |
+| The review shows gross weight per species | 27 Nov | c-492 |
+| Focus moves to the error summary | Accessibility | c-493 |
+| Drill-downs show no "Action required" | 16 Nov | c-494 |
+| The germinal list ships now as a copy of today's live animals list | 27 Nov | c-495 |
+| Pagination with ellipses | 23 Nov | c-500 |
+| The INS address book follows DR2.1 | DR2.1 | c-501 |
+| Branch type and role added back | 5 Nov, DR2.1 | c-502 |
+| The edit page asks the roles | DR2.1 | c-504 |
+| UK postcode search for consignee, importer and place of destination | Rulings | c-506 |
+| Find-an-address waits on the lookup | Rulings | c-507 |
+| Addresses come from the INS backend lookup | Ruling | c-508 |
+| Search by postcode only | DR2.1 | c-509 |
+| The amend confirmation takes the design's wording | 27 Nov | c-512 |
+| "Notification has been deleted." | 9 Oct | c-513 |
+| The record holds a list of commodities | Repo | c-514 |
+| No consignment contact party | Repo | c-515 |
+| Unweaned is asked per V4's list | 11 Nov | c-516 |
+| Completing Consignment addresses saves to the overview | DR2.1 | c-517 |
+| Cancel amendment is its own page | 9 Nov ID | c-518 |
+| INS page titles use a hyphen; already met | Repo | c-519 |
+| Germinal "Change number of commodities" | 11 Nov | c-520 |
+
+### Settled earlier, still standing
 
 | Decision | Settled by | Conflict |
 |---|---|---|
@@ -399,10 +479,10 @@ Settled-by key: dates are rulings (7 Oct and 9 Oct are Sam's; 9 Oct pm is Sam's 
 | Origin page keeps all three return controls | DR1 | c-003 |
 | Saving origin with no country lands on the overview | 7 Oct | c-004 |
 | Origin page keeps its server checks; a refused save stores nothing | 7 Oct | c-005 |
-| Accessibility and no-JavaScript duties override DR2.1 only as far as they need to | 7 Oct, 9 Oct pm | c-006 |
+| Accessibility and no-JavaScript duties override DR2.1 only as far as they need to | 7 Oct, pm | c-006 |
 | A start from the all-types dashboard asks "What are you importing?" first, in the INS front door | DR2.1, 9 Oct | c-007 |
-| Region code prefix is drawn on the server; design snagging has since built the live prefix | 9 Oct pm | c-008 |
-| Country control stays the accessible autocomplete: no hint, "Search for a country" placeholder | 9 Oct pm | c-009 |
+| Region code prefix is drawn on the server | pm | c-008 |
+| Country control stays the accessible autocomplete: no hint, "Search for a country" placeholder | pm | c-009 |
 | Region code hint changes, box caps at 5 characters, server check stays | 7 Oct | c-010 |
 | Internal reference hint drops the 58-character sentence; the limit stays | 7 Oct | c-011 |
 | Commodity search is the separate ticket's work: nothing here builds or changes the control | 10 Nov | c-012 |
@@ -413,17 +493,17 @@ Settled-by key: dates are rulings (7 Oct and 9 Oct are Sam's; 9 Oct pm is Sam's 
 | "Error: " title prefix stays | 7 Oct | c-017 |
 | Commodity details still redirects when no commodity is chosen | 7 Oct | c-018 |
 | Live-animal number of packages stays optional but validated | 7 Oct | c-019 |
-| Cat and dog species take DR2.1's names | DR2.1 | c-020 |
+| Cat and dog species take DR2.1's names, as MDM serves them | DR2.1 | c-020 |
 | After a change from check answers, both commodity pages return there | 7 Oct | c-021 |
-| Germinal "Total gross weight" is each line's gross weight in kg: stored and shown, not published | 9 Oct, V4 | c-022 |
+| Germinal "Total gross weight" is each line's gross weight in kg: stored and shown, not published | 9 Oct, V4, 27 Nov | c-022 |
 | Answers stay stored as service codes | Rulings | c-023 |
 | Off-list values are refused; a refused submit saves nothing | 7 Oct | c-024 |
 | One shared destination country and port of exit, prefilled in each reveal | DR1, 9 Oct | c-025 |
-| Destination select built now from reference-data's GBNAG_SPS_EX countries, labelled "<territory> (<parent>)" | 9 Oct | c-026 |
-| Both port of exit selects offer the whole ports-of-entry list; no exit-only list | 9 Oct | c-027 |
+| Destination select built from reference-data's GBNAG_SPS_EX countries, labelled "<territory> (<parent>)" | 9 Oct | c-026 |
+| Both port of exit selects offer the whole ports-of-entry list | 9 Oct | c-027 |
 | "Error: " title prefix stays | 7 Oct | c-028 |
 | Reason page heading becomes "Main import reason" | DR2.1 | c-029 |
-| Reason page Back goes to the previous page, or the hub | DR2.1 | c-030 |
+| Reason page Back goes to the previous page, or the overview | DR2.1 | c-030 |
 | Reason page continues to Commodity details | DR2.1 | c-031 |
 | Destination country placeholder "Select one", no divider | DR2.1 | c-032 |
 | Port of exit placeholder "Select one", no divider | DR2.1 | c-033 |
@@ -439,18 +519,16 @@ Settled-by key: dates are rulings (7 Oct and 9 Oct are Sam's; 9 Oct pm is Sam's 
 | Commodity details refuses a count below the saved records | DR1 | c-043 |
 | Permanent address leaves the identification page for its own page | 7 Oct | c-044 |
 | Arrival and transit keep every server-side field check | 7 Oct | c-045 |
-| The country of origin question stays one question with its own page | 7 Oct | c-046 |
 | Pages keep submitting and storing codes | Rulings | c-047 |
 | Port of entry and transit lists built from MDM content; ports ordered airports, seaports, rail | 9 Oct | c-048 |
-| Arrival date is the expected arrival at the port of entry | 7 Oct | c-049 |
+| Arrival date reads "Arrival date at port of entry" everywhere, review included | 17 Nov, 27 Nov | c-049 |
 | Arrival date hint keeps its wording with an example inside the window | 7 Oct | c-050 |
-| Arrival details keeps its own page and its real path | 9 Oct | c-051 |
-| Each transporter row gets "View details", pointing at the address book; built now | DR2.1, 6 Nov | c-052 |
-| Status strip follows DR2.1 page by page on the transporter pages; what journey mode carries is c-390 | DR2.1 | c-053 |
-| Private transporter country list is the UK plus reference-data's GBNAG_SPS_EX countries as MDM serves them; built now | 9 Oct, 6 Nov, 11 Nov | c-054 |
+| Each transporter row gets "View details", pointing at the address book | DR2.1, 6 Nov | c-052 |
+| Status strip follows DR2.1 page by page on the transporter pages; journey mode is c-390 | DR2.1 | c-053 |
+| Private transporter country list is the UK plus GBNAG_SPS_EX countries as MDM serves them | 9 Oct, 6 Nov, 11 Nov | c-054 |
 | A commercial transporter with a non-Northern Ireland country is refused | 7 Oct | c-055 |
-| Add transporter forms keep DR1's return controls and add "Cancel and return to dashboard"; built now | DR1, 6 Nov | c-056 |
-| Approved transporters are parked: the eight shipped records stay exactly as they are | 6 Nov, 11 Nov | c-057 |
+| Add transporter forms keep DR1's return controls and add "Cancel and return to dashboard" | DR1, 6 Nov | c-056 |
+| Approved transporters are parked: the eight shipped records stay as they are | 6 Nov, 11 Nov | c-057 |
 | Added transporters stay scoped to the organisation, in both sets | Rulings | c-058 |
 | Documents page stays at accompanying-documents | 9 Oct | c-059 |
 | Documents Back returns to the review when come from it, else the overview | DR2.1 | c-060 |
@@ -458,11 +536,11 @@ Settled-by key: dates are rulings (7 Oct and 9 Oct are Sam's; 9 Oct pm is Sam's 
 | Row drops the leading "An" | DR2.1 | c-062 |
 | Document reference hint removed | DR2.1 | c-063 |
 | Document reference keeps its 58-character limit | 7 Oct | c-064 |
-| Document references accept punctuation; the backend drops its pattern | DR2.1 | c-065 |
+| Document references accept punctuation; frontend and backend agree | DR2.1 | c-065 |
 | Document type travels as the service code | 7 Oct | c-066 |
 | Date of issue hint "For example, 27/3/2026" | DR2.1 | c-067 |
 | Size bullet opens "files that are smaller than" | DR2.1 | c-068 |
-| File limit becomes 50MB everywhere | DR1, DR2.1 | c-069 |
+| File limit is 50MB everywhere; already built | DR1, DR2.1 | c-069 |
 | File-type bullet drops the leading "a" | DR2.1 | c-070 |
 | Stated file rules stay enforced | 7 Oct | c-071 |
 | GOV.UK file upload component stays | DR1 | c-072 |
@@ -475,32 +553,31 @@ Settled-by key: dates are rulings (7 Oct and 9 Oct are Sam's; 9 Oct pm is Sam's 
 | View file stays for clean documents | 7 Oct | c-079 |
 | Save and continue stops waiting for scans; a rejected document still holds | DR2.1 | c-080 |
 | Upload documents continues to consignment addresses, or back to where the trader came from | DR2.1 | c-081 |
-| Save and return checks and saves a part-filled document | DR2.1 | c-082 |
-| Upload documents link opens once the origin is answered | DR2.1 | c-083 |
+| Save and return checks and saves a part-filled document, in live animals and germinal | DR2.1, 27 Nov | c-082 |
+| Upload documents link opens once the origin is answered; already built | DR2.1 | c-083 |
 | Documents are stored durably by the backend | 7 Oct | c-084 |
 | Document types drop "Health certificate" | 7 Oct | c-085 |
-| The addresses page keeps one page for every party | DR2.1 | c-086 |
 | Roles and addresses keeps its summary list, with full addresses | DR1 | c-087 |
-| Fraud warning ends with a full stop | DR2.1 | c-088 |
+| Fraud warning has no full stop | DR2.1 | c-088 |
 | Each empty row's add link names what it adds | DR2.1 | c-089 |
 | Answered party rows show the whole address | DR2.1 | c-090 |
 | Germinal products are their own set with no CPH page; live animals still exempts only 0101 and 01061900 | 9 Oct | c-091 |
-| Roles and addresses continues to contact address, or the overview once complete | DR2.1, 9 Oct | c-092 |
+| Consignment addresses continues to the review, or the overview when opened from it | DR2.1, 9 Oct | c-092 |
 | Picker's "Add a new address" looks and sits as drawn | DR2.1 | c-093 |
-| Every picker pages at eight with a "Selected address" inset, searched on the server, with no live filtering | 25 Nov, 23 Nov, 9 Oct pm | c-094 |
+| Every picker pages at eight with a "Selected address" inset, searched on the server, with no live filtering | 25 Nov, 23 Nov, pm | c-094 |
 | Picker count wording follows DR2.1 | DR2.1 | c-095 |
 | Picker address column shows one line per address line | DR2.1 | c-096 |
-| Animals picker rows get a "View" link to the INS address book; plants' pickers keep their own | DR2.1, 9 Oct pm | c-097 |
-| A blank picker save returns to roles and addresses, party unchanged; an address not in the book is refused | DR2.1 | c-098 |
+| Animals picker rows get a "View" link to the INS address book; plants' pickers keep their own | DR2.1, pm | c-097 |
+| A blank picker save returns to consignment addresses, party unchanged; an address not in the book is refused | DR2.1 | c-098 |
 | Party pickers end with the primary button alone | DR1 | c-099 |
 | DR1's address-page blocks do not stop these differences | 7 Oct | c-100 |
-| Records with no role yet appear on every picker; plants' pickers filter by role too | DR1, 9 Oct pm | c-101 |
-| The place of origin picker takes the same search box, hint and server search as the other four | 9 Oct pm, DR2.1's own withdrawal | c-102 |
-| The party is named "Consignor", in animals and plants | DR2.1, 9 Oct pm | c-103 |
-| Roles and addresses completes when every shown section is complete | DR2.1 | c-104 |
-| Picker search has a medium label and an icon button "Search", in animals and plants | DR2.1, 9 Oct pm | c-105 |
+| Records with no role yet appear on every picker; plants' pickers filter by role too | DR1, pm | c-101 |
+| The place of origin picker takes the same search box, hint and server search as the other four | pm, DR2.1 | c-102 |
+| The party is named "Consignor", in animals and plants | DR2.1, pm | c-103 |
+| Consignment addresses completes when every shown section is complete | DR2.1 | c-104 |
+| Picker search has a medium label and an icon button "Search", in animals and plants | DR2.1, pm | c-105 |
 | Journey add-address stays on the INS address book through today's handshake | Rulings | c-106 |
-| Manual-entry Country list built with what MDM serves; "Select one" placeholder built | 9 Oct | c-107 |
+| Manual-entry Country list built with what MDM serves; "Select one" placeholder | 9 Oct | c-107 |
 | Add-address keeps the address book's length and email checks | 7 Oct | c-108 |
 | Add-address keeps GOV.UK accessibility patterns | 7 Oct | c-109 |
 | CPH page keeps "Save and continue" alone | DR1 | c-110 |
@@ -509,20 +586,19 @@ Settled-by key: dates are rulings (7 Oct and 9 Oct are Sam's; 9 Oct pm is Sam's 
 | CPH page can be saved blank | DR2.1 | c-113 |
 | Part-filled CPH numbers are still checked | 7 Oct | c-114 |
 | CPH Back and Save go to consignment addresses | DR2.1 | c-115 |
-| Addresses page continues to contact address; from the overview it returns there | DR2.1, 9 Oct | c-116 |
+| Consignment addresses never goes on to the CPH or permanent address page; from the overview it returns there | DR2.1, 9 Oct | c-116 |
 | CPH help's second paragraph takes DR2.1's wording and link | 7 Oct | c-117 |
-| The permanent address keeps its own page rather than returning to identification | 7 Oct | c-118 |
-| Permanent address page and same-as-destination are built now | 7 Oct | c-119 |
-| Contact page's sentence, structure and add-a-branch are built now | 7 Oct | c-120 |
+| Permanent address page and same-as-destination are built | 7 Oct | c-119 |
+| Contact page's sentence, structure and add-a-branch | 7 Oct | c-120 |
 | Contact page offers only the organisation's branch addresses | DR2.1, DR1 | c-121 |
 | A blank contact save shows "Select a contact address" | DR2.1 | c-122 |
 | Contact page continues to review on the first pass; from the overview it returns there | DR2.1, 9 Oct | c-123 |
 | Contact stays complete when the address-book record goes | 7 Oct | c-124 |
 | Contact page drops the "Current contact address" card; the edit route stays | DR2.1, 9 Oct | c-125 |
 | A new permanent address keeps its county and fields | 7 Oct | c-126 |
-| Hub "Cancel amend" goes to the cancel-amendment confirmation page | 9 Oct pm | c-127 |
-| Each notification keeps its own hub, in each set's own path | Rulings | c-128 |
-| Hub keeps the GOV.UK Task list component | 7 Oct | c-129 |
+| Overview "Cancel amend" goes to the cancel-amendment confirmation page | pm | c-127 |
+| Each notification keeps its own overview, in each set's own path | Rulings | c-128 |
+| Overview keeps the GOV.UK Task list component | 7 Oct | c-129 |
 | Transport card shows the transporter's stored country | 7 Oct | c-130 |
 | Submitted view shows the notification's own answers | 7 Oct | c-131 |
 | Declaration submit keeps its completeness re-check | 7 Oct | c-132 |
@@ -530,41 +606,40 @@ Settled-by key: dates are rulings (7 Oct and 9 Oct are Sam's; 9 Oct pm is Sam's 
 | Review names unfinished commodity and species answers as drawn | DR2.1 | c-134 |
 | Review error summary has one entry per unfinished card | 7 Oct | c-135 |
 | Amend review opens without errors; an incomplete amendment is refused with errors | 7 Oct | c-136 |
-| The review keeps one card per section rather than the prototype's split | DR2.1 | c-137 |
 | Review drops row-level "Edit details" links | 7 Oct | c-138 |
 | Review keeps errors from real validation | 7 Oct | c-139 |
 | Review keeps virus-scan errors | 7 Oct | c-140 |
 | Transit countries move into Arrival details on the review | DR2.1 | c-141 |
 | Subsection headings above review cards go | DR2.1 | c-142 |
-| "Return to your dashboard" and the view's Back go to the set's own notification list | 9 Oct pm, 9 Oct tpl | c-143 |
+| "Return to your dashboard" and the view's Back go to the set's own notification list | pm, tpl | c-143 |
 | A trader with something left to do amends from the view; the action-required view is withdrawn (c-410) | 7 Oct, 16 Nov | c-144 |
 | INS root becomes the DR2.1 overall dashboard, blocked with the summary information; today's table stays meanwhile | DR2.1, 9 Oct | c-145 |
-| Home title "Dashboard - Import notification service - GOV.UK" built now; caption and h1 wait with the overall home | DR2.1, 9 Oct pm | c-146 |
-| "Create new" always shows and goes to the type choice, built now on today's home | 7 Oct, 9 Oct tpl | c-147 |
+| Home title "Dashboard - Import notification service - GOV.UK" built now; caption and h1 wait with the overall home | DR2.1, pm | c-146 |
+| "Create new" always shows and goes to the type choice, on today's home | 7 Oct, tpl | c-147 |
 | Glance counts come from the organisation's real notifications, and wait on the INS dashboard requirements | 7 Oct | c-148 |
 | "Action needed" means a submitted notification missing a required document or identifier; its status stays Submitted | DR2.1, 9 Oct, 16 Nov | c-149 |
 | No "Messages" link or unread count | 7 Oct | c-150 |
 | Plants "View dashboard" links to the real plants dashboard | 7 Oct | c-151 |
-| Plants glance cards link like the others; the cards and counts wait | 7 Oct, 9 Oct pm | c-152 |
+| Plants glance cards link like the others; the cards and counts wait | 7 Oct, pm | c-152 |
 | "Log out" stays | 7 Oct | c-153 |
 | Drill-down cards keep status-driven links | DR1 | c-154 |
 | Drill-downs apply the chosen search and sort | 7 Oct | c-155 |
 | Home and drill-downs take DR2.1's styling | DR2.1 | c-156 |
 | Drill-downs are always sorted, "Newest first" by default | DR1 | c-157 |
 | Per-category glance cards replace DR1's band | 7 Oct | c-158 |
-| Each list stays in its own frontend at its set root, reframed in place; the animals backend's list gains the category filter | 9 Oct pm, 9 Oct tpl | c-159 |
+| Each list stays in its own frontend at its set root, reframed in place; the animals backend's list gains the category filter | pm, tpl | c-159 |
 | Drafts keep Resume, Copy as new and Delete; submitted cards keep status actions; plants mirrors with its own | 7 Oct, DR1 | c-160 |
 | List is always sorted: "Newest first", "Oldest first", "Arrival date" | DR1 | c-161 |
 | Search, sort and filters really change the list, through one GET form | 7 Oct | c-162 |
 | Page links keep tab, sort, search and filters | 7 Oct | c-163 |
-| Card writes the arrival date as "21 June 2026" | DR2.1 | c-164 |
-| Amending notifications sit in "In progress" with an "Amending" tag | 7 Oct | c-165 |
+| Card writes the arrival date as "2 December 2026" | DR2.1 | c-164 |
+| Amending notifications sit with the drafts, tagged yellow "Amend" | DR2.1 | c-165 |
 | Unreadable or reversed filter dates show GOV.UK errors | 7 Oct | c-166 |
 | DR1's deferred dashboard rows do not hold back DR2.1 | Rulings | c-167 |
 | Address book shows 8 a page, asked for through the list API's page size (1 to 100, default 25) | DR2.1, 5 Nov, 25 Nov | c-168 |
-| Address book search runs on the server; design ruled it does not filter as the trader types | 9 Oct pm, 13 Nov | c-169 |
+| Address book search runs on the server; it does not filter as the trader types | pm, 13 Nov | c-169 |
 | Address book honours same-site and approved cross-origin returns | 7 Oct | c-170 |
-| INS list drops controls DR2.1 lacks; the banner stays and stops hiding itself | 7 Oct, 9 Oct pm | c-171 |
+| INS list drops controls DR2.1 lacks; the banner stays and stops hiding itself | 7 Oct, pm | c-171 |
 | Address book stays persisted and organisation-wide | 7 Oct | c-172 |
 | Address view reads the book only | 7 Oct | c-173 |
 | View link keeps the visually hidden name | 7 Oct | c-174 |
@@ -575,35 +650,33 @@ Settled-by key: dates are rulings (7 Oct and 9 Oct are Sam's; 9 Oct pm is Sam's 
 | Length limits and email check stay | 7 Oct, V4 | c-179 |
 | Error-state accessibility stays | 7 Oct | c-180 |
 | Addresses persist; an edit keeps every role the address has | 7 Oct | c-181 |
-| A template keeps the notification's own answer shape | 9 Oct | c-182 |
 | Templates are stored by the backend, with no seeded examples | Rulings | c-183 |
 | A template is private to the user who saved it | DR2.1 | c-184 |
-| Manage templates has no sort control; the sort is dropped with templates (9 Nov ID) | 9 Oct pm, 9 Nov ID | c-185 |
+| Manage templates has no sort control; the sort is dropped with templates | pm, 9 Nov ID | c-185 |
 | A template saves each party's address separately | 7 Oct | c-186 |
 | Using a template seeds the transporter's country | 7 Oct | c-187 |
 | No saving a template by GET | 7 Oct | c-188 |
 | Amend, cancel amendment, copy and delete change state by form posts | Rulings | c-189 |
 | Amend and cancel-amendment confirmations are pages; the dialogs are dropped outright | 9 Nov ID | c-190 |
-| Confirming an amendment lands on the amend review | DR2.1 | c-191 |
+| Confirming an amendment lands on the amend review; already built | DR2.1 | c-191 |
 | Amendment edits are saved to the record | 7 Oct | c-192 |
 | Delete stays a soft delete | 7 Oct | c-193 |
 | Dashboard cards keep status-driven actions | DR1 | c-194 |
 | DR2.1 copy adopted on the delete and cancel-amend pages | DR1 | c-195 |
 | A copy carries exactly DR2.1's list | DR2.1 | c-196 |
 | Copying mid-amendment copies the submitted version | DR2.1 | c-197 |
-| Guards, delete and view Back go to the set's own notification list | 9 Oct pm | c-198 |
-| The amend review keeps the notification's own route | 9 Oct | c-199 |
+| Guards, delete and view Back go to the set's own notification list | pm | c-198 |
 | Continue on the amend review is held while anything is invalid, with an error summary | 7 Oct | c-201 |
 | Reason for import is asked before commodity details | DR2.1, 9 Oct | c-202 |
-| CPH number is reached only from its roles and addresses row | DR2.1 | c-203 |
+| CPH number is reached only from its consignment addresses row | DR2.1 | c-203 |
 | Pages opened from the overview return to it on save | DR2.1, 9 Oct | c-204 |
-| Opening run always ends on the review page; plants takes the same | DR2.1, 9 Oct pm | c-205 |
+| Opening run always ends on the review page; plants takes the same | DR2.1, pm | c-205 |
 | Back follows the page's context, read from the service's own state | DR2.1 | c-206 |
 | Origin page offers the overview return controls | 7 Oct, DR1 | c-207 |
 | Pickers, CPH and permanent address pages end with the primary button alone | 7 Oct, DR1 | c-208 |
-| Contact page return controls say "hub", as drawn | 7 Oct | c-209 |
+| No contact page is left to carry hub-worded controls | 7 Oct, DR2.1 | c-209 |
 | While amending, overview pages get the amend ending; pickers, CPH and permanent address show "Save and return" | 7 Oct | c-210 |
-| **Replaced:** the soft save is withdrawn. On every page with both buttons, "Save and return to overview" makes exactly the same checks as "Save and continue", with no page an exception. How far those checks reach is question 20 | 26 Oct | c-211 |
+| **Replaced:** the soft save is withdrawn. On every page with both buttons, "Save and return to overview" makes the same checks as "Save and continue". How far they reach is settled by c-372 | 26 Oct, 27 Nov | c-211 |
 | Log out stays last in the navigation on every frontend | 7 Oct | c-212 |
 | Address book item goes to the INS address book from both frontends and both sets | 9 Oct | c-213 |
 | Logo links to gov.uk; service name to each set's or frontend's own dashboard home | 9 Oct | c-214 |
@@ -614,7 +687,7 @@ Settled-by key: dates are rulings (7 Oct and 9 Oct are Sam's; 9 Oct pm is Sam's 
 | Choosing a different type starts a new notification; the old one is untouched | 9 Oct | c-219 |
 | No template mode is built on the type question while templates are parked | 4 Nov, 9 Nov ID | c-220 |
 | Country of origin labels subdivisions "<territory> (<parent>)", sorted by label, in both sets | DR2.1, 9 Oct | c-221 |
-| Taking today's germinal lines out of the live-animals catalogue is the commodity-search ticket's work; the germinal set's own search offers no live-animal commodity | 10 Nov | c-222 |
+| Taking germinal lines out of the live-animals catalogue is the commodity-search ticket's work, now landed | 10 Nov | c-222 |
 | The real commodity lines and fields stay; the prototype's hidden fields are not copied | 9 Oct | c-223 |
 | Commodity pages keep their real paths | 9 Oct | c-224 |
 | Performance tests change in each increment whose change breaks a k6 script | 7 Oct, 9 Oct | c-225 |
@@ -622,11 +695,11 @@ Settled-by key: dates are rulings (7 Oct and 9 Oct are Sam's; 9 Oct pm is Sam's 
 | Germinal products is a sibling set at /germinal-products, started from its own route | 9 Oct | c-227 |
 | The germinal set holds only germinal products; there is no mixed case | 9 Oct | c-228 |
 | Embryos and ova are separate catalogue items (EMBRYO, OVA); a combined line carries EMBRYO meanwhile | 9 Oct | c-229 |
-| The germinal catalogue's 18-item content is MDM's (c-282); V4 still decides which germinal fields apply | V4, 9 Oct, 11 Nov | c-230 |
-| Germinal gross weight is asked and stored per species line | 9 Oct | c-231 |
-| Germinal gross weight and temperature are optional; number of packages stays required | V4 | c-232 |
+| The germinal catalogue's content is MDM's; V4 still decides which germinal fields apply | V4, 9 Oct, 11 Nov | c-230 |
+| Germinal gross weight is asked and stored per species line, in each species block on Commodity details | 27 Nov, 9 Oct | c-231 |
+| Germinal gross weight and temperature are optional | V4 | c-232 |
 | Temperature is asked once and stored on every line | V4, DR2.1 | c-233 |
-| A germinal line's quantity is its number of packages, a whole number from 1 to 1,000 | V4, 9 Oct | c-234 |
+| A germinal line's mandatory count is Quantity (unit/pieces), 1 to 1,000; Number of packages is optional where V4's list names it | V4, 9 Oct | c-234 |
 | A germinal species counts as identified once its entry holds one identifier | 9 Oct, V4 | c-235 |
 | Arrival details page stays at port-of-entry | 9 Oct | c-236 |
 | Documents page returns without ?from= markers | 9 Oct | c-237 |
@@ -635,8 +708,8 @@ Settled-by key: dates are rulings (7 Oct and 9 Oct are Sam's; 9 Oct pm is Sam's 
 | CPH, permanent address and contact pages use real paths and field names | 9 Oct | c-240 |
 | No new link to the kept contact edit route | DR2.1 | c-241 |
 | CPH, permanent address and contact error states keep "Error: " and HTTP 400 | Rulings | c-242 |
-| Pages return to the hub by the flow's fallback, with no from=hub marker | 9 Oct | c-243 |
-| Germinal hub weight card region is named "Gross weight summary" | 9 Oct | c-244 |
+| Pages return to the overview by the flow's fallback, with no from=hub marker | 9 Oct | c-243 |
+| The germinal overview shows "Units/pieces" and "Packages/boxes" cards and no weight card | DR2.1, 9 Oct | c-244 |
 | Review, declaration and confirmation keep their real paths | 9 Oct | c-245 |
 | A draft's review shows the view header with its Draft status and stays editable | 9 Oct | c-246 |
 | Confirmation's "Create a new notification" keeps today's mechanism, styled as a link | 9 Oct | c-247 |
@@ -646,10 +719,8 @@ Settled-by key: dates are rulings (7 Oct and 9 Oct are Sam's; 9 Oct pm is Sam's 
 | Lists keep the prototype's content; each list's own frontend names addresses and parameters | 9 Oct | c-251 |
 | The list banner stays triggered by the redirect flag, in animals and plants | 9 Oct | c-252 |
 | The INS service names the tab and search parameters | 9 Oct | c-253 |
-| A template's name is its own field rather than a derived title | 9 Oct | c-254 |
 | Only transporters carry a transporter authorisation number | 9 Oct | c-255 |
 | Phone stays free text up to 20 characters | Address book, V4 silent | c-256 |
-| The template list reads the backend's own records | 9 Oct | c-257 |
 | Templates pages use real paths and field names | 9 Oct | c-258 |
 | Template ids are the backend's design | 9 Oct | c-259 |
 | A notification does not record its template | 9 Oct | c-260 |
@@ -661,10 +732,9 @@ Settled-by key: dates are rulings (7 Oct and 9 Oct are Sam's; 9 Oct pm is Sam's 
 | A template's category is the set it was made in | 9 Oct | c-266 |
 | Amendment buttons post the service's own fields | 9 Oct | c-267 |
 | ?cancelled=1 stays; no success banner after cancelling | 9 Oct, DR2.1 | c-268 |
-| The deletion message shows on the set's own list through ?deleted=1 | 9 Oct pm | c-269 |
-| The delete confirmation page keeps the notification's own route | 9 Oct | c-270 |
-| The deletion banner does not dismiss itself, in every set | 9 Oct pm, accessibility | c-271 |
-| The category is stored on the record only; no event or schema change | 9 Oct pm | c-272 |
+| The deletion message shows on the set's own list through ?deleted=1 | pm | c-269 |
+| The deletion banner does not dismiss itself, in every set | pm, accessibility | c-271 |
+| The category is stored on the record only; no event or schema change | pm | c-272 |
 | Live-animal lines carry LIVE_ANIMAL; germinal lines SEMEN or EMBRYO until MDM separates ova | 9 Oct | c-273 |
 | Journey pages keep real paths; germinal uses /germinal-products | 9 Oct | c-274 |
 | Buttons keep the service's own fields | 9 Oct | c-275 |
@@ -673,373 +743,283 @@ Settled-by key: dates are rulings (7 Oct and 9 Oct are Sam's; 9 Oct pm is Sam's 
 | The catalogue's content is MDM's and out of scope; only the reference-data integration stays blocked on MDM | 11 Nov | c-278 |
 | Germinal set asks "Total gross weight", stored per line in kilograms; no conditional temperature | 9 Oct | c-279 |
 | No mixed live-and-germinal consignment behaviour is built | 9 Oct | c-280 |
-| A germinal notification starts from the type question or the germinal set's own list | 9 Oct pm | c-281 |
-| The germinal catalogue's content leaves the backlog as an MDM concern; the set goes ahead on the lines the catalogue holds | 11 Nov | c-282 |
+| A germinal notification starts from the type question or the germinal set's own list | pm | c-281 |
+| The germinal catalogue's content leaves the backlog as an MDM concern; the set goes ahead on the lines it holds | 11 Nov | c-282 |
 | The germinal dates keep the MOJ date picker over a text input, built with the germinal identification dates | 9 Nov ID, 10 Nov | c-283 |
-| Port search matches are not bolded, in animals or plants | 9 Oct pm | c-284 |
-| **Overruled 6 November:** the address book manages transporters, so every add, list and search change goes ahead; only the commercial address search still waits, on the lookup (c-218) | 9 Oct pm, overruled by 6 Nov | c-285 |
-| The template-review controls go on the transporter list as it stands; no longer blocked | 9 Oct pm | c-286 |
-| The no-JavaScript address search is built when the lookup lands; its JavaScript parts are deferred with the concept work, and there is no live filtering | 9 Oct pm, 13 Nov, 9 Nov | c-287 |
+| Port search matches are not bolded, in animals or plants | pm | c-284 |
+| **Overruled 6 November:** the address book manages transporters; only the commercial address search still waits, on the lookup (c-218) | pm, 6 Nov | c-285 |
+| The template-review controls go on the transporter list as it stands | pm | c-286 |
+| The no-JavaScript address search is built when the lookup lands; no live filtering | pm, 13 Nov, 9 Nov | c-287 |
 | The CPH boxes follow the GOV.UK date input with no JavaScript; the server keeps its checks | 9 Nov ID | c-288 |
-| No cancel-amend dialog on the CPH page; the Amend bar's "Cancel amend" goes to the confirmation page | 9 Oct pm | c-289 |
-| Plants' contact page takes only the new intro and "Select an address" heading | 9 Oct pm | c-290 |
-| Plants' contact page keeps the whole address book and no add link | 9 Oct pm | c-291 |
-| The plants contact picker keeps its pagination and its "Selected address" inset, and pages at eight | 25 Nov | c-292 |
-| Plants' party cards, contact included, drop telephone and email rows and read the address line by line | 9 Oct pm | c-293 |
-| Import reference numbers stay selectable text; no Copy button is built at all | 13 Nov | c-294 |
-| Each category list stays in its own frontend; "View dashboard" and drill-down Back links point there | 9 Oct tpl, 9 Oct pm | c-295 |
-| The category is not published on the notification event | 9 Oct pm | c-296 |
-| The INS home's germinal section waits with the summary information | 9 Oct pm | c-297 |
-| No list carries a Back link to the overall home | 9 Oct pm | c-298 |
-| The list uses GOV.UK and MoJ components, with no custom JavaScript | 9 Oct pm | c-299 |
-| Plants' list drops its empty-list sentence | 9 Oct pm, DR2.1 | c-300 |
-| Plants' "Submitted" becomes plain text; "Draft" stays a tag | 9 Oct pm, DR2.1 | c-301 |
-| Plants' tabs, 8 a page, search, sort and filters wait on the plants backend (inc-200); the rest of plants' frame changes now | 9 Oct pm | c-302 |
-| Address book category tabs are MoJ sub navigation | 9 Oct pm | c-304 |
-| The no-JavaScript address search has its fields visible; the search-only layout waits on design question 10 and is deferred | 9 Oct pm | c-305 |
-| **Overruled 6 November:** "Transporter" is a fourth option on "Choose an address type", third before "Branch", and its hand-over goes ahead | 9 Oct pm, overruled by 6 Nov | c-306 |
-| Plants' navigation gains a Templates item in the same increment as animals and has no templates of its own; with templates parked, nothing is built now | 9 Oct tpl, 4 Nov | c-307 |
-| "Use template" is a form post | 9 Oct pm | c-309 |
-| Card Amend goes through the amend confirmation page, in every set | 9 Oct pm | c-310 |
-| Plants' status strip reads "Amend" | 9 Oct pm | c-311 |
-| Plants' opening run ends on check your answers even when incomplete | 9 Oct pm | c-312 |
-| **Replaced:** plants' lenient save is withdrawn. On every plants page with both buttons the two make exactly the same checks | 26 Oct | c-313 |
-| Each set's root renders its own notification list | 9 Oct pm, 9 Oct tpl | c-314 |
-| The performance suite does not join the list reframe for a route move | 9 Oct pm | c-315 |
-| Arrival and transit keep the "Error: " title prefix and named Remove buttons that work without JavaScript | 9 Oct pm | c-316 |
-| Plants' Overview changes only where an animals hub row changes the same page; it keeps its own tags, rows and sections | 9 Oct pm | c-317 |
-| Country of origin is mandatory to proceed: the origin page saves only with a country, on both buttons | V4, 26 Oct | c-319 |
-| The animals origin page shows "Select a country of origin" for a missing country; plants keeps its own wording | V4 silent, each frontend | c-320 |
-| On the origin page both buttons make the same checks; a blank region code still saves, being mandatory to submit | 26 Oct | c-321 |
-| On the commodity page, Commodity details and the plants commodity type page, both buttons make the same checks | 26 Oct | c-323 |
-| Number of packages is asked wherever V4's 54-commodity list names the species' commodity, and withheld elsewhere | V4 | c-324 |
-| Remove on Commodity details keeps the numbers the trader has typed but not yet saved | 26 Oct | c-329 |
-| On the main import reason and additional details pages both buttons run the same checks | 26 Oct | c-332 |
-| A species whose commodity requires no specific identifier is asked free-text Identification details and a Description | V4 | c-333 |
-| A tattoo is asked on cattle (0102) and pigs (0103) as well as cats, dogs and ferrets; V4's entries beat its list title's count | 11 Nov | c-334 |
-| The live-animals catalogue's commodity and species names are whatever MDM serves | 9 Oct, V4 | c-328 |
-| Both transporter forms take the Standard Address Block's fields and limits and DR2.1's labels, hints, heading and order | 11 Nov | c-347 |
-| Any detail entered makes the add-a-document form a document, refused with an error for each missing one | 26 Oct, 10 Nov | c-351 |
-| A CPH number is three parts of 2, 3 and 4 digits, hinted "For example 12/345/6789", stored as nine digits | 11 Nov | c-358 |
-| The contact address comes from the organisation's address book, narrowed to branch-address records, with no manual entry | 11 Nov, 9 Oct | c-359 |
-| A new permanent address asks DR2.1's eight fields with County and no country; a trader-created contact keeps the add page's fields | 11 Nov, 14 Oct | c-360 |
-| A germinal notification needs action on the documents the germinal set requires, with no animal-identifier test | 10 Nov | c-366 |
-| The amend review's heading switches once a saved answer differs from the submitted one | 19 Nov, DR2.1 | c-371 |
-| On every germinal page with both buttons the two make exactly the same checks | 26 Oct, 9 Oct | c-339 |
-| A germinal commodity's code is the catalogue's eight-digit code, not V4's seven-digit form | 9 Oct pm | c-340 |
+| No cancel-amend dialog on the CPH page; the Amend bar's "Cancel amend" goes to the confirmation page | pm | c-289 |
+| Plants' contact page takes only the new intro and "Select an address" heading | pm | c-290 |
+| Plants' contact page keeps the whole address book and no add link | pm | c-291 |
+| The plants contact picker keeps its pagination and "Selected address" inset, and pages at eight | 25 Nov | c-292 |
+| Plants' party cards drop telephone and email rows and read the address line by line | pm | c-293 |
+| Import reference numbers stay selectable text; no Copy button is built | 13 Nov | c-294 |
+| Each category list stays in its own frontend; "View dashboard" and drill-down Back links point there | tpl, pm | c-295 |
+| The category is not published on the notification event | pm | c-296 |
+| The INS home's germinal section waits with the summary information | pm | c-297 |
+| No list carries a Back link to the overall home | pm | c-298 |
+| The list uses GOV.UK and MoJ components, with no custom JavaScript | pm | c-299 |
+| Plants' list drops its empty-list sentence | pm, DR2.1 | c-300 |
+| Plants' card mirrors the component: "Submitted" blue tag, "Draft" tag, "Amend" yellow | pm, DR2.1 | c-301 |
+| Plants' tabs, 8 a page, search, sort and filters wait on the plants backend (inc-200); the rest of plants' frame changes now | pm | c-302 |
+| Address book category tabs are MoJ sub navigation | pm | c-304 |
+| The address search is server-side find-an-address pages; the add-details step shows its fields straight away | pm, 13 Nov | c-305 |
+| **Overruled 6 November:** "Transporter" is an option on "Choose an address type", third before "Branch" | pm, 6 Nov | c-306 |
+| Plants' navigation gains no Templates item while templates are parked | tpl, 4 Nov | c-307 |
+| "Use template" is a form post | pm | c-309 |
+| Card Amend goes through the amend confirmation page, in every set | pm | c-310 |
+| The strip reads "Amend" in every set, plants included | pm | c-311 |
+| Plants' opening run ends on check your answers even when incomplete | pm | c-312 |
+| **Replaced:** plants' lenient save is withdrawn; both buttons make the same checks | 26 Oct | c-313 |
+| Each set's root renders its own notification list | pm, tpl | c-314 |
+| The performance suite does not join the list reframe for a route move | pm | c-315 |
+| Arrival and transit keep the "Error: " title prefix and named Remove buttons that work without JavaScript | pm | c-316 |
+| Plants' Overview changes only where an animals overview row changes the same page | pm | c-317 |
+| Country of origin is mandatory to proceed on both buttons | V4, 26 Oct | c-319 |
+| The animals origin page shows "Select a country of origin"; plants keeps its own wording | V4 silent | c-320 |
+| On the origin page both buttons make the same checks; a blank region code still saves | 26 Oct | c-321 |
+| On the commodity page, Commodity details and the plants commodity type page, both buttons make the same checks | 26 Oct, 27 Nov | c-323 |
+| Number of packages is asked where V4's list names the species' commodity, and withheld elsewhere | V4 | c-324 |
+| The live-animals catalogue's names are whatever MDM serves | 9 Oct, V4 | c-328 |
+| Remove on Commodity details keeps unsaved typed numbers | 26 Oct | c-329 |
+| On the main import reason and additional details pages both buttons make the same checks | 26 Oct | c-332 |
+| A species whose commodity needs no specific identifier is asked free-text Identification details and a Description | V4 | c-333 |
+| A tattoo is asked on cattle and pigs as well as cats, dogs and ferrets | 11 Nov | c-334 |
+| On every germinal page with both buttons the two make the same checks | 27 Nov, 26 Oct, 9 Oct | c-339 |
+| A germinal commodity's code is the catalogue's eight-digit code | pm | c-340 |
 | On arrival details and transit countries both buttons make the same checks | 26 Oct | c-341 |
-| The port of entry offers every port MDM returns for the GBNAG system, in both sets | 9 Oct | c-342 |
-| There are exactly four means of transport, stored AIRPLANE, RAILWAY, ROAD_VEHICLE and VESSEL, read Air, Rail, Road and Sea | V4, DR2.1 | c-343 |
-| The germinal set asks for transit countries on the same terms as live animals | 9 Oct, V4 | c-344 |
-| Transit countries stay optional: the page saves with no country added | V4 | c-345 |
-| A transporter is mandatory to proceed: a save with none chosen is refused on both buttons | V4, 26 Oct | c-346 |
+| The port of entry offers every port MDM returns for GBNAG, in both sets | 9 Oct | c-342 |
+| Four means of transport, stored AIRPLANE, RAILWAY, ROAD_VEHICLE, VESSEL, read Air, Rail, Road, Sea | V4, DR2.1 | c-343 |
+| The germinal set asks transit countries on the same terms as live animals | 9 Oct, V4 | c-344 |
+| Transit countries stay optional | V4 | c-345 |
+| A transporter is mandatory to proceed on both buttons | V4, 26 Oct | c-346 |
+| Both transporter forms take the Standard Address Block's fields and limits and DR2.1's labels | 11 Nov | c-347 |
 | The Document type select offers the business's thirteen types in order; three wait on codelist codes | V4 | c-348 |
-| Each document type keeps DR2.1's wording where both name the same type; a type the design lacks takes the business's name | V4's role | c-349 |
+| Each document type keeps DR2.1's wording where both name it | V4 | c-349 |
+| Any detail entered makes the add-a-document form a document, refused with an error for each missing one | 26 Oct, 10 Nov | c-351 |
 | The date of issue accepts a one- or two-digit day and month with a four-digit year | DR2.1, V4 | c-352 |
-| On the upload documents page both buttons make exactly the same checks | 26 Oct | c-353 |
-| The four document fields keep the labels "Document reference", "Document type", "Date of issue" and "Attachment" | V4's role | c-354 |
-| The attachment's format is taken from the file and checked against the eight permitted formats | V4, DR2.1 | c-355 |
-| The review's wording names each party by its own title | DR2.1 | c-356 |
-| The CPH question applies to V4's seventeen commodity codes and to nothing else | V4 | c-357 |
-| Both buttons make the same checks, and which answers a page needs comes from V4's markings | 26 Oct, V4 | c-361 |
-| The germinal contact address page carries the live-animals page's save-button behaviour | 26 Oct, 9 Oct | c-362 |
-| Only cats, dogs and ferrets need a permanent address; "mandatory to submit" says when the answer is checked | V4, DR2.1 | c-363 |
-| While amending, "Save and return to overview" makes exactly the same checks, upload documents included | 26 Oct | c-370 |
-| Deltas in the commodity area are read from the animals frontend and the tests repo, not the stale traces | repo | c-374 |
+| On upload documents both buttons make the same checks | 26 Oct, 27 Nov | c-353 |
+| The four document fields keep their labels | V4 | c-354 |
+| The attachment's format is taken from the file and checked against eight formats | V4, DR2.1 | c-355 |
+| The CPH question applies to V4's seventeen commodity codes only | V4 | c-357 |
+| A CPH number is 2, 3 and 4 digits, hinted "For example 12/345/6789", stored as nine digits | 11 Nov | c-358 |
+| The contact address comes from the organisation's branch-address records, with no manual entry | 11 Nov, 9 Oct | c-359 |
+| A new permanent address asks DR2.1's eight fields with County and no country | 11 Nov, 14 Oct | c-360 |
+| Both buttons make the same checks; which answers a page needs comes from V4's markings | 26 Oct, V4 | c-361 |
+| The germinal contact address page carries the live-animals save-button behaviour | 26 Oct, 9 Oct | c-362 |
+| Only cats, dogs and ferrets need a permanent address | V4, DR2.1 | c-363 |
+| A germinal notification needs action on the documents its set requires, with no identifier test | 10 Nov | c-366 |
+| While amending, "Save and return to overview" makes the same checks, upload documents included | 26 Oct, 27 Nov | c-370 |
+| The amend review's heading switches once a saved answer differs from the submitted one | 19 Nov, DR2.1 | c-371 |
+| Commodity-area deltas are read from the frontend and tests repo, not the stale traces | Repo | c-374 |
 | The commodity pages build no template behaviour while templates are parked | 4 Nov, 9 Nov ID, 9 Nov | c-375 |
-| The number of animals accepts every whole number up to 9,223,372,036,854,775,807, and the store widens | V4, 11 Nov | c-376 |
-| Reference-data serves no commodity or species list yet: the commodity search still reads the frontend's own service | repo | c-377 |
-| A stale unweaned answer is cleared, on the service's own applicability rule rather than the prototype's code list | 11 Nov | c-378 |
-| No template-mode behaviour is built on the main import reason or additional details pages | 4 Nov, 9 Nov ID | c-380 |
-| The germinal commodity search leaves this backlog for the commodity-search ticket; the page keeps the server-side search | 10 Nov | c-382 |
-| The port and transit country searches keep the autocomplete's own announcements; no custom results labels | 9 Nov, 9 Oct pm | c-383 |
-| The INS front door's add pages are the one route to adding a transporter; the animals frontend's three add-page folders go | 6 Nov | c-385 |
+| The number of animals accepts whole numbers up to 9,223,372,036,854,775,807, and the store widens | V4, 11 Nov | c-376 |
+| Reference-data now serves a commodity search and species check backed by MDM | Repo | c-377 |
+| A stale unweaned answer is cleared on the service's own applicability rule | 11 Nov | c-378 |
+| No template-mode behaviour on main import reason or additional details | 4 Nov, 9 Nov ID | c-380 |
+| The germinal commodity search goes to the commodity-search ticket; the page keeps the server-side search | 10 Nov | c-382 |
+| Port and transit country searches keep the autocomplete's own announcements | 9 Nov, pm | c-383 |
+| The INS front door's add pages are the one route to adding a transporter; the animals frontend's add pages go | 6 Nov | c-385 |
 | The transporter list pages at eight, with an inset naming the chosen transporter | 25 Nov | c-386 |
-| The transporter list searches on the server behind its button and Enter; no filtering as the trader types, and no bolding | 13 Nov, 9 Oct pm | c-387 |
-| The animals frontend's own source, not the stale traces, says what the transporter pages do today | repo | c-391 |
-| The address book is the system of record for transporters; the frontend's in-memory store is replaced, with nothing to carry over | 6 Nov | c-392 |
-| The addresses section reads "Addresses" and its page and overview row read "Consignment addresses", plants included | 17 Nov | c-393 |
+| The transporter list searches on the server behind its button and Enter; no filtering as you type, no bolding | 13 Nov, pm | c-387 |
+| The animals frontend's own source says what the transporter pages do today | Repo | c-391 |
+| The address book is the system of record for transporters; the frontend's in-memory store is replaced | 6 Nov | c-392 |
+| The section reads "Addresses" and its page and overview row "Consignment addresses", plants included | 17 Nov | c-393 |
 | "County (optional)" stays on the add-address page the journey reaches | 14 Oct | c-395 |
-| The add page is already DR2.1's "Add address and contact details" page; the traces record the earlier build | repo | c-396 |
-| A journey-added address record holds roles only, at least one, with no stored address type | 5 Nov | c-397 |
-| The animals frontend's own extract, not the stale traces, says what it does now | repo | c-400 |
+| The add page is already DR2.1's "Add address and contact details" page | Repo | c-396 |
+| A journey-added address record holds roles only, at least one, with no stored type | 5 Nov | c-397 |
+| The animals frontend's own extract says what it does now | Repo | c-400 |
 | The CPH and permanent address pages show the caption "Addresses" | 17 Nov | c-401 |
 | The animals contact address page pages at eight with the "Selected address" restatement | 25 Nov | c-402 |
-| The hub's heading is "Notification task list", two words; a template's reads "Template task list" | 19 Nov | c-404 |
-| The hub's fifth section reads "Addresses" with its number kept, and its row "Consignment addresses" | 17 Nov | c-405 |
-| The repository, not the traces, says what the live-animals hub now shows | repo | c-406 |
-| The review row reads "Port of exit"; "Exit border control post" is not used | 17 Nov | c-407 |
-| The review row reads "Arrival date at port of entry" | 17 Nov | c-408 |
-| The review's section reads "Addresses", its card "Consignment addresses" and its message "Complete consignment addresses" | 17 Nov | c-409 |
-| No "Submitted action required" status, view warning, Continue, review error or list marking is built | 16 Nov | c-410 |
+| The overview heading is "Notification task list"; a template's reads "Template task list" | 19 Nov | c-404 |
+| The overview's fifth section reads "Addresses" with its number kept, its row "Consignment addresses" | 17 Nov | c-405 |
+| The repository says what the live-animals overview now shows | Repo | c-406 |
+| The review row reads "Port of exit" | 17 Nov | c-407 |
+| The review row reads "Arrival date at port of entry" | 17 Nov, 27 Nov | c-408 |
+| The review's section reads "Addresses", its card "Consignment addresses", its message "Complete consignment addresses" | 17 Nov | c-409 |
+| No "Submitted action required" status, view warning, Continue, review error or list marking | 16 Nov | c-410 |
 | Submitting records the submitted date and no outstanding items list; both come back with the banner | 19 Nov | c-411 |
-| A notification reference that does not exist answers 404 with the standard "Page not found" page, in animals and plants | 19 Nov | c-412 |
-| No template review, template sections or "Save template" button are built in this programme | 4 Nov | c-413 |
-| The INS home's "Use template" button and the Templates navigation item are not built; the home offers "Create new" alone | 4 Nov, 9 Nov, 9 Nov ID | c-416 |
-| The Action needed card and drill-down keep DR2.1's content and links, and wait on the banner and the INS requirements | 16 Nov, 19 Nov | c-417 |
-| The list shows no "Action required" tag, no error card and no outstanding-items message | 16 Nov, 19 Nov | c-418 |
-| No list offers a "Use template" button; the heading is followed by "Create new" alone | 4 Nov, 9 Nov, 9 Nov ID | c-420 |
-| Every list of an organisation's addresses is served and shown a page at a time, the role filter running before the page is cut | 25 Nov, 5 Nov | c-422 |
-| The list takes repeatable roles matching any of them, plus search roles, so one request serves a whole tab | 5 Nov, 25 Nov | c-423 |
-| An address's roles all come from one group, so an address is listed on exactly one tab | 5 Nov | c-424 |
-| A listed name breaks after its first word, as the design renders it and the real list already does | DR2.1 | c-425 |
-| The Transporter tab lists transporter records with a Commercial or Private type; no seventh role and no fourth role group | 6 Nov, 5 Nov | c-426 |
+| An unknown notification reference answers 404 "Page not found", in animals and plants | 19 Nov | c-412 |
+| No template review, template sections or "Save template" button in this programme | 4 Nov | c-413 |
+| The INS home has no "Use template" button or Templates item; it offers "Create new" alone | 4 Nov, 9 Nov, 9 Nov ID | c-416 |
+| The Action needed card and drill-down wait on the banner and the INS requirements | 16 Nov, 19 Nov | c-417 |
+| The list shows no "Action required" tag, error card or outstanding-items message | 16 Nov, 19 Nov | c-418 |
+| No list offers a "Use template" button | 4 Nov, 9 Nov, 9 Nov ID | c-420 |
+| Every list of an organisation's addresses is served a page at a time, role filter first | 25 Nov, 5 Nov | c-422 |
+| The list takes repeatable roles plus search roles, so one request serves a whole tab | 5 Nov, 25 Nov | c-423 |
+| An address's roles all come from one group, so it is listed on exactly one tab | 5 Nov | c-424 |
+| A listed name breaks after its first word | DR2.1 | c-425 |
+| The Transporter tab lists transporter records with a Commercial or Private type; no seventh role | 6 Nov, 5 Nov | c-426 |
 | "Transporter" sits third on the address type question, before "Branch" | 5 Nov, 6 Nov | c-427 |
-| The merged address-book theme's end-to-end claims and the November rulings say what the add and edit do today | 25 Nov | c-428 |
-| A create or update carrying an address type is refused with a 400 and a per-field message, not saved with the type dropped | 6 Nov | c-429 |
-| One save reports every missing or invalid answer, the roles among them | 26 Oct, 7 Oct | c-430 |
-| The edit page's Country select offers no blank option unless the stored code is no longer served, when it opens blank | 7 Oct | c-431 |
-| "County (optional)" stays on the address book's add-details step, between "Town or city" and "Postcode or Zip code" | 14 Oct | c-432 |
-| The templates pages read "Addresses" for the section and "Consignment addresses" for the card and task row | 17 Nov | c-435 |
-| A task list heading is spelled "task list", two words, on a notification and on a template | 19 Nov | c-436 |
-| Templates are built when the parking lifts, not now; every adopted templates requirement carries that decision as its blocker | 4 Nov, 9 Nov, 9 Nov ID | c-437 |
-| Amend, copy as new and delete accept a submitted notification with outstanding items as any other | 16 Nov | c-439 |
-| A copy carries certified-for over as stored; no mapping of retired prototype values is built | 11 Nov | c-440 |
-| The record holds no outstanding items list and nothing derives one; the submitted date is still recorded | 19 Nov | c-441 |
-| No "Submitted action required" status is added: the enum stays DRAFT, SUBMITTED, AMEND and DELETED | 16 Nov | c-442 |
-| The submission event's data is the GBN-AG exchanged document and specified consignment | repo | c-444 |
+| The address-book theme's end-to-end claims and the November rulings say what add and edit do today | 25 Nov | c-428 |
+| A create or update carrying an address type is refused with a 400 and a per-field message | 6 Nov | c-429 |
+| One save reports every missing or invalid answer, roles included | 26 Oct, 7 Oct | c-430 |
+| The edit page's Country select has no blank option unless the stored code is no longer served | 7 Oct | c-431 |
+| "County (optional)" stays on the address book's add-details step | 14 Oct | c-432 |
+| The templates pages read "Addresses" and "Consignment addresses" | 17 Nov | c-435 |
+| A task list heading is spelled "task list", two words | 19 Nov | c-436 |
+| Templates are built when the parking lifts; every adopted templates requirement carries that blocker | 4 Nov, 9 Nov, 9 Nov ID | c-437 |
+| Amend, copy and delete accept a submitted notification with outstanding items as any other | 16 Nov | c-439 |
+| A copy carries certified-for over as stored | 11 Nov | c-440 |
+| The record holds no outstanding items list; the submitted date is still recorded | 19 Nov | c-441 |
+| No "Submitted action required" status: the enum stays DRAFT, SUBMITTED, AMEND, DELETED | 16 Nov | c-442 |
+| The submission event's data is the GBN-AG exchanged document and specified consignment | Repo | c-444 |
 | A decision in the animals frontend's own design record is not one of the named overrides | 7 Oct, 9 Oct | c-445 |
-| The deleted plants journey spec ruling is not restored and nothing records its removal | 19 Nov | c-448 |
+| The deleted plants journey spec ruling is not restored | 19 Nov | c-448 |
 | Every plants picker pages at eight and keeps the restatement of the chosen address | 25 Nov | c-449 |
-| A page opened from a Change link on the review returns to the review when it is saved | 7 Oct | c-452 |
+| A page opened from a review Change link returns to the review when saved | 7 Oct | c-452 |
+
+465 conflicts were settled this way.
 
 ## Already in place
 
-1,506 adopted requirements are met today. Statements are in `distil/requirements.json`. The first column names where today's evidence shows it; the second lists every requirement that evidence set backs.
+1,623 adopted requirements already exist in the services. They need no build, only care not to break them. Each sits in the first group whose evidence backs it.
 
-Key: E2E the end-to-end traces, AF the animals fit traces, IF the INS fit traces, FE the animals frontend, INS-FE the INS frontend, PF the plants frontend, BE the animals backend, INS-BE the INS backend, AB the address book, RD reference data, stub the stub, tests the tests repo, perf the performance suite.
-
-| What already exists | Requirements |
-|---|---|
-| AB | req-1120, req-1155, req-1268, req-1868, req-1869, req-2357 |
-| AB E2E IF INS-FE tests | req-1141, req-1235 |
-| AB E2E IF tests | req-1145, req-1149, req-1263, req-1264 |
-| AB E2E INS-FE perf tests | req-1243 |
-| AB E2E INS-FE tests | req-1125, req-1157, req-1158, req-1256 |
-| AB E2E tests | req-1123, req-1151 |
-| AB IF INS-FE tests | req-1192, req-1236, req-1237, req-1238, req-1239, req-1240, req-1241, req-1242, req-1244 |
-| AB INS-FE perf tests | req-1119, req-1121 |
-| AB INS-FE tests | req-1122, req-1130, req-1156 |
-| AB tests | req-1152, req-1203, req-1265, req-1266, req-1269, req-1867, req-2352, req-2353, req-2362 |
-| AF | req-133, req-186, req-239, req-373, req-476, req-524, req-1468, req-1760, req-1973 |
-| AF BE E2E FE | req-1423 |
-| AF BE E2E FE PF tests | req-1415, req-1453 |
-| AF BE E2E FE perf tests | req-547 |
-| AF BE E2E FE tests | req-500, req-509, req-513, req-526, req-532, req-534, req-535, req-546, req-1032, req-1422 |
-| AF BE E2E tests | req-1476 |
-| AF BE FE | req-495, req-496, req-506 |
-| AF BE tests | req-1396 |
-| AF E2E | req-086, req-130, req-188, req-196, req-197, req-247, req-274, req-336, req-479, req-522, req-525, req-559, req-605, req-704, req-775, req-1882 |
-| AF E2E FE | req-021, req-047, req-050, req-055, req-087, req-089, req-090, req-117, req-118, req-135, req-137, req-139, req-141, req-149, req-151, req-152, req-156, req-159, req-160, req-179, req-195, req-202, req-205, req-209, req-210, req-212, req-214, req-217, req-218, req-221, req-223, req-224, req-225, req-226, req-233, req-235, req-238, req-240, req-243, req-244, req-264, req-265, req-269, req-273, req-275, req-276, req-278, req-279, req-281, req-283, req-292, req-297, req-298, req-305, req-307, req-317, req-320, req-321, req-326, req-330, req-334, req-340, req-343, req-347, req-363, req-380, req-381, req-382, req-384, req-400, req-409, req-411, req-412, req-423, req-437, req-467, req-468, req-480, req-483, req-484, req-486, req-490, req-494, req-510, req-517, req-573, req-583, req-669, req-707, req-721, req-723, req-724, req-771, req-774, req-777, req-783, req-784, req-785, req-787, req-790, req-793, req-794, req-795, req-796, req-797, req-798, req-799, req-801, req-802, req-803, req-804, req-806, req-809, req-810, req-811, req-825, req-827, req-829, req-834, req-840, req-843, req-844, req-845, req-849, req-852, req-853, req-855, req-856, req-863, req-868, req-871, req-899, req-918, req-924, req-932, req-936, req-938, req-945, req-1047, req-1685, req-1756, req-1768, req-1845, req-2142, req-2144, req-2145, req-2154, req-2273, req-2285, req-2290 |
-| AF E2E FE INS-FE | req-1677 |
-| AF E2E FE INS-FE PF | req-1675, req-1676, req-1679, req-1680, req-1684 |
-| AF E2E FE INS-FE PF tests | req-1674 |
-| AF E2E FE PF | req-015, req-022, req-616, req-1881, req-2078, req-2298 |
-| AF E2E FE PF tests | req-016, req-608, req-681, req-683, req-684, req-686, req-687, req-688, req-689, req-690, req-1398, req-1412, req-1452, req-1454 |
-| AF E2E FE RD | req-025, req-300 |
-| AF E2E FE RD tests | req-172, req-465, req-499 |
-| AF E2E FE perf | req-1823 |
-| AF E2E FE perf tests | req-206, req-504, req-533, req-1635, req-1640, req-1757, req-1807, req-1822, req-1897, req-1918 |
-| AF E2E FE tests | req-011, req-012, req-013, req-014, req-023, req-024, req-030, req-032, req-035, req-036, req-037, req-039, req-040, req-044, req-045, req-046, req-048, req-049, req-052, req-053, req-054, req-066, req-067, req-068, req-070, req-077, req-078, req-079, req-080, req-082, req-083, req-084, req-085, req-103, req-104, req-106, req-107, req-111, req-120, req-131, req-132, req-134, req-136, req-138, req-140, req-142, req-143, req-144, req-145, req-147, req-148, req-150, req-157, req-171, req-173, req-174, req-175, req-176, req-200, req-211, req-216, req-222, req-228, req-234, req-237, req-241, req-242, req-263, req-272, req-282, req-285, req-287, req-293, req-294, req-295, req-308, req-309, req-310, req-311, req-312, req-315, req-318, req-319, req-325, req-329, req-331, req-337, req-338, req-339, req-341, req-342, req-345, req-350, req-351, req-352, req-356, req-357, req-358, req-359, req-362, req-370, req-379, req-388, req-391, req-392, req-393, req-395, req-402, req-404, req-406, req-415, req-416, req-418, req-424, req-430, req-435, req-439, req-444, req-446, req-454, req-460, req-464, req-478, req-492, req-498, req-515, req-516, req-519, req-520, req-527, req-528, req-529, req-530, req-531, req-540, req-541, req-545, req-606, req-703, req-705, req-709, req-715, req-718, req-720, req-752, req-759, req-761, req-762, req-763, req-769, req-773, req-778, req-820, req-822, req-823, req-824, req-826, req-833, req-838, req-839, req-851, req-860, req-870, req-872, req-874, req-875, req-876, req-883, req-887, req-888, req-892, req-896, req-897, req-901, req-912, req-915, req-916, req-917, req-919, req-921, req-922, req-926, req-928, req-933, req-935, req-1084, req-1421, req-1610, req-1611, req-1613, req-1619, req-1622, req-1630, req-1641, req-1653, req-1755, req-2079, req-2147, req-2148, req-2149, req-2158 |
-| AF E2E INS-FE PF tests | req-1702 |
-| AF E2E PF | req-587, req-620 |
-| AF E2E PF tests | req-586, req-589, req-591, req-593, req-594, req-595, req-597, req-599, req-600, req-602, req-603, req-615, req-1397, req-1459 |
-| AF E2E tests | req-001, req-194, req-201, req-601, req-768, req-881, req-1394, req-1402 |
-| AF FE | req-031, req-056, req-072, req-074, req-109, req-126, req-129, req-146, req-153, req-154, req-164, req-177, req-185, req-227, req-229, req-231, req-236, req-245, req-268, req-284, req-288, req-289, req-314, req-322, req-323, req-335, req-346, req-360, req-364, req-366, req-367, req-368, req-390, req-403, req-417, req-445, req-452, req-453, req-485, req-487, req-488, req-489, req-491, req-502, req-503, req-507, req-508, req-511, req-512, req-514, req-518, req-521, req-551, req-560, req-562, req-563, req-570, req-574, req-575, req-581, req-584, req-702, req-710, req-716, req-765, req-779, req-786, req-805, req-807, req-813, req-835, req-836, req-857, req-859, req-869, req-877, req-878, req-923, req-925, req-934, req-1770, req-1975, req-2026, req-2105, req-2215, req-2245, req-2249, req-2280 |
-| AF FE INS-FE PF | req-1687, req-1698, req-1701 |
-| AF FE INS-FE PF tests | req-2086 |
-| AF FE PF | req-693, req-1091, req-1418, req-1478, req-1691, req-2088 |
-| AF FE PF perf tests | req-1828, req-1844 |
-| AF FE PF tests | req-604 |
-| AF FE perf tests | req-537, req-1637, req-1771, req-1835 |
-| AF FE tests | req-038, req-071, req-076, req-088, req-113, req-114, req-116, req-165, req-166, req-180, req-313, req-316, req-355, req-401, req-414, req-433, req-436, req-440, req-459, req-493, req-523, req-544, req-556, req-566, req-708, req-764, req-828, req-830, req-858, req-893, req-894, req-895, req-898, req-913, req-914, req-927, req-929, req-930, req-937, req-1616, req-1617, req-1638, req-1759, req-1834, req-2157, req-2224, req-2281 |
-| AF INS-FE PF | req-1723 |
-| AF PF | req-1699, req-1909 |
-| AF PF tests | req-596 |
-| AF tests | req-009, req-158, req-385, req-1655, req-1910 |
-| BE | req-501, req-1490, req-1491, req-1492, req-1493, req-1494, req-1495, req-1496, req-1498, req-1499, req-1500, req-1501, req-1502, req-1503, req-1504, req-1505, req-1508, req-1509, req-1510, req-1521, req-1524, req-1526, req-1527, req-1528, req-1529, req-1530, req-1531, req-1532, req-1533, req-1534, req-1535, req-1536, req-1537, req-1540, req-1542, req-1544, req-1547, req-1548, req-1549, req-1551, req-1552, req-1553, req-1554, req-1559, req-1560, req-1561, req-1562, req-1565, req-1566, req-1568, req-1569, req-1570, req-1571, req-1572, req-1574, req-1576, req-1577, req-1588, req-1589, req-1590, req-1593, req-1595, req-1597, req-1598, req-1599, req-1601, req-2385 |
-| BE E2E | req-1431 |
-| BE E2E FE PF tests | req-1065 |
-| BE E2E tests | req-1395, req-1409, req-1489, req-1507, req-1511, req-1512, req-1513, req-1515, req-1516, req-1517, req-1518, req-1519, req-1520, req-1525, req-1545 |
-| BE FE | req-1438, req-2174, req-2175, req-2180 |
-| BE FE PF | req-1094 |
-| BE perf | req-1543 |
-| BE perf tests | req-1557, req-1558 |
-| BE tests | req-548, req-1497, req-1506, req-1514, req-1522, req-1523, req-1539, req-1541, req-1550, req-1567, req-1579, req-1585, req-1586, req-1592, req-1596, req-1600, req-1987, req-2201, req-2209 |
-| E2E | req-614, req-633, req-677, req-696, req-697, req-698, req-781, req-961, req-1401, req-1436, req-1477 |
-| E2E FE | req-073, req-232, req-361, req-371, req-426, req-473, req-719, req-730, req-733, req-739, req-747, req-792, req-812, req-846, req-1089, req-1743, req-2184, req-2214, req-2242 |
-| E2E FE INS-FE PF | req-1715 |
-| E2E FE INS-FE tests | req-2087 |
-| E2E FE PF tests | req-572, req-618, req-685, req-694, req-1664, req-2342, req-2529 |
-| E2E FE tests | req-041, req-042, req-043, req-277, req-425, req-451, req-536, req-630, req-668, req-672, req-674, req-679, req-706, req-726, req-727, req-732, req-738, req-740, req-741, req-744, req-755, req-760, req-862, req-1405, req-1625, req-1645, req-1706, req-2143, req-2150, req-2163, req-2531 |
-| E2E IF | req-969 |
-| E2E IF INS-FE | req-1282 |
-| E2E IF INS-FE perf tests | req-1140, req-1159, req-1174, req-1182 |
-| E2E IF INS-FE tests | req-1108, req-1111, req-1112, req-1113, req-1115, req-1116, req-1131, req-1134, req-1137, req-1138, req-1142, req-1148, req-1153, req-1175, req-1177, req-1179, req-1180, req-1181, req-1188, req-1193, req-1210, req-1221, req-1222, req-1223, req-1226, req-1227, req-1228, req-1245, req-1257, req-1258, req-1259, req-1270, req-1271, req-1272, req-1273, req-1276, req-2363 |
-| E2E INS-FE | req-1710, req-1716 |
-| E2E INS-FE PF | req-1713 |
-| E2E INS-FE tests | req-1021, req-1109, req-1146, req-1284, req-1711 |
-| E2E PF | req-695 |
-| E2E PF tests | req-598 |
-| E2E tests | req-474, req-634, req-635, req-636, req-637, req-638, req-639, req-640, req-641, req-644, req-645, req-659, req-667, req-671, req-673, req-675, req-676, req-1027, req-1095, req-1407, req-1604, req-1651, req-1712, req-1830, req-2304 |
-| FE | req-115, req-155, req-161, req-162, req-187, req-215, req-219, req-220, req-230, req-246, req-286, req-306, req-324, req-333, req-344, req-365, req-429, req-442, req-448, req-449, req-450, req-466, req-481, req-549, req-558, req-632, req-717, req-725, req-735, req-736, req-737, req-742, req-745, req-746, req-758, req-831, req-841, req-847, req-848, req-873, req-879, req-880, req-882, req-885, req-891, req-1660, req-1661, req-1708, req-1959, req-1960, req-1974, req-2080, req-2125, req-2146, req-2151, req-2155, req-2164, req-2165, req-2170, req-2176, req-2177, req-2183, req-2189, req-2213, req-2222, req-2226, req-2228, req-2232, req-2233, req-2234, req-2239, req-2240, req-2243, req-2246, req-2247, req-2248, req-2269, req-2271, req-2282, req-2287, req-2288, req-2291, req-2314, req-2317, req-2318, req-2319, req-2320, req-2328, req-2388 to req-2417, req-2419 to req-2461, req-2463 to req-2476, req-2536, req-2539, req-2559, req-2561, req-2562 |
-| FE INS-FE PF | req-1678, req-1689, req-1693, req-1697, req-1700 |
-| FE INS-FE PF tests | req-1690, req-1705 |
-| FE PF | req-619, req-691, req-692, req-1088, req-1460, req-1659, req-1662, req-1694, req-1696, req-1707, req-2250, req-2251, req-2325, req-2335, req-2372, req-2522, req-2525, req-2532, req-2535, req-2537, req-2538, req-2540, req-2558 |
-| FE PF tests | req-564, req-588, req-611, req-911, req-1406, req-1650, req-1663, req-1703, req-2061, req-2348, req-2523, req-2528 |
-| FE RD stub | req-2256 |
-| FE perf | req-1821 |
-| FE perf tests | req-1753 |
-| FE tests | req-386, req-387, req-394, req-399, req-413, req-422, req-427, req-428, req-431, req-434, req-441, req-443, req-447, req-550, req-557, req-561, req-565, req-567, req-568, req-569, req-571, req-576, req-577, req-578, req-579, req-580, req-582, req-661, req-662, req-663, req-665, req-666, req-714, req-729, req-734, req-743, req-748, req-861, req-886, req-889, req-890, req-900, req-931, req-1614, req-1618, req-1644, req-1646, req-1647, req-1648, req-1649, req-1758, req-2122, req-2123, req-2152, req-2169, req-2178, req-2187, req-2208, req-2223, req-2227, req-2270, req-2274, req-2276, req-2286, req-2289, req-2299, req-2300, req-2316, req-2326, req-2329, req-2330 |
-| IF | req-956, req-957, req-958, req-968, req-970, req-1026, req-1246, req-1280, req-1874 |
-| IF INS-FE | req-966, req-1020, req-1171, req-1172, req-1184, req-1267 |
-| IF INS-FE perf | req-1183 |
-| IF INS-FE tests | req-953, req-1136, req-1143, req-1160, req-1161, req-1162, req-1163, req-1165, req-1166, req-1168, req-1169, req-1173, req-1209, req-1211, req-1274, req-1281, req-2046 |
-| IF tests | req-1224 |
-| INS-FE | req-1247, req-1695, req-1704, req-1714, req-1728, req-1729, req-1731, req-1732 |
-| INS-FE PF | req-2212 |
-| INS-FE tests | req-1114, req-1147, req-1176, req-1202, req-1207, req-1278, req-1862, req-2199 |
-| PF | req-607, req-1911 to req-1917, req-1929, req-1930, req-1931, req-1936 to req-1949, req-1952, req-1953, req-1954, req-1976, req-1977, req-1978, req-1979, req-1992, req-1993, req-1995 to req-2002, req-2004 to req-2024, req-2033, req-2037, req-2070 to req-2074, req-2084, req-2091 to req-2094, req-2128, req-2136, req-2252, req-2253, req-2254, req-2255, req-2321, req-2336, req-2484, req-2488, req-2489, req-2491 to req-2514, req-2520 |
-| PF tests | req-2120, req-2534 |
-| RD | req-060, req-061, req-062, req-063, req-064, req-301 |
-| RD stub | req-1809, req-1810 |
-| perf | req-1849, req-1853, req-1902, req-1903, req-1904, req-1906 |
-| perf tests | req-1808, req-1824, req-1860 |
-| stub | req-1748, req-1749, req-1871 |
-| tests | req-002, req-004, req-005, req-006, req-007, req-008, req-461, req-462, req-463, req-609, req-610, req-655, req-656, req-657, req-658, req-1124, req-1126, req-1127, req-1129, req-1135, req-1139, req-1187, req-1194 to req-1201, req-1208, req-1213, req-1248 to req-1255, req-1275, req-1546, req-1580, req-1581, req-1583, req-1605, req-1606, req-1607, req-1608, req-1657, req-1658, req-1719 to req-1722, req-1725, req-1727, req-1815, req-2041, req-2216 to req-2220, req-2260, req-2261, req-2262, req-2279, req-2294, req-2355, req-2361, req-2367, req-2373, req-2374, req-2375, req-2379, req-2380, req-2542, req-2544 to req-2548, req-2550, req-2552, req-2554, req-2563 |
-| No claim from today's code: confirm before passing this on | req-374, req-1488, req-1858, req-1935, req-1950, req-1963, req-1966, req-1967, req-1968, req-1969, req-1970, req-2050, req-2257, req-2293 |
+| Where the evidence is | Count | Requirements |
+|---|---|---|
+| Animals frontend, its fit traces and the shared suites | 846 | req-009, 011 to 014, 021, 023 to 025, 030 to 032, 035 to 050, 052, 053, 055, 056, 066, 068, 070 to 074, 076, 079, 082 to 090, 103, 104, 106, 107, 109, 111, 113 to 118, 120, 126, 129 to 162, 164 to 166, 171 to 177, 179, 180, 185 to 188, 194, 195, 197, 200 to 202, 205, 206, 209 to 212, 214, 215, 219 to 221, 223 to 228, 230 to 233, 235 to 247, 263 to 265, 268, 269, 272 to 279, 281 to 289, 292 to 295, 297, 298, 300, 304 to 326, 329 to 331, 333 to 347, 350 to 352, 355 to 360, 362 to 368, 370, 371, 373, 379 to 382, 384 to 388, 390 to 395, 399 to 404, 406, 409, 411 to 418, 421 to 431, 433 to 437, 439 to 454, 459, 460, 464, 465, 467, 468, 473, 476, 478 to 481, 484 to 494, 498, 502 to 504, 507, 508, 510 to 512, 514 to 519, 521 to 531, 533, 537, 540, 541, 544, 545, 549 to 551, 556, 557, 559 to 563, 565 to 571, 573 to 583, 601, 605, 606, 630, 632, 661 to 663, 665, 666, 668, 669, 672, 674, 676, 679, 702 to 710, 714 to 727, 730, 733 to 748, 777 to 779, 783 to 787, 790, 792 to 799, 801, 802, 804 to 807, 809 to 813, 820, 822 to 829, 833 to 836, 838 to 841, 843 to 848, 852, 853, 855 to 863, 866, 868 to 883, 885 to 894, 898 to 901, 912 to 919, 921 to 930, 932 to 938, 945, 1032, 1047, 1084, 1089, 1394, 1396, 1402, 1405, 1421, 1468, 1476, 1610, 1611, 1613, 1614, 1616, 1617, 1619, 1630, 1635, 1637, 1638, 1640, 1641, 1644 to 1649, 1653, 1655, 1660, 1661, 1685, 1706, 1708, 1743, 1753, 1755 to 1760, 1768, 1770, 1771, 1807 to 1811, 1813, 1821 to 1823, 1834, 1835, 1845, 1882, 1897, 1918, 1959, 1960, 1973 to 1975, 2026, 2079, 2080, 2105, 2122, 2123, 2125, 2135, 2142, 2144 to 2152, 2154, 2155, 2157, 2158, 2163 to 2165, 2169, 2177, 2178, 2183, 2184, 2189, 2213, 2215, 2222, 2223, 2226 to 2228, 2232 to 2234, 2239, 2240, 2242, 2243, 2245 to 2249, 2269, 2271, 2273, 2276, 2280 to 2282, 2285 to 2291, 2299, 2314, 2316 to 2320, 2326, 2328 to 2330, 2388 to 2417, 2419 to 2461, 2463 to 2476, 2536, 2539, 2552, 2559, 2561, 2562, 2576 to 2582, 2590, 2591, 2648, 2712, 2757 to 2759, 2901, 2904, 2907, 2908, 2910 to 2912, 2918, 2919, 2922, 2952 to 2954, 2956 to 2959, 2961 to 2965, 2967 to 2969, 2971 to 2977 |
+| INS front door, its read model and the address book | 280 | req-001, 002, 004 to 006, 008, 054, 461, 463, 953, 956 to 958, 960 to 963, 966, 968 to 970, 1020, 1021, 1024, 1026, 1027, 1094, 1108, 1109, 1111 to 1116, 1118 to 1127, 1129 to 1132, 1134 to 1146, 1148, 1149, 1151 to 1153, 1155 to 1159, 1161, 1162, 1164 to 1166, 1168, 1169, 1171 to 1176, 1179 to 1185, 1188, 1192 to 1198, 1200 to 1203, 1207, 1208, 1211, 1213, 1221 to 1223, 1226 to 1229, 1231, 1232, 1234, 1237 to 1245, 1247, 1251, 1252, 1254, 1255, 1257 to 1259, 1261 to 1274, 1276, 1278, 1280 to 1282, 1284, 1674 to 1680, 1684, 1686, 1687, 1689, 1690, 1693, 1695, 1697, 1698, 1700 to 1702, 1704, 1705, 1710, 1711, 1713 to 1715, 1723, 1728, 1729, 1731, 1732, 1849, 1862, 1867 to 1869, 1874, 1904, 1910, 2040, 2041, 2046, 2086, 2087, 2199, 2212, 2216, 2217, 2219, 2260 to 2262, 2270, 2274, 2277, 2279, 2352 to 2354, 2357, 2358, 2360, 2362, 2363, 2535, 2537, 2538, 2558, 2565, 2566, 2569 to 2572, 2653 to 2666, 2668, 2669, 2671 to 2675, 2677, 2679, 2683 to 2690, 2692 to 2697, 2784 to 2786, 2799, 2800, 2830 to 2834, 2944 to 2947 |
+| Plants frontend | 213 | req-015, 016, 022, 564, 572, 586 to 589, 591, 593 to 600, 602 to 604, 607, 608, 611, 615, 616, 618 to 620, 681 to 695, 911, 1065, 1088, 1091, 1397, 1398, 1406, 1412, 1415, 1418, 1452 to 1454, 1459, 1460, 1478, 1650, 1659, 1662, 1663, 1691, 1694, 1696, 1699, 1703, 1707, 1828, 1844, 1881, 1909, 1911 to 1917, 1929 to 1931, 1935 to 1949, 1952 to 1954, 1956, 1976 to 1979, 1992, 1993, 1995 to 1998, 2001, 2002, 2005 to 2024, 2033, 2037, 2061, 2070 to 2074, 2078, 2084, 2088, 2091 to 2094, 2120, 2128, 2136, 2250 to 2255, 2298, 2303, 2321, 2335, 2336, 2348, 2372, 2484, 2488, 2489, 2491 to 2514, 2520, 2522, 2523, 2525, 2528, 2529, 2532 to 2534, 2540, 2722, 2734, 2753, 2762, 2763, 2920, 2921, 2923, 2924, 2970 |
+| Animals backend | 129 | req-495 to 497, 499 to 501, 506, 509, 513, 520, 532, 534, 538, 546 to 548, 1422, 1423, 1438, 1488 to 1507, 1509 to 1531, 1533, 1535 to 1537, 1539 to 1545, 1547 to 1554, 1557 to 1562, 1565 to 1572, 1576, 1577, 1579, 1585, 1586, 1588 to 1590, 1592, 1593, 1595 to 1601, 1987, 2174 to 2176, 2179, 2180, 2201, 2209, 2376, 2385, 2713, 2865 to 2870 |
+| Reference data and the stub | 26 | req-077, 078, 1754, 1871, 2130, 2224, 2256, 2259, 2574, 2575, 2872 to 2877, 2880 to 2887, 2894, 2897 |
+| Tests repo and end-to-end traces only | 94 | req-007, 361, 462, 474, 609, 610, 614, 633, 636 to 641, 644, 645, 657 to 659, 667, 671, 673, 675, 677, 696 to 698, 781, 1095, 1147, 1187, 1395, 1401, 1407, 1409, 1436, 1477, 1546, 1580, 1581, 1604 to 1608, 1618, 1625, 1651, 1664, 1712, 1716, 1727, 1815, 1824, 1830, 1860, 2143, 2208, 2218, 2220, 2294, 2304, 2342, 2355, 2361, 2367, 2373 to 2375, 2379, 2380, 2531, 2542, 2544 to 2548, 2550, 2554, 2563, 2900, 2905, 2913 to 2915, 2932 to 2936, 2939, 2940, 2943 |
+| Performance suite | 3 | req-1853, 1861, 2925 |
+| Rulings, V4, DR1 or design only: confirm before passing on | 32 | req-060 to 064, 374, 931, 1719 to 1722, 1725, 1744 to 1746, 1748, 1749, 1812, 1858, 1902, 1903, 1906, 1950, 1963, 1966 to 1970, 2050, 2257, 2293 |
 
 ## The increments
 
-A **review point** is a check the owner makes once the theme is built. The build never waits for it mid-run. Six rows carry one: inc-120, inc-128, inc-129, inc-132, inc-176 and inc-277.
-
-"Lands after" lists the rows in `dependsOn`, and, marked †, the rows in `externalDependsOn` that live on a split branch. Rows are in id order; Lands after is the only order there is.
-
 ### Ready to go
+
+The table is in build order. A row builds once every row in its Lands after cell has landed.
+
+A **Review point** is a check the owner makes once the theme is built. The build never waits for it mid-run.
 
 | Id | What it delivers | Criteria | Repos | Lands after | Theme |
 |---|---|---|---|---|---|
-| inc-016 | The germinal set's "What are you importing?" offers germinal commodities only, with its own search hint | 4 | frontend, tests | inc-176 | germinal-products |
-| inc-017 | Germinal Commodity details asks total gross weight, number of packages and temperature, and every trade line says what it is | 10 | backend, frontend, tests | inc-016, inc-024, inc-018† | germinal-products |
-| inc-024 | The germinal start and its main import reason: two reasons, four purposes, the Transit answers and no exit date | 8 | frontend, tests | inc-016, inc-141, inc-015†, inc-218†, inc-022† | germinal-products |
-| inc-052 | Germinal identification asks once per species for the donor, the dates and the identification number | 9 | backend, frontend, tests | inc-016, inc-017, inc-045† | germinal-products |
-| inc-053 | Germinal identification dates and names: text inputs with a "Choose date" calendar, and the format, real-date and length checks | 10 | frontend, tests | inc-052, inc-206† | germinal-products |
-| inc-099 | The germinal overview page, with packages and kilograms commodity totals and its Commodity details completeness rule | 12 | frontend, tests | inc-017, inc-177 | germinal-products |
-| inc-105 | The germinal set's own review: answers in their species blocks, its unfinished-species messages, its shorter Addresses card and its confirmation page | 9 | frontend, tests | inc-017, inc-052, inc-176, inc-099, inc-104†, inc-106† | germinal-products |
-| inc-120 | **Review point.** Amend goes through a confirmation page, then opens the amend review, in animals and plants | 9 | frontend, plantsfrontend, tests, perftests | inc-112† | manage-notifications |
-| inc-121 | The cancel-amendment page is one question and two controls, and returns to the submitted notification with no banner | 8 | frontend, plantsfrontend, tests | inc-110† | manage-notifications |
-| inc-123 | Copy as new carries over the trade answers and clears the shipment answers, from the submitted version | 8 | backend, frontend, tests | — | manage-notifications |
-| inc-124 | A stale Copy as new from the view page returns there and says the notification has been updated | 3 | frontend, tests | inc-112† | manage-notifications |
-| inc-125 | The delete confirmation page identifies the notification in a summary, with shorter wording and a plain link back | 13 | frontend, plantsfrontend, tests | — | manage-notifications |
-| inc-126 | The deletion message reads "Notification has been deleted" on each set's own list, the endings work without JavaScript, and the amend, cancel and delete walks are proven end to end | 11 | backend, frontend, plantsfrontend, tests | inc-120, inc-121, inc-125, inc-110† | animals-dashboard |
-| inc-129 | **Review point.** The live animals list is reframed in place, scoped to the trader's organisation, and plants' list takes the same frame | 11 | backend, frontend, plantsfrontend, tests, perftests | — | animals-dashboard |
-| inc-130 | Notification cards show the design's facts, on the live animals list and on plants' list | 10 | backend, frontend, plantsfrontend, tests | inc-129 | animals-dashboard |
-| inc-131 | Card status styles on both lists | 3 | frontend, plantsfrontend, tests | inc-129, inc-130, inc-113† | animals-dashboard |
-| inc-135 | The live animals list has "In progress", "Draft" and "Completed" tabs | 7 | backend, frontend, tests | inc-130 | animals-dashboard |
-| inc-136 | The live animals list's search and sort become one form that really searches and sorts | 10 | backend, frontend, plantsfrontend, tests, perftests | inc-135, inc-210† | animals-dashboard |
-| inc-137 | The live animals list has "Additional filters" for arrival date, date range and status | 8 | backend, frontend, tests | inc-136 | animals-dashboard |
-| inc-138 | The lists page 8 at a time with numbered pages, and show neither a results count nor an empty-state message | 8 | backend, frontend, plantsfrontend, tests | inc-136, inc-137 | animals-dashboard |
-| inc-140 | The lists' success banner is titled "Success" | 3 | frontend, plantsfrontend, tests | inc-129, inc-126 | animals-dashboard |
-| inc-141 | The germinal set's root renders its own copy of the reframed list | 5 | frontend, tests | inc-176, inc-129, inc-130, inc-135, inc-136, inc-137, inc-138, inc-140, inc-196 | germinal-products |
-| inc-172 | Germinal notifications on their own list, with their own card facts | 6 | backend, frontend, tests | inc-130, inc-141, inc-017 | germinal-products |
-| inc-176 | **Review point.** A germinal notification starts in its own set, with its own draft reference, stored category, service chrome, cross-set guard and origin page | 26 | backend, frontend, tests | inc-129, inc-130, inc-135, inc-148†, inc-150†, inc-098†, inc-100† | germinal-products |
-| inc-177 | Germinal Commodity details checks the weight and the number of packages, and lists its errors by question | 9 | frontend, tests | inc-017, inc-018† | germinal-products |
-| inc-178 | A germinal notification picks its transporter from the germinal set's own transporter list | 11 | frontend, tests | inc-176 | germinal-products |
-| inc-179 | Germinal notifications have their own Upload documents page | 9 | frontend, tests | inc-176, inc-031†, inc-033†, inc-034†, inc-035† | germinal-products |
-| inc-181 | The germinal set's own consignment addresses page, its five party pickers and its overview task, with no CPH number and no permanent address | 11 | frontend, tests | inc-054†, inc-091† | germinal-products |
-| inc-182 | The rest of the germinal journey: arrival, transit countries, contact address, declaration and submission, certified for "Germinal products" | 12 | frontend, tests | inc-099, inc-105, inc-178, inc-179, inc-181, inc-018†, inc-028†, inc-029†, inc-110†, inc-111†, inc-112†, inc-113†, inc-115†, inc-094†, inc-095†, inc-097† | germinal-products |
-| inc-183 | The germinal set has no Additional details step, and a germinal species counts as identified once it has one identifier | 5 | frontend, tests | inc-052, inc-099, inc-105, inc-182, inc-280 | germinal-products |
-| inc-184 | End-to-end proof: a germinal notification for bovine semen, from create to submitted | 3 | tests | inc-182, inc-183, inc-141, inc-172 | germinal-products |
-| inc-185 | Amend, cancel amendment, copy as new and delete for germinal notifications | 3 | backend, frontend, tests | inc-182, inc-120, inc-121, inc-123, inc-124, inc-125, inc-126 | germinal-products |
-| inc-191 | Germinal selections read as live-animal ones do, and each germinal trade line carries the code for its own product type | 3 | backend, frontend, tests | inc-016, inc-017, inc-012† | germinal-products |
-| inc-239 | The live animals list shows a success banner only when an action sends the trader back to it | 4 | frontend | — | animals-dashboard |
-| inc-244 | Both save buttons make the same checks on every germinal page that shows them | 4 | frontend, tests | inc-053, inc-177, inc-182 | germinal-products |
-| inc-264 | The INS type question offers Germinal products and hands it to the germinal set's start | 3 | insfrontend, tests | inc-176, inc-263†, inc-154†, inc-155† | germinal-products |
-| inc-277 | **Review point.** The plants set's rulings records carry the decisions now in force | 5 | plantsfrontend | — | recorded-decisions-plants |
-| inc-278 | The plants journey specification says what the set now has | 7 | plantsfrontend | inc-277 | recorded-decisions-plants |
-| inc-279 | The plants set's guides describe the journey the service serves | 5 | plantsfrontend | inc-278 | recorded-decisions-plants |
-| inc-280 | The germinal origin page's Back link returns to wherever the notification was started from | 4 | frontend, tests | inc-141, inc-176, inc-150† | germinal-products |
+| inc-176 **Review point** | Germinal starts in its own set: draft reference, stored category, chrome, cross-set guard and origin page | 27 | backend, frontend, tests | type-question (inc-148, 150); overview-and-review (inc-098, 100) | germinal-products |
+| inc-181 | Germinal Consignment addresses: five pickers and an overview task, with no CPH and no permanent address | 14 | frontend, tests | identification-and-permanent-address (inc-054); consignment-parties (inc-091) | germinal-products |
+| inc-239 | A success banner only when an action sends the trader back to the list | 4 | frontend | nothing | animals-dashboard |
+| inc-277 **Review point** | Plants rulings records carry the decisions now in force | 8 | plantsfrontend | nothing | recorded-decisions-plants |
+| inc-278 | The plants journey specification says what the set now has | 17 | plantsfrontend | inc-277 | recorded-decisions-plants |
+| inc-141 | The germinal root shows its own list, a copy of today's live animals list | 4 | backend, frontend, tests | inc-176 | germinal-products |
+| inc-016 | Germinal "What are you importing?" offers germinal commodities only, with its own hint | 6 | frontend, tests | inc-176 | germinal-products |
+| inc-178 | Germinal picks its transporter from the germinal set's own list | 12 | frontend, tests | inc-176 | germinal-products |
+| inc-179 | Germinal's own Upload documents page | 10 | frontend, tests | inc-176; documents (inc-031, 033, 034, 035) | germinal-products |
+| inc-264 | The INS type question takes germinal back to its own journey | 6 | insfrontend, tests | inc-176; type-question (inc-263) | germinal-products |
+| inc-129 **Review point** | The live animals list reframed in place, scoped to the organisation; plants' list and the germinal list copy take the same frame | 9 | plantsfrontend, frontend, tests | inc-141 | animals-dashboard |
+| inc-024 | Germinal start and main import reason: two reasons, four purposes, the Transit answers, no exit date | 12 | frontend, tests | inc-016, inc-141; commodities-and-reason (inc-015, 022); design-snagging (inc-218) | germinal-products |
+| inc-017 | Germinal Commodity details: quantity, packages where they apply, gross weight and temperature; the record holds them; every trade line says what it is | 17 | backend, frontend, tests | inc-016, inc-024; commodities-and-reason (inc-018, 012) | germinal-products |
+| inc-177 | Germinal Commodity details checks quantity and weight, with errors by question | 10 | frontend, tests | inc-017; commodities-and-reason (inc-018) | germinal-products |
+| inc-052 | Germinal identification once per species: donor, dates and identification number, held on the record | 10 | backend, frontend, tests | inc-016, inc-017; identification-and-permanent-address (inc-045) | germinal-products |
+| inc-099 | Germinal overview: section 2 tasks, two total cards, Commodity details completeness rule | 15 | frontend, tests | inc-017, inc-177 | germinal-products |
+| inc-105 | Germinal review and confirmation, with germinal transport guidance and the missing-ITAHC reminder | 16 | frontend, tests | inc-017, inc-052, inc-176, inc-099, inc-141; overview-and-review (inc-104, 106) | germinal-products |
+| inc-182 | The germinal journey follows live animals without additional details, CPH or permanent address; certified "Germinal products" | 12 | frontend, tests | inc-099, inc-105, inc-178, inc-179, inc-181; commodities-and-reason (inc-018); arrival-and-transit (inc-028, 029); overview-and-review (inc-110, 111, 112, 113, 115); consignment-parties (inc-094, 095, 097) | germinal-products |
+| inc-053 | Germinal dates and names: text inputs with a "Choose date" calendar, and their checks | 14 | frontend, tests | inc-052, inc-177, inc-182; design-snagging (inc-206) | germinal-products |
+| inc-283 | Germinal transit countries for rail and road, with live animals' page, list, cap and task | 10 | frontend, tests | inc-182; arrival-and-transit (inc-028, 029) | germinal-products |
+| inc-185 | Amend, cancel amendment, copy as new and delete for germinal | 8 | backend, frontend, tests | inc-182; manage-notifications (inc-120, 121, 123, 124, 125) | germinal-products |
+| inc-183 | No Additional details step; a germinal species is identified once it has one identifier; the bovine semen walk from create to submitted | 15 | frontend, tests | inc-052, inc-099, inc-105, inc-182, inc-141, inc-283, inc-280 (blocked) | germinal-products |
+| inc-126 | "Notification has been deleted." with a "Success" banner, and the cards' facts and status styles, on the live animals, plants and germinal lists | 17 | backend, plantsfrontend, frontend, tests | inc-129, inc-185; overview-and-review (inc-110); manage-notifications (inc-120, 121, 125) | animals-dashboard |
+| inc-135 | Tabs "Submitted", "Draft and Amend" and "Past" | 6 | backend, frontend, tests | inc-126 | animals-dashboard |
+| inc-136 | Search and sort as one form that really searches and sorts | 9 | backend, plantsfrontend, frontend, tests | inc-135; design-snagging (inc-210) | animals-dashboard |
+| inc-137 | "Additional filters" for arrival date, date range and status | 11 | backend, frontend, tests | inc-136 | animals-dashboard |
+| inc-138 | 8 a page with numbered pages, and no results count or empty-list message | 7 | backend, plantsfrontend, frontend, tests | inc-136, inc-137 | animals-dashboard |
+| inc-172 | The germinal list takes the rest of the reframed frame, with its own card facts | 3 | frontend, tests | inc-126, inc-141, inc-017, inc-137 | animals-dashboard |
 
 ### Blocked
 
-#### Waiting on the INS front door dashboard's requirements
+#### Waiting on the INS dashboard's requirements
 
-Whoever owns those requirements must firm them up and agree them with Sam. The rulings do not name them. Each area is re-distilled once they exist.
+Whoever owns the INS dashboard's requirements must firm them up and agree them with Sam (9 October). Several rows also wait on a second thing, named in the table.
 
 | Id | What it delivers | Repos | Theme |
 |---|---|---|---|
-| inc-128 | **Review point.** The INS home becomes the overall notifications dashboard, with the performance suite's readiness probe following its heading | insfrontend, tests, perftests | ins-dashboard |
-| inc-132 | **Review point.** The Action needed page lists the organisation's notifications needing action. Also waits on the outstanding-actions banner being designed and the animals backend re-adding the outstanding-items rule | insbackend, insfrontend, tests | ins-dashboard |
-| inc-133 | Search and sort the Action needed list | insbackend, insfrontend, tests | ins-dashboard |
-| inc-134 | Action needed glance card on the home's Live animals section. Also waits on the outstanding-actions banner | insfrontend, tests | ins-dashboard |
-| inc-139 | The live animals list's Summary shows "Action needed" and "Status updated" glance cards. Also waits on the outstanding-actions banner for the "Action needed" count | backend, frontend, tests | animals-dashboard |
-| inc-145 | Germinal products section on the home, and what makes a germinal notification need action. Also waits on the outstanding-actions banner | insfrontend, tests | ins-dashboard |
+| inc-128 **Review point** | The INS home becomes the overall dashboard | insfrontend, tests, perftests | ins-dashboard |
+| inc-132 **Review point** | Action needed page; also waits on the banner design and the outstanding-items rule | insbackend, insfrontend, tests | ins-dashboard |
+| inc-133 | Search and sort on Action needed | insbackend, insfrontend, tests | ins-dashboard |
+| inc-134 | Action needed glance card; also waits on the banner | insfrontend, tests | ins-dashboard |
+| inc-139 | Live animals Summary glance cards; also waits on the banner | backend, frontend, tests | animals-dashboard |
+| inc-143 | Status updates cards and page; also waits on the authorities' outcomes | insbackend, insfrontend, tests | ins-dashboard |
+| inc-144 | Inspection required page; also waits on the inspection selection feed | insbackend, insfrontend, tests | ins-dashboard |
+| inc-145 | Germinal section on the INS home; also waits on the outstanding-items rule | insfrontend, tests | ins-dashboard |
+| inc-146 | Plants glance cards; also waits on plants publishing to the INS read model | insfrontend, tests | ins-dashboard |
 
 #### Waiting on the authorities' outcome feed
 
-The authorities' import-checking systems must send post-submission outcomes (inspection required, delayed, completed, passed inspection) back to the services. No service in the workspace receives them today. The programme owner must agree that feed with the authorities' systems team.
+The owners of the PIMS Dynamics integration must send post-submission outcomes. A real source of completion must also exist.
 
 | Id | What it delivers | Repos | Theme |
 |---|---|---|---|
-| inc-142 | Cards show the authorities' outcomes: delayed, completed, inspection, their actions and the status-updated count. Also waits on a real source of completion, and on the INS dashboard's requirements for the status-updated count | backend, frontend, tests | animals-dashboard |
-| inc-143 | Status updates cards and the Status updated page. Also waits on the INS dashboard's requirements | insbackend, insfrontend, tests | ins-dashboard |
-| inc-144 | Inspection required page. Also waits on the INS dashboard's requirements | insbackend, insfrontend, tests | ins-dashboard |
-
-#### Waiting on the plants services publishing to the INS read model
-
-Whoever owns `trade-imports-plants-frontend` and `trade-imports-plants-backend` must publish plants notifications to `trade-imports-ins-backend` before the plants glance cards can count or list anything.
-
-| Id | What it delivers | Repos | Theme |
-|---|---|---|---|
-| inc-146 | The plants section's glance cards. Also waits on the INS dashboard's requirements | insfrontend, tests | ins-dashboard |
+| inc-142 | Cards show the authorities' outcomes: delayed and past, "View" and the status-updated count | backend, frontend, tests | animals-dashboard |
 
 #### Waiting on the plants backend
 
-The plants backend's owners must let plants' list query plants notifications by status for the tabs and their counts, ask for a page size of 8, and search by keyword, status and arrival date with the new sorts. Until then plants' list keeps today's search, sort and paging.
+The owners of trade-imports-plants-backend must let plants' list query by status, keyword and date, at 8 a page.
 
 | Id | What it delivers | Repos | Theme |
 |---|---|---|---|
-| inc-200 | Plants' list tabs, eight a page, search, sort and filters | plantsfrontend, tests | animals-dashboard |
+| inc-200 | Plants' list tabs, 8 a page, search, sort and filters | plantsfrontend, tests | animals-dashboard |
 
-#### Waiting on the owner to pick templates up again
+#### Waiting on the INS address lookup
 
-Sam de-prioritised templates on 4 November and the interaction designer dropped them for now on 9 November, with no condition named for their return. Sam must decide to pick them up, after which the templates area is re-distilled.
+Sam must plan address search again, and the INS backend's owners must make the lookup real.
 
 | Id | What it delivers | Repos | Theme |
 |---|---|---|---|
-| inc-186 | A germinal template is answered on the germinal set's own pages, saved, listed, changed and used to start a germinal notification. Question 2 (c-308) also bears on it, with a default the builder follows | frontend, tests | germinal-products |
+| inc-282 | Find an address by postcode, in the address book and the consignee, importer and destination sections | stub, insbackend, insfrontend, frontend, tests | waiting-on-design |
 
-### Rows that are not being built
+#### Waiting on templates
 
-| Id | Status | Why |
+The row says Sam must plan templates again. Its one requirement, req-1740, no longer carries that blocker.
+
+| Id | What it delivers | Repos | Theme |
+|---|---|---|---|
+| inc-280 | The germinal origin page's Back link returns to where the notification was started | frontend, tests | germinal-products |
+
+### Not being built
+
+| Id | What it was | Status |
 |---|---|---|
-| inc-014 | dropped | Every requirement it covered is out of scope or already met. The commodity search already lists results as the trader types, and the germinal search results are the separate ticket's and MDM's |
-| inc-030 | dropped | Design answered on 13 November: transit countries keep the "Add country" button, Remove reloads the page, and no announcement is needed |
-| inc-093 | dropped | The interaction designer answered on 9 November: the county parish holding boxes follow the GOV.UK date input with no JavaScript on top |
-| inc-147 | dropped | The 16 November ruling withdraws the "Action required" tag and everything action-required from the card |
-| inc-162 | dropped | The interaction designer dropped templates for now, which settles the templates sort with them |
-| inc-189 | dropped | The 9 November ruling keeps the accessible autocomplete's own announcements |
-| inc-192 | merged-into | Merged into inc-053 on 10 November: germinal products follow live animals, so the calendar lands with the dates it enhances |
-| inc-193 | dropped | Design answered on 13 November: no list filters as the trader types. A return to the idea comes back as a new question |
-| inc-194 | deferred | The 9 November ruling parks address search as concept work, not needed for the deadline. Pick it up only when address search is planned, starting from design question 10 and a real lookup |
-| inc-195 | dropped | The interaction designer answered on 9 November: amend and cancel amendment are pages, not dialogs |
-| inc-196 | dropped | The "Use template" button is out of scope now that templates are parked |
-| inc-198 | dropped | Design answered on 13 November: no Copy buttons on the import reference numbers |
-| inc-201 | dropped | No "Submitted action required" status exists, so there is no such notification whose amend, copy and delete need proving apart |
-| inc-245 | dropped | The 10 November ruling drops the obligation model row: main already tells a hard stop from a submission check |
-| inc-270 | dropped | req-931 is already met and the 16 November ruling withdraws the status it would have flagged |
-| inc-271 | dropped | The 16 November ruling withdraws the action-required header warnings and inline identifier errors |
+| inc-186 | A germinal products template | Deferred with templates |
+| inc-194 | Address search's search-only layout and live results | Deferred with address search |
+| inc-196 | "Use template" on the live animals list | Deferred with templates |
+| inc-271 | The needs-action view names missing identifiers | Deferred until the banner |
+| inc-014 | Commodity search as the trader types | Dropped: the commodity-search ticket's work |
+| inc-030 | Transit add and remove with JavaScript | Dropped: design answered 13 November |
+| inc-093 | CPH boxes with JavaScript | Dropped: interaction designer, 9 November |
+| inc-147 | "Information is missing" on the list card | Dropped: 16 November ruling |
+| inc-162 | A templates sort | Dropped with templates |
+| inc-189 | Country search announcements | Dropped: 9 November ruling |
+| inc-193 | Pickers filtering as the trader types | Dropped: design, 13 November |
+| inc-195 | Amend and cancel confirmations as dialogs | Dropped: they are pages |
+| inc-198 | Copy buttons on import reference numbers | Dropped: design, 13 November |
+| inc-245 | The obligation model | Dropped: Sam, 10 November second ruling |
+| inc-130, inc-131, inc-140 | Card facts, status styles and the list banner | Merged into inc-126 and inc-129 |
+| inc-184 | End to end: a bovine semen notification from create to submitted | Merged into inc-183 this run |
+| inc-191 | Germinal selections and trade-line codes | Merged into inc-017 |
+| inc-192, inc-244 | Germinal date calendar; same checks on germinal pages | Merged into inc-053 |
+| inc-279 | Plants guides | Merged into inc-278 |
+| inc-281 | Germinal quantity beside packages | Merged into inc-099, inc-017 and inc-052 |
+| inc-270 | Incomplete identifiers flag action | Merged into overview-and-review's inc-266 |
 
 **Check these ordering decisions:**
 
-- inc-132 lands after inc-147, and inc-141 after inc-196, but both of those rows are now dropped. Treat the dependency as met rather than waiting for a row that will never build.
-- inc-176 carries 26 acceptance criteria and four external dependencies. It is the largest row in the backlog. It would split along its own criteria: the set's start and draft reference, its stored category and cross-set guard, its service chrome, and its origin page.
-- inc-186 is the only germinal row that is blocked, and it blocks nothing else, so the germinal theme can be built to completion without it.
-- inc-141 lands after eight animals-dashboard rows and inc-176, while inc-176 itself lands after three animals-dashboard rows and inc-024 lands after inc-141. That makes a long single file through the germinal theme. Check whether the germinal list really needs every list row before it, or only the frame (inc-129) and the cards (inc-130).
-- inc-280 is written after inc-182 in the file but builds earlier: inc-183 lands after it. The id order is not the build order here.
-- inc-200 covers req-2034 to req-2037 while the plants list's rest of the frame changes in inc-129 and inc-136. If the plants backend lands mid-run, fold inc-200 into those rows rather than keeping a separate pass over the same page.
-- inc-239 touches only the animals frontend and has no dependencies. It can be built first in its theme to shake out the harness.
-- inc-139 and inc-142 are animals-dashboard rows blocked on an INS-side decision. If the summary information is dropped rather than firmed up, they go out of scope instead of building.
+- inc-176 lands first. It is the germinal gate: every germinal row but inc-181 waits on it, and so does the list reframe, through inc-141.
+- The list reframe now follows the germinal set. inc-129 waits on inc-141, the germinal list copy it reframes (Sam, 27 November, points 8 and 10).
+- inc-126 waits on inc-185, so the whole list reframe (inc-126, inc-135 to inc-138, inc-172) lands after germinal amend, copy and delete. inc-126 could land earlier if inc-185 took the germinal deletion message itself.
+- inc-181, inc-239 and inc-277 can land early. inc-181 needs only the identification-and-permanent-address and consignment-parties branches.
+- inc-183 waits on inc-280, which is blocked. Since inc-184 merged into it, the bovine semen end-to-end walk waits too.
+- inc-280 is blocked, but req-1740 no longer carries a blocker. Moving inc-280 to ready would free inc-183.
+- inc-183 now holds 15 criteria across frontend and tests, at the edge of one plan. It would split back into the identified rule and the end-to-end walk.
+- inc-176 has 27 criteria and may be too big to review. It would split into the start, reference and category half, and the chrome, guard and origin page half.
+- inc-126 has 17 criteria, after absorbing inc-130 and inc-140.
+- inc-172 builds only what the reframe rows leave of the germinal frame and card facts. It may build little beyond its proof.
+- inc-016 needs a germinal commodity search from reference-data, which the split reference-lists branch owns. Default: build the frontend half against such a search, adding it outside this backlog or at a re-distil.
+- inc-017 builds the interim EMBRYO code for a combined embryos-and-ova line. That rests on nobody objecting, not an active approval.
+- inc-132 depends on inc-147, which is dropped. That link no longer holds it back.
+- The combine review merged one pair. It kept the rest apart: too big to review, another row's open question, or different code.
 
 ## Themes
 
@@ -1047,43 +1027,51 @@ Each theme builds on its own branch and machine. No two themes touch the same co
 
 | Theme | Ready | Blocked | Touches | Lands after |
 |---|---|---|---|---|
-| manage-notifications | inc-120, inc-121, inc-123, inc-124, inc-125 | — | The amend, cancel-amend, delete and notification-actions folders in the animals and plants frontends, the backend's notification controller and copy mapper, and the k6 amend walk | overview-and-review |
-| recorded-decisions-plants | inc-277, inc-278, inc-279 | — | The plants set's decisions ledger, conflicts register, journey specification, fixtures and four guides | consignment-parties, journey-foundation, overview-and-review |
-| animals-dashboard | inc-126, inc-129, inc-130, inc-131, inc-135, inc-136, inc-137, inc-138, inc-140, inc-239 | inc-139, inc-142, inc-200 | The live-animals dashboard folder, the list reads in the frontend's persistence, the backend's list query and sort, plants' dashboard folder and the k6 list endpoints | manage-notifications, overview-and-review, type-question-and-templates |
-| germinal-products | inc-016, inc-017, inc-024, inc-052, inc-053, inc-099, inc-105, inc-141, inc-172, inc-176, inc-177, inc-178, inc-179, inc-181, inc-182, inc-183, inc-184, inc-185, inc-191, inc-244, inc-264, inc-280 | inc-186 | The germinal-products set folder and its routes, the set's build config, the persistence mapper, and the backend's germinal commodity, species and GBN-AG publishing | animals-dashboard, arrival-and-transit, commodities-and-reason, consignment-parties, design-snagging, documents, identification-and-permanent-address, journey-foundation, manage-notifications, overview-and-review, type-question-and-templates |
-| ins-dashboard | — | inc-128, inc-132, inc-133, inc-134, inc-143, inc-144, inc-145, inc-146 | The INS read model and its drill-down feature folders, and the k6 INS page and readiness checks | animals-dashboard, germinal-products, type-question-and-templates |
-| waiting-on-design | — | — | The enhancement scripts layered on other themes' pages, in all three frontends | address-book, arrival-and-transit, commodities-and-reason, consignment-parties, design-snagging, germinal-products, journey-foundation, manage-notifications, overview-and-review, transporters, type-question-and-templates |
-| identifiers-action-required | — | — | The live-animals review header and consignment cards, the confirmation feature, and the backend's notification service | identification-and-permanent-address, overview-and-review |
-| obligation-model | — | — | The journey platform's obligation model in both frontends, and the obligation-marking specs | nothing: can start now |
-| type-question-and-templates | split off to `feat/NO_JIRA-design-release-2-1-type-question-and-templates` | — | The INS type question and home controls, the templates folder and template review, the backend's template store, and plants' first page | design-snagging |
-| journey-foundation | split off to `feat/EUDPA-691-design-release-2-1-journey-foundation` | — | The journey engine, flow and shared save actions | nothing: can start now |
-| reference-lists | split off to `feat/EUDPA-692-design-release-2-1-reference-lists` | — | The reference services and the lists the journey reads | nothing: can start now |
-| commodities-and-reason | split off to `feat/EUDPA-693-design-release-2-1-commodities-and-reason` | — | The commodity, Commodity details, main import reason and additional details pages | design-snagging, journey-foundation |
-| arrival-and-transit | split off to `feat/EUDPA-694-design-release-2-1-arrival-and-transit` | — | Arrival details, the port of entry and the transit countries pages | design-snagging, journey-foundation, reference-lists |
-| origin-page | split off to `feat/EUDPA-695-design-release-2-1-origin-page` | — | The origin page and its region code | nothing: can start now |
-| overview-and-review | split off to `feat/EUDPA-696-design-release-2-1-overview-and-review` | — | The hub, the review, the declaration, the confirmation and the notification view header, in both journeys | arrival-and-transit, design-snagging, identification-and-permanent-address |
-| design-snagging | split off to `feat/EUDPA-720-design-release-2-1-design-snagging` | — | The shared search macro, the layout and the snagging fixes | journey-foundation, reference-lists |
-| documents | split off to `feat/EUDPA-724-design-release-2-1-documents` | — | The upload documents page and the document types | design-snagging, journey-foundation |
-| address-book | split off to `feat/EUDPA-707-design-release-2-1-address-book` | — | The INS address book's list, view, add, edit and delete, and the address book service's record and API | reference-lists |
-| transporters | split off to `feat/EUDPA-781-design-release-2-1-transporters` | — | The transporter list and the address book's transporter records and add pages | address-book, documents, journey-foundation, reference-lists |
-| identification-and-permanent-address | split off to `feat/EUDPA-796-design-release-2-1-identification-and-permanent-address` | — | The identification details and permanent address pages | commodities-and-reason, design-snagging, journey-foundation, type-question-and-templates |
-| test-hygiene | split off to `feat/NO_JIRA-design-release-2-1-test-hygiene` | — | The suites' own hygiene and the plants `docs/testing.md` | arrival-and-transit, commodities-and-reason, design-snagging, documents, journey-foundation, origin-page |
-| consignment-parties | split off to `feat/EUDPA-805-design-release-2-1-consignment-parties` | — | The consignment addresses page, the five party pickers, the party add and edit pages and the contact address page | address-book, design-snagging, identification-and-permanent-address, journey-foundation |
+| journey-foundation | split off to `feat/EUDPA-691-design-release-2-1-journey-foundation` | — | Both animals and plants journey flow and shared layout, the shared flows and base page in tests | nothing: can start now |
+| reference-lists | split off to `feat/EUDPA-692-design-release-2-1-reference-lists` | — | Country and port services in three frontends, reference-data, the MDM stub fixtures | nothing: can start now |
+| origin-page | split off to `feat/EUDPA-695-design-release-2-1-origin-page` | — | Animals and plants origin pages and their tests | nothing: can start now |
+| type-question-and-templates | split off to `feat/NO_JIRA-design-release-2-1-type-question-and-templates` | — | The backend template store, animals templates and template review, the INS type question and home controls, plants' commodity type page | design-snagging |
+| commodities-and-reason | split off to `feat/EUDPA-693-design-release-2-1-commodities-and-reason` | — | Animals commodity search and details, import reason, additional details, their obligations, the k6 walk | design-snagging, journey-foundation |
+| arrival-and-transit | split off to `feat/EUDPA-694-design-release-2-1-arrival-and-transit` | — | Animals port of entry and transit countries, plants arrival pages | design-snagging, journey-foundation, reference-lists |
+| design-snagging | split off to `feat/EUDPA-720-design-release-2-1-design-snagging` | — | The accessible autocomplete component, shared styles, transport copy, origin snags | journey-foundation, reference-lists |
+| documents | split off to `feat/EUDPA-724-design-release-2-1-documents` | — | Animals documents page, document types, the backend's accompanying documents | design-snagging, journey-foundation |
+| address-book | split off to `feat/EUDPA-707-design-release-2-1-address-book` | — | The address book service and the INS address book pages | reference-lists |
+| identification-and-permanent-address | split off to `feat/EUDPA-796-design-release-2-1-identification-and-permanent-address` | — | Animals identification and permanent address pages, the backend's AnimalIdentifier | commodities-and-reason, design-snagging, journey-foundation, type-question-and-templates |
+| overview-and-review | split off to `feat/EUDPA-696-design-release-2-1-overview-and-review` | — | Animals hub and check answers, plants review, declaration and confirmation | arrival-and-transit, design-snagging, identification-and-permanent-address |
+| manage-notifications | split off to `feat/EUDPA-845-design-release-2-1-manage-notifications` | — | Amend, cancel amend, delete and notification actions in both frontends, the backend's copy, the k6 journeys | overview-and-review |
+| transporters | split off to `feat/EUDPA-781-design-release-2-1-transporters` | — | Animals transporter pages and service, the address lookup stub and INS lookup | address-book, documents, journey-foundation, reference-lists |
+| consignment-parties | split off to `feat/EUDPA-805-design-release-2-1-consignment-parties` | — | Animals addresses page, pickers, CPH and contact; plants' address-book service | address-book, design-snagging, identification-and-permanent-address, journey-foundation |
+| test-hygiene | split off to `feat/NO_JIRA-design-release-2-1-test-hygiene` | — | Type-ahead and caption fit specs, client helpers, the tests repo README | arrival-and-transit, commodities-and-reason, design-snagging, documents, journey-foundation, origin-page |
+| recorded-decisions-plants | inc-277, inc-278 | — | Plants set spec ledgers, journey spec, fixtures and docs | consignment-parties, journey-foundation, overview-and-review |
+| germinal-products | inc-016, 017, 024, 052, 053, 099, 105, 141, 176, 177, 178, 179, 181, 182, 183, 185, 264, 283 | inc-280 | The germinal set folder and routes, the notification mapper, backend germinal fields and outbox, the INS type question, germinal tests | arrival-and-transit, commodities-and-reason, consignment-parties, design-snagging, documents, identification-and-permanent-address, journey-foundation, manage-notifications, overview-and-review, type-question-and-templates |
+| animals-dashboard | inc-129, inc-239, inc-126, inc-135, inc-136, inc-137, inc-138, inc-172 | inc-139, inc-142, inc-200 | Live animals, germinal and plants dashboard folders, list reads in persistence, the backend's list query and sort, k6 list endpoints, list tests, the germinal end-to-end folder | germinal-products, manage-notifications, overview-and-review |
+| ins-dashboard | — | inc-128, 132, 133, 134, 143, 144, 145, 146 | The INS read model, drill-down feature folders, notification list, k6 INS page and readiness checks | animals-dashboard, germinal-products |
+| waiting-on-design | — | inc-282 | Client-side enhancements, the address lookup stub and INS lookup, the INS add page, party pickers | address-book, arrival-and-transit, commodities-and-reason, consignment-parties, design-snagging, germinal-products, journey-foundation, manage-notifications, overview-and-review, transporters |
+| obligation-model | — | — | Obligation models in both frontends; holds only the dropped inc-245 | nothing |
 
-Every row sits in exactly one theme. No row is in none.
+In no theme: inc-270, merged into overview-and-review's inc-266.
 
 **Cross-theme dependencies:**
 
-- inc-126 (animals-dashboard) lands after inc-120, inc-121 and inc-125 (manage-notifications): the deletion message and the proven walks need the amend, cancel and delete pages to exist first.
-- inc-132 (ins-dashboard) lands after inc-131 (animals-dashboard): the drill-down's cards take the card status styles the list defines.
-- inc-141, inc-172 and inc-176 (germinal-products) land after animals-dashboard rows: the germinal list is a copy of the reframed live animals list, so the frame, the cards and the tabs come first.
-- inc-145 (ins-dashboard) lands after inc-141 (germinal-products): the home's germinal section needs a germinal list to link to.
-- inc-185 (germinal-products) lands after five manage-notifications rows and inc-126 (animals-dashboard): germinal amend, cancel, copy and delete are copies of the live-animals pages.
-- 36 rows depend on a row in a split-off theme's own workarea, 19 of them ready to go. Those branches merge before the rows that name them build. Two external references name workareas the split-off list does not carry: `themes/type-question` (inc-148, inc-149, inc-150, inc-263) and `themes/design-snagging-b` (inc-219). Read them as the `type-question-and-templates` and `design-snagging` branches respectively, and check that mapping before launching inc-176, inc-128, inc-280 or inc-264.
+- inc-129 (animals-dashboard) on inc-141 (germinal-products): the first reframe row changes the germinal list copy in the same increment.
+- inc-126 (animals-dashboard) on inc-185 (germinal-products): the deletion message changes on the germinal list too, so germinal delete comes first.
+- inc-172 (animals-dashboard) on inc-141 and inc-017 (germinal-products): it reframes the germinal list and totals the germinal quantity.
+- inc-132 (ins-dashboard) on inc-126 (animals-dashboard), and on the dropped inc-147.
+- inc-145 (ins-dashboard) on inc-141 (germinal-products): the INS germinal section links to the germinal list.
+- inc-176 and inc-264 on the type question (inc-148, 150, 263): germinal starts from the INS type question.
+- inc-128 (ins-dashboard) and inc-280 (germinal-products) on the type question (inc-149, inc-150): the INS home and the origin Back link follow it.
+- inc-017, inc-024, inc-177 and inc-182 on commodities-and-reason (inc-012, 015, 018, 022): germinal copies the live animals commodity and reason pages.
+- inc-052 on identification-and-permanent-address (inc-045), and inc-181 on it (inc-054) and consignment-parties (inc-091): germinal copies those pages.
+- inc-053, inc-024, inc-136 and inc-200 on design-snagging (inc-206, inc-218, inc-210): they build on its date picker, Back links and list snags.
+- inc-179 on documents (inc-031, 033, 034, 035): germinal copies the documents page.
+- inc-182 and inc-283 on arrival-and-transit (inc-028, 029): germinal takes the same transit page.
+- inc-105, inc-126, inc-176 and inc-182 on overview-and-review (inc-098, 100, 104, 106, 110 to 113, 115): germinal and the list follow the overview and review as rebuilt.
+- inc-126 and inc-185 on manage-notifications (inc-120, 121, 123, 124, 125): the deletion message and germinal actions follow the live animals actions.
+- inc-182 on consignment-parties (inc-094, 095, 097): germinal follows the rebuilt pickers.
 
 ## For the split branches
 
-Each branch below adds or changes rows in its own backlog for these requirements, citing the requirement ids.
+Each branch below adds or changes rows in its own backlog for these requirements. Every full statement is in `distil/requirements.json`.
 
 ### type-question-and-templates
 
@@ -1091,7 +1079,19 @@ Branch `feat/NO_JIRA-design-release-2-1-type-question-and-templates`, backlog `s
 
 | Requirement | What happened | What it now says |
 |---|---|---|
-| req-003 | Changed since the split | The type question offers Live animals; Germinal products (semen, ova, embryos); Plants for planting; Potatoes (seed and ware); Wood products, in that order, with no hint text and none pre-selected. Live animals continues to the live-animals start, which creates the GBN-AG draft with the live-animals category and lands on its origin page. Germinal products continues to the germinal set's own start, which creates its own draft with the germinal category and lands on that set's origin page; this option may land before the germinal set is built. The three plants options continue to the start of the high-risk plants journey, which creates a plants draft in that service's own reference format and lands on plants' own first page |
+| req-2595 | New since the split | While a template is created, Commodity details lets a blank field pass and flags only an invalid entered value |
+| req-2632, 2633 | New since the split; blocked on templates | Template-mode arrival details needs no means of transport; template return controls |
+| req-2049 | New since the split; blocked on templates | Template question pages: both buttons check an entered answer as the notification page does |
+| req-2842 to 2846 | New since the split; blocked on templates | Manage templates: "Help with templates" details, its wording and warning; one list for both categories |
+| req-2847 to 2851 | New since the split; blocked on templates | "Make template" from a submitted notification: name page, review, cancel and discard |
+| req-2852 to 2856 | New since the split; blocked on templates | Return goes to the template review; review title, "Save template" and "Delete"; no task list Back link; named Change links |
+| req-003 | Changed since the split | The type question's options in order, no hint, none pre-selected |
+| req-119 | Changed since the split | Commodity pages return to check answers, or to the overview when opened from it |
+| req-543 | Changed since the split | Template mode skips Upload documents, in the shared journey flow |
+| req-407 | Changed since the split | Amending: the transporter list shows "Save and return", "Save and continue", "Save and return to overview" |
+| req-408 | Changed since the split | From a template review: one "Save and return" and a "Cancel" link, animals only |
+| req-167, 290, 291, 814 to 818, 1291 to 1298, 1300 to 1314, 1316 to 1334, 1336, 1338, 1340, 1343 to 1354, 1356, 1358 to 1361, 1363 to 1365, 1367 to 1382, 2048, 2052, 2107, 2202 | Changed since the split | Now blocked until Sam picks templates up again (4 and 9 November rulings); req-167 is adopted again on that footing |
+| req-010, 091, 941, 942, 943, 964, 965, 1299 | No longer to build | Out of scope: templates parked |
 
 ### journey-foundation
 
@@ -1099,8 +1099,30 @@ Branch `feat/EUDPA-691-design-release-2-1-journey-foundation`, backlog `shared/d
 
 | Requirement | What happened | What it now says |
 |---|---|---|
-| req-405 | New since the split | In the journey run, "Save and continue" on the transporter list goes on to the documents page ("Upload documents"), which keeps its real path. Opened from its overview task, the list returns to the overview |
-| req-1639 | New since the split | A page opened from the review returns to the review when it is saved, and keeps that context through its own in-page actions (add, remove, upload) until it does. "Save and return to overview" still goes to the overview first |
+| req-405 | New since the split | From arrival details, the transporter list's "Save and continue" goes on to Upload documents; from the overview it returns there |
+| req-1639 | New since the split | A page opened from the review returns to the review on save, through its own in-page actions |
+| req-2567, 2589, 2744, 2899 | New since the split | The status strip shows "Draft", then "<type> - <reference>", such as "Live animals - GBN-AG-26-…" |
+| req-2909 | New since the split | With every task complete, Consignment addresses' "Save and continue" opens the overview; "Review and submit" opens the review |
+| req-1612 | Changed since the split | With every section complete, Consignment addresses returns to the overview |
+| req-1988 | Changed since the split | Plants' opening run ends on check your answers even when incomplete |
+| req-1615 | Changed since the split | An overview-opened page returns to the overview on save |
+| req-1403, 2068 | Changed since the split | Amending: three amend controls on every page, in live animals and plants |
+| req-782 | Changed since the split | Amending: the status line shows "Cancel amend", to the cancel-amendment confirmation page |
+| req-808, 1934 | No longer to build | Now questions (c-487) |
+| req-1658 | No longer to build | Out of scope: weighed with the whole journeys |
+
+### reference-lists
+
+Branch `feat/EUDPA-692-design-release-2-1-reference-lists`, backlog `shared/design-release-2-1/themes/reference-lists/backlog.json`. Nothing new and nothing dropped.
+
+| Requirement | What happened | What it now says |
+|---|---|---|
+| req-1932, 1769 | Changed since the split | Port lists read airports, seaports, then rail, each A to Z; plants' place of landing too |
+| req-1747 | Changed since the split | The stub's FileUtilsTest checks the regenerated fixtures, and a test proves the countries blocks filter |
+| req-1750 | Changed since the split | The animals and plants captured countries fixtures match what reference-data serves over the regenerated stub |
+| req-1751 | Changed since the split | In stub mode the INS frontend's Country select offers a captured fixture's countries, with no hand-typed list |
+| req-1752 | Changed since the split | The tests repo derives country names from the recaptured fixture and expects the 249 places the stub serves |
+| req-1814, 1933 | Changed since the split | Every other captured countries and ports fixture follows the tidied stub |
 
 ### commodities-and-reason
 
@@ -1108,7 +1130,18 @@ Branch `feat/EUDPA-693-design-release-2-1-commodities-and-reason`, backlog `shar
 
 | Requirement | What happened | What it now says |
 |---|---|---|
-| req-110 | New since the split | Commodity details groups the questions under an h2 per commodity, "<commodity name> (<commodity code>)", and an h3 per chosen species naming its Latin name, with a section break between commodity groups and none above the save buttons |
+| req-110 | New since the split | Commodity details: an h2 per commodity "<name> (<code>)" and an h3 per species |
+| req-2916 | New since the split | Poultry by rail in transit, walked from create to submitted |
+| req-2573, 2586 | New since the split | Commodity names come from MDM through reference-data; species read "<common name> (<Latin name>)" |
+| req-2587, 2588, 2611, 2612 | New since the split | Numeric inputs ten characters wide; full-width Commodity details; reveal spacing; two-thirds additional details |
+| req-112, 1643 | Changed since the split | Number of packages asked only where V4's list names the commodity, and required there |
+| req-1919, 1761 | Changed since the split | The k6 walk searches a matching term and walks the main import reason page |
+| req-1642 | Changed since the split | Arrival details refuses a save only when the means of transport is missing |
+| req-168 | Changed since the split | Main import reason completes on a valid reason and its follow-ups |
+| req-2132 | Changed since the split | Number of animals above 9,223,372,036,854,775,807 is refused, and the store holds that size |
+| req-1656, 2131, 2137 | Changed since the split | Now blocked on MDM: the poultry-by-rail walk, commodity types, unweaned for pigs, sheep and goats |
+| req-094 to 101 | No longer to build | Out of scope: reference-list content, MDM's |
+| req-075, 080, 081 | No longer to build | Now questions (c-379) |
 
 ### arrival-and-transit
 
@@ -1116,7 +1149,8 @@ Branch `feat/EUDPA-694-design-release-2-1-arrival-and-transit`, backlog `shared/
 
 | Requirement | What happened | What it now says |
 |---|---|---|
-| req-280 | New since the split | The arrival date hint reads "The expected date of arrival at the port of entry. For example, <today>", where the example is today's date in d/m/yyyy, so copying the example is always accepted |
+| req-280 | New since the split | The arrival date hint's example is today's date |
+| req-327 | Changed since the split | Opened from the overview, Save and continue returns there |
 
 ### origin-page
 
@@ -1124,7 +1158,8 @@ Branch `feat/EUDPA-695-design-release-2-1-origin-page`, backlog `shared/design-r
 
 | Requirement | What happened | What it now says |
 |---|---|---|
-| req-051 | New since the split | The origin page in both animals sets ends with "Save and continue", a secondary "Save and return to overview" that saves before going to the overview, and a "Cancel and return to overview" link that reaches the overview even on a notification with no answers. It is blocked until the EUDPA-774 save and continue work merges |
+| req-051 | New since the split; blocked on EUDPA-774 | The origin page's three return controls |
+| req-2124 | Changed since the split; blocked on EUDPA-774 | "Save and return to overview" makes the same checks as "Save and continue", plants included |
 
 ### overview-and-review
 
@@ -1132,19 +1167,46 @@ Branch `feat/EUDPA-696-design-release-2-1-overview-and-review`, backlog `shared/
 
 | Requirement | What happened | What it now says |
 |---|---|---|
-| req-585 | New since the split | The overview's "5. Addresses" section holds the task "Consignment addresses", hinted "Consignor or Exporter, Consignee, Importer and Place of Destination", linking to the consignment addresses page and covering the CPH number page behind it |
-| req-837 | New since the split | On an editable review each card's Change link opens the page that collected that card's answers, pre-filled, and saving there returns the trader to the review |
-| req-920 | New since the split | The declaration checkbox is shown ticked when the notification already holds a confirmed declaration, as on resubmitting an amendment |
-| req-2205 | New since the split | Once a saved answer differs from the submitted one during an amendment, the amend review's title and h1 read "Review before re-submitting"; until then they read "Review your notification", in live animals, germinal products and plants |
-| req-2311 | New since the split | The tests that prove the review's broken-copy error summary and its inline party errors find the cards by GOV.UK structure and role rather than by the words of a numbered heading |
-| req-2327 | New since the split | The Uploaded documents section is never marked unfinished and never appears in the review's error summary |
-| req-2331 | New since the split | The live animals review tests find its cards by their GOV.UK structure and role, as the plants tests do, with no test depending on a numbered section heading's words, the review page object offering a single heading, and the shared resume-in-the-UI and save-and-continue walk helpers carrying no overloads |
-| req-2332 | New since the split | Tests prove the review's visually hidden text, its GOV.UK summary-card structure and the rendering of its last card, alongside the overview's totals box, buttons and caption line height |
-| req-2333 | New since the split | Whether an amendment's answers differ from the submitted version is a yes-or-no flag that is never absent, held on the notification record and read by the review to choose its heading. The animals frontend's local stub takes it from the record's own shape rather than working it out itself |
-| req-2334 | New since the split | Outstanding actions on a submitted notification are shown through a banner-style alert, and the notification record carries the outstanding items left at submission and the rule that works them out for the banner to read |
-| req-2364 | New since the split | On a notification's view header no action shares another action's form: each posting action has a form of its own, and Delete is a link to the delete confirmation page placed outside those forms, in the live animals, germinal products and plants frontends |
-| req-2366 | New since the split | The animals backend records whether an amended notification's answers differ from the submitted ones as a yes-or-no value that is never empty, and the animals frontend reads that value from the backend's shape, in its local stub as against the real service |
-| req-2524 | New since the split | The plants frontend shows the notification task list heading visibly, reading "Notification task list", as the live animals frontend does, with "task list" spelled as two words |
+| req-585 | New since the split | Section 5 holds "Consignment addresses" with its hint |
+| req-920 | New since the split | The declaration shows ticked when already confirmed |
+| req-2205, 2333 | New since the split | The amend review heading switches on a never-absent "answers differ" flag on the record |
+| req-2311, 2331, 2332 | New since the split | Tests find review cards by GOV.UK structure, not heading words; more review and overview proof |
+| req-2327 | New since the split | Uploaded documents is never marked unfinished |
+| req-2364, 2325, 2365, 2748 | New since the split | View header: an "Actions" MoJ button menu; Amend a link to its confirmation page; Copy as new its own form |
+| req-1441 | New since the split | The amend review ends with "Continue", "Cancel amend" and a warning "Delete" |
+| req-2524 | New since the split | Plants shows the "Notification task list" heading |
+| req-2749 | New since the split | Status tag grey for Draft, blue for Submitted |
+| req-2752 | New since the split | The review uses the full-width column |
+| req-2334 | New since the split; blocked on the banner | Outstanding actions shown through a banner |
+| req-837 | New since the split; blocked on EUDPA-774 | Review Change links return to the review |
+| req-791, 800, 854, 332, 372 | Changed since the split | Overview regions, transit row, transport labels, stale arrival date, transit completeness |
+| req-830, 831, 832 | Changed since the split | "What are you importing?" card, its code and species wording |
+| req-864, 680 | Changed since the split | CPH with slashes; parties read back line by line |
+| req-895, 896, 897, 1999, 2000, 2004 | Changed since the split | Actions menu order, in animals and plants |
+| req-909 | Changed since the split | Submitting records the date, with no outstanding items list |
+| req-950 | Changed since the split | Tests for the unproven review, declaration and confirmation paths |
+| req-2138 | Changed since the split | Submit needs the main import reason, its follow-ups and certified-for |
+| req-867 | Changed since the split; blocked on EUDPA-774 | A CPH change returns to the review |
+| req-910, 2114 | Changed since the split; blocked on a source of completion | The "Past" status and its tag |
+| req-849, 850 | No longer to build | Now questions (c-491) |
+| req-375, 1991, 902, 903, 907 | No longer to build | Out of scope: weighed elsewhere, plants' own, or action-required |
+
+### design-snagging
+
+Branch `feat/EUDPA-720-design-release-2-1-design-snagging`, backlog `shared/design-release-2-1/themes/design-snagging/backlog.json`. Nothing new.
+
+| Requirement | What happened | What it now says |
+|---|---|---|
+| req-590, 1964, 558 | Changed since the split | Picker "Search" label, plants contact layout, fraud warning with no full stop |
+| req-207, 208, 105, 213 | Changed since the split | Selected commodities table columns and naming; identification sections per commodity |
+| req-229, 505 | Changed since the split | Identifier length errors use the field's label; "For example, 27/3/2026" |
+| req-267, 057, 128 | Changed since the split | Welsh counterparts kept as machine drafts |
+| req-034, 058 | Changed since the split | Origin completeness; the origin visual baseline |
+| req-067, 102, 183 | Changed since the split | Commodity inset text; unweaned cleared; "Port of exit" |
+| req-108, 163, 178 | Changed since the split | Back links on Commodity details, main import reason and additional details |
+| req-203, 204 | No longer to build | Now questions (c-337) |
+| req-222 | No longer to build | Now a question (c-335) |
+| req-184 | No longer to build | Out of scope: weighed in overview-and-review |
 
 ### documents
 
@@ -1152,7 +1214,10 @@ Branch `feat/EUDPA-724-design-release-2-1-documents`, backlog `shared/design-rel
 
 | Requirement | What happened | What it now says |
 |---|---|---|
-| req-2179 | New since the split | A document saved as Self-declaration, CITES permit/certificate or Packing list / species list is accepted, stored and published by its own code |
+| req-483 | New since the split | The page's opening paragraph |
+| req-535, 536 | New since the split | Each row has a named "Remove" link to a confirmation page; no change action |
+| req-2700 to 2711 | New since the split | The "Delete this document?" page: title, inset, summary, warning, buttons, Back, layout, behaviour, return context, no JavaScript needed |
+| req-542, 539 | Changed since the split | The page keeps where the trader came from; Save and continue goes to Consignment addresses |
 
 ### address-book
 
@@ -1160,10 +1225,22 @@ Branch `feat/EUDPA-707-design-release-2-1-address-book`, backlog `shared/design-
 
 | Requirement | What happened | What it now says |
 |---|---|---|
-| req-631 | New since the split | The journey's address-return route accepts a return only when its fulfilment id names a role and its handshake token matches the single-use token the picker issued for that role, a missing, reused or mismatched token included, and looks the returned address id up in the signed-in organisation's own address book |
-| req-2309 | New since the split | The add-address hand-off between the animals frontend and the INS address book works in CDP, in the local Docker stack and in the CI Docker stack the pull request runs use, each service taking the other's address from its own configuration and never from a hard-coded host or port. Which CDP environment and what counts as proof there is question 29 |
-| req-2356 | New since the split | The address book groups its six roles into sending (place of origin, consignor), receiving (place of destination, consignee, importer) and branch (branch address), the same three groups the add's "Choose an address type" step offers. It refuses an address whose roles come from more than one group, and refuses a consignee, importer or place of destination outside the United Kingdom, while a place of origin, a consignor or a branch address may be anywhere |
-| req-2358 | New since the split | A role a new notification type needs is added by changing the address book's code, each role in exactly one group |
+| req-631, 2309 | New since the split | Address-return handshake tokens; the hand-off works in CDP and both Docker stacks |
+| req-2356 | New since the split | Six roles in three groups |
+| req-1160, 1163, 2780, 2781 | New since the split | View page rows and roles; "You can only edit this address in the address book" inset; delete page inset |
+| req-1224, 2787 to 2795 | New since the split | Edit page: name label, inset, roles question, hints and error |
+| req-1235, 1246 | New since the split | Countries from reference-data; "Error: " titles |
+| req-2796, 2797, 2723, 2724 | New since the split | "Postcode" labels and field widths |
+| req-1256, 1199, 1209, 1210, 1212, 1859 | Changed since the split | Roles on the record; "Branch" option; add page heading and titles; role hints |
+| req-1233, 1117, 1133, 1110 | Changed since the split | "Select one"; search placeholder; filter contents; page titles |
+| req-1177, 1178, 1167, 1260, 1277 | Changed since the split | Delete page wording; return query; success banners |
+| req-1248, 1249, 1250, 1253, 1275, 1220 | Changed since the split | Roles legends and hint; Branch role; edit asks roles; UK fixed for receiving and branch |
+| req-1870 | Changed since the split | The k6 address-book scenarios follow the type step and roles |
+| req-1230 | Changed since the split | The edit page lays out like the add form |
+| req-634, 635, 670, 646, 643, 660, 664, 655, 656, 678, 1958, 2186 | Changed since the split | Journey add-address page: headings, no caption, autocomplete, countries, errors, "Add to your address book", round trip, skipping the type step, same checks |
+| req-1186, 1279 | Changed since the split | Welsh counterparts as machine drafts |
+| req-1217, 1218, 647, 648, 650, 651 | Changed since the split; blocked on the lookup | Find an address by postcode |
+| req-2045, 1225, 1863, 2043, 642 | No longer to build | Out of scope |
 
 ### transporters
 
@@ -1171,16 +1248,17 @@ Branch `feat/EUDPA-781-design-release-2-1-transporters`, backlog `shared/design-
 
 | Requirement | What happened | What it now says |
 |---|---|---|
-| req-455 | New since the split | A commercial transporter posted with a country other than Northern Ireland, or with none at all, is refused with "A commercial transporter you add must be in Northern Ireland", not quietly corrected |
-| req-2171 | New since the split | Both transporter forms ask the Standard Address Block's address and contact fields, with its formats and limits, and read with Design Release 2.1's labels, hints, section heading and question order. The commercial form asks a transporter authorisation number as well; the private form asks none |
-| req-2263 | New since the split | A transporter's approval status reads "Approved" or "New" on the transporter list and is held in a field of its own, separate from the record's soft-delete status, under a name the address book chooses |
-| req-2264 | New since the split | "Add a transporter" on the transporter list opens the address book's add-a-transporter pages in journey mode and lands the trader back on the list on save or on cancel, through the same hand-off the journey already uses to add an address. The animals frontend serves no transporter add pages of its own |
-| req-2265 | New since the split | The name field on both transporter forms is labelled "Name or organisation name" |
-| req-2266 | New since the split | The commercial transporter form's first field is labelled "Transporter authorisation number" |
-| req-2267 | New since the split | Both transporter forms carry one section heading, "Enter contact details", after the country and before the email address, and no heading above the address fields |
-| req-2268 | New since the split | The transporter list shows eight transporters a page, with GOV.UK pagination below the table carrying the search term and the chosen transporter in its links, no pagination where eight or fewer are found, and an inset between the search box and the table naming the transporter the trader has chosen |
-| req-2272 | New since the split | A transporter saved on a notification comes back ticked on the transporter list, matched to the address book record it came from |
-| req-2283 | New since the split | With JavaScript switched off a trader can search the transporter list, pick a transporter the search found and save it, and can save or cancel either add form, each ending where it does with JavaScript on |
+| req-455 | New since the split | A commercial transporter outside Northern Ireland is refused with a message |
+| req-2171, 2265, 2266, 2267 | New since the split | Both forms' fields, labels and section heading |
+| req-2263, 2272 | New since the split | Approval status in its own field; a saved transporter comes back ticked |
+| req-2264, 2283, 466, 2170 | New since the split | Add in journey mode; works without JavaScript; recoverable save error; one transporter per notification |
+| req-2268, 2634 to 2637 | New since the split | 8 a page; "Selected transporter" inset with Change and Remove; a ticked choice survives a search |
+| req-2670, 2676, 2678, 2680, 2681, 2682, 2691 | New since the split | Address book transporter pages: errors, country select, landing after edit or delete |
+| req-2641 to 2647 | New since the split; blocked on the lookup | Private transporter postcode lookup |
+| req-432, 470, 420, 472, 1204, 2042, 2198 | Changed since the split | Country list, accessibility, type error, no register page, captions, "Transporter" option, search by approval number |
+| req-456, 457, 1819 | Changed since the split; blocked on the lookup | The commercial transporter's address search |
+| req-2172 | Changed since the split; blocked on approved transporters | Which list the commercial record draws on |
+| req-397, 398 | No longer to build | Out of scope: approved transporters parked |
 
 ### identification-and-permanent-address
 
@@ -1188,9 +1266,13 @@ Branch `feat/EUDPA-796-design-release-2-1-identification-and-permanent-address`,
 
 | Requirement | What happened | What it now says |
 |---|---|---|
-| req-731 | New since the split | The permanent address page explains "A permanent address is where an animal:" followed by the bullets "will permanently reside" and "can be checked by the Animal and Plant Health Agency (APHA)", then asks "Where will their permanent address be?" |
-| req-2241 | New since the split | A refused save on the identification details page shows the page again with every identifier the trader typed still in its field, the cap-reached refusal of a line that filled up while the page was open included |
-| req-2315 | New since the split | A new permanent address refuses an email address that is not correctly formed, with the same message the journey's edit-address page uses |
+| req-731, 2742 | New since the split | Permanent address page wording and layout |
+| req-2241, 2315 | New since the split | Refused saves keep typed values; email checked |
+| req-196, 216, 217, 218 | New since the split | Inset text; cattle, horses and other mammals' identifiers |
+| req-2615 to 2619 | New since the split | "Enter at least one identifier." hint; species labels; "Equine name"; free-text order; single-identifier error |
+| req-199, 234 | Changed since the split | Back link; a blank animal saves nothing |
+| req-728, 732, 729, 749 | Changed since the split | Permanent address section, cards, listing and review rows |
+| req-1657 | No longer to build | Out of scope: weighed with the whole journeys |
 
 ### consignment-parties
 
@@ -1198,210 +1280,172 @@ Branch `feat/EUDPA-805-design-release-2-1-consignment-parties`, backlog `shared/
 
 | Requirement | What happened | What it now says |
 |---|---|---|
-| req-617 | New since the split | A deleted address-book record is never offered on a picker and can never be saved, and a stored answer picked from one shows no ticked row. An address book that cannot be reached is an error, never read as a deletion |
-| req-682 | New since the split | The party edit page is headed "Edit address details", captioned with the party's own title ("Place of origin", "Consignor", "Consignee", "Importer", "Place of destination" or "Contact address for consignment"), titled "Edit address details - Import notification service - GOV.UK", below the notification's journey strip |
-| req-1965 | New since the split | The plants consignment contact page shows eight address-book records a page with GOV.UK pagination ("Previous", "Next" and numbered page links, in Welsh "Blaenorol" and "Nesaf", none where eight or fewer were found), carries the search term, page number and ticked address in its paging links, opens on page one on re-entry, lets a contact ticked on a later page be saved, and shows an inset "Selected address: <name>" for a ticked or saved contact even on a page where that record is not listed. A soft-deleted or missing record is never shown there or carried in paging links |
-| req-2305 | New since the split | On the consignee, importer and place of destination party edit pages the Country select holds "United Kingdom" alone and the saved country is United Kingdom. The place of origin, consignor and consignment contact edit pages offer the whole country list. The plants place of destination edit page does the same |
-| req-2306 | New since the split | On the party edit page a country the address book does not list is refused with "Enter a country", in both the live animals and the high-risk plants frontends |
-| req-2307 | New since the split | The party edit page's county field carries the browser autocomplete hint `address-level1`, as its other address fields carry theirs |
-| req-2312 | New since the split | The contact address page in both animals sets shows eight branch-address records a page, with GOV.UK pagination ("Previous", "Next" and numbered page links, and none where eight or fewer were found), carries the page number in its paging links, opens on page one when the trader comes back, and lets a contact ticked on a later page be saved |
-| req-2313 | New since the split | The contact address page in both animals sets shows an inset "Selected address: <name>" for a ticked or saved contact, above the list of addresses, even on a page where that record is not listed |
-| req-2486 | New since the split | In the plants frontend the consignment contact page's two return controls read "Save and return to overview" and "Cancel and return to overview" |
+| req-617 | New since the split | A deleted address-book record is never offered or saved |
+| req-1965, 2486, 2738, 2739 | New since the split | Plants contact page: 8 a page, wording, heading and buttons |
+| req-2305, 2306, 2307 | New since the split | Party edit page: UK only for receiving parties, country error, county autocomplete |
+| req-2966 | New since the split | Each animals party picker refuses a save made after the notification changed, and sends the trader back to the picker |
+| req-2300, 2715, 2716, 2717, 2740, 2741 | New since the split | "Remove" buttons for parties, CPH and permanent address |
+| req-2719 | New since the split | The Permanent address section lists every animal |
+| req-612, 613 | Changed since the split | Role-less records on every picker; stub records carry roles |
+| req-699, 700, 701, 584 | Changed since the split | CPH applicability, section and display; task completeness |
+| req-770, 1624, 2188 | Changed since the split | Amend controls and same checks |
+| req-1831 | Changed since the split | Germinal add-address uses the same handshake |
+| req-753, 754, 755, 756, 757, 760, 761, 764, 766, 767, 772, 774, 2187 | No longer to build | Now questions (c-484): the contact address |
+| req-1622 | No longer to build | Out of scope: no contact page |
 
-`reference-lists`, `design-snagging` and `test-hygiene` have nothing to pick up.
+### manage-notifications
+
+Branch `feat/EUDPA-845-design-release-2-1-manage-notifications`, backlog `shared/design-release-2-1/themes/manage-notifications/backlog.json`. Nothing dropped.
+
+| Requirement | What happened | What it now says |
+|---|---|---|
+| req-1852 | New since the split | The k6 script reads the list at the set root |
+| req-1431 | New since the split | A copy carries roles, addresses, CPH and permanent address |
+| req-1479 | New since the split | Tests assert the new animals pages and banners |
+| req-2003, 2055, 2487 | New since the split | Plants' header offers Copy as new, Amend and Delete |
+| req-2368 | New since the split | Amend, cancel amendment and delete work without JavaScript |
+| req-2861, 2862 | New since the split | Amend confirmation page summary and sentence |
+| req-1391, 1392, 1487, 1877 | Changed since the split | Amend opens a confirmation page; "Yes, amend"; refusals; the k6 amend journey |
+| req-1410, 1413, 1414, 1416 | Changed since the split | Cancel-amendment page title, "Go back", route, no banner |
+| req-1424 to 1429, 1432, 1435, 1437, 1439 | Changed since the split | What a copy carries and does not |
+| req-1443, 1444, 1445, 1451, 2053 | Changed since the split | Delete and amend confirmation summary rows |
+| req-2054 | Changed since the split | Plants' fit specs assert the changed amend, cancel, copy and delete pages |
+
+### test-hygiene
+
+Branch `feat/NO_JIRA-design-release-2-1-test-hygiene`. Nothing to pick up.
 
 ## Where the requirements came from
 
-21,218 claims were weighed, from 40 sources: 20,284 taken by the extractors and 934 added during reconcile as claims the extractors had missed. 20,110 held and 174 were dropped as refuted, leaving a working set of 21,044.
+- 42 sources gave 21,999 claims. 21,754 held, 245 were refuted and dropped, and 811 missed claims were added.
+- Reconcile weighed 32 areas apart: start and origin, commodities, commodity details, reason and additional details, animal identification, germinal products, arrival and transit, transporters, transporter records, documents, consignment parties, party address add and edit, CPH permanent and contact, notification hub, review and submit, declaration and submitted, dashboard home, notification list, address book list, address book add and edit, address lookup, templates, manage notifications, notification record, reference lists, recorded decisions for animals, recorded decisions for plants, plants set docs, journey flow, whole journeys, test suites, layout and sign-in.
+- 2,866 requirements: 2,359 adopted (441 new and 295 to change, so 736 to build; 1,623 already in place), 88 questions and 419 out of scope.
 
-Reconcile cut the service into 24 areas, so every part of it was weighed apart: start-and-origin, commodities, reason-and-additional-details, animal-identification, germinal-products, arrival-and-transit, transporters, documents, consignment-parties, party-address-add-and-edit, cph-permanent-and-contact, notification-hub, review-and-submit, dashboard-home, notification-list, address-book-list, address-book-add-and-edit, templates, manage-notifications, notification-record, recorded-decisions-animals, recorded-decisions-plants, journey-flow and layout-and-sign-in.
+| Source | Claims | Held | Refuted | Missed, added | Cited | Requirements backed (in scope) |
+|---|---|---|---|---|---|---|
+| Sam, 27 November | 28 | 28 | 0 | 0 | 28 of 28 | 85 (81) |
+| Ian, 25 November b | 40 | 40 | 0 | 0 | 37 of 40 | 19 (18) |
+| Ian, 25 November | 41 | 40 | 1 | 1 | 41 of 41 | 32 (30) |
+| Ian, 23 November | 15 | 15 | 0 | 0 | 15 of 15 | 11 (11) |
+| Sam, 19 November | 41 | 41 | 0 | 2 | 42 of 43 | 40 (35) |
+| Sam, 17 November | 20 | 20 | 0 | 1 | 21 of 21 | 39 (38) |
+| Sam, 16 November | 21 | 21 | 0 | 1 | 22 of 22 | 36 (24) |
+| Ian, 16 November | 46 | 46 | 0 | 1 | 23 of 47 | 9 (7) |
+| Design, 13 November | 31 | 31 | 0 | 0 | 28 of 31 | 23 (11) |
+| Ian, 11 November | 40 | 40 | 0 | 1 | 22 of 41 | 57 (36) |
+| Sam, 10 November b | 49 | 49 | 0 | 1 | 28 of 50 | 18 (15) |
+| Sam, 10 November | 24 | 24 | 0 | 1 | 14 of 25 | 23 (17) |
+| Sam, 9 November | 23 | 22 | 1 | 1 | 16 of 23 | 38 (25) |
+| Interaction designer, 9 November | 48 | 48 | 0 | 2 | 32 of 50 | 35 (23) |
+| Ian, 6 November | 74 | 74 | 0 | 2 | 73 of 76 | 64 (55) |
+| Paul, 5 November | 53 | 52 | 1 | 3 | 51 of 55 | 34 (33) |
+| Sam, 4 November | 25 | 25 | 0 | 3 | 10 of 28 | 32 (17) |
+| Sam, 26 October | 26 | 26 | 0 | 2 | 28 of 28 | 56 (54) |
+| Paul, 14 October | 19 | 19 | 0 | 1 | 14 of 20 | 6 (5) |
+| Sam, 9 October afternoon | 302 | 301 | 1 | 5 | 271 of 306 | 525 (438) |
+| Sam, 9 October templates | 52 | 52 | 0 | 0 | 50 of 52 | 76 (62) |
+| Sam, 9 October | 200 | 199 | 1 | 2 | 199 of 201 | 419 (362) |
+| Sam, 7 October | 23 | 23 | 0 | 0 | 14 of 23 | 95 (89) |
+| V4 data fields | 648 | 646 | 2 | 17 | 663 of 663 | 223 (202) |
+| DR1 parity notes | 88 | 88 | 0 | 1 | 89 of 89 | 62 (48) |
+| DR1 parity backlog | 481 | 481 | 0 | 64 | 545 of 545 | 173 (140) |
+| Prototype source | 2,081 | 2,062 | 19 | 69 | 2,114 of 2,131 | 1,352 (1,185) |
+| Prototype traces | 1,592 | 1,581 | 11 | 48 | 1,568 of 1,629 | 1,073 (976) |
+| Prototype specs | 1,166 | 1,160 | 6 | 26 | 1,158 of 1,186 | 724 (649) |
+| backend | 494 | 485 | 9 | 23 | 508 of 508 | 170 (148) |
+| insbackend | 224 | 224 | 0 | 3 | 227 of 227 | 5 (1) |
+| addressbook | 411 | 407 | 4 | 13 | 420 of 420 | 82 (80) |
+| referencedata | 199 | 197 | 2 | 17 | 209 of 214 | 38 (28) |
+| stub | 580 | 580 | 0 | 6 | 103 of 586 | 15 (12) |
+| frontend | 2,826 | 2,779 | 47 | 89 | 2,864 of 2,868 | 1,270 (1,191) |
+| insfrontend | 957 | 948 | 9 | 38 | 943 of 986 | 320 (304) |
+| plantsfrontend | 2,701 | 2,663 | 38 | 105 | 2,768 of 2,768 | 379 (326) |
+| tests | 2,434 | 2,386 | 48 | 69 | 2,376 of 2,455 | 935 (853) |
+| perftests | 215 | 214 | 1 | 15 | 229 of 229 | 36 (29) |
+| Animals fit traces | 1,948 | 1,921 | 27 | 81 | 2,002 of 2,002 | 782 (742) |
+| INS fit traces | 250 | 248 | 2 | 27 | 270 of 275 | 104 (98) |
+| End-to-end traces | 1,463 | 1,448 | 15 | 70 | 1,517 of 1,518 | 785 (731) |
+| **Total, 42 sources** | **21,999** | **21,754** | **245** | **811** | **21,652 of 22,565** | |
 
-Those claims became 2,459 requirements: 2,087 adopted (1,506 already in place, 323 new, 258 a change to what exists), 43 questions, and 329 out of scope. The backlog's rows cover 276 of them, and the split-off themes' own backlogs cover a further 307.
+- Every source backs at least one requirement. No source has under a tenth of its working set cited.
+- The stub has the lowest share, 103 of 586. Its uncited claims are single country and port entries in the MDM fixtures: reference-list content, which is MDM's.
+- insbackend backs 5 requirements, only one in scope.
+- Strongest: req-594, req-608, req-1079, req-1256 and req-1391 rest on 11 sources each. 20 more rest on 10: req-025, 040, 068, 134, 144, 150, 234, 509, 564, 603, 611, 727, 892, 1032, 1046, 1052, 1108, 1259, 1410, 2130.
+- 446 in-scope requirements rest on one source: frontend 125, backend 63, plantsfrontend 61, tests 36, prototype source 33, insfrontend 33, Sam 9 October 22, addressbook 16, referencedata 11, prototype specs 7, prototype traces 6, Sam 9 October afternoon 6, end-to-end traces 6, V4 5, stub 3, animals fit traces 3. Ian 25 November b, Sam 10 November b and Sam 19 November back 2 each. perftests, Sam 7 October, Sam 16 November and INS fit traces back 1 each.
+- Inferred claims only, in scope: req-060, 061, 062, 063, 064, 267, 373, 957, 1351, 1372, 1745, 1746, 1747, 1748, 1752, 1762, 1812, 1851, 1856, 1880, 1902, 1903, 1905, 1927, 1928, 2213, 2257, 2576, 2601, 2803, 2805, 2855, 2971.
+- Resting on a gap only: req-1788, req-2695, req-2967. On an inference and a gap only: req-950, 1184, 1300, 1699, 1894, 2036, 2863.
+- Confirm before passing on: the 32 requirements in place on rulings or design alone, and the requirements above that rest on inferences or gaps.
 
-| Source | Claims | Held | Added | Cited | Requirements (in scope) |
-|---|---|---|---|---|---|
-| ruling:ian-2026-11-25 | 41 | 40 | 1 | 41 | 32 (30) |
-| ruling:ian-2026-11-23 | 15 | 15 | 0 | 15 | 11 (11) |
-| ruling:sam-2026-11-19 | 41 | 41 | 2 | 42 | 40 (37) |
-| ruling:sam-2026-11-17 | 20 | 20 | 1 | 21 | 39 (38) |
-| ruling:sam-2026-11-16 | 21 | 21 | 1 | 22 | 29 (19) |
-| ruling:ian-2026-11-16 | 46 | 46 | 1 | 23 | 8 (6) |
-| ruling:design-2026-11-13 | 31 | 31 | 0 | 28 | 23 (15) |
-| ruling:ian-2026-11-11 | 40 | 40 | 1 | 22 | 33 (19) |
-| ruling:sam-2026-11-10b | 49 | 49 | 1 | 28 | 18 (15) |
-| ruling:sam-2026-11-10 | 24 | 24 | 1 | 14 | 18 (14) |
-| ruling:sam-2026-11-09 | 23 | 22 | 1 | 16 | 28 (22) |
-| ruling:interaction-designer-2026-11-09 | 48 | 48 | 2 | 32 | 31 (20) |
-| ruling:ian-2026-11-06 | 74 | 74 | 2 | 74 | 53 (45) |
-| ruling:paul-2026-11-05 | 53 | 52 | 3 | 51 | 30 (29) |
-| ruling:sam-2026-11-04 | 25 | 25 | 3 | 10 | 20 (10) |
-| ruling:sam-2026-10-26 | 26 | 26 | 2 | 28 | 54 (52) |
-| ruling:paul-2026-10-14 | 19 | 19 | 1 | 14 | 6 (5) |
-| ruling:sam-2026-10-09-pm | 302 | 301 | 5 | 271 | 517 (432) |
-| ruling:sam-2026-10-09-templates | 52 | 52 | 0 | 50 | 71 (56) |
-| ruling:sam-2026-10-09 | 200 | 199 | 2 | 199 | 370 (321) |
-| ruling:sam-2026-10-07 | 23 | 23 | 0 | 14 | 87 (80) |
-| confluence:6497338582 (V4) | 648 | 646 | 17 | 642 | 215 (198) |
-| document:dr1-parity-notes | 88 | 88 | 1 | 89 | 58 (45) |
-| document:dr1-parity-backlog | 481 | 481 | 64 | 545 | 176 (144) |
-| prototype:dr2-1-source | 1,705 | 1,683 | 81 | 1,762 | 1,181 (1,060) |
-| trace:prototype-dr2-1 | 1,791 | 1,784 | 85 | 1,784 | 1,059 (967) |
-| prototype:dr2-1-specs | 1,003 | 998 | 8 | 1,006 | 639 (586) |
-| repo:backend | 688 | 683 | 26 | 709 | 189 (167) |
-| repo:insbackend | 132 | 132 | 8 | 140 | 4 (0) |
-| repo:addressbook | 339 | 336 | 12 | 348 | 48 (46) |
-| repo:referencedata | 98 | 96 | 5 | 101 | 21 (19) |
-| repo:stub | 130 | 130 | 6 | 136 | 18 (15) |
-| repo:frontend | 2,666 | 2,644 | 136 | 2,681 | 1,183 (1,120) |
-| repo:insfrontend | 638 | 638 | 31 | 669 | 193 (181) |
-| repo:plantsfrontend | 2,598 | 2,575 | 116 | 2,642 | 360 (308) |
-| repo:tests | 2,300 | 2,268 | 111 | 2,328 | 943 (869) |
-| repo:perftests | 145 | 143 | 19 | 162 | 56 (53) |
-| trace:animals-fit | 1,948 | 1,921 | 81 | 1,962 | 779 (743) |
-| trace:ins-fit | 250 | 248 | 27 | 275 | 116 (110) |
-| trace:e2e | 1,463 | 1,448 | 70 | 1,492 | 806 (759) |
-
-**Unused sources.** There are none: `tim distil coverage` refuses a source that backs nothing, and every one of the 40 sources backs at least one requirement. No source's cited share falls under a tenth. The lowest is `ruling:sam-2026-11-04` at 10 of 25 claims; its uncited claims restate the type-question split's branch and theme mechanics, which are the backlog's shape rather than service behaviour. `repo:insbackend` is the one to watch for a different reason: every one of its 140 claims is cited, but it backs only 4 requirements and all 4 are out of scope, because this programme's notification lists moved to the animals frontend and the INS read model's own rows are all blocked.
-
-**The strongest requirements.** req-1256 rests on 14 sources: what the address book stores for an address's roles. Four more rest on 11: req-106, req-499, req-608 and req-1141. Twenty-two rest on 10, among them req-025, req-112, req-594, req-611, req-727, req-760, req-1123, req-1235 and req-2130.
-
-**The weakest.** 321 in-scope requirements rest on a single source: 98 on the animals frontend alone, 63 on the animals backend, 60 on the plants frontend, 37 on the tests repo, 12 on the prototype source and 10 each on the INS frontend and the prototype traces. A single-source requirement from a repo is a statement about what exists today rather than a difference to build, so most of these are `exists` rows.
-
-Nineteen in-scope requirements rest only on inferred claims, with no verbatim evidence anywhere: req-267, req-957, req-975, req-1014, req-1099, req-1343, req-1351, req-1365, req-1372, req-1496, req-1508, req-1554, req-1851, req-1856, req-1927, req-1928, req-1969, req-2213 and req-2257. Two rest only on gap claims, where the evidence is the absence of something: req-501 and req-1184.
-
-**Confirm before passing this on.** Fourteen requirements are recorded as already in place with no claim from today's code behind them: req-374, req-1488, req-1858, req-1935, req-1950, req-1963, req-1966, req-1967, req-1968, req-1969, req-1970, req-2050, req-2257 and req-2293. Check each against the running service before anyone treats it as built.
+| Count | Number |
+|---|---|
+| Requirements | 2,866 |
+| Adopted | 2,359: 1,623 exist, 441 new, 295 change |
+| Questions | 88 |
+| Out of scope | 419 |
+| Conflicts | 509: 465 settled by precedence, 44 questions |
+| Areas | 32 |
+| Backlog rows | 65: 28 todo, 13 blocked, 4 deferred, 10 dropped, 10 merged |
+| Requirements in this backlog's rows | 314 |
+| Requirements in the split themes | 443 |
+| Themes | 6 here, 15 split off |
 
 ## Out of scope
 
-329 requirements are out of scope. Each is listed once, under the reason it is out.
+419 requirements are not built.
 
-### Templates, parked
+| Why | Count | Requirements |
+|---|---|---|
+| Templates, parked | 18 | req-010, 091, 819, 941, 942, 943, 964, 965, 1038, 1299, 1846, 2623, 2650, 2651, 2718, 2732, 2743, 2986 |
+| Nothing action-required until the banner is designed | 12 | req-902, 903, 904, 905, 906, 907, 908, 939, 940, 2111, 2113, 2776 |
+| Design has answered by dropping it | 12 | req-348, 349, 353, 354, 592, 711, 712, 713, 1393, 1951, 1986, 2039 |
+| The 26 November design no longer shows it | 14 | req-649, 789, 803, 1083, 1216, 1285, 1622, 1863, 1864, 1957, 2043, 2044, 2310, 2864 |
+| The separate commodity-search ticket's work | 6 | req-1782, 2229, 2230, 2231, 2583, 2584 |
+| Approved transporters, parked | 5 | req-396, 397, 398, 2173, 2284 |
+| Reference-list content, handed to MDM | 22 | req-026, 027, 028, 029, 065, 093, 094, 095, 096, 097, 098, 099, 100, 101, 302, 303, 1766, 1767, 1818, 2384, 2594, 2928 |
+| Search mechanics the real component replaces | 7 | req-017, 020, 621, 622, 623, 624, 1908 |
+| Other notification types | 7 | req-059, 1668, 1764, 1921, 1922, 1923, 1924 |
+| URL paths, field names, data shapes and owners the prototype does not decide | 24 | req-271, 477, 626, 821, 1016, 1128, 1341, 1342, 1355, 1357, 1362, 1366, 1430, 1829, 1855, 1879, 1887, 2593, 2613, 2622, 2736, 2783, 2836, 2978 |
+| Prototype mechanics, seed data and defects | 56 | req-189, 190, 378, 383, 410, 419, 438, 469, 471, 625, 750, 751, 776, 946, 947, 1017, 1018, 1106, 1189, 1286, 1287, 1289, 1384 to 1389, 1486, 1665, 1666, 1667, 1681, 1682, 1742, 2196, 2197, 2204, 2649, 2652, 2731, 2733, 2751, 2764, 2767, 2782, 2837 to 2841, 2857, 2858, 2927, 2950, 2985 |
+| Set aside by a conflict, a ruling or an accessibility duty | 26 | req-033, 627, 629, 642, 952, 959, 1003, 1035, 1087, 1097, 1104, 1107, 1150, 1170, 1225, 1290, 1847, 1920, 2045, 2206, 2207, 2308, 2369, 2624, 2747, 2750 |
+| Duplicates | 3 | req-2103, 2366, 2386 |
+| No longer supported by the evidence | 6 | req-1508, 1532, 1534, 1574, 1583, 2214 |
+| The DR1 parity backlog is not a source of requirements | 8 | req-192, 369, 555, 1031, 1190, 1288, 1734, 2082 |
+| Data V4 de-scopes, or that comes from sign-in | 6 | req-1802, 1803, 1804, 1805, 2190, 2983 |
+| Plants keeps its own, or has parked it | 31 | req-1925, 1926, 1955, 1962, 1972, 1981 to 1985, 1991, 1994, 2025, 2047, 2056, 2059, 2062, 2063, 2064, 2075, 2095, 2096, 2104, 2108, 2110, 2116, 2129, 2168, 2192, 2323, 2518 |
+| Weighed in another area | 58 | req-184, 198, 266, 270, 301, 375, 482, 552, 949, 1028, 1029, 1030, 1564, 1657, 1658, 1765, 1778, 1779, 1816, 1817, 1961, 2038, 2058, 2060, 2081, 2106, 2115, 2117, 2118, 2119, 2121, 2160, 2182, 2191, 2221, 2235, 2258, 2297, 2301, 2340, 2343, 2350, 2378, 2517, 2519, 2549, 2553, 2555, 2556, 2560, 2714, 2777, 2778, 2871, 2890, 2929, 2951, 2988 |
+| Suite mechanics and gaps in the evidence | 16 | req-1609, 1669, 1670, 1671, 2238, 2302, 2345, 2351, 2371, 2543, 2699, 2765, 2930, 2931, 2979, 2989 |
+| The specification document, not the service | 5 | req-2161, 2167, 2181, 2185, 2211 |
+| Welsh sign-off | 7 | req-376, 475, 554, 948, 2418, 2592, 2698 |
+| Page sign-off is its own reviewed change | 4 | req-2324, 2339, 2370, 2754 |
+| Nothing designed, or nothing to build | 8 | req-191, 1883, 2341, 2344, 2462, 2889, 2948, 2949 |
+| Problems for the owning teams | 58 | req-193, 377, 553, 1105, 1154, 1191, 1283, 1481 to 1485, 1538, 1555, 1556, 1563, 1573, 1575, 1578, 1582, 1584, 1587, 1591, 1594, 1602, 1603, 1717, 1718, 1724, 1726, 1730, 1733, 1873, 2109, 2292, 2295, 2296, 2349, 2377, 2381, 2382, 2383, 2387, 2477, 2478, 2479, 2515, 2516, 2541, 2551, 2667, 2735, 2835, 2888, 2891, 2898, 2937, 2941 |
 
-The 4 November ruling de-prioritises templates and leaves their rows unbuilt, the interaction designer dropped them for now on 9 November, and the 9 November owner ruling calls Design Release 2.1's templates concept work: req-010, req-091, req-167, req-819, req-941, req-942, req-943, req-964, req-965, req-1038, req-1299, req-1846.
+Among the problems for owning teams:
 
-### Nothing action-required until the banner is designed
-
-The 16 November ruling withdraws the "Submitted action required" status, the "Action required" tag, the view's warnings and the review's certificate error, and the 19 November ruling takes the stored outstanding items off the animals backend record. Nothing action-required is shown until the outstanding-actions banner the dashboard designs introduce is agreed: req-902, req-903, req-904, req-905, req-906, req-907, req-908, req-939, req-940, req-2111, req-2113.
-
-### Design has answered the question by dropping it
-
-The 13 November design ruling and the interaction designer's 9 November answers drop these outright rather than parking them: req-348, req-349, req-353, req-354, req-592, req-711, req-712, req-713, req-1393, req-1951, req-1986, req-2039.
-
-### The separate commodity-search ticket's work
-
-The 10 November ruling hands commodity search to another ticket, whose design call does not come back here: req-1754, req-1782, req-2229, req-2230, req-2231.
-
-### Approved transporters, parked
-
-The 6 November ruling parks approved transporters, including the eight records the service ships, and the 11 November ruling bars a row from resting on the prototype's `app/data` files: req-396, req-397, req-398, req-2173, req-2284.
-
-### Reference-list content, handed to MDM
-
-List content is master data MDM owns, so a difference from Design Release 2.1 goes to MDM as a content report rather than into code: req-026, req-027, req-028, req-029, req-065, req-093, req-094, req-095, req-096, req-097, req-098, req-099, req-100, req-101, req-302, req-303, req-1766, req-1767, req-1818, req-2384.
-
-### Search mechanics the real component replaces
-
-A search box is the real frontends' accessible component, behaving as they configure it, so the prototype's own search mechanics and announcements are not copied, and the prototype itself withdrew the place of origin picker's separate country search: req-017, req-020, req-621, req-622, req-623, req-624, req-1908.
-
-### Other notification types
-
-Plants for planting, potatoes and wood products belong to the high-risk plants journey in its own frontend, and the prototype's fall-through to the live-animals pages is not a design: req-059, req-1668, req-1764, req-1921, req-1922, req-1923, req-1924.
-
-### URL paths, field names, data shapes and data owners the prototype does not decide
-
-The 9 October ruling keeps architecture with the real services, and the 11 November ruling makes V4 and MDM the only owners of data: req-271, req-477, req-626, req-821, req-1016, req-1128, req-1341, req-1342, req-1355, req-1357, req-1362, req-1366, req-1430, req-1829, req-1855, req-1879, req-1887.
-
-### Prototype mechanics, seed data and defects
-
-The prototype's version mount, session storage, seeded demonstration data, custom classes and markup defects are how it is built, not what it designs: req-189, req-190, req-378, req-383, req-410, req-419, req-438, req-469, req-471, req-625, req-750, req-751, req-776, req-946, req-947, req-1017, req-1018, req-1106, req-1189, req-1286, req-1287, req-1289, req-1384, req-1385, req-1386, req-1387, req-1388, req-1389, req-1486, req-1665, req-1666, req-1667, req-1681, req-1682, req-1742, req-2196, req-2197, req-2204.
-
-### Set aside by a conflict, a ruling or an accessibility duty
-
-A ruling, a settled conflict or an accessibility duty closes these: req-033, req-627, req-629, req-642, req-952, req-959, req-1003, req-1035, req-1087, req-1097, req-1104, req-1107, req-1150, req-1170, req-1225, req-1290, req-1847, req-1920, req-2045, req-2206, req-2207, req-2308, req-2369.
-
-### The DR1 parity backlog is not a source of requirements
-
-The ruling makes the DR1 parity backlog and notes a source of judgements only: req-192, req-369, req-555, req-1031, req-1190, req-1288, req-1734, req-2082.
-
-### Germinal data the V4 change log de-scopes
-
-The change log de-scopes these fields, and the PIMS schema update is EUDPA-686, outside the backlog: req-1802, req-1803, req-1804, req-1805, req-2190.
-
-### Plants keeps its own, or plants has parked it
-
-Plants keeps its own questions, data, step order and parked decisions, and a plants change that needs `trade-imports-plants-backend` is outside the programme: req-1925, req-1926, req-1955, req-1962, req-1972, req-1981, req-1982, req-1983, req-1984, req-1985, req-1991, req-1994, req-2003, req-2025, req-2047, req-2055, req-2056, req-2059, req-2062, req-2063, req-2064, req-2075, req-2095, req-2096, req-2104, req-2108, req-2110, req-2116, req-2129, req-2168, req-2192, req-2323, req-2518.
-
-### Weighed in another area
-
-Each claim describes a page, a service or a record another area owns, and is recorded here only so every claim is weighed: req-198, req-266, req-270, req-482, req-552, req-949, req-1028, req-1029, req-1030, req-1564, req-1765, req-1778, req-1779, req-1816, req-1817, req-1961, req-2038, req-2058, req-2060, req-2081, req-2106, req-2115, req-2117, req-2118, req-2119, req-2121, req-2160, req-2182, req-2191, req-2221, req-2235, req-2258, req-2297, req-2301, req-2340, req-2343, req-2350, req-2378, req-2517, req-2519, req-2549, req-2553, req-2555, req-2556, req-2560.
-
-### Suite mechanics and gaps in the evidence
-
-These describe how a suite drives the service, or a hole in what the evidence shows, rather than anything a trader sees: req-1609, req-1669, req-1670, req-1671, req-2238, req-2302, req-2345, req-2351, req-2371, req-2543.
-
-### The specification document, not the service
-
-These describe how a source is written rather than anything a user, operator or other system can observe: req-2161, req-2167, req-2181, req-2185, req-2211.
-
-### Welsh sign-off
-
-Design Release 2.1 is English only, and the Welsh copy is a machine draft that may not ship without Welsh Language Standards sign-off: req-376, req-475, req-554, req-948, req-2418.
-
-### Page sign-off is its own reviewed change
-
-Promoting a page is its own reviewed pull request and never part of other work, so no row of this programme raises a page's maturity: req-2324, req-2339, req-2370.
-
-### Nothing designed, or nothing to build
-
-No source asks for these, or no source settles them: req-191, req-1883, req-2341, req-2344, req-2462.
-
-### Problems for the owning teams
-
-Real problems, test gaps, mapping gaps and housekeeping in today's services that bringing them up to Design Release 2.1 does not touch. Each needs its own ticket with the owning team. Four are access-control or platform findings (req-1482, req-1556, req-1730, req-1154) and one is a platform limit (req-2292): the detail is in the programme's local files, not here. The rest: req-193, req-377, req-553, req-1105, req-1191, req-1283, req-1481, req-1483, req-1484, req-1485, req-1538, req-1555, req-1563, req-1573, req-1575, req-1578, req-1582, req-1584, req-1587, req-1591, req-1594, req-1602, req-1603, req-1717, req-1718, req-1724, req-1726, req-1733, req-1873, req-2109, req-2295, req-2296, req-2349, req-2354, req-2376, req-2377, req-2381, req-2382, req-2383, req-2387, req-2477, req-2478, req-2479, req-2515, req-2516, req-2541, req-2551.
+- req-1482, req-1556, req-1730, req-1154 and req-2292 are security or platform findings for the owning teams. The detail is in the programme's local files.
+- req-2941 is a gap in security scan coverage, for the tests repo's owners. The detail is in the programme's local files.
+- req-2937 is a gap in accessibility scan coverage.
 
 ## Terms used
 
 | Term | Meaning |
 |---|---|
-| AB | The address book service repo, trade-imports-address-book |
-| AF | The animals frontend's fit traces |
-| APHA | Animal and Plant Health Agency |
-| BE | The animals backend repo, trade-imports-animals-backend |
-| CDP | The Core Delivery Platform, where the services are deployed |
-| CDS | The Customs Declaration Service, whose codes name document types |
-| CPH | County Parish Holding number |
-| DR1 | Design Release 1, and the parity programme's notes and backlog that judged it |
-| DR2.1 | Design Release 2.1 of the GB notification service prototype |
-| E2E | The end-to-end traces from the tests repo's animals and INS projects |
-| FE | The animals frontend repo, trade-imports-animals-frontend |
-| GBN-AG | The animals notification document published downstream |
-| GBN-GP | The germinal products notification reference format |
-| GBNAG_SPS_EX | The reference-data list of export countries for the animals notification |
-| IF | The INS frontend's fit traces |
-| INS | Import Notification Service |
-| INS-BE | The INS read model repo, trade-imports-ins-backend |
-| INS-FE | The INS front door repo, trade-imports-ins-frontend |
-| ITAHC | Intra Trade Animal Health Certificate |
-| MDM | Master Data Management, the service that owns reference-list content |
-| MoJ | Ministry of Justice, whose frontend components are an accepted library |
-| PF | The plants frontend repo, trade-imports-plants-frontend |
-| PIMS | The downstream system the notification events reach |
-| RD | The reference data repo, trade-imports-reference-data |
-| V4 | Version 210 of the Live Animals & Germinals Data Fields Confluence page |
-| WCAG | Web Content Accessibility Guidelines |
-| claim | One statement an extractor took from one source, with its own id |
-| conflict | Two or more sources disagreeing on one point, settled by precedence or raised as a question |
-| cited | A working-set claim that a requirement or a conflict names as its evidence |
-| delta | Whether a requirement is new, a change to what exists, or already in place |
-| gap claim | A claim whose evidence is the absence of something in a source |
-| held | A claim a second agent verified against its source |
-| increment | One row of the backlog: a full-stack slice with its own acceptance criteria |
-| inferred claim | A claim an extractor drew from a source rather than quoting it |
-| perf | The performance test suite repo, trade-imports-performance-tests |
-| precedence | The ranked order of sources that settles a disagreement |
-| refuted | A claim a second agent could not find in its source, so it was dropped |
-| review point | A check the owner makes once a theme is built; the build never waits for it |
-| stub | The upstream stub repo, trade-imports-stub |
-| tests | The test suite repo, trade-imports-ins-tests |
-| theme | A group of increments whose code areas do not overlap, built on its own branch |
-| working set | Every claim that survived verification, plus the claims reconcile added
+| CDP | The Defra platform the services deploy to |
+| CPH | County parish holding number |
+| DR1 | Design Release 1 and its parity judgements |
+| DR2.1 | Design Release 2.1, the prototype pinned at commit c2078fb (26 November) |
+| EUDPA-774 | The save and continue work the return links wait on |
+| GBN-AG | The animals notification and its reference prefix |
+| INS | Import Notification Service, the front door holding the home, type question and address book |
+| ITAHC | Intra-trade animal health certificate |
+| k6 | The performance-test tool the perftests suite runs |
+| MDM | Master data management, which owns reference-list content |
+| MoJ | Ministry of Justice design system components |
+| Overview | A notification's task list page, once called the hub |
+| PIMS Dynamics | The authorities' case system that would send post-submission outcomes |
+| Review | The check your answers page before the declaration |
+| Review point | A check the owner makes once a theme is built; the build never waits for it |
+| Set | One journey in a frontend: live animals, germinal products, or plants |
+| Split theme | A theme built on its own branch and backlog, merged before the themes here |
+| V4 | The Live Animals and Germinals Data Fields page in Confluence |
+

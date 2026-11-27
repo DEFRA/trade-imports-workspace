@@ -1,0 +1,1429 @@
+{
+  "source": "prototype:dr2-1-specs",
+  "structure": "Part 6, Templates and address book. Read in full: e2e/templates.fit.spec.js (206 lines, 12 tests in three describe blocks: 'manage templates' 2 tests — the list and the dashboard Use template button; 'a saved template' 6 tests — view, use, change one section, POST reload plus unknown template, edit on its own task list, delete; 'create a new template' 4 tests — type then name then answers then review and save, Untitled template, discard, discard outside a template journey), e2e/address-book.fit.spec.js (220 lines, 9 tests in three describe blocks: 'address book list' 1 multi-step test — default category, page 2, the three other categories, search inside the Filter addresses disclosure; 'add an address to the address book' 6 tests — choose an address type with its error, origin or consignor by hand with errors and uses, destination/consignee/importer by search with errors and uses, branch use, transporter hand-off, the usage step guard; 'an address book entry' 2 tests — view/edit/save with error and banner, delete with banner) and the shared helper e2e/support/journey.js (270 lines: the /design-release-2.1 mount, url/urlFor, the action-button and submit helpers, expectHeading, expectErrorSummary with its 'There is a problem' title, expectBackLink, answerOrigin and answerCommodity used by the template-creation test). Every path below is under the /design-release-2.1 mount. Claims cover each route, title, heading, caption, label, hint, option, error message verbatim, banner, back link, redirect and count the 21 tests assert; journey.js is claimed only where these two specs call it. Gaps record what the tests leave unasserted (template-name validation, the address usage step with an address pending, add-address success banner, the address view page's delete link, button text on the review and edit forms).",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-specs-p6-001",
+      "statement": "Design Release 2.1 is mounted at /design-release-2.1 as a mirror of the root route table, so every template and address book route the specs visit sits under that prefix.",
+      "kind": "constraint",
+      "ref": "e2e/support/journey.js:3-5",
+      "quote": "// Design Release 2.1 is a mirror mount of the root route table.\nconst BASE = '/design-release-2.1'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-002",
+      "statement": "The manage templates page is at /design-release-2.1/templates and its page title is 'Manage templates - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:15-16 (manage templates > lists the saved templates with view and use actions)",
+      "quote": "await page.goto(url('/templates'))\n    await expect(page).toHaveTitle('Manage templates - Import notification service - GOV.UK')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-003",
+      "statement": "The manage templates page heading is 'Manage templates'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:17",
+      "quote": "await expectHeading(page, 'Manage templates')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-004",
+      "statement": "The manage templates page says 'Select, manage or create new notification templates'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:19",
+      "quote": "await expect(main).toContainText('Select, manage or create new notification templates')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-005",
+      "statement": "The manage templates page has a 'Create new template' link to /design-release-2.1/templates/create?new=1.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:20",
+      "quote": "await expect(main.locator('a', { hasText: 'Create new template' })).toHaveAttribute('href', url('/templates/create?new=1'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-006",
+      "statement": "The saved templates are listed under a 'My templates' heading.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:21",
+      "quote": "await expect(main.getByRole('heading', { name: 'My templates' })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-007",
+      "statement": "The templates list shows a results count in the form 'Show 1-5 of 5 results'; the prototype starts with five saved templates.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:22",
+      "quote": "await expect(main).toContainText('Show 1-5 of 5 results')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-008",
+      "statement": "The five seeded templates are named Arena Aintree, Rice Lane City Farm, Monk Park Farm, Acorn Farm and Glen Keen Farm, and all five appear on the list.",
+      "kind": "data",
+      "ref": "e2e/templates.fit.spec.js:11, 23",
+      "quote": "const TEMPLATE_NAMES = ['Arena Aintree', 'Rice Lane City Farm', 'Monk Park Farm', 'Acorn Farm', 'Glen Keen Farm']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-009",
+      "statement": "Each listed template has a 'View template' link to /design-release-2.1/templates/<template slug>; the first is /templates/arena-aintree.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:24",
+      "quote": "await expect(main.locator('a', { hasText: 'View template' }).first()).toHaveAttribute('href', url('/templates/arena-aintree'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-010",
+      "statement": "Each listed template has a 'Use template' link to /design-release-2.1/templates/<template slug>/use; the first is /templates/arena-aintree/use.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:25",
+      "quote": "await expect(main.locator('a', { hasText: 'Use template' }).first()).toHaveAttribute('href', url('/templates/arena-aintree/use'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-011",
+      "statement": "On the manage templates page the service navigation marks 'Templates' as the active item.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:26",
+      "quote": "await expect(page.locator('.govuk-service-navigation__item--active')).toContainText('Templates')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-012",
+      "statement": "The dashboard has a 'Use template' button that opens the manage templates page at /design-release-2.1/templates.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:30-34 (manage templates > the dashboard \"Use template\" button opens manage templates)",
+      "quote": "await page.locator('main').getByRole('button', { name: 'Use template' }).click()\n    await expect(page).toHaveURL(urlFor('/templates'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-013",
+      "statement": "Selecting 'View template' opens the template's view page at /design-release-2.1/templates/arena-aintree, whose heading is the template name 'Arena Aintree'.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:40-42 (a saved template > view: the template answers with a change link per section)",
+      "quote": "await expect(page).toHaveURL(urlFor('/templates/arena-aintree'))\n    await expectHeading(page, 'Arena Aintree')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-014",
+      "statement": "The template view page shows the word 'Templates', most likely as a caption above the heading (the test asserts only that main contains it).",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:44",
+      "quote": "await expect(main).toContainText('Templates')",
+      "confidence": "inferred",
+      "note": "Placement as a caption is an inference; the assertion is a containment check on main."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-015",
+      "statement": "The template view page shows when the template was created, as 'Date created: 15 April 2026' for Arena Aintree.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:45",
+      "quote": "await expect(main).toContainText('Date created: 15 April 2026')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-016",
+      "statement": "The template view page has a 'Use template' link to /design-release-2.1/templates/arena-aintree/use.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:46",
+      "quote": "await expect(main.locator('a', { hasText: 'Use template' })).toHaveAttribute('href', url('/templates/arena-aintree/use'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-017",
+      "statement": "The template view page has a link with the text 'Delete' to /design-release-2.1/templates/arena-aintree/delete.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:47",
+      "quote": "await expect(page.locator(`a[href=\"${url('/templates/arena-aintree/delete')}\"]`)).toHaveText('Delete')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-018",
+      "statement": "The template view page shows the template's answers with a 'Change' link per section; the first Change link goes to /design-release-2.1/templates/arena-aintree/change/origin-of-the-import.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:38, 48",
+      "quote": "await expect(main.getByRole('link', { name: 'Change' }).first()).toHaveAttribute('href', url('/templates/arena-aintree/change/origin-of-the-import'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-019",
+      "statement": "The template view page groups answers under numbered section headings, starting with '1. About the consignment'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:49",
+      "quote": "await expect(main).toContainText('1. About the consignment')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-020",
+      "statement": "The template view page's back link goes to /design-release-2.1/templates.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:50",
+      "quote": "await expectBackLink(page, url('/templates'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-021",
+      "statement": "Using a template (/design-release-2.1/templates/arena-aintree/use) starts a new draft notification from it and lands on the notification hub at /design-release-2.1/notification-hub.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:54-56 (a saved template > use: starts a new draft notification from the template)",
+      "quote": "test('use: starts a new draft notification from the template', async ({ page }, testInfo) => {\n    await page.goto(url('/templates/arena-aintree/use'))\n    await expect(page).toHaveURL(urlFor('/notification-hub'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-022",
+      "statement": "The draft started from a template shows the status 'Draft' and a new notification reference of the form GBN-AG-26-<letters and digits>.",
+      "kind": "data",
+      "ref": "e2e/templates.fit.spec.js:58",
+      "quote": "await expect(main).toContainText(/Draft\\s+GBN-AG-26-[A-Z0-9]+/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-023",
+      "statement": "The hub for a draft started from a template has the heading 'Notification tasklist'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:59",
+      "quote": "await expect(main.getByRole('heading', { name: 'Notification tasklist' })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-024",
+      "statement": "The hub for a draft started from a template contains the figure '2', most likely a count of sections already completed from the template's answers.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:60",
+      "quote": "await expect(main).toContainText('2')",
+      "confidence": "inferred",
+      "note": "A weak assertion: any '2' on the page satisfies it. The meaning (sections completed carried from the template) is an inference."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-025",
+      "statement": "A template section's Change link opens the ordinary question page in a template-review mode: the origin page at /design-release-2.1/origin-of-the-import?from=template-review.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:64-67 (a saved template > change one section: save and return goes back to the template)",
+      "quote": "await expect(page).toHaveURL(url('/origin-of-the-import?from=template-review').replace(/\\./g, '.'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-026",
+      "statement": "When changing one template section, the page's only action button is 'Save and return'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:68",
+      "quote": "await expect(page.locator('button[name=\"action\"]')).toHaveText(['Save and return'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-027",
+      "statement": "When changing one template section, the page has a 'Cancel' link.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:69",
+      "quote": "await expect(page.locator('main a', { hasText: /^Cancel$/ })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-028",
+      "statement": "The origin page's internal reference field can be edited when changing a template section.",
+      "kind": "data",
+      "ref": "e2e/templates.fit.spec.js:71",
+      "quote": "await page.locator('#internal-reference').fill('AINTREE-2026')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-029",
+      "statement": "Saving a changed template section returns to the template's view page, /design-release-2.1/templates/arena-aintree.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:72-73",
+      "quote": "await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/templates/arena-aintree'))",
+      "confidence": "verbatim",
+      "note": "saveAndContinue clicks the button with action value 'continue' (journey.js:22), which carries the text 'Save and return' in this mode."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-030",
+      "statement": "After a template section is saved, the view page shows a notification banner '<template name> has been updated', such as 'Arena Aintree has been updated'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:74",
+      "quote": "await expect(page.locator('.govuk-notification-banner')).toContainText('Arena Aintree has been updated')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-031",
+      "statement": "After a template section is saved, the view page shows the new answer (the internal reference AINTREE-2026).",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:75",
+      "quote": "await expect(page.locator('main')).toContainText('AINTREE-2026')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-032",
+      "statement": "A POST to a template's view page does nothing but redirect (302) back to the same page.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:79-83 (a saved template > posting to a template page just reloads it, and an unknown template returns to the list)",
+      "quote": "const response = await page.request.post(url('/templates/arena-aintree'), { maxRedirects: 0 })\n    expect(response.status()).toBe(302)\n    expect(response.headers().location).toBe(url('/templates/arena-aintree'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-033",
+      "statement": "Visiting a template that does not exist redirects to the manage templates page.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:84-85",
+      "quote": "await page.goto(url('/templates/no-such-template'))\n    await expect(page).toHaveURL(urlFor('/templates'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-034",
+      "statement": "Editing a template (/design-release-2.1/templates/arena-aintree/edit) opens the template on its own task list at /design-release-2.1/notification-hub.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:88-90 (a saved template > edit: opens the template on its own task list)",
+      "quote": "await page.goto(url('/templates/arena-aintree/edit'))\n    await expect(page).toHaveURL(urlFor('/notification-hub'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-035",
+      "statement": "A template's task list shows the status 'Template' with the template's name in place of a draft status and reference.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:92",
+      "quote": "await expect(main).toContainText(/Template\\s+Arena Aintree/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-036",
+      "statement": "A template's task list has the heading 'Template tasklist'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:93",
+      "quote": "await expect(main.getByRole('heading', { name: 'Template tasklist' })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-037",
+      "statement": "Templates have no documents section: the template task list has no 'Upload documents' link.",
+      "kind": "rule",
+      "ref": "e2e/templates.fit.spec.js:94, 96",
+      "quote": "// Templates have no documents section.\n    await expect(main.getByRole('heading', { name: '4. Consignment parties' })).toBeVisible()\n    await expect(main.getByRole('link', { name: 'Upload documents' })).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-038",
+      "statement": "On a template's task list the consignment parties section is numbered '4. Consignment parties'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:95",
+      "quote": "await expect(main.getByRole('heading', { name: '4. Consignment parties' })).toBeVisible()",
+      "confidence": "verbatim",
+      "note": "Asserted next to the 'no documents section' comment; whether the numbering differs from a notification's task list is not stated here."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-039",
+      "statement": "A template's task list has a 'Review template' link to /design-release-2.1/review-notification.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:97",
+      "quote": "await expect(main.locator('a', { hasText: 'Review template' })).toHaveAttribute('href', url('/review-notification'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-040",
+      "statement": "A template's task list has a 'Return to manage templates' link to /design-release-2.1/templates.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:98",
+      "quote": "await expect(main.locator('a', { hasText: 'Return to manage templates' })).toHaveAttribute('href', url('/templates'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-041",
+      "statement": "Selecting 'Delete' on a template's view page opens the delete confirmation at /design-release-2.1/templates/arena-aintree/delete.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:102-105 (a saved template > delete: confirm, then the list says it was deleted)",
+      "quote": "await page.locator(`a[href=\"${url('/templates/arena-aintree/delete')}\"]`).click()\n    await expect(page).toHaveURL(urlFor('/templates/arena-aintree/delete'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-042",
+      "statement": "The template delete confirmation's page title is 'Delete this template? - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:106",
+      "quote": "await expect(page).toHaveTitle('Delete this template? - Import notification service - GOV.UK')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-043",
+      "statement": "The template delete confirmation's heading is 'Delete this template?'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:107",
+      "quote": "await expectHeading(page, 'Delete this template?')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-044",
+      "statement": "The template delete confirmation shows the template's name in a 'Name' row.",
+      "kind": "data",
+      "ref": "e2e/templates.fit.spec.js:109",
+      "quote": "await expect(main).toContainText(/Name\\s+Arena Aintree/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-045",
+      "statement": "The template delete confirmation says 'Confirm that you want to delete this template.'",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:110",
+      "quote": "await expect(main).toContainText('Confirm that you want to delete this template.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-046",
+      "statement": "The template delete confirmation warns 'This action cannot be undone.'",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:111",
+      "quote": "await expect(main).toContainText('This action cannot be undone.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-047",
+      "statement": "The template delete confirmation's back link goes to the template's view page, /design-release-2.1/templates/arena-aintree.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:112",
+      "quote": "await expectBackLink(page, url('/templates/arena-aintree'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-048",
+      "statement": "Confirming with the 'Yes, delete' button deletes the template and returns to the manage templates page.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:114-115",
+      "quote": "await submitForm(page, 'Yes, delete')\n    await expect(page).toHaveURL(urlFor('/templates'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-049",
+      "statement": "After a template is deleted, the manage templates page shows a notification banner '<template name> has been deleted', such as 'Arena Aintree has been deleted'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:116",
+      "quote": "await expect(page.locator('.govuk-notification-banner')).toContainText('Arena Aintree has been deleted')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-050",
+      "statement": "After a template is deleted it is gone from the list: the count drops to 'Show 1-4 of 4 results'.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:117",
+      "quote": "await expect(main).toContainText('Show 1-4 of 4 results')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-051",
+      "statement": "The template delete confirmation's cancel option is not asserted: unlike the address delete page, the spec does not check for a 'No, cancel' link.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:102-119",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through the delete test; only the back link is asserted as a way out."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-052",
+      "statement": "Creating a new template asks the notification type first: 'Create new template' leads to /design-release-2.1/notification-type.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:124-127 (create a new template > type, name, answers, review, save)",
+      "quote": "await test.step('create new template asks the notification type first', async () => {\n      await page.goto(url('/templates'))\n      await page.locator('main a', { hasText: 'Create new template' }).click()\n      await expect(page).toHaveURL(urlFor('/notification-type'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-053",
+      "statement": "Choosing the live animals notification type (notificationType 'live-animals') and continuing in template creation goes to the template name page, /design-release-2.1/templates/create.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:128-133",
+      "quote": "await page.locator('input[name=\"notificationType\"][value=\"live-animals\"]').check()\n      await saveAndContinue(page)\n    })\n\n    await test.step('then the template name', async () => {\n      await expect(page).toHaveURL(urlFor('/templates/create'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-054",
+      "statement": "The template name page's title is 'Enter template name - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:134",
+      "quote": "await expect(page).toHaveTitle('Enter template name - Import notification service - GOV.UK')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-055",
+      "statement": "The template name page shows the text 'Create a new template', most likely as its caption.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:135",
+      "quote": "await expect(page.locator('main')).toContainText('Create a new template')",
+      "confidence": "inferred",
+      "note": "Caption placement is an inference; the assertion is a containment check on main."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-056",
+      "statement": "The template name page has a text field labelled 'Enter template name'.",
+      "kind": "data",
+      "ref": "e2e/templates.fit.spec.js:136",
+      "quote": "await expect(page.getByLabel('Enter template name')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-057",
+      "statement": "The template name page has a 'Cancel and return to manage templates' link to /design-release-2.1/templates.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:137",
+      "quote": "await expect(page.locator('main a', { hasText: 'Cancel and return to manage templates' })).toHaveAttribute('href', url('/templates'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-058",
+      "statement": "The template name page's back link goes to the notification type page, /design-release-2.1/notification-type.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:138",
+      "quote": "await expectBackLink(page, url('/notification-type'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-059",
+      "statement": "Submitting the template name with the 'Save and continue' button goes to the origin of the import page, /design-release-2.1/origin-of-the-import.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:140-142",
+      "quote": "await page.getByLabel('Enter template name').fill('Weekly Irish cattle')\n      await submitForm(page, 'Save and continue')\n      await expect(page).toHaveURL(urlFor('/origin-of-the-import'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-060",
+      "statement": "A template is answered on the same question pages as a notification: the template journey uses the origin page (country of origin by type-ahead, region of origin No) and the commodity page (species search) that notifications use.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:146-147; e2e/support/journey.js:130-143",
+      "quote": "await answerOrigin(page, { search: 'Irel', country: 'Republic of Ireland' })\n      await answerCommodity(page, SPECIES.cattle)",
+      "confidence": "inferred",
+      "note": "Inferred from the template test calling the shared notification helpers answerOrigin and answerCommodity, which drive #country-of-origin, regionOfOriginRequired and #commodity-search."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-061",
+      "statement": "In template mode, after the origin and commodity pages are answered, the journey returns to the template's task list (/design-release-2.1/notification-hub) instead of continuing to the next question.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:145-148",
+      "quote": "await test.step('origin and commodity, after which the template returns to its task list', async () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-062",
+      "statement": "A new template's task list shows 'Template' followed by the name just entered (Weekly Irish cattle).",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:149",
+      "quote": "await expect(page.locator('main')).toContainText(/Template\\s+Weekly Irish cattle/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-063",
+      "statement": "Documents are not part of a template: visiting /design-release-2.1/upload-documents during a template journey redirects to the task list.",
+      "kind": "rule",
+      "ref": "e2e/templates.fit.spec.js:153-155",
+      "quote": "await test.step('documents and declaration are not part of a template', async () => {\n      await page.goto(url('/upload-documents'))\n      await expect(page).toHaveURL(urlFor('/notification-hub'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-064",
+      "statement": "The declaration is not part of a template: visiting /design-release-2.1/declaration during a template journey redirects to /design-release-2.1/review-notification.",
+      "kind": "rule",
+      "ref": "e2e/templates.fit.spec.js:156-157",
+      "quote": "await page.goto(url('/declaration'))\n      await expect(page).toHaveURL(urlFor('/review-notification'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-065",
+      "statement": "'Review template' on the task list opens /design-release-2.1/review-notification, which shows the template's name.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:161-164",
+      "quote": "await page.locator('main a', { hasText: 'Review template' }).click()\n      await expect(page).toHaveURL(urlFor('/review-notification'))\n      await expect(page.locator('main')).toContainText('Weekly Irish cattle')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-066",
+      "statement": "Submitting the review form when reviewing a template saves the template and returns to the manage templates page.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:166-167",
+      "quote": "await page.locator('main form[action$=\"/review-notification\"] button[type=\"submit\"]').first().click()\n      await expect(page).toHaveURL(urlFor('/templates'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-067",
+      "statement": "The text of the button that saves a template from the review page is not asserted; the spec clicks the first submit button of the review form.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:166",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-068",
+      "statement": "After a template is saved, the manage templates page shows a notification banner '<template name> saved to templates', such as 'Weekly Irish cattle saved to templates'.",
+      "kind": "copy",
+      "ref": "e2e/templates.fit.spec.js:168",
+      "quote": "await expect(page.locator('.govuk-notification-banner')).toContainText('Weekly Irish cattle saved to templates')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-069",
+      "statement": "A newly saved template is added to the list: the count rises to 'Show 1-6 of 6 results'.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:169",
+      "quote": "await expect(page.locator('main')).toContainText('Show 1-6 of 6 results')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-070",
+      "statement": "The template name is optional: submitting the name page blank proceeds to the origin page with no error.",
+      "kind": "rule",
+      "ref": "e2e/templates.fit.spec.js:174-179 (create a new template > a template with no name is saved as \"Untitled template\")",
+      "quote": "await submitForm(page, 'Save and continue')\n    await expect(page).toHaveURL(urlFor('/origin-of-the-import'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-071",
+      "statement": "Visiting /design-release-2.1/templates/save during template creation saves the template and returns to the manage templates page.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:180-181",
+      "quote": "await page.goto(url('/templates/save'))\n    await expect(page).toHaveURL(urlFor('/templates'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-072",
+      "statement": "A template saved with no name is called 'Untitled template', and the banner reads 'Untitled template saved to templates'.",
+      "kind": "rule",
+      "ref": "e2e/templates.fit.spec.js:174, 182",
+      "quote": "await expect(page.locator('.govuk-notification-banner')).toContainText('Untitled template saved to templates')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-073",
+      "statement": "No validation of the template name is tested: the spec asserts no length limit, character rule, duplicate-name rule or error message for it.",
+      "kind": "rule",
+      "ref": "e2e/templates.fit.spec.js:132-143, 174-183",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked at the name step of the create test and the Untitled template test; the only rule shown is that a blank name is allowed."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-074",
+      "statement": "A template being created can be discarded at /design-release-2.1/templates/discard, which shows a confirmation headed 'Delete this template?'.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:185-193 (create a new template > discard a template being created)",
+      "quote": "await page.goto(url('/templates/discard'))\n    await expect(page).toHaveURL(urlFor('/templates/discard'))\n    await expectHeading(page, 'Delete this template?')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-075",
+      "statement": "The discard confirmation shows the name of the template being created in a 'Name' row.",
+      "kind": "data",
+      "ref": "e2e/templates.fit.spec.js:194",
+      "quote": "await expect(page.locator('main')).toContainText(/Name\\s+Throwaway/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-076",
+      "statement": "The discard confirmation's back link goes to the review page, /design-release-2.1/review-notification.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:195",
+      "quote": "await expectBackLink(page, url('/review-notification'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-077",
+      "statement": "Confirming the discard with 'Yes, delete' returns to the manage templates page with the banner '<template name> has been deleted', such as 'Throwaway has been deleted'.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:197-199",
+      "quote": "await submitForm(page, 'Yes, delete')\n    await expect(page).toHaveURL(urlFor('/templates'))\n    await expect(page.locator('.govuk-notification-banner')).toContainText('Throwaway has been deleted')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-078",
+      "statement": "Visiting the discard page when no template is being created redirects to the manage templates page.",
+      "kind": "behaviour",
+      "ref": "e2e/templates.fit.spec.js:202-204 (create a new template > the discard page outside a template journey returns to manage templates)",
+      "quote": "await page.goto(url('/templates/discard'))\n    await expect(page).toHaveURL(urlFor('/templates'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-079",
+      "statement": "The address book is reachable at /design-release-2.1/address-book, and its links stay inside the Design Release 2.1 mount.",
+      "kind": "constraint",
+      "ref": "e2e/address-book.fit.spec.js:5-7",
+      "quote": "// The address book under the DR2.1 mount. Its views are shared with the other\n// releases (only the delete confirmation is a DR2.1 override), but every route is\n// reachable at /design-release-2.1/address-book and links stay inside the mount.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-080",
+      "statement": "The address book's views are shared with the other design releases; only the address delete confirmation is specific to Design Release 2.1.",
+      "kind": "constraint",
+      "ref": "e2e/address-book.fit.spec.js:5-6",
+      "quote": "Its views are shared with the other\n// releases (only the delete confirmation is a DR2.1 override)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-081",
+      "statement": "The address book page's title is 'Address book - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:23-24 (address book list > categories, pagination and filters)",
+      "quote": "await expect(page).toHaveTitle('Address book - Import notification service - GOV.UK')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-082",
+      "statement": "The address book page's heading is 'Address book'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:25",
+      "quote": "await expectHeading(page, 'Address book')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-083",
+      "statement": "The address book page says 'Manage your addresses for use across all your import notifications'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:27",
+      "quote": "await expect(main).toContainText('Manage your addresses for use across all your import notifications')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-084",
+      "statement": "The address book page has an 'Add a new address' link to /design-release-2.1/address-book/add.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:28",
+      "quote": "await expect(main.locator('a', { hasText: 'Add a new address' })).toHaveAttribute('href', url('/address-book/add'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-085",
+      "statement": "The address book page has a 'Filter addresses' control.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:29",
+      "quote": "await expect(main).toContainText('Filter addresses')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-086",
+      "statement": "The address book has a category link 'Origin and Consignor' to /design-release-2.1/address-book?category=origin-and-consignor.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:30-31",
+      "quote": "['Origin and Consignor', 'origin-and-consignor']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-087",
+      "statement": "The address book has a category link 'Destination, Consignee and Importer' to /design-release-2.1/address-book?category=destination-consignee-importer.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:30-31",
+      "quote": "['Destination, Consignee and Importer', 'destination-consignee-importer']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-088",
+      "statement": "The address book has a category link 'Transporter' to /design-release-2.1/address-book?category=transporter.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:30-31",
+      "quote": "['Transporter', 'transporter']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-089",
+      "statement": "The address book has a category link 'Branch' to /design-release-2.1/address-book?category=branch.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:30-31",
+      "quote": "['Branch', 'branch']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-090",
+      "statement": "With no category chosen, the address book shows origin and consignor addresses under the heading 'Origin and Consignor addresses'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:22, 33",
+      "quote": "await test.step('origin and consignor addresses by default', async () => {\n      await page.goto(url('/address-book'))",
+      "confidence": "verbatim",
+      "note": "Heading asserted at line 33: await expect(main.getByRole('heading', { name: 'Origin and Consignor addresses' })).toBeVisible()"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-091",
+      "statement": "The address list shows eight addresses a page with a range count, 'Showing 1-8 of 23' for the 23 seeded origin and consignor addresses.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:34",
+      "quote": "await expect(main).toContainText('Showing 1-8 of 23')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-092",
+      "statement": "The address list table has the columns Name, Type, Address and Country.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:35",
+      "quote": "await expect(main).toContainText(/Name\\s+Type\\s+Address\\s+Country/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-093",
+      "statement": "In the origin and consignor category, the type filter offers 'Select one', 'Place of Origin' and 'Consignor'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:36",
+      "quote": "await expect(page.locator('#address-book-type option')).toHaveText(['Select one', 'Place of Origin', 'Consignor'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-094",
+      "statement": "Each address row has a 'View' link to its entry page; the first is /design-release-2.1/address-book/green-valley-farm-sanpetru-0.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:37",
+      "quote": "await expect(main.getByRole('link', { name: 'View' }).first()).toHaveAttribute('href', url('/address-book/green-valley-farm-sanpetru-0'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-095",
+      "statement": "On the address book page the service navigation marks 'Address book' as the active item.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:38",
+      "quote": "await expect(page.locator('.govuk-service-navigation__item--active')).toContainText('Address book')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-096",
+      "statement": "The address list is paginated: 'Next' in the pagination goes to page=2, which shows 'Showing 9-16 of 23'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:42-45",
+      "quote": "await page.locator('.govuk-pagination').getByRole('link', { name: 'Next' }).click()\n      await expect(page).toHaveURL(/page=2/)\n      await expect(page.locator('main')).toContainText('Showing 9-16 of 23')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-097",
+      "statement": "The destination-consignee-importer, transporter and branch categories each show their addresses in a table.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:49-55",
+      "quote": "for (const category of ['destination-consignee-importer', 'transporter', 'branch']) {\n      await test.step(`${category} addresses`, async () => {\n        await page.goto(url(`/address-book?category=${category}`))\n        await expect(page.locator('main table')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-098",
+      "statement": "The headings, counts, columns and type-filter options of the destination-consignee-importer, transporter and branch categories are not asserted; the spec checks only that a table shows.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:49-55",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-099",
+      "statement": "The search and type filter sit inside a 'Filter addresses' disclosure that is collapsed by default, so the search box is hidden until it is opened.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:59-61",
+      "quote": "// Search and type sit inside a collapsed \"Filter addresses\" disclosure.\n      await expect(page.locator('#address-book-search')).toBeHidden()\n      await page.locator('.app-address-book-page__filter-summary').click()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-100",
+      "statement": "The address search field is labelled 'Search'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:62",
+      "quote": "await expect(page.locator('label[for=\"address-book-search\"]')).toHaveText('Search')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-101",
+      "statement": "The address search field's placeholder is 'Search by name, address or country'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:63",
+      "quote": "await expect(page.locator('#address-book-search')).toHaveAttribute('placeholder', 'Search by name, address or country')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-102",
+      "statement": "Typing in the search filters the rows of the current category as you type, without submitting: typing 'Ballymore' leaves two visible rows, both Ballymore.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:64-67",
+      "quote": "await page.locator('#address-book-search').pressSequentially('Ballymore', { delay: 30 })\n      // Ballymore Farm is held twice: once as a place of origin, once as a consignor.\n      await expect(page.locator('main tbody tr:visible')).toHaveCount(2)",
+      "confidence": "inferred",
+      "note": "Filtering as you type (client-side, no submit) is inferred from the test asserting visible rows straight after typing with no submit."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-103",
+      "statement": "The same place can be held twice in the address book under different uses: Ballymore Farm is held once as a place of origin and once as a consignor.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:65",
+      "quote": "// Ballymore Farm is held twice: once as a place of origin, once as a consignor.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-104",
+      "statement": "The choose an address type page is at /design-release-2.1/address-book/add and its title is 'Choose an address type - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:75-76 (add an address to the address book > choose an address type)",
+      "quote": "await page.goto(url('/address-book/add'))\n    await expect(page).toHaveTitle('Choose an address type - Import notification service - GOV.UK')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-105",
+      "statement": "The choose an address type page's heading is 'Choose an address type'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:77",
+      "quote": "await expectHeading(page, 'Choose an address type')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-106",
+      "statement": "The choose an address type page shows 'Add a new address', most likely as its caption.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:79",
+      "quote": "await expect(main).toContainText('Add a new address')",
+      "confidence": "inferred",
+      "note": "Caption placement is an inference; the assertion is a containment check on main."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-107",
+      "statement": "The address type is one choice of four radios, in order: 'Origin or Consignor', 'Destination, Consignee or Importer', 'Transporter' and 'Branch' (values origin-and-consignor, destination-consignee-importer, transporter, branch).",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:80; values from chooseType calls at 94, 123, 143, 151",
+      "quote": "await expect(page.locator('input[name=\"addressType\"] + label')).toHaveText(['Origin or Consignor', 'Destination, Consignee or Importer', 'Transporter', 'Branch'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-108",
+      "statement": "The 'Origin or Consignor' address type has the hint 'Place of origin, Consignor'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:81",
+      "quote": "'Place of origin, Consignor'",
+      "confidence": "inferred",
+      "note": "The test checks the four hints only as page text, not against each radio; pairing by order is an inference."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-109",
+      "statement": "The 'Destination, Consignee or Importer' address type has the hint 'Place of destination, Consignee, Importer'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:81",
+      "quote": "'Place of destination, Consignee, Importer'",
+      "confidence": "inferred",
+      "note": "Pairing by order is an inference; the hint is asserted as page text."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-110",
+      "statement": "The 'Transporter' address type has the hint 'Private, Commercial'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:81",
+      "quote": "'Private, Commercial'",
+      "confidence": "inferred",
+      "note": "Pairing by order is an inference; the hint is asserted as page text."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-111",
+      "statement": "The 'Branch' address type has the hint 'Branch address'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:81",
+      "quote": "'Branch address'",
+      "confidence": "inferred",
+      "note": "Pairing by order is an inference; the hint is asserted as page text."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-112",
+      "statement": "The choose an address type page's back link goes to /design-release-2.1/address-book.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:84",
+      "quote": "await expectBackLink(page, url('/address-book'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-113",
+      "statement": "The choose an address type page submits with a 'Continue' button.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:17, 87",
+      "quote": "await submitForm(page, 'Continue')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-114",
+      "statement": "An address type is required: continuing with none chosen shows an error summary titled 'There is a problem' with the single message 'Select an address type'.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:87-88; e2e/support/journey.js:39-44",
+      "quote": "await expectErrorSummary(page, ['Select an address type'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-115",
+      "statement": "The 'Select an address type' error links to the first radio, #address-type-origin-and-consignor.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:89",
+      "quote": "await expect(page.locator('.govuk-error-summary__list a')).toHaveAttribute('href', '#address-type-origin-and-consignor')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-116",
+      "statement": "Choosing 'Origin or Consignor' and continuing goes to the add address and contact details page, /design-release-2.1/address-book/add/lookup.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:94-95 (add an address to the address book > origin or consignor: an address entered by hand with its uses)",
+      "quote": "await chooseType(page, 'origin-and-consignor')\n    await expect(page).toHaveURL(urlFor('/address-book/add/lookup'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-117",
+      "statement": "The add address page's title is 'Add address and contact details - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:96",
+      "quote": "await expect(page).toHaveTitle('Add address and contact details - Import notification service - GOV.UK')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-118",
+      "statement": "The add address page's heading is 'Add address and contact details'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:97",
+      "quote": "await expectHeading(page, 'Add address and contact details')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-119",
+      "statement": "For an origin or consignor address, the uses offered are the checkboxes 'Place of origin' and 'Consignor'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:98",
+      "quote": "await expect(page.locator('input[name=\"addressUses\"] + label')).toHaveText(['Place of origin', 'Consignor'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-120",
+      "statement": "For an origin or consignor address, the address is entered by hand (the test fills the manual fields directly, with no search step).",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:93, 105-114",
+      "quote": "test('origin or consignor: an address entered by hand with its uses', async ({ page }, testInfo) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-121",
+      "statement": "The add address page has a field labelled 'Name or organisation'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:105",
+      "quote": "await page.getByLabel('Name or organisation', { exact: true }).fill('Hof Sonnenberg')",
+      "confidence": "verbatim",
+      "note": "The edit page labels the same field 'Name or organisation name' (line 182)."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-122",
+      "statement": "The add address page has a field labelled 'Address line 1'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:106",
+      "quote": "await page.getByLabel('Address line 1', { exact: true }).fill('Bergstrasse 5')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-123",
+      "statement": "The add address page has a field labelled 'Town or city'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:107",
+      "quote": "await page.getByLabel('Town or city', { exact: true }).fill('Munich')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-124",
+      "statement": "The add address page has a field labelled 'Postcode or Zip code'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:108",
+      "quote": "await page.getByLabel('Postcode or Zip code', { exact: true }).fill('80331')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-125",
+      "statement": "The add address page has a country field (#address-book-manual-country) which may be a select list that includes Germany; the test sets it only when it is a select.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:109-112",
+      "quote": "const country = page.locator('#address-book-manual-country')\n    if (await country.evaluate((el) => el.tagName === 'SELECT')) {\n      await country.selectOption('Germany')\n    }",
+      "confidence": "inferred",
+      "note": "The control type is not fixed by the spec; it guards on the tag name."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-126",
+      "statement": "The add address page has a field labelled 'Email address'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:113",
+      "quote": "await page.getByLabel('Email address', { exact: true }).fill('hof@example.com')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-127",
+      "statement": "The add address page has a field labelled 'Phone number'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:114",
+      "quote": "await page.getByLabel('Phone number', { exact: true }).fill('+49 89 000000')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-128",
+      "statement": "Continuing from the add address page with nothing entered shows an error summary titled 'There is a problem' listing six messages in this order: 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:9-12, 101-102; e2e/support/journey.js:39-44",
+      "quote": "const MANUAL_ERRORS = [\n  'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city',\n  'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-129",
+      "statement": "The name or organisation is required on the add address page; its error is 'Enter a name or organisation name'.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:10",
+      "quote": "'Enter a name or organisation name'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-130",
+      "statement": "Address line 1 is required on the add address page; its error is 'Enter address line 1'.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:10",
+      "quote": "'Enter address line 1'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-131",
+      "statement": "Town or city is required on the add address page; its error is 'Enter a town or city'.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:10",
+      "quote": "'Enter a town or city'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-132",
+      "statement": "Postcode or Zip code is required on the add address page; its error is 'Enter a postcode or Zip code'.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:11",
+      "quote": "'Enter a postcode or Zip code'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-133",
+      "statement": "Email address is required on the add address page; its error is 'Enter an email address'.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:11",
+      "quote": "'Enter an email address'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-134",
+      "statement": "Phone number is required on the add address page; its error is 'Enter a phone number'.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:11",
+      "quote": "'Enter a phone number'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-135",
+      "statement": "Country and address uses raise no error when blank on the add address page: the blank-submit error list has no message for either.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:9-12, 101-102",
+      "quote": "await clickAction(page, 'continue')\n    await expectErrorSummary(page, MANUAL_ERRORS)",
+      "confidence": "inferred",
+      "note": "expectErrorSummary asserts the exact list of messages, so no other message shows. Whether country or a use is enforced once the other fields are valid is not tested."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-136",
+      "statement": "Format checks on email address, phone number and postcode are not tested; only blank-field errors are asserted.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:93-140",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-137",
+      "statement": "A valid origin or consignor address with the place of origin use ticked saves and returns to the address book, which then lists it (Hof Sonnenberg).",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:115-118",
+      "quote": "await page.locator('input[name=\"addressUses\"][value=\"place-of-origin\"]').check()\n    await clickAction(page, 'continue')\n    await expect(page).toHaveURL(/\\/design-release-2\\.1\\/address-book/)\n    await expect(page.locator('main')).toContainText('Hof Sonnenberg')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-138",
+      "statement": "The add address page's submit button carries the action value 'continue'; its text is not asserted.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:101, 116; e2e/support/journey.js:17-18",
+      "quote": "await clickAction(page, 'continue')",
+      "confidence": "inferred",
+      "note": "The visible button text is not asserted for the add address page."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-139",
+      "statement": "No success banner or message after adding an address is asserted, and the exact page the add returns to (list or category) is only matched as somewhere under /design-release-2.1/address-book.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:116-118",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-140",
+      "statement": "Choosing 'Destination, Consignee or Importer' and continuing goes to /design-release-2.1/address-book/add/lookup, which shows an address search labelled 'Search for an address' and hides the manual 'Address line 1' field.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:122-126 (add an address to the address book > destination, consignee or importer: a UK address found by search)",
+      "quote": "await expect(page).toHaveURL(urlFor('/address-book/add/lookup'))\n    await expect(page.getByLabel('Search for an address')).toBeVisible()\n    await expect(page.getByLabel('Address line 1', { exact: true })).toBeHidden()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-141",
+      "statement": "For a destination, consignee or importer, the address is a UK address found by search.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:122",
+      "quote": "test('destination, consignee or importer: a UK address found by search', async ({ page }, testInfo) => {",
+      "confidence": "verbatim",
+      "note": "Stated in the test title only; the spec does not assert a UK-only restriction."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-142",
+      "statement": "Continuing from the destination address search with nothing chosen shows the same six errors as the manual address form ('Enter a name or organisation name' through 'Enter a phone number').",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:129-130",
+      "quote": "await clickAction(page, 'continue')\n    await expectErrorSummary(page, MANUAL_ERRORS)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-143",
+      "statement": "Typing in the address search (for example 'Acorn') lists matching addresses as options; picking one reveals the address fields, including Address line 1.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:133-137",
+      "quote": "await search.pressSequentially('Acorn', { delay: 30 })\n    await page.locator('.app-address-book-lookup-search__option').first().click()\n    await expect(page.getByLabel('Address line 1', { exact: true })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-144",
+      "statement": "For a destination, consignee or importer address, the uses offered are the checkboxes 'Place of destination', 'Consignee' and 'Importer'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:138",
+      "quote": "await expect(page.locator('input[name=\"addressUses\"] + label')).toHaveText(['Place of destination', 'Consignee', 'Importer'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-145",
+      "statement": "Saving a destination address picked by search is not tested; the test stops after the address is picked.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:122-140",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-146",
+      "statement": "Choosing 'Branch' and continuing goes to /design-release-2.1/address-book/add/lookup.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:143-144 (add an address to the address book > branch: the branch address use)",
+      "quote": "await chooseType(page, 'branch')\n    await expect(page).toHaveURL(urlFor('/address-book/add/lookup'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-147",
+      "statement": "For a branch address there is exactly one use checkbox, 'Branch address'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:145-146",
+      "quote": "await expect(page.locator('input[name=\"addressUses\"]')).toHaveCount(1)\n    await expect(page.locator('input[name=\"addressUses\"] + label')).toHaveText(['Branch address'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-148",
+      "statement": "Choosing 'Transporter' hands over to the add-a-transporter pages: it goes to /design-release-2.1/transporter/add, headed 'Choose a transporter type'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:150-153 (add an address to the address book > transporter: hands over to the add-a-transporter pages)",
+      "quote": "await chooseType(page, 'transporter')\n    await expect(page).toHaveURL(urlFor('/transporter/add'))\n    await expectHeading(page, 'Choose a transporter type')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-149",
+      "statement": "The address usage step (/design-release-2.1/address-book/add/usage) is only reachable with an address pending; visiting it without one redirects to /design-release-2.1/address-book/add.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:156-158 (add an address to the address book > the usage step is only reachable with an address pending)",
+      "quote": "test('the usage step is only reachable with an address pending', async ({ page }) => {\n    await page.goto(url('/address-book/add/usage'))\n    await expect(page).toHaveURL(urlFor('/address-book/add'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-150",
+      "statement": "The address usage step's own page (heading, options, errors, where it leads) is never shown with an address pending, so its content is not asserted.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:156-159",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-151",
+      "statement": "An address book entry's page is at /design-release-2.1/address-book/<entry slug> and its title is the entry's name, such as 'Green Valley Farm - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:163, 167-168 (an address book entry > view, edit and save)",
+      "quote": "await expect(page).toHaveTitle('Green Valley Farm - Import notification service - GOV.UK')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-152",
+      "statement": "An address book entry's page heading is the entry's name, such as 'Green Valley Farm'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:169",
+      "quote": "await expectHeading(page, 'Green Valley Farm')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-153",
+      "statement": "An address book entry's page shows a 'Name or organisation name' row (Green Valley Farm).",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:171",
+      "quote": "await expect(main).toContainText(/Name or organisation name\\s+Green Valley Farm/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-154",
+      "statement": "An address book entry's page shows a 'Country' row (Romania).",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:172",
+      "quote": "await expect(main).toContainText(/Country\\s+Romania/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-155",
+      "statement": "An address book entry's page shows an 'Email address' row (info@greenvalleyfarm.eu).",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:173",
+      "quote": "await expect(main).toContainText(/Email address\\s+info@greenvalleyfarm\\.eu/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-156",
+      "statement": "An address book entry's page has an 'Edit' link to /design-release-2.1/address-book/<entry slug>/edit.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:178-179",
+      "quote": "await page.locator('main').locator('a', { hasText: /^\\s*Edit\\s*$/ }).click()\n      await expect(page).toHaveURL(urlFor(`${ENTRY}/edit`))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-157",
+      "statement": "The entry page's way to delete the address (a Delete link) and its back link are not asserted; the delete test opens the delete URL directly.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:165-175, 205",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-158",
+      "statement": "The edit address page's title is 'Edit address and contact details - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:180",
+      "quote": "await expect(page).toHaveTitle('Edit address and contact details - Import notification service - GOV.UK')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-159",
+      "statement": "The edit address page's heading is 'Edit address and contact details'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:181",
+      "quote": "await expectHeading(page, 'Edit address and contact details')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-160",
+      "statement": "The edit address page is prefilled with the entry's answers; its name field is labelled 'Name or organisation name' and holds 'Green Valley Farm'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:182",
+      "quote": "await expect(page.getByLabel('Name or organisation name', { exact: true })).toHaveValue('Green Valley Farm')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-161",
+      "statement": "The edit address page has 'Town or city' and 'Postcode or Zip code' fields.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:195-196",
+      "quote": "await page.getByLabel('Town or city', { exact: true }).fill('Sânpetru')\n      await page.getByLabel('Postcode or Zip code', { exact: true }).fill('507190')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-162",
+      "statement": "On the edit address page the name is required: clearing it and saving shows an error summary containing 'Enter a name or organisation name'.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:186-189",
+      "quote": "await page.getByLabel('Name or organisation name', { exact: true }).fill('')\n      await page.locator('main form button[type=\"submit\"]').first().click()\n      await expect(page.locator('.govuk-error-summary')).toContainText('Enter a name or organisation name')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-163",
+      "statement": "Saving a valid edit returns to /design-release-2.1/address-book.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:193-198",
+      "quote": "await test.step('saving the edit returns to the list with a banner', async () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-164",
+      "statement": "After an edit is saved, the address book shows a notification banner '<name> address updated', with the name in sentence case, such as 'Green valley farm srl address updated' (matched without regard to case).",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:199",
+      "quote": "await expect(page.locator('.govuk-notification-banner')).toContainText(/Green valley farm srl address updated/i)",
+      "confidence": "inferred",
+      "note": "The match is case-insensitive, so the exact casing of the name in the banner is inferred from the expected string and the delete banner at line 216."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-165",
+      "statement": "The text of the edit page's save button is not asserted; the spec clicks the form's first submit button.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:188, 197",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-166",
+      "statement": "The address delete confirmation is at /design-release-2.1/address-book/<entry slug>/delete and its title is 'Delete this address? - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:205-206 (an address book entry > delete: confirm, then the list says it was deleted)",
+      "quote": "await page.goto(url(`${ENTRY}/delete`))\n    await expect(page).toHaveTitle('Delete this address? - Import notification service - GOV.UK')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-167",
+      "statement": "The address delete confirmation's heading is 'Delete this address?'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:207",
+      "quote": "await expectHeading(page, 'Delete this address?')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-168",
+      "statement": "The address delete confirmation shows the address being deleted in an 'Address' row, starting with its name.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:209",
+      "quote": "await expect(main).toContainText(/Address\\s+Green Valley Farm/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-169",
+      "statement": "The address delete confirmation says 'Confirm that you want to delete this address.'",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:210",
+      "quote": "await expect(main).toContainText('Confirm that you want to delete this address.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-170",
+      "statement": "The address delete confirmation warns 'This action cannot be undone.'",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:211",
+      "quote": "await expect(main).toContainText('This action cannot be undone.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-171",
+      "statement": "The address delete confirmation has a 'No, cancel' link.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:212",
+      "quote": "await expect(main.locator('a', { hasText: 'No, cancel' })).toBeVisible()",
+      "confidence": "verbatim",
+      "note": "Where 'No, cancel' leads is not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-172",
+      "statement": "Confirming with 'Yes, delete' deletes the address and returns to /design-release-2.1/address-book.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:214-215",
+      "quote": "await submitForm(page, 'Yes, delete')\n    await expect(page).toHaveURL(urlFor('/address-book'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-173",
+      "statement": "After an address is deleted, the address book shows a notification banner '<name> address deleted', with the name in sentence case, such as 'Green valley farm address deleted'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:216",
+      "quote": "await expect(page.locator('.govuk-notification-banner')).toContainText('Green valley farm address deleted')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-174",
+      "statement": "After an address is deleted it is gone from the list: the origin and consignor count drops to 'Showing 1-8 of 22'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:217",
+      "quote": "await expect(page.locator('main')).toContainText('Showing 1-8 of 22')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p6-175",
+      "statement": "The address book's range count reads 'Showing ...' while the templates list reads 'Show ... results', so the two lists word their counts differently.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:34; e2e/templates.fit.spec.js:22",
+      "quote": "await expect(main).toContainText('Showing 1-8 of 23')",
+      "confidence": "inferred",
+      "note": "Recorded as an observation of the two asserted strings, not a ruling on which is right."
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 1 read how the live-animals set is mounted and sequenced, not what its pages say. It read in full: src/server/app/routes.js and routes-live-animals.js (the Hapi plugin that mounts the set and the order it configures its seams in); the generic flow layer src/server/app/flow/ (dispatch.js, gates.js, prerequisites.js, navigation.js, journey-flow.js, section-status.js); the set's identity sets/live-animals/set.js and its journey config journeys/linear/config.js; the composition files journeys/linear/features/index.js (28 route bundles, 15 dispatch pages), features/evaluation.js and features/system/evaluation.js; the whole of journeys/linear/flow/ (flow.js's 8 sections, task-rows.js's 12 rows, entry-guard.js, stored-answers.js, notification-action-slugs.js, section-captions/index.js with copy.en.js and copy.cy.js, fixtures/happy-path.json, and reachability-fixtures/seeds.js, scope-states.js and enumerate-answer-states.js); all 12 obligation files (obligations/index.js plus the 11 section files, commodities/identifiers.js, lines.js and aggregates.js among them); the eight files of sets/live-animals/services/commodities/; and the two test-support files (sets/live-animals/test-support.js, journeys/linear/test-support.js). To ground facts those files rest on it also read, outside its own list: shared/paths.js (the URL builders), bridge/obligation-source.js (SYSTEM_POPULATED, ENFORCED_AT_CONTINUE), bridge/status/index.js and bridge/status/vocabulary.js (statusOf and the five statuses), the seven gate helpers under model/obligations/helpers/, obligation-purity.js and set-completeness.js (the boot assertions), each dispatch page's `collects` from its controller.js and each flow page's id, slug, subPage and maturity from its page.js, shared/kit.js's CYA_SLUG and CANCEL_AMEND_SLUG, features/transport/transporter-add-session.js and features/commodities/search/selection/rows.js (the flow-only key values), services/reference-data/request.js, common/services/mode.js and common/helpers/frontend-url.js. It covers: the set base, id and the URL shape every page hangs off; the 28 route bundles and which pages the flow holds that declare no obligations; how a page claims an obligation and how a derived page or section gate is worked out; the 8 journey sections in order with their pages and the review section's gate; all 12 task rows with their parts, conditions and how rowStatus decides; the two answers enforced at Save and continue and where a trader lands without them; the entry guard and the INS type-question URL; the 9 section captions verbatim in English with Welsh key parity; the 6 flow-only keys; all 52 obligations with their level, mandate, scope condition and cardinality; and the commodity reference service with its code lists, species check and stub. It claims no page's own heading, caption position, fields, hints, options or error messages: each feature's part does that.",
+  "structure": "Part 1 read all 48 files its read list names, in full, in repos/trade-imports-animals-frontend on main (0.373.0): the router (routes.js) and the set's composition root (routes-live-animals.js); the generic flow layer (flow/dispatch.js, gates.js, prerequisites.js, navigation.js, journey-flow.js, section-status.js); the set identity (set.js), journey config (config.js) and two test-support files; features/index.js (27 imported route bundles, 14 dispatchPages metas), features/evaluation.js (9 feature binding groups) and system/evaluation.js; the journey flow folder (flow.js with FLOW_ONLY_KEYS and the 7 sections, task-rows.js with 11 rows and rowStatus, entry-guard.js, stored-answers.js, notification-action-slugs.js, section captions index with English and Welsh copy, the happy-path fixture and three reachability-fixture files); obligations/index.js (a 51-obligation manifest and its groups) and the 11 obligation section files; and the 8 files of services/commodities (client, rules, species check, search, stub, stub-or-reference-data, index and test support). It covers the set's id and base path and the URL shape under /live-animals/notifications/<journeyId>/, the boot assertions, the 7 sections and their 17 pages, the review section's readiness gate, the derived page and section gates and authored-gate overrides, required-earlier-answer prerequisites and Save and continue landing, all 11 task rows and how rowStatus works, stored-answer demotion, the entry guard and its log and metric, the INS type-question URL, the 9 captions with Welsh key parity, the 6 flow-only keys, every obligation's scope, mandate, cardinality and reason code, the commodity reference service, its rules tables and its stub, and the test fixtures' answer shapes. Since the last extract the contact select page, its contact-address section and task row, the contactAddress obligation and the contact feature binding are gone, so the counts moved from 28 bundles, 15 dispatch pages, 8 sections, 12 rows, 52 obligations and 10 binding groups to 27, 14, 7, 11, 51 and 9; claims stating the old counts were given new ids and the contact-only claims were dropped. Kept claims had their file and line refs moved to the current lines.",
   "claims": [
     {
       "id": "repo-frontend-p1-001",
@@ -8,46 +8,6 @@
       "kind": "behaviour",
       "ref": "src/server/app/sets/live-animals/set.js:6-7",
       "quote": "export const SET_ID = 'live-animals'\nexport const SET_BASE = `/${SET_ID}`",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-002",
-      "statement": "A journey page's URL is /live-animals/notifications/<journeyId>/<page slug>.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/paths.js:5,11-12",
-      "quote": "export const pageRoutePath = (slug) => `/notifications/{journeyId}/${slug}`\n...\nexport const pagePath = (journeyId, slug) =>\n  `${setBase()}/notifications/${journeyId}/${slug}`",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-003",
-      "statement": "The notification overview (the task list a trader returns to) is at /live-animals/notifications/<journeyId>, with no page slug.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/paths.js:6,13",
-      "quote": "export const hubRoutePath = () => '/notifications/{journeyId}'\n...\nexport const hubPath = (journeyId) => `${setBase()}/notifications/${journeyId}`",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-004",
-      "statement": "A new notification is created at /live-animals/notifications, and /live-animals/start is a separate entry route.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/paths.js:7-8,14",
-      "quote": "export const createRoutePath = () => '/notifications'\nexport const startRoutePath = () => '/start'\n...\nexport const createPath = () => `${setBase()}/notifications`",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-005",
-      "statement": "The set's dashboard sits at /live-animals itself, because the dashboard page's slug is empty.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/paths.js:9,15; src/server/app/sets/live-animals/journeys/linear/features/dashboard/page.js:1-5",
-      "quote": "export const dashboardRoutePath = () => '/'\n...\nexport const dashboardPath = () => setBase()\n---\nexport const dashboardPage = {\n  id: 'dashboard',\n  slug: '',\n  maturity: 'exploring'\n}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-006",
-      "statement": "The dashboard section of the service is the base path, the create path and anything under the create path.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/paths.js:17-20",
-      "quote": "export const inDashboardSection = (path) =>\n  path === dashboardPath() ||\n  path === createPath() ||\n  path.startsWith(`${createPath()}/`)",
       "confidence": "verbatim"
     },
     {
@@ -97,30 +57,6 @@
       "kind": "behaviour",
       "ref": "src/server/app/routes-live-animals.js:90-99",
       "quote": "server.ext(\n          'onPreHandler',\n          async (request, h) => {\n            const target = await runInRequestContext(request, SET_ID, () =>\n              journeyEntryGuardTarget(request, h)\n            )\n            return target ? h.redirect(target).takeover() : h.continue\n          },\n          { sandbox: 'plugin' }\n        )",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-013",
-      "statement": "The set refuses to mount when it has left any required seam unconfigured, naming each one.",
-      "kind": "constraint",
-      "ref": "src/server/app/set-completeness.js:20-26",
-      "quote": "const assertSeamsConfigured = (setId) => {\n  const missing = unconfiguredSeamsOf(setId)\n  if (missing.length) {\n    throw new Error(\n      `Set \"${setId}\" mounted without configuring: ${missing.join(', ')}`\n    )\n  }\n}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-014",
-      "statement": "The set refuses to mount when any of its journey cookies was not registered on the server.",
-      "kind": "constraint",
-      "ref": "src/server/app/set-completeness.js:7-18",
-      "quote": "const missing = cookieNamesOf(setId).filter((name) => !registered[name])\n  if (missing.length) {\n    throw new Error(\n      `Set \"${setId}\" mounted without its journey cookies: ${missing.join(', ')} — ` +\n        'registerJourneyCookie() must run, and must run after configureSession()'\n    )\n  }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-015",
-      "statement": "Boot refuses an obligation model that carries any display key, such as a label, title or hint: display wording may not live in the obligation model.",
-      "kind": "constraint",
-      "ref": "src/server/app/obligation-purity.js:4-9",
-      "quote": "// Model purity gate: no display logic in the model. A boot-time check over the\n// live model — no `label`/`title`/`hint` etc. on any obligation.\n\nexport const assertObligationPurity = () => {\n  assertNoDisplayKeys(obligations())\n}",
       "confidence": "verbatim"
     },
     {
@@ -190,35 +126,10 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p1-024",
-      "statement": "The set's routes are composed from 28 controller route bundles: dashboard, hub, origin, commodities search, consignment details, animal identification, import reason, additional details, documents, addresses, party picker, address return, party edit, CPH number, permanent address, port of entry, transit countries, transporters, transporter add, commercial transporter details, private transporter details, contact select, check answers, cancel amend, notification actions, delete notification, declaration and confirmation.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/index.js:49-78",
-      "quote": "export const allRoutes = [\n  ...dashboard.routes,\n  ...hub.routes,\n  ...origin.routes,\n  ...commoditiesSearch.routes,\n  ...consignmentDetails.routes,\n  ...animalIdentification.routes,\n  ...importReason.routes,\n  ...additionalDetails.routes,\n  ...documents.routes,\n  ...addresses.routes,\n  ...partyPicker.routes,\n  ...addressReturn.routes,\n  ...partyEdit.routes,\n  ...cphNumber.routes,\n  ...permanentAddress.routes,\n  ...portOfEntry.routes,\n  ...transitCountries.routes,\n  ...transporters.routes,\n  ...transporterAdd.routes,\n  ...commercialTransporterDetails.routes,\n  ...privateTransporterDetails.routes,\n  ...contactSelect.routes,\n  ...cya.routes,\n  ...cancelAmend.routes,\n  ...notificationActions.routes,\n  ...deleteNotification.routes,\n  ...declaration.routes,\n  ...confirmation.routes\n]",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-025",
-      "statement": "Only 15 of the set's pages declare the obligations they collect, and those 15 build the obligation-to-page index: origin, commodities, consignment details, animal identification, import reason, additional details, documents, addresses, CPH number, permanent address, port of entry, transit countries, transporters, contact select and declaration.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/index.js:30-47",
-      "quote": "/** The pages whose page-side `collects` build the obligation->page index. */\nexport const dispatchPages = [\n  origin.meta,\n  commoditiesSearch.meta,\n  consignmentDetails.meta,\n  animalIdentification.meta,\n  importReason.meta,\n  additionalDetails.meta,\n  documents.meta,\n  addresses.meta,\n  cphNumber.meta,\n  permanentAddress.meta,\n  portOfEntry.meta,\n  transitCountries.meta,\n  transporters.meta,\n  contactSelect.meta,\n  declaration.meta\n]",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-026",
-      "statement": "Every one of the 15 pages that declare collects also appears in the journey flow; three pages the flow holds declare no collects at all, the dashboard, the notification view and the confirmation.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/index.js:31-47; src/server/app/sets/live-animals/journeys/linear/flow/flow.js:40-78",
-      "quote": "export const sections = [\n  {\n    id: 'start',\n    pages: [dashboardPage]\n  },\n...\n    pages: [notificationViewPage, declarationPage, confirmationPage]",
-      "confidence": "inferred",
-      "note": "Compared the 15 dispatchPages metas against the 18 pages the 8 sections list. The three with no collects are the dashboard, the review's notification-view page and the confirmation page."
-    },
-    {
       "id": "repo-frontend-p1-027",
       "statement": "Ten route bundles serve pages the journey flow does not sequence at all: the overview (hub), the party picker, the address return, the party edit, transporter add, commercial transporter details, private transporter details, cancel amend, notification actions and delete notification.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/index.js:49-78; src/server/app/sets/live-animals/journeys/linear/flow/flow.js:40-78",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/index.js:47-75; src/server/app/sets/live-animals/journeys/linear/flow/flow.js:39-73",
       "quote": "...partyPicker.routes,\n  ...addressReturn.routes,\n  ...partyEdit.routes,\n...\n  ...transporterAdd.routes,\n  ...commercialTransporterDetails.routes,\n  ...privateTransporterDetails.routes,\n...\n  ...cancelAmend.routes,\n  ...notificationActions.routes,\n  ...deleteNotification.routes,",
       "confidence": "inferred",
       "note": "These bundles are reachable by URL but are in no journey section, so Save and continue never lands on them and the task list never counts them."
@@ -232,130 +143,6 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p1-029",
-      "statement": "The origin page collects five answers: the country of origin, the country-of-origin subdivision code, whether a region-of-origin code is required, the region-of-origin code, and the trader's internal reference number.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:21-31",
-      "quote": "export const meta = {\n  ...page,\n  collects: [\n    'countryOfOrigin',\n    'countryOfOriginSubdivisionCode',\n    'regionOfOriginCodeRequirement',\n    'regionOfOriginCode',\n    'internalReferenceNumber'\n  ],\n  validation\n}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-030",
-      "statement": "The commodities page collects the commodity lines collection, and so owns every answer inside a line, including each line's per-animal identifier records and their permanent addresses.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js:10,30",
-      "quote": "import { commoditiesPage as page } from '../page.js'\n...\nexport const meta = { ...page, collects: ['commodityLines'] }",
-      "confidence": "verbatim",
-      "note": "Ownership of the nested answers follows from the ancestor walk in dispatch.js, since no deeper page claims them."
-    },
-    {
-      "id": "repo-frontend-p1-031",
-      "statement": "The consignment details page collects no obligation of its own.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:7,37",
-      "quote": "import { consignmentDetailsPage as page } from '../page.js'\n...\nexport const meta = { ...page, collects: [] }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-032",
-      "statement": "The animal identification page collects no obligation of its own.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:33",
-      "quote": "export const meta = { ...page, collects: [] }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-033",
-      "statement": "The import reason page collects five answers: the reason for import, the purpose in the internal market, the destination country, the port of exit and the exit date.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js:22-32",
-      "quote": "export const meta = {\n  ...page,\n  collects: [\n    'reasonForImport',\n    'purposeInInternalMarket',\n    'destinationCountry',\n    'portOfExit',\n    'exitDate'\n  ],\n  validation\n}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-034",
-      "statement": "The additional details page collects two answers: what the animals are certified for, and whether the consignment contains unweaned animals.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.js:16-20",
-      "quote": "export const meta = {\n  ...page,\n  collects: ['animalsCertifiedFor', 'containsUnweanedAnimals'],\n  validation\n}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-035",
-      "statement": "The accompanying documents page collects the documents collection, and so owns every answer inside a document.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:52",
-      "quote": "export const meta = { ...page, collects: ['documents'], validation }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-036",
-      "statement": "The addresses page collects the five consignment parties: the consignor, the place of destination, the place of origin, the consignee and the importer.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js:33-42",
-      "quote": "export const meta = {\n  ...page,\n  collects: [\n    'consignor',\n    'placeOfDestination',\n    'placeOfOrigin',\n    'consignee',\n    'importer'\n  ]\n}",
-      "confidence": "verbatim",
-      "note": "The addresses page states no validation rules of its own, unlike most collecting pages."
-    },
-    {
-      "id": "repo-frontend-p1-037",
-      "statement": "The CPH number page collects one answer, the county parish holding number.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.js:18-22",
-      "quote": "export const meta = {\n  ...page,\n  collects: ['countyParishHoldingCph'],\n  validation\n}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-038",
-      "statement": "The permanent address page collects no obligation of its own, even though it is in the flow and in the obligation-to-page index.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.js:27",
-      "quote": "export const meta = { ...page, collects: [] }",
-      "confidence": "verbatim",
-      "note": "The permanentAddress and permanentAddressOrigin obligations sit inside a commodity line's identifier records, so the commodities page owns them."
-    },
-    {
-      "id": "repo-frontend-p1-039",
-      "statement": "The port of entry page collects five answers: the arrival date at the port, the port of entry, the means of transport, the transport identification and the transport document reference.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.js:19-29",
-      "quote": "export const meta = {\n  ...page,\n  collects: [\n    'arrivalDateAtPort',\n    'portOfEntry',\n    'meansOfTransport',\n    'transportIdentification',\n    'transportDocumentReference'\n  ],\n  validation\n}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-040",
-      "statement": "The transit countries page collects one answer, the countries transited.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js:32-36",
-      "quote": "export const meta = {\n  ...page,\n  collects: ['transitedCountries'],\n  validation\n}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-041",
-      "statement": "The transporters page collects three answers: the transporter type and the two mutually exclusive transporter records, commercial and private.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js:32-36",
-      "quote": "export const meta = {\n  ...page,\n  collects: ['transporterType', 'commercialTransporter', 'privateTransporter'],\n  validation\n}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-042",
-      "statement": "The consignment contact select page collects one answer, the contact address.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js:31",
-      "quote": "export const meta = { ...page, collects: ['contactAddress'], validation }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-043",
-      "statement": "The declaration page collects one answer, the declaration itself, which is a flow-only key rather than a notification obligation.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:38",
-      "quote": "export const meta = { ...page, collects: ['declaration'] }",
-      "confidence": "verbatim",
-      "note": "'declaration' is also the first entry of FLOW_ONLY_KEYS, so it is stored in the flow-only cookie and is not part of the obligation manifest."
-    },
-    {
       "id": "repo-frontend-p1-044",
       "statement": "A page that states validation rules can have them run against already-stored answers by a caller holding only its page id, which is how the task list and the review page re-check saved answers.",
       "kind": "behaviour",
@@ -364,18 +151,10 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p1-045",
-      "statement": "The journey has eight sections, in this order: start, about the consignment, description of the goods, transport and arrival, documents, consignment parties, contact address, and review.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:40-78",
-      "quote": "export const sections = [\n  {\n    id: 'start',\n...\n    id: 'about-the-consignment',\n...\n    id: 'description-of-the-goods',\n...\n    id: 'transport-and-arrival',\n...\n    id: 'documents',\n...\n    id: 'consignment-parties',\n...\n    id: 'contact-address',\n...\n    id: 'review',",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-frontend-p1-046",
       "statement": "The start section holds one page, the dashboard.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:41-44",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:40-43",
       "quote": "{\n    id: 'start',\n    pages: [dashboardPage]\n  },",
       "confidence": "verbatim"
     },
@@ -383,7 +162,7 @@
       "id": "repo-frontend-p1-047",
       "statement": "The about-the-consignment section holds three pages in order: origin, commodities and import reason.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:45-48",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:44-47",
       "quote": "{\n    id: 'about-the-consignment',\n    pages: [originPage, commoditiesPage, importReasonPage]\n  },",
       "confidence": "verbatim"
     },
@@ -391,7 +170,7 @@
       "id": "repo-frontend-p1-048",
       "statement": "The description-of-the-goods section holds three pages in order: consignment details, animal identification and additional details.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:49-56",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:48-55",
       "quote": "{\n    id: 'description-of-the-goods',\n    pages: [\n      consignmentDetailsPage,\n      animalIdentificationPage,\n      additionalDetailsPage\n    ]\n  },",
       "confidence": "verbatim"
     },
@@ -399,7 +178,7 @@
       "id": "repo-frontend-p1-049",
       "statement": "The transport-and-arrival section holds three pages in order: port of entry, transit countries and transporters.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:57-60",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:56-59",
       "quote": "{\n    id: 'transport-and-arrival',\n    pages: [portOfEntryPage, transitCountriesPage, transportersPage]\n  },",
       "confidence": "verbatim"
     },
@@ -407,7 +186,7 @@
       "id": "repo-frontend-p1-050",
       "statement": "The documents section holds one page, accompanying documents.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:61-64",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:60-63",
       "quote": "{\n    id: 'documents',\n    pages: [documentsPage]\n  },",
       "confidence": "verbatim"
     },
@@ -415,24 +194,16 @@
       "id": "repo-frontend-p1-051",
       "statement": "The consignment-parties section holds three pages in order: CPH number, permanent address and addresses.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:65-68",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:64-67",
       "quote": "{\n    id: 'consignment-parties',\n    pages: [cphNumberPage, permanentAddressPage, addressesPage]\n  },",
       "confidence": "verbatim",
       "note": "CPH number and permanent address come before the addresses page in the flow, although the addresses task row leads with the addresses page."
     },
     {
-      "id": "repo-frontend-p1-052",
-      "statement": "The contact-address section holds one page, the consignment contact select page.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:69-72",
-      "quote": "{\n    id: 'contact-address',\n    pages: [consignmentContactSelectPage]\n  },",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-frontend-p1-053",
       "statement": "The review section holds three pages in order, the notification view, the declaration and the confirmation, and opens only when the journey is ready for check your answers.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:73-77",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:68-72",
       "quote": "{\n    id: 'review',\n    gate: (scope) => scope.readyForCheckYourAnswers,\n    pages: [notificationViewPage, declarationPage, confirmationPage]\n  }",
       "confidence": "verbatim"
     },
@@ -440,7 +211,7 @@
       "id": "repo-frontend-p1-054",
       "statement": "The review section is the only section with an authored gate; every other section's availability is derived from its obligations.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:40-78",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:39-73",
       "quote": "gate: (scope) => scope.readyForCheckYourAnswers,",
       "confidence": "inferred",
       "note": "No other section entry in the sections array carries a `gate` key."
@@ -451,14 +222,6 @@
       "kind": "rule",
       "ref": "src/server/app/flow/section-status.js:11-19",
       "quote": "/** True for a status that leaves nothing for the trader to do: fulfilled, not\n * applicable or optional. */\nexport const rowReady = (status) =>\n  status === FULFILLED || status === NA || status === OPTIONAL\n\nexport const readyForCheckYourAnswers = (answers, inScope, evaluation) =>\n  journeyTaskRows().every((row) =>\n    rowReady(journeyRowStatus(row, answers, inScope, evaluation))\n  )",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-056",
-      "statement": "The answer sections are the seven sections other than review, so a section list used for answering excludes the review.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:87-89",
-      "quote": "export const answerSections = sections.filter(\n  (section) => section.id !== 'review'\n)",
       "confidence": "verbatim"
     },
     {
@@ -494,14 +257,6 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p1-061",
-      "statement": "Exactly two answers are enforced at Save and continue, the country of origin and the commodity code, and they are the only answers a later page can be held back for.",
-      "kind": "rule",
-      "ref": "src/server/app/bridge/obligation-source.js:29-32",
-      "quote": "export const ENFORCED_AT_CONTINUE = new Set([\n  'countryOfOrigin',\n  'commodityCode'\n])",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-frontend-p1-062",
       "statement": "A page is held back only by those enforced answers whose own page comes earlier than it in the journey's page order, so an enforced answer asked later in the flow never blocks an earlier page.",
       "kind": "rule",
@@ -534,21 +289,13 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p1-066",
-      "statement": "The CPH number and permanent address pages are marked as sub-pages, so Save and continue never lands on either of them even though both are in the journey's sections.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/page.js:1-6; src/server/app/sets/live-animals/journeys/linear/features/permanent-address/page.js:1-6",
-      "quote": "export const cphNumberPage = {\n  id: 'cphNumber',\n  slug: 'cph-number',\n  subPage: true,\n  maturity: 'detailing'\n}\n---\nexport const permanentAddressPage = {\n  id: 'permanentAddress',\n  slug: 'permanent-address',\n  subPage: true,\n  maturity: 'detailing'\n}",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-frontend-p1-067",
       "statement": "The permanent address page is in the journey's sections but in no task row, so it is reachable only from another page, not from the task list.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:28-73; src/server/app/sets/live-animals/journeys/linear/flow/flow.js:65-68",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:27-71; src/server/app/sets/live-animals/journeys/linear/flow/flow.js:64-67",
       "quote": "pages: [cphNumberPage, permanentAddressPage, addressesPage]",
       "confidence": "inferred",
-      "note": "The 12 task rows list the CPH number page (inside the addresses row) but never the permanent address page."
+      "note": "The 11 task rows list the CPH number page (inside the addresses row) but never the permanent address page."
     },
     {
       "id": "repo-frontend-p1-068",
@@ -583,26 +330,19 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p1-072",
-      "statement": "The journey has twelve task rows, in this order: origin, commodities, import reason, consignment details, animal identification, additional details, arrival details, transit countries, transporter, documents, addresses and contact.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:28-73",
-      "quote": "export const taskRows = [\n  { id: 'origin', pages: [originPage] },\n  {\n    id: 'commodities',\n...\n  { id: 'importReason', pages: [importReasonPage] },\n...\n    id: 'consignmentDetails',\n...\n    id: 'animalIdentification',\n...\n  { id: 'additionalDetails', pages: [additionalDetailsPage] },\n  { id: 'arrivalDetails', pages: [portOfEntryPage] },\n  { id: 'transitCountries', pages: [transitCountriesPage], conditional: true },\n  { id: 'transporter', pages: [transportersPage] },\n  { id: 'documents', pages: [documentsPage] },\n  {\n    id: 'addresses',\n...\n  { id: 'contact', pages: [consignmentContactSelectPage] }\n]",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-frontend-p1-073",
       "statement": "The origin task row covers the origin page alone, and its status comes from the five answers that page collects.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:29,77-78",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:28,75-76",
       "quote": "{ id: 'origin', pages: [originPage] },\n...\nexport const rowParts = (row) =>\n  row.parts ?? row.pages.flatMap((page) => collectsOf(page.id))",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "The origin page's meta collects countryOfOrigin, countryOfOriginSubdivisionCode, regionOfOriginCodeRequirement, regionOfOriginCode and internalReferenceNumber (features/origin/controller.js:23-29, read only to confirm the count)."
     },
     {
       "id": "repo-frontend-p1-074",
       "statement": "The commodities task row covers the commodities page and counts every answer in a commodity line except the animal identifiers, the number of animals and the number of packages, so the counts and identifiers belong to other rows.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:30-43",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:29-42",
       "quote": "{\n    id: 'commodities',\n    pages: [commoditiesPage],\n    parts: [\n      {\n        collection: 'commodityLines',\n        except: [\n          'animalIdentifiers',\n          'numberOfAnimalsQuantity',\n          'numberOfPackages'\n        ]\n      }\n    ]\n  },",
       "confidence": "verbatim"
     },
@@ -610,7 +350,7 @@
       "id": "repo-frontend-p1-075",
       "statement": "The import reason task row covers the import reason page alone.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:44",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:43",
       "quote": "{ id: 'importReason', pages: [importReasonPage] },",
       "confidence": "verbatim"
     },
@@ -618,7 +358,7 @@
       "id": "repo-frontend-p1-076",
       "statement": "The consignment details task row covers the consignment details page and counts only two answers per commodity line, the number of animals and the number of packages.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:45-54",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:44-53",
       "quote": "{\n    id: 'consignmentDetails',\n    pages: [consignmentDetailsPage],\n    parts: [\n      {\n        collection: 'commodityLines',\n        only: ['numberOfAnimalsQuantity', 'numberOfPackages']\n      }\n    ]\n  },",
       "confidence": "verbatim"
     },
@@ -626,7 +366,7 @@
       "id": "repo-frontend-p1-077",
       "statement": "The animal identification task row covers the animal identification page, counts only the animal identifiers of each commodity line, is shown as a conditional row, and reads not applicable until the consignment has at least one commodity line.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:55-61",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:54-60",
       "quote": "{\n    id: 'animalIdentification',\n    pages: [animalIdentificationPage],\n    parts: [{ collection: 'commodityLines', only: ['animalIdentifiers'] }],\n    conditional: true,\n    applies: hasAnyCommodityLine\n  },",
       "confidence": "verbatim"
     },
@@ -634,7 +374,7 @@
       "id": "repo-frontend-p1-078",
       "statement": "The additional details task row covers the additional details page alone.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:62",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:61",
       "quote": "{ id: 'additionalDetails', pages: [additionalDetailsPage] },",
       "confidence": "verbatim"
     },
@@ -642,7 +382,7 @@
       "id": "repo-frontend-p1-079",
       "statement": "The arrival details task row covers the port of entry page alone, so one row stands for the arrival date, the port, the means of transport, the transport identification and the transport document reference.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:63",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:62",
       "quote": "{ id: 'arrivalDetails', pages: [portOfEntryPage] },",
       "confidence": "verbatim"
     },
@@ -650,7 +390,7 @@
       "id": "repo-frontend-p1-080",
       "statement": "The transit countries task row covers the transit countries page and is shown as a conditional row, with no condition of its own beyond the scope of the answer it counts.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:64",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:63",
       "quote": "{ id: 'transitCountries', pages: [transitCountriesPage], conditional: true },",
       "confidence": "verbatim",
       "note": "The row carries `conditional: true` but no `applies`, so whether it reads not applicable falls to the transitedCountries obligation's own land-transport gate."
@@ -659,7 +399,7 @@
       "id": "repo-frontend-p1-081",
       "statement": "The transporter task row covers the transporters page alone.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:65",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:64",
       "quote": "{ id: 'transporter', pages: [transportersPage] },",
       "confidence": "verbatim"
     },
@@ -667,7 +407,7 @@
       "id": "repo-frontend-p1-082",
       "statement": "The documents task row covers the accompanying documents page alone.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:66",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:65",
       "quote": "{ id: 'documents', pages: [documentsPage] },",
       "confidence": "verbatim"
     },
@@ -675,23 +415,15 @@
       "id": "repo-frontend-p1-083",
       "statement": "The addresses task row groups two pages, the addresses page and the CPH number page, and does not read as finished until every animal that needs a permanent address has one, even when all the answers the two pages collect are given.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:67-71",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:66-70",
       "quote": "{\n    id: 'addresses',\n    pages: [addressesPage, cphNumberPage],\n    extraAnswerGiven: everyAddressableAnimalHasPermanentAddress\n  },",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-084",
-      "statement": "The contact task row covers the consignment contact select page alone.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:72",
-      "quote": "{ id: 'contact', pages: [consignmentContactSelectPage] }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p1-085",
       "statement": "A row's status is worked out in three steps: a row whose condition does not apply reads not applicable; otherwise the row's parts are rolled up into a status; and a rolled-up fulfilled is demoted to in progress when the row's extra answer is still missing.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:80-94",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:78-92",
       "quote": "const rowApplies = (row, answers, evaluation) =>\n  row.applies?.(answers, evaluation) ?? true\n\nconst extraAnswerGiven = (row, answers, evaluation) =>\n  row.extraAnswerGiven?.(answers, evaluation) ?? true\n\nexport const rowStatus = (row, answers, inScope, evaluation) => {\n  if (!rowApplies(row, answers, evaluation)) {\n    return NA\n  }\n  const status = statusOf(rowParts(row), answers, inScope, evaluation)\n  return status === FULFILLED && !extraAnswerGiven(row, answers, evaluation)\n    ? IN_PROGRESS\n    : status\n}",
       "confidence": "verbatim"
     },
@@ -699,32 +431,8 @@
       "id": "repo-frontend-p1-086",
       "statement": "A row that does not author its own parts counts the obligations its pages collect, so the task list follows the dispatch ownership map by default.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:77-78",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:75-76",
       "quote": "export const rowParts = (row) =>\n  row.parts ?? row.pages.flatMap((page) => collectsOf(page.id))",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-087",
-      "statement": "A task row or section reads as one of five statuses: not applicable, not started, in progress, fulfilled or optional.",
-      "kind": "data",
-      "ref": "src/server/app/bridge/status/vocabulary.js:1-5",
-      "quote": "export const NA = 'not-applicable'\nexport const NOT_STARTED = 'not-started'\nexport const IN_PROGRESS = 'in-progress'\nexport const FULFILLED = 'fulfilled'\nexport const OPTIONAL = 'optional'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-088",
-      "statement": "A row with nothing in scope reads not applicable; a row with no mandatory part reads optional while untouched, then fulfilled or in progress; and a row with mandatory parts reads fulfilled when each is satisfied, in progress when something is started, and not started otherwise.",
-      "kind": "rule",
-      "ref": "src/server/app/bridge/status/index.js:46-89",
-      "quote": "const inScopeParts = parts.filter((part) => inScope.has(partKey(part)))\n  if (inScopeParts.length === 0) {\n    return NA\n  }\n\n  const required = inScopeParts.filter((part) => partRequired(part, evaluation))\n  const started = inScopeParts.some((part) => partStarted(part, answers))\n\n  return required.length === 0\n    ? optionalOrProgressStatus(inScopeParts, started, answers, evaluation)\n    : requiredPartsStatus(required, started, answers, evaluation)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-089",
-      "statement": "An empty collection that is required still blocks a row from reading fulfilled, and an empty collection that is optional reads optional while a partly filled optional one reads in progress.",
-      "kind": "rule",
-      "ref": "src/server/app/bridge/status/index.js:3-31",
-      "quote": "so the presentation-facing edge cases (empty optional collection -> OPTIONAL,\n * partial optional -> IN_PROGRESS, empty required collection -> NOT_STARTED)\n * hold.\n...\n * The empty-collection floor is manifest-sourced (`requiredAtLeastOne`:\n * `requires.minEntries` or `requires.anyOfIds`) and stays a presentation\n * rule — the model emits nothing for a group with zero records, but an\n * empty required collection must still block FULFILLED.",
       "confidence": "verbatim"
     },
     {
@@ -764,7 +472,7 @@
       "id": "repo-frontend-p1-094",
       "statement": "The entry guard applies to any page path under /live-animals/notifications/<journeyId>/ and leaves the create path, the four notification action paths and the origin page (with anything under it) alone.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:17-33",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:21-34",
       "quote": "export const guardedJourneyPath = (path) => {\n  const prefix = journeyPrefix()\n  if (!path.startsWith(prefix) || path === createPath()) {\n    return false\n  }\n  const [journeyId, ...slugParts] = path.slice(prefix.length).split('/')\n  const slug = slugParts.join('/')\n  if (ACTION_SLUGS.has(slug)) {\n    return false\n  }\n  const isEntrySurface =\n    slug === originPage.slug || slug.startsWith(`${originPage.slug}/`)\n  return Boolean(journeyId) && !isEntrySurface\n}",
       "confidence": "verbatim"
     },
@@ -772,15 +480,15 @@
       "id": "repo-frontend-p1-095",
       "statement": "A trader who opens a guarded page of a notification with no answer entered yet is sent to that notification's origin page.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:58-71",
-      "quote": "export const entryGuardTarget = async (request, h) => {\n  if (!guardedJourneyPath(request.path)) {\n    return null\n  }\n  const { journey, answers } = await get(request, h)\n  if (hasCommittedNotificationAnswers(answers)) {\n    return null\n  }\n  request.logger.info(\n    { journeyId: journey.journeyId, path: request.path },\n    'No answer entered, sent to the first page'\n  )\n  return pagePath(request.params.journeyId, originPage.slug)\n}",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:59-73",
+      "quote": "export const entryGuardTarget = async (request, h) => {\n  if (!guardedJourneyPath(request.path)) {\n    return null\n  }\n  const { journey, answers } = await get(request, h)\n  if (hasCommittedNotificationAnswers(answers)) {\n    return null\n  }\n  request.logger.info(\n    { journeyId: journey.journeyId, path: request.path },\n    'No answer entered, sent to the first page'\n  )\n  countEventInBackground('journey.entry.redirect')\n  return pagePath(request.params.journeyId, originPage.slug)\n}",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p1-096",
       "statement": "That redirect is logged once at info with the notification's id and the path the trader asked for, under the message 'No answer entered, sent to the first page'.",
       "kind": "non-functional",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:66-69",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:67-70",
       "quote": "request.logger.info(\n    { journeyId: journey.journeyId, path: request.path },\n    'No answer entered, sent to the first page'\n  )",
       "confidence": "verbatim"
     },
@@ -788,7 +496,7 @@
       "id": "repo-frontend-p1-097",
       "statement": "A notification counts as having committed answers when any stored key is a trader-entered obligation (not a system-populated one) and holds an answer; a flow-only key such as the declaration does not count.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:35-43",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:36-44",
       "quote": "const userEntered = (key) => {\n  const obligation = obligationByName(key)\n  return obligation !== undefined && !SYSTEM_POPULATED.has(key)\n}\n\nexport const hasCommittedNotificationAnswers = (answers) =>\n  Object.entries(answers ?? {}).some(\n    ([key, value]) => userEntered(key) && isAnswered(value)\n  )",
       "confidence": "verbatim",
       "note": "A flow-only key is not in the obligation manifest, so obligationByName returns undefined for it."
@@ -797,7 +505,7 @@
       "id": "repo-frontend-p1-098",
       "statement": "The link that leaves a notification goes to that notification's overview once any answer is committed, and back to the dashboard while none is.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:45-48",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:46-49",
       "quote": "export const leaveJourneyLink = (journey, answers) =>\n  hasCommittedNotificationAnswers(answers)\n    ? hubPath(journey.journeyId)\n    : dashboardPath()",
       "confidence": "verbatim"
     },
@@ -805,23 +513,15 @@
       "id": "repo-frontend-p1-099",
       "statement": "The question that asks which type of notification this is lives on the INS frontend, at /notification-type with the notification id and the current notification type ('live-animals') as query parameters.",
       "kind": "integration",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:50-56",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:51-57",
       "quote": "export const insTypeQuestionUrl = (journeyId) => {\n  const query = new URLSearchParams({\n    'notification-id': journeyId,\n    'current-notification-type': SET_ID\n  })\n  return buildInsFrontendUrl(`/notification-type?${query.toString()}`)\n}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-100",
-      "statement": "That INS URL is built from the configured INS frontend base URL with any trailing slash removed.",
-      "kind": "integration",
-      "ref": "src/server/common/helpers/frontend-url.js:9-10",
-      "quote": "export const buildInsFrontendUrl = (path) =>\n  `${config.get('tradeImportsInsFrontend.baseUrl').replace(/\\/$/, '')}${path}`",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p1-101",
       "statement": "Nothing in the set's flow sends a trader to the INS notification-type question: the entry guard's only target is the notification's own origin page, and the INS URL is handed to the journey flow for some other caller to use.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:58-71; src/server/app/routes-live-animals.js:73-82; src/server/app/flow/journey-flow.js:31-32",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:59-73; src/server/app/routes-live-animals.js:73-82; src/server/app/flow/journey-flow.js:31-32",
       "quote": "export const journeyInsTypeQuestionUrl = (...args) =>\n  configured().insTypeQuestionUrl(...args)",
       "confidence": "gap",
       "note": "The part's scope expects the entry guard to say when a trader is sent back to the INS type question. entry-guard.js returns only the origin page path, and the INS URL is exposed through journeyInsTypeQuestionUrl for a caller outside this part's files. Looked in entry-guard.js, journey-flow.js and routes-live-animals.js; the caller that uses it is not in this slice."
@@ -834,14 +534,6 @@
       "quote": "export const notificationActionSlugs = Object.freeze({\n  amend: 'amend',\n  cancelAmend: CANCEL_AMEND_SLUG,\n  copy: 'copy',\n  delete: deleteNotificationPage.slug\n})",
       "confidence": "verbatim",
       "note": "CANCEL_AMEND_SLUG is 'cancel-amend' and the delete page's slug is 'delete', so the four paths are .../amend, .../cancel-amend, .../copy and .../delete."
-    },
-    {
-      "id": "repo-frontend-p1-103",
-      "statement": "The review page's own slug is 'notification-view', the same as the page id, so a Change link from the review returns to /live-animals/notifications/<journeyId>/notification-view.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:69; src/server/app/sets/live-animals/journeys/linear/features/check-answers/page.js:1-5",
-      "quote": "export const CYA_SLUG = 'notification-view'\n---\nexport const notificationViewPage = {\n  id: 'notification-view',\n  slug: 'notification-view',\n  maturity: 'detailing'\n}",
-      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p1-104",
@@ -944,28 +636,11 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p1-116",
-      "statement": "Five pages the journey sequences carry no caption at all: the notification view, the declaration, the confirmation, the consignment contact select page and the transit-countries-adjacent pages are captioned but the review trio and the contact page are not.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js:28-56; src/server/app/sets/live-animals/journeys/linear/flow/flow.js:69-77",
-      "quote": "export const captionSections = [\n  { id: 'dashboard', pages: [dashboardPage] },",
-      "confidence": "inferred",
-      "note": "Checked each of the 18 flow pages against captionSections: the notification view, declaration, confirmation and consignment contact select pages appear in no caption section, so sectionCaptionOf returns undefined for them. The overview, cancel amend, notification actions and delete pages are also uncaptioned."
-    },
-    {
       "id": "repo-frontend-p1-117",
       "statement": "Six session keys are treated as not an answer: the declaration, the stored commodity search rows, the transporter being added, the name of the transporter just added, the transporter-type restart flag and the transporter type chosen.",
       "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:31-38",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:30-37",
       "quote": "export const FLOW_ONLY_KEYS = [\n  'declaration',\n  STORED_SEARCH_ROWS,\n  TRANSPORTER_ADD_IN_PROGRESS,\n  JUST_ADDED_TRANSPORTER_NAME,\n  TRANSPORTER_TYPE_RESTART,\n  TRANSPORTER_TYPE_CHOSEN\n]",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-118",
-      "statement": "Those six keys are stored under the names declaration, commoditySearchRows, transporterAddInProgress, justAddedTransporterName, transporterTypeRestart and transporterTypeChosen.",
-      "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/selection/rows.js:4; src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add-session.js:3-6",
-      "quote": "export const STORED_SEARCH_ROWS = 'commoditySearchRows'\n---\nexport const TRANSPORTER_ADD_IN_PROGRESS = 'transporterAddInProgress'\nexport const JUST_ADDED_TRANSPORTER_NAME = 'justAddedTransporterName'\nexport const TRANSPORTER_TYPE_RESTART = 'transporterTypeRestart'\nexport const TRANSPORTER_TYPE_CHOSEN = 'transporterTypeChosen'",
       "confidence": "verbatim"
     },
     {
@@ -977,26 +652,10 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p1-120",
-      "statement": "Any stored answer key that is neither an obligation name in its declared position, a flow-only key, nor the system key 'referenceNumber' raises an error rather than being kept silently and shipped at submission.",
-      "kind": "constraint",
-      "ref": "src/server/app/bridge/obligation-source.js:47,122-142",
-      "quote": "const SYSTEM_ANSWER_KEYS = new Set(['referenceNumber'])\n...\n  throw new Error(\n    `Unrecognised answer key(s) ${detail} (${context}). Every stored key ` +\n      'must be a manifest obligation name, a flow-only key or a system key — ' +\n      'see bridge/obligation-source.js.'\n  )",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-121",
-      "statement": "The notification carries 52 obligations in all, listed in one manifest order that runs from the system reference number through origin, import reason, parties, transport, arrival, contact, commodity lines and identifiers to the accompanying documents.",
-      "kind": "data",
-      "ref": "src/server/app/sets/live-animals/obligations/index.js:126-179",
-      "quote": "export const obligations = [\n  poApprovedReferenceNumber,\n  countryOfOrigin,\n...\n  documentUploadId,\n  documentFilename\n]",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-frontend-p1-122",
       "statement": "Three of the 52 obligations are groups that hold others inside them: the commodity lines, the animal identifier records inside a line, and the documents.",
       "kind": "data",
-      "ref": "src/server/app/sets/live-animals/obligations/index.js:181-183",
+      "ref": "src/server/app/sets/live-animals/obligations/index.js:178-180",
       "quote": "export const groups = obligations.filter((obligation) =>\n  obligations.some((other) => other.within === obligation)\n)",
       "confidence": "inferred",
       "note": "commodityLine, unitRecord (animalIdentifiers) and documents are the only obligations named as another obligation's `within`."
@@ -1205,27 +864,11 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p1-148",
-      "statement": "The contact address is always asked and always mandatory.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/obligations/sections/misc.js:5-9",
-      "quote": "export const contactAddress = {\n  id: 'f037e8f9-a0b1-4c26-8d72-fe5f60718293',\n  name: 'contactAddress',\n  status: 'mandatory'\n}",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-frontend-p1-149",
-      "statement": "The internal reference number is trader-entered, always in scope and always optional.",
+      "statement": "The internal reference number is always in scope and always optional.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/obligations/sections/misc.js:11-19",
-      "quote": "// Internal reference (trader-entered)\n...\nexport const internalReferenceNumber = {\n  id: '10e5f607-1829-4a3b-84c5-06d7e8f9a0b1',\n  name: 'internalReferenceNumber',\n  status: 'optional'\n}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-150",
-      "statement": "What the animals are certified for is asked once for the whole notification and is always mandatory, although the spec notes APHA may make it depend on the commodity later.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/obligations/sections/misc.js:21-30",
-      "quote": "// Animals certified for (notification-level; spec notes APHA may make\n// this commodity-gated later — modelled as always-mandatory for now)\nexport const animalsCertifiedFor = {\n  id: '274c5d6e-7f80-4da4-8123-7de4f5061729',\n  name: 'animalsCertifiedFor',\n  status: 'mandatory'\n}",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/misc.js:1-5",
+      "quote": "export const internalReferenceNumber = {\n  id: '10e5f607-1829-4a3b-84c5-06d7e8f9a0b1',\n  name: 'internalReferenceNumber',\n  status: 'optional'\n}",
       "confidence": "verbatim"
     },
     {
@@ -1449,30 +1092,6 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p1-178",
-      "statement": "A gate that reads one stored answer and swaps the mandate keeps the answer in scope on both branches, while one that swaps in scope drops the stored answer when the gate answer flips.",
-      "kind": "rule",
-      "ref": "src/server/app/model/obligations/helpers/equals-gate.js:16-26",
-      "quote": "Both\n * `whenTrue` and `whenFalse` are returned verbatim, so a caller who\n * passes two in-scope decisions gets a pure status flip (e.g.\n * `regionCode` mandatory ↔ optional), and one in-scope + one\n * out-of-scope gets a purge-on-flip (e.g. `purposeInInternalMarket`\n * dropped when `reasonForImport` changes).",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-179",
-      "statement": "A per-line or per-animal gate decides entry by entry, so one commodity line can be asked for an identifier while another in the same consignment is not.",
-      "kind": "rule",
-      "ref": "src/server/app/model/obligations/helpers/allow-listed.js:3-15",
-      "quote": "/**\n * allowListed — in scope on entries where `gateObligation`'s stored\n * value is in the allowlist.\n *\n * - Depth-1 (gate + gated at the same identity level): pass `null` for\n *   `gatedParentGroup`; fulfilmentIndexes are the passing gate keys.\n * - Depth-N > 1 (gate broader than gated): pass the gated obligation's\n *   parent group as `gatedParentGroup`; fulfilmentIndexes are that\n *   group's fulfilmentIndexes whose ancestor prefix has a passing gate.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-180",
-      "statement": "An answer that is blank never counts as outside an allowlist, so a commodity line with no code yet is not treated as an unidentified species.",
-      "kind": "rule",
-      "ref": "src/server/app/model/obligations/helpers/not-in-union-of.js:4-9",
-      "quote": "/**\n * notInUnionOf — dual of `allowListed`. In scope on entries whose\n * `gateObligation` stored value is not blank and not in the union of the\n * given allowlists. The union is derived at call-time and exposed on\n * `.metadata.values`.",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-frontend-p1-181",
       "statement": "A trader searching for a commodity gets one page of species grouped by CN code, with the total, the page number and the page size alongside.",
       "kind": "integration",
@@ -1484,16 +1103,16 @@
       "id": "repo-frontend-p1-182",
       "statement": "The commodity search asks the reference data service for GET /commodities with the search term as q and the page and size as query parameters.",
       "kind": "integration",
-      "ref": "src/server/app/sets/live-animals/services/commodities/client.js:6-16",
-      "quote": "export const fetchCommodities = (term, { page, size }) => {\n  const url = referenceDataUrl('/commodities')\n  url.searchParams.set('q', term)\n  url.searchParams.set('page', String(page))\n  url.searchParams.set('size', String(size))\n  return requestReferenceData(\n    url,\n    { method: 'GET' },\n    'Failed to search commodities'\n  )\n}",
+      "ref": "src/server/app/sets/live-animals/services/commodities/client.js:6-12",
+      "quote": "export const fetchCommodities = (term, { page, size }) => {\n  const url = referenceDataUrl('/commodities')\n  url.searchParams.set('q', term)\n  url.searchParams.set('page', String(page))\n  url.searchParams.set('size', String(size))\n  return requestReferenceData('search-commodities', url, { method: 'GET' })\n}",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p1-183",
       "statement": "The species check asks the reference data service for POST /commodities/species-check with the commodity lines in the body.",
       "kind": "integration",
-      "ref": "src/server/app/sets/live-animals/services/commodities/client.js:18-23",
-      "quote": "export const checkSpecies = (lines) =>\n  requestReferenceData(\n    referenceDataUrl('/commodities/species-check'),\n    { method: 'POST', body: JSON.stringify({ lines }) },\n    'Failed to check species'\n  )",
+      "ref": "src/server/app/sets/live-animals/services/commodities/client.js:14-19",
+      "quote": "export const checkSpecies = (lines) =>\n  requestReferenceData(\n    'check-species',\n    referenceDataUrl('/commodities/species-check'),\n    { method: 'POST', body: JSON.stringify({ lines }) }\n  )",
       "confidence": "verbatim"
     },
     {
@@ -1532,16 +1151,8 @@
       "id": "repo-frontend-p1-188",
       "statement": "A reference data failure is turned into a 503 'Reference data unavailable' naming the dataset that failed, either 'commodities' or 'species'.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/services/commodities/stub-or-reference-data.js:11-16; src/server/app/services/reference-data/request.js:33-34",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub-or-reference-data.js:12-16; src/server/app/services/reference-data/request.js:30-31",
       "quote": "try {\n    return await realCall()\n  } catch (err) {\n    throw referenceDataUnavailable(dataset, err)\n  }\n---\nexport const referenceDataUnavailable = (dataset, err) =>\n  Boom.serverUnavailable('Reference data unavailable', { dataset, cause: err })",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-189",
-      "statement": "Every call to reference data carries the service's trace headers and a JSON content type, and any non-OK reply is raised as a failure carrying the status, status text and URL.",
-      "kind": "non-functional",
-      "ref": "src/server/app/services/reference-data/request.js:10-31",
-      "quote": "const response = await fetch(url.toString(), {\n    ...init,\n    headers: {\n      'Content-Type': 'application/json',\n      ...traceHeaders(),\n      ...init?.headers\n    }\n  })\n\n  if (!response.ok) {\n    throw Object.assign(new Error(failureMessage), {\n      status: response.status,\n      statusText: response.statusText,\n      url: url.toString()\n    })\n  }",
       "confidence": "verbatim"
     },
     {
@@ -1696,29 +1307,12 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p1-208",
-      "statement": "Ten feature groups bind answers to obligations, in this order: system, origin, import reason, additional details, addresses, transport, contact, CPH number, commodities and documents.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/evaluation.js:12-23",
-      "quote": "export const featureEvaluationBindings = Object.freeze([\n  system,\n  origin,\n  importReason,\n  additionalDetails,\n  addresses,\n  transport,\n  contact,\n  cphNumber,\n  commodities,\n  documents\n])",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-frontend-p1-209",
       "statement": "The system feature contributes one binding, the notification's approved reference number, held as a single value rather than a collection.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/system/evaluation.js:7-12",
       "quote": "export const evaluationBindings = feature('system', [\n  scalar({\n    field: 'poApprovedReferenceNumber',\n    obligation: poApprovedReferenceNumber\n  })\n])",
       "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p1-210",
-      "statement": "A complete live-animals notification holds answers for the country of origin, region of origin, internal reference, one commodity line with its species and counts and ear tag, the reason for import and purpose, what the animals are certified for, whether they are unweaned, one accompanying document, five consignment parties, the CPH number, the port of entry and arrival date, the means of transport and its identification and document reference, the transited countries, the transporter type and transporter record, the contact address and the declaration.",
-      "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/fixtures/happy-path.json:1-131",
-      "quote": "{\n  \"schema_version\": 1,\n  \"values\": {\n    \"countryOfOrigin\": \"FR\",\n    \"regionOfOriginCodeRequirement\": \"yes\",\n    \"regionOfOriginCode\": \"FR-75\",\n    \"internalReferenceNumber\": \"Imports456GB\",",
-      "confidence": "verbatim",
-      "note": "The happy-path fixture is the canonical shape of a finished notification's answers, versioned with schema_version 1."
     },
     {
       "id": "repo-frontend-p1-211",
@@ -1782,7 +1376,7 @@
       "id": "repo-frontend-p1-218",
       "statement": "The declaration is stored as the value 'confirmed' once the trader has made it.",
       "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/fixtures/happy-path.json:129",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/fixtures/happy-path.json:118",
       "quote": "\"declaration\": \"confirmed\"",
       "confidence": "verbatim"
     },
@@ -1790,7 +1384,7 @@
       "id": "repo-frontend-p1-219",
       "statement": "A submit-ready notification needs no accompanying document at all: the seed that is ready to submit carries none.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/reachability-fixtures/seeds.js:11-71,113-130",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/reachability-fixtures/seeds.js:11-67,109-127",
       "quote": "export const submitReadySeed = {\n  countryOfOrigin: 'FR',\n  regionOfOriginCodeRequirement: 'no',\n...\n  declaration: 'confirmed'\n}\n...\n  {\n    id: 'with-documents',\n    answers: {\n      ...submitReadySeed,\n      documents: [",
       "confidence": "verbatim",
       "note": "The base submit-ready seed has no `documents` key, and a separate variant adds one, so the documents row must read optional rather than mandatory when empty."
@@ -1799,7 +1393,7 @@
       "id": "repo-frontend-p1-220",
       "statement": "Five kinds of consignment are exercised as reachability seeds: a cattle line with an ear tag, a horse line with a passport, a cat line with a passport, an unidentified ostrich line described in free text, and a cattle line with an accompanying document.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/reachability-fixtures/seeds.js:73-131",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/reachability-fixtures/seeds.js:69-127",
       "quote": "export const seedVariants = () => [\n  { id: 'base', answers: submitReadySeed },\n  {\n    id: 'horse-line',\n...\n    id: 'cat-line',\n...\n    id: 'unidentified-line',\n...\n        lineOf(STRUTHIO_ROW, {\n          numberOfAnimalsQuantity: '40',\n          animalIdentifiers: [{ identificationDetails: 'Scar on left wing' }]\n        })\n...\n    id: 'with-documents',",
       "confidence": "verbatim"
     },
@@ -1879,19 +1473,10 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p1-230",
-      "statement": "The set's flow names no page order or sequencing for the notification actions, the amendment or the deletion: the four action slugs are exempted from the entry guard and otherwise sit outside the journey's eight sections.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:18,27-29; src/server/app/sets/live-animals/journeys/linear/flow/flow.js:40-78",
-      "quote": "const ACTION_SLUGS = new Set(Object.values(notificationActionSlugs))\n...\n  if (ACTION_SLUGS.has(slug)) {\n    return false\n  }",
-      "confidence": "inferred",
-      "note": "Amend, cancel amend, copy and delete are reachable by URL on any notification whatever its answers, and no section or task row sequences them."
-    },
-    {
       "id": "repo-frontend-p1-231",
       "statement": "The journey's own section order and the caption groupings disagree in three places: animal identification is captioned 'About the consignment' although the flow puts it in description of the goods, transit countries is captioned 'Movement' although the flow puts it in transport and arrival, and the permanent address page is captioned 'Addresses' although the flow puts it in consignment parties before the addresses page.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js:28-56; src/server/app/sets/live-animals/journeys/linear/flow/flow.js:40-78",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js:28-56; src/server/app/sets/live-animals/journeys/linear/flow/flow.js:39-73",
       "quote": "{ id: 'movement', pages: [transitCountriesPage] },\n  { id: 'transportAndArrival', pages: [portOfEntryPage, transportersPage] },",
       "confidence": "inferred",
       "note": "Recorded as an ambiguity for the reconciler: a page's caption is not derived from the journey section it sits in, so the two lists can drift."
@@ -1904,6 +1489,338 @@
       "quote": "// V4 (Confluence page 6497338582, \"Reason of Import\" section):",
       "confidence": "gap",
       "note": "Looked for a rulings file under the set's obligations and flow folders and found none; the only rulings in this slice are the code comments cited. The repo's two markdown ledgers (src/server/app/docs/decisions.md and sets/live-animals/docs/page-design.md) are another part's to read."
+    },
+    {
+      "id": "repo-frontend-p11-005",
+      "statement": "The caption above the arrival details heading reads \"Transport and arrival\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js:46 with flow/section-captions/copy/copy.en.js:13",
+      "quote": "{ id: 'transportAndArrival', pages: [portOfEntryPage, transportersPage] } … transportAndArrival: 'Transport and arrival'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p11-038",
+      "statement": "The arrival date, port of entry, means of transport, transport identification and transport document reference are each mandatory for a notification, whatever the page lets a user save part-way.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/arrival.js:5-15 and obligations/sections/transport.js:69-85",
+      "quote": "export const arrivalDateAtPort = {\n  id: '12b3c4d5-e6f7-4a08-8b9a-1c2d3e4f5a6b',\n  name: 'arrivalDateAtPort',\n  status: 'mandatory'\n}\n\nexport const portOfEntry = { … status: 'mandatory'\n} … export const meansOfTransport = { … status: 'mandatory'\n} … export const transportIdentification = { … status: 'mandatory'\n} … export const transportDocumentReference = { … status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p11-055",
+      "statement": "The caption above the transit countries heading reads \"Movement\", not \"Transport and arrival\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js:45 with flow/section-captions/copy/copy.en.js:12",
+      "quote": "{ id: 'movement', pages: [transitCountriesPage] } … movement: 'Movement',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p11-082",
+      "statement": "Transit countries is asked only of a consignment arriving by rail or road: for any other means of transport the answer is out of scope and dropped.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/transport.js:17-21,96-111",
+      "quote": "const transitedCountriesReason = {\n  code: 'obligation.transitedCountries.applicable.becauseLandTransport',\n  explanation:\n    'transitedCountries applies when meansOfTransport is RAILWAY or ROAD_VEHICLE'\n} … const LAND_TRANSPORT_MODES = ['RAILWAY', 'ROAD_VEHICLE'] … applyTo: includesGate(\n    meansOfTransport,\n    LAND_TRANSPORT_MODES, … { inScope: false }\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p11-083",
+      "statement": "The overview shows a transit countries task row only while the page applies, which is why the row is marked conditional.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:62-63 with fit/arrival-transit.fit.spec.js:697-703",
+      "quote": "{ id: 'arrivalDetails', pages: [portOfEntryPage] },\n  { id: 'transitCountries', pages: [transitCountriesPage], conditional: true }, … await expect(\n      page.getByRole('link', {\n        name: hubCopy.rows.transitCountries.title,\n        exact: true\n      })\n    ).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-007",
+      "statement": "The page sits in the journey's consignment-parties section alongside the CPH number page and the permanent address page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:64-67",
+      "quote": "id: 'consignment-parties',\n    pages: [cphNumberPage, permanentAddressPage, addressesPage]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-008",
+      "statement": "A trader reaches the page from the notification overview's addresses task row, which covers the addresses page and the CPH number page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:66-70",
+      "quote": "id: 'addresses',\n    pages: [addressesPage, cphNumberPage],\n    extraAnswerGiven: everyAddressableAnimalHasPermanentAddress",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-009",
+      "statement": "The addresses task row is not complete until every animal that needs a permanent address has one, even when all five parties are chosen and the CPH number is given.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:69, features/permanent-address/cards.js:57-63",
+      "quote": "extraAnswerGiven: everyAddressableAnimalHasPermanentAddress  …  export const everyAddressableAnimalHasPermanentAddress = (\n  answers,\n  evaluation\n) =>\n  addressableUnits(answers, evaluation).every(({ unit }) =>\n    isPartyHeld(unit.permanentAddress)\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p17-004",
+      "statement": "The page's section caption above the heading reads \"Documents\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/copy/copy.en.js:15",
+      "quote": "documents: 'Documents'",
+      "confidence": "verbatim",
+      "note": "The caption comes from the flow's shared section-caption copy; the template renders it with `sectionCaption(caption)` (template.njk:21)."
+    },
+    {
+      "id": "repo-frontend-p1-233",
+      "statement": "The set is registered as a server plugin named after the set id, 'live-animals', and records its mount at the base path /live-animals before anything else is configured.",
+      "kind": "behaviour",
+      "ref": "src/server/app/routes-live-animals.js:55-59",
+      "quote": "export const liveAnimals = {\n  plugin: {\n    name: SET_ID,\n    register: async (server) => {\n      registerSetMount(SET_ID, SET_BASE)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-234",
+      "statement": "A notification's journey pages sit under /live-animals/notifications/<journeyId>/<page slug>: the entry guard reads the journey id and the page slug from the path after that prefix.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:18,21-27",
+      "quote": "const journeyPrefix = () => `${setBase()}/notifications/`\n...\n  const [journeyId, ...slugParts] = path.slice(prefix.length).split('/')\n  const slug = slugParts.join('/')",
+      "confidence": "inferred",
+      "note": "Inferred from the guard's parsing; the pagePath builder itself lives in shared/paths.js, outside this part."
+    },
+    {
+      "id": "repo-frontend-p1-235",
+      "statement": "The set's routes are composed from 27 controller route bundles: dashboard, hub, origin, commodities search, consignment details, animal identification, import reason, additional details, documents, addresses, party picker, address return, party edit, CPH number, permanent address, port of entry, transit countries, transporters, transporter add, commercial transporter details, private transporter details, check answers, cancel amend, notification actions, delete notification, declaration and confirmation.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/index.js:47-75",
+      "quote": "export const allRoutes = [\n  ...dashboard.routes,\n  ...hub.routes,\n  ...origin.routes,\n  ...commoditiesSearch.routes,\n  ...consignmentDetails.routes,\n  ...animalIdentification.routes,\n  ...importReason.routes,\n  ...additionalDetails.routes,\n  ...documents.routes,\n  ...addresses.routes,\n  ...partyPicker.routes,\n  ...addressReturn.routes,\n  ...partyEdit.routes,\n  ...cphNumber.routes,\n  ...permanentAddress.routes,\n  ...portOfEntry.routes,\n  ...transitCountries.routes,\n  ...transporters.routes,\n  ...transporterAdd.routes,\n  ...commercialTransporterDetails.routes,\n  ...privateTransporterDetails.routes,\n  ...cya.routes,\n  ...cancelAmend.routes,\n  ...notificationActions.routes,\n  ...deleteNotification.routes,\n  ...declaration.routes,\n  ...confirmation.routes\n]",
+      "confidence": "verbatim",
+      "note": "There is no contact select bundle in the route list."
+    },
+    {
+      "id": "repo-frontend-p1-236",
+      "statement": "Only 14 of the set's pages declare the obligations they collect, and those 14 build the obligation-to-page index: origin, commodities, consignment details, animal identification, import reason, additional details, documents, addresses, CPH number, permanent address, port of entry, transit countries, transporters and declaration.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/index.js:29-45",
+      "quote": "/** The pages whose page-side `collects` build the obligation->page index. */\nexport const dispatchPages = [\n  origin.meta,\n  commoditiesSearch.meta,\n  consignmentDetails.meta,\n  animalIdentification.meta,\n  importReason.meta,\n  additionalDetails.meta,\n  documents.meta,\n  addresses.meta,\n  cphNumber.meta,\n  permanentAddress.meta,\n  portOfEntry.meta,\n  transitCountries.meta,\n  transporters.meta,\n  declaration.meta\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-237",
+      "statement": "Every one of the 14 pages that declare collects also appears in the journey flow; three of the flow's 17 pages declare no collects at all: the dashboard, the notification view and the confirmation.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/index.js:30-45; src/server/app/sets/live-animals/journeys/linear/flow/flow.js:39-73",
+      "quote": "export const sections = [\n  {\n    id: 'start',\n    pages: [dashboardPage]\n  },\n...\n    pages: [notificationViewPage, declarationPage, confirmationPage]",
+      "confidence": "inferred",
+      "note": "Compared the 14 dispatchPages metas against the 17 pages the 7 sections list. No page is in dispatchPages but missing from the flow."
+    },
+    {
+      "id": "repo-frontend-p1-238",
+      "statement": "The journey has seven sections, in this order: start, about the consignment, description of the goods, transport and arrival, documents, consignment parties, and review.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:39-73",
+      "quote": "export const sections = [\n  {\n    id: 'start',\n...\n    id: 'about-the-consignment',\n...\n    id: 'description-of-the-goods',\n...\n    id: 'transport-and-arrival',\n...\n    id: 'documents',\n...\n    id: 'consignment-parties',\n...\n    id: 'review',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-239",
+      "statement": "The answer sections are the six sections other than review, so a section list used for answering excludes the review.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:82-84",
+      "quote": "export const answerSections = sections.filter(\n  (section) => section.id !== 'review'\n)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-240",
+      "statement": "The journey has eleven task rows, in this order: origin, commodities, import reason, consignment details, animal identification, additional details, arrival details, transit countries, transporter, documents and addresses.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:27-71",
+      "quote": "export const taskRows = [\n  { id: 'origin', pages: [originPage] },\n  {\n    id: 'commodities',\n...\n  { id: 'importReason', pages: [importReasonPage] },\n...\n    id: 'consignmentDetails',\n...\n    id: 'animalIdentification',\n...\n  { id: 'additionalDetails', pages: [additionalDetailsPage] },\n  { id: 'arrivalDetails', pages: [portOfEntryPage] },\n  { id: 'transitCountries', pages: [transitCountriesPage], conditional: true },\n  { id: 'transporter', pages: [transportersPage] },\n  { id: 'documents', pages: [documentsPage] },\n  {\n    id: 'addresses',\n    pages: [addressesPage, cphNumberPage],\n    extraAnswerGiven: everyAddressableAnimalHasPermanentAddress\n  }\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-241",
+      "statement": "The set asks for no contact address: there is no contact-address obligation in the manifest, no contact section in the journey, no contact task row, no contact route bundle and no contact feature binding.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/obligations/index.js:124-176; src/server/app/sets/live-animals/journeys/linear/flow/flow.js:39-73; .../flow/task-rows.js:27-71; .../features/index.js:47-75; .../features/evaluation.js:11-21",
+      "quote": "export const obligations = [\n  poApprovedReferenceNumber,\n...\n  internalReferenceNumber,\n  animalsCertifiedFor,\n  commodityLine,",
+      "confidence": "inferred",
+      "note": "Inferred from absence across every wiring file in the slice. The source's partition structure says the contact feature folder and its contact-address section were removed from the journey."
+    },
+    {
+      "id": "repo-frontend-p1-242",
+      "statement": "Three pages the journey sequences carry no caption: the notification view, the declaration and the confirmation; every other flow page is captioned.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js:28-56; src/server/app/sets/live-animals/journeys/linear/flow/flow.js:68-72",
+      "quote": "export const captionSections = [\n  { id: 'dashboard', pages: [dashboardPage] },",
+      "confidence": "inferred",
+      "note": "Checked each of the 17 flow pages against captionSections. Outside the flow, the overview, party picker, address return, party edit, check-answers routes, cancel amend, notification actions and delete pages also get no caption from this lookup."
+    },
+    {
+      "id": "repo-frontend-p1-243",
+      "statement": "The notification carries 51 obligations in all, listed in one manifest order that runs from the system reference number through origin, import reason, unweaned animals, parties, transport, arrival, the internal reference, what the animals are certified for, commodity lines and identifiers, to the accompanying documents.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/obligations/index.js:124-176",
+      "quote": "export const obligations = [\n  poApprovedReferenceNumber,\n  countryOfOrigin,\n...\n  documentUploadId,\n  documentFilename\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-244",
+      "statement": "What the animals are certified for is asked once for the whole notification and is always mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/misc.js:7-11",
+      "quote": "export const animalsCertifiedFor = {\n  id: '274c5d6e-7f80-4da4-8123-7de4f5061729',\n  name: 'animalsCertifiedFor',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim",
+      "note": "The obligation sits at the top level, with no `within` and no `applyTo`."
+    },
+    {
+      "id": "repo-frontend-p1-245",
+      "statement": "Nine feature groups bind answers to obligations, in this order: system, origin, import reason, additional details, addresses, transport, CPH number, commodities and documents.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/evaluation.js:11-21",
+      "quote": "export const featureEvaluationBindings = Object.freeze([\n  system,\n  origin,\n  importReason,\n  additionalDetails,\n  addresses,\n  transport,\n  cphNumber,\n  commodities,\n  documents\n])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-246",
+      "statement": "A complete live-animals notification holds answers for the country of origin, region of origin, internal reference, one commodity line with its species, counts and ear tag, the reason for import and purpose, what the animals are certified for, whether they are unweaned, one accompanying document, five consignment parties, the CPH number, the port of entry and arrival date, the means of transport with its identification and document reference, the transited countries, the transporter type and transporter record, and the declaration.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/fixtures/happy-path.json:1-120",
+      "quote": "{\n  \"schema_version\": 1,\n  \"values\": {\n    \"countryOfOrigin\": \"FR\",\n    \"regionOfOriginCodeRequirement\": \"yes\",\n    \"regionOfOriginCode\": \"FR-75\",\n    \"internalReferenceNumber\": \"Imports456GB\",",
+      "confidence": "verbatim",
+      "note": "The happy-path fixture is the canonical shape of a finished notification's answers, versioned with schema_version 1. It holds no contact address."
+    },
+    {
+      "id": "repo-frontend-p1-247",
+      "statement": "Each time the entry guard sends a trader back to the origin page, it counts a 'journey.entry.redirect' metric event.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:71",
+      "quote": "countEventInBackground('journey.entry.redirect')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-248",
+      "statement": "The set's flow names no page order or sequencing for the notification actions, the amendment or the deletion: the four action slugs are exempted from the entry guard and otherwise sit outside the journey's seven sections.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:19,28-30; src/server/app/sets/live-animals/journeys/linear/flow/flow.js:39-73",
+      "quote": "const ACTION_SLUGS = new Set(Object.values(notificationActionSlugs))\n...\n  if (ACTION_SLUGS.has(slug)) {\n    return false\n  }",
+      "confidence": "inferred",
+      "note": "Amend, cancel amend, copy and delete are reachable by URL on any notification whatever its answers, and no section or task row sequences them."
+    },
+    {
+      "id": "repo-frontend-p1-249",
+      "statement": "When the next page that applies needs required earlier answers that are missing, Save and continue lands on the page that asks for the earliest missing one instead, and records the page it could not open with every missing answer id; a next page with an authored gate is never held back this way.",
+      "kind": "behaviour",
+      "ref": "src/server/app/flow/navigation.js:34-37,64-70",
+      "quote": "const landingOnAskingPage = (next, missing, journeyId) => ({\n  path: askingPagePath(missing, journeyId),\n  unopened: { pageId: next.id, missingAnswerIds: missing.missingAnswerIds }\n})\n...\n  const missing = next.gate\n    ? undefined\n    : earliestMissingAnswerPage(next.id, scope)\n  if (!missing) {\n    return { path: pagePath(journeyId, next.slug) }\n  }\n  return landingOnAskingPage(next, missing, journeyId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-250",
+      "statement": "The submit-ready reachability seed arrives by air, so its base answers leave the transit countries out of scope until a scope state overlays road transport.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/reachability-fixtures/seeds.js:54; .../scope-states.js:15",
+      "quote": "meansOfTransport: 'AIRPLANE',\n---\n['', 'ROAD_VEHICLE'].flatMap((meansOfTransport) =>",
+      "confidence": "inferred",
+      "note": "Inferred from the transitedCountries gate, which admits only RAILWAY and ROAD_VEHICLE."
+    },
+    {
+      "id": "repo-frontend-p1-251",
+      "statement": "When the destination country is in scope, the reason given is the code obligation.destinationCountry.applicable.becauseTransitOrTranshipment.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/import-reason.js:12-16",
+      "quote": "const destinationCountryReason = {\n  code: 'obligation.destinationCountry.applicable.becauseTransitOrTranshipment',\n  explanation:\n    'destinationCountry applies when reasonForImport is transit or transhipmentOrOnwardTravel'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-252",
+      "statement": "When the port of exit is in scope, the reason given is the code obligation.portOfExit.applicable.becauseTransitOrTemporaryAdmissionHorses.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/import-reason.js:18-22",
+      "quote": "const portOfExitReason = {\n  code: 'obligation.portOfExit.applicable.becauseTransitOrTemporaryAdmissionHorses',\n  explanation:\n    'portOfExit applies when reasonForImport is transit or temporaryAdmissionHorses'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-253",
+      "statement": "When the exit date is in scope, the reason given is the code obligation.exitDate.applicable.becauseTemporaryAdmissionHorses.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/import-reason.js:24-28",
+      "quote": "const exitDateReason = {\n  code: 'obligation.exitDate.applicable.becauseTemporaryAdmissionHorses',\n  explanation:\n    'exitDate applies when reasonForImport is temporaryAdmissionHorses'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-254",
+      "statement": "When a passport is asked of an animal, the reason given is the code obligation.passport.applicable.becausePassportCommodity.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:24-28",
+      "quote": "const passportReason = {\n  code: 'obligation.passport.applicable.becausePassportCommodity',\n  explanation:\n    'passport applies on units of lines whose commodityCode is in the passport list'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-255",
+      "statement": "When a tattoo is asked of an animal, the reason given is the code obligation.tattoo.applicable.becauseTattooCommodity.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:30-34",
+      "quote": "const tattooReason = {\n  code: 'obligation.tattoo.applicable.becauseTattooCommodity',\n  explanation:\n    'tattoo applies on units of lines whose commodityCode is in the tattoo list'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-256",
+      "statement": "When an ear tag is asked of an animal, the reason given is the code obligation.earTag.applicable.becauseEarTagCommodity.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:36-40",
+      "quote": "const earTagReason = {\n  code: 'obligation.earTag.applicable.becauseEarTagCommodity',\n  explanation:\n    'earTag applies on units of lines whose commodityCode is in the ear-tag list'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-257",
+      "statement": "When a horse name is asked of an animal, the reason given is the code obligation.horseName.applicable.becauseHorseCommodity.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:42-46",
+      "quote": "const horseNameReason = {\n  code: 'obligation.horseName.applicable.becauseHorseCommodity',\n  explanation:\n    'horseName applies on units of lines whose commodityCode and species pair is in the horse-name list'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-258",
+      "statement": "When identification details are asked of an animal, the reason given is the code obligation.identificationDetails.applicable.becauseUnidentifiedCommodity.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:48-52",
+      "quote": "const identificationDetailsReason = {\n  code: 'obligation.identificationDetails.applicable.becauseUnidentifiedCommodity',\n  explanation:\n    'identificationDetails applies on units of lines whose commodityCode is outside the identified list'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-259",
+      "statement": "When a free-text description is asked of an animal, the reason given is the code obligation.description.applicable.becauseUnidentifiedCommodity.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:54-58",
+      "quote": "const descriptionReason = {\n  code: 'obligation.description.applicable.becauseUnidentifiedCommodity',\n  explanation:\n    'description applies on units of lines whose commodityCode is outside the identified list'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-260",
+      "statement": "When a permanent address is asked of an animal, the reason given is the code obligation.permanentAddress.applicable.becausePermanentAddressLine.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:60-64",
+      "quote": "const permanentAddressReason = {\n  code: 'obligation.permanentAddress.applicable.becausePermanentAddressLine',\n  explanation:\n    'permanentAddress applies on units of lines whose commodityCode and species pair is in the permanent-address list'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-261",
+      "statement": "When where the permanent address came from is asked of an animal, the reason given is the code obligation.permanentAddressOrigin.applicable.becausePermanentAddressLine.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:66-70",
+      "quote": "const permanentAddressOriginReason = {\n  code: 'obligation.permanentAddressOrigin.applicable.becausePermanentAddressLine',\n  explanation:\n    'permanentAddressOrigin applies on units of lines whose commodityCode and species pair is in the permanent-address list'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-262",
+      "statement": "Every obligation carries a fixed UUID alongside its answer name, such as countryOfOrigin with id a01b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/origin.js:12-16",
+      "quote": "export const countryOfOrigin = {\n  id: 'a01b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d',\n  name: 'countryOfOrigin',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim",
+      "note": "Each of the 51 obligations in the 11 section files has an `id` UUID and a `name`; the unit record's at-least-one rule refers to its identifiers by these UUIDs."
+    },
+    {
+      "id": "repo-frontend-p1-263",
+      "statement": "The commodity reference service tells a page which identifiers a commodity code asks for, its description and its short name, looked up by code.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/services/commodities/index.js:23-28",
+      "quote": "export const identifiersFor = (code) =>\n  (COMMODITY_IDENTIFIERS[code] ?? []).map(identifierNameOf)\n\nexport const commodityDescriptionFor = (code) => COMMODITY_DESCRIPTIONS[code]\n\nexport const commodityNameFor = (code) => COMMODITY_NAMES_BY_CODE[code]",
+      "confidence": "verbatim",
+      "note": "mechanism: in-process lookups over the rules tables, not calls to reference data. A code outside the identifier table asks for no named identifier."
     }
   ]
 }

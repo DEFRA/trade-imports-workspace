@@ -1,0 +1,741 @@
+{
+  "source": "prototype:dr2-1-specs",
+  "structure": "Part 9, the live-animals snag list. Read in full: e2e/snagging.fit.spec.js (557 lines, 37 tests in 12 describes, S01 to S38 with S30 left out), e2e/support/snagging.js (63 lines: shoot, shootNoJs, shootMobile screenshot helpers), e2e/support/journey.js (283 lines: URL helpers, journey step helpers and the species and address fixtures) and e2e/support/fixtures.js (48 lines: the visited-pages recorder). Each snag test walks the live-animals journey to the page state a designer snag is about and takes full-page screenshots (desktop, and where named, with JavaScript off or at phone width). Most tests assert little beyond reaching the page; the claims record each page state reached, every selector, label, option, copy string and branch the tests assert or drive, and the snag number. Describes covered: origin of the import (S01-S05), what are you importing (S06-S08), main import reason (S09-S12), commodity details (S13-S14), identification details (S15-S18), arrival details (S19-S23), transit countries (S24-S25), transporter details (S26-S27), upload documents (S28, S29, S31), consignment addresses (S32, S33, S36, S37), review your notification (S34, S35) and notification submitted (S38). From the shared journey.js only the helpers this spec calls are claimed; the germinal helpers, the error-summary and back-link assertions and the reference reader are other parts' to claim.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-specs-p9-001",
+      "statement": "The snag list has one test per live-animals designer snag, each reaching the page state the snag is about and saving full-page screenshots as evidence.",
+      "kind": "non-functional",
+      "ref": "e2e/snagging.fit.spec.js:10-13",
+      "quote": "// The live-animals snag list (snagging/snags.json): one test per snag, each\n// reaching the prototype page state the designers' snag is about and saving\n// full-page screenshots to snagging/screens/prototype/.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-002",
+      "statement": "Snag S30 has no test because the designers say no action is needed on it.",
+      "kind": "rule",
+      "ref": "e2e/snagging.fit.spec.js:14",
+      "quote": "// S30 is left out: the designers say no action is needed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-003",
+      "statement": "What each snag asks to change is not in this slice: the tests name the page and element each snag is about and photograph it, but assert no corrected wording or layout. The snag descriptions live in snagging/snags.json, which this part does not read.",
+      "kind": "copy",
+      "ref": "e2e/snagging.fit.spec.js:10",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the spec and its helpers. Every snag test asserts at most that the page state is reached; the snag's wanted outcome must come from snags.json or the design release itself."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-004",
+      "statement": "Snag evidence is photographed at desktop width (1280 by 1200), and for named snags also with JavaScript off and at phone width (390 by 844), in a second browser that shares the prototype session.",
+      "kind": "non-functional",
+      "ref": "e2e/support/snagging.js:6-7, 35-61",
+      "quote": "const DESKTOP = { width: 1280, height: 1200 }\nconst MOBILE = { width: 390, height: 844 }",
+      "confidence": "verbatim",
+      "note": "mechanism: screenshot helper that re-opens the current URL with the session's storage state."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-005",
+      "statement": "Every Design Release 2.1 page is served under the /design-release-2.1 path, as a mirror of the root route table.",
+      "kind": "constraint",
+      "ref": "e2e/support/journey.js:3-5",
+      "quote": "// Design Release 2.1 is a mirror mount of the root route table.\nconst BASE = '/design-release-2.1'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-006",
+      "statement": "Every Design Release 2.1 date picker takes a date in d/m/yyyy form.",
+      "kind": "rule",
+      "ref": "e2e/support/journey.js:10-15",
+      "quote": "/** d/m/yyyy, the format every DR2.1 date picker takes, `days` from today. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-007",
+      "statement": "The date pickers are MOJ date pickers: a calendar toggle button beside the input opens a calendar dialog, and Escape dismisses it.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:104-109; e2e/support/journey.js:103-108",
+      "quote": "const picker = page.locator('.moj-datepicker', { has: page.locator(inputSelector) })\n  await picker.locator('button.moj-datepicker__toggle').click()\n  await expect(picker.locator('.moj-datepicker__dialog')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-008",
+      "statement": "Journey pages submit through a button named action: value continue saves and continues, value hub saves and returns to the overview.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:17-23",
+      "quote": "const saveAndContinue = (page) => clickAction(page, 'continue')\nconst saveAndReturnToOverview = (page) => clickAction(page, 'hub')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-009",
+      "statement": "Country of origin, port of entry and transit country use a bespoke type-and-pick autocomplete: it renders options as each key is typed, and clicking an option writes the hidden value the server reads.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:67-86",
+      "quote": "Bespoke type-and-pick autocompletes (country of origin, port of entry, transit\n * country). They render on each input event, so type per key, then click the\n * rendered option, which writes the hidden value the server reads.",
+      "confidence": "verbatim",
+      "note": "The option buttons carry class app-country-search__option."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-010",
+      "statement": "Starting a notification: /create-notification redirects to /notification-type, where choosing the live-animals notification type and saving leads to /origin-of-the-import.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:121-128",
+      "quote": "await page.goto(url('/create-notification'))\n  await expect(page).toHaveURL(urlFor('/notification-type'))\n  await page.locator(`input[name=\"notificationType\"][value=\"${type}\"]`).check()\n  await saveAndContinue(page)\n  await expect(page).toHaveURL(urlFor('/origin-of-the-import'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-011",
+      "statement": "S01: the origin of the import page shows hint text under the country of origin.",
+      "kind": "copy",
+      "ref": "e2e/snagging.fit.spec.js:125-127",
+      "quote": "test('S01 Origin: hint text under the country of origin'",
+      "confidence": "verbatim",
+      "note": "The hint's wording is not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-012",
+      "statement": "S02: the country of origin is a search box (#country-of-origin); typing \"Fran\" opens suggestions that include France.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:129-133",
+      "quote": "await typeInto(page, '#country-of-origin', 'Fran')\n    await expect(page.locator('button.app-country-search__option', { hasText: 'France' }).first()).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-013",
+      "statement": "S02: the origin page's country search is photographed with JavaScript off, empty and with \"Fran\" typed, so the snag covers how the box reads without the enhancement.",
+      "kind": "non-functional",
+      "ref": "e2e/snagging.fit.spec.js:134-135",
+      "quote": "await shootNoJs(browser, page, 'S02', 'default')\n    await shootNoJs(browser, page, 'S02', 'typed', (p) => p.locator('#country-of-origin').fill('Fran'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-014",
+      "statement": "S03: the origin page asks whether a region of origin code is needed (radios regionOfOriginRequired, Yes and No); Yes reveals the region of origin code box with its hint.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:138-143",
+      "quote": "test('S03 Origin: region of origin code hint, revealed by Yes'\n    await page.locator('input[name=\"regionOfOriginRequired\"][value=\"Yes\"]').check()\n    await expect(page.locator('#region-of-origin-code-suffix')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-015",
+      "statement": "S04: the region of origin code has a prefix box in front of the code box; once France is chosen as country of origin the prefix shows FR, and the user types the rest of the code (such as 75) after it.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:145-153",
+      "quote": "await pickFromAutocomplete(page, 'country-of-origin', 'Fran', 'France')\n    await expect(page.locator('#region-of-origin-code-prefix')).toHaveText('FR')\n    await page.locator('#region-of-origin-code-suffix').fill('75')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-016",
+      "statement": "S04: the region code prefix box is shown before any country is chosen; the test photographs that state but does not assert what the prefix holds then.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:146-147",
+      "quote": "await shoot(page, 'S04', 'no-country-yet')",
+      "confidence": "inferred",
+      "note": "Inferred from the state name; only the FR value after a country is chosen is asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-017",
+      "statement": "S05: the origin page asks for your internal reference in a free-text box (#internal-reference).",
+      "kind": "data",
+      "ref": "e2e/snagging.fit.spec.js:155-159",
+      "quote": "test('S05 Origin: your internal reference question'\n    await page.locator('#internal-reference').fill('CATTLE-2026-01')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-018",
+      "statement": "The internal reference is optional: the journey continues from the origin page with only the country and the region answer given.",
+      "kind": "rule",
+      "ref": "e2e/support/journey.js:130-136; e2e/snagging.fit.spec.js:18-22",
+      "quote": "async function answerOrigin (page, { search = 'Fran', country = 'France', region = 'No', code = '', reference = '' } = {}) {",
+      "confidence": "inferred",
+      "note": "Inferred because the default walk leaves the reference blank and still reaches /what-are-you-importing."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-019",
+      "statement": "Saving the origin page with a country chosen and the region answered leads to /what-are-you-importing.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:18-22",
+      "quote": "await answerOrigin(page)\n  await expect(page).toHaveURL(urlFor('/what-are-you-importing'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-020",
+      "statement": "S06: the page's heading is \"What are you importing?\" and an inset sits under it.",
+      "kind": "copy",
+      "ref": "e2e/snagging.fit.spec.js:169-171",
+      "quote": "test('S06 What are you importing?: inset under the heading'",
+      "confidence": "verbatim",
+      "note": "The inset's wording is not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-021",
+      "statement": "S07: the commodity search box on What are you importing? has a hint, photographed with and without JavaScript.",
+      "kind": "copy",
+      "ref": "e2e/snagging.fit.spec.js:173-176",
+      "quote": "test('S07 What are you importing?: search box hint'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-022",
+      "statement": "S08: typing \"cattle\" in the commodity search (#commodity-search) lists \"Cattle (0102)\": a result shows the commodity name with its commodity code.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:180-181",
+      "quote": "await typeInto(page, '#commodity-search', 'cattle')\n    await expect(page.locator('main')).toContainText('Cattle (0102)')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-023",
+      "statement": "S08: each search result has a species checkbox; ticking one keeps the results open, and Escape closes them leaving the species selected.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:183-186",
+      "quote": "await page.locator(`#commodity-species-${SPECIES.cattle.id}`).check()\n    await shoot(page, 'S08', 'cattle-ticked-results-open')\n    await page.locator('#commodity-search').press('Escape')\n    await shoot(page, 'S08', 'one-selected')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-024",
+      "statement": "S08: the commodity search also finds commodities by commodity code (\"0101\") and by Latin name (\"Bos\").",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:187-190",
+      "quote": "await typeInto(page, '#commodity-search', '0101')\n    await shoot(page, 'S08', 'code-0101-results-open')\n    await typeInto(page, '#commodity-search', 'Bos')\n    await shoot(page, 'S08', 'latin-bos-results-open')",
+      "confidence": "inferred",
+      "note": "Inferred from the state names 'results-open'; the results for these searches are photographed, not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-025",
+      "statement": "S08: the commodity search is photographed with JavaScript off, empty and with \"cattle\" typed.",
+      "kind": "non-functional",
+      "ref": "e2e/snagging.fit.spec.js:191-192",
+      "quote": "await shootNoJs(browser, page, 'S08', 'default')\n    await shootNoJs(browser, page, 'S08', 'typed', (p) => p.locator('#commodity-search').fill('cattle'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-026",
+      "statement": "Ticked species are carried in a hidden selected-species value the form submits.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:88-101",
+      "quote": "await expect(page.locator('input.app-commodity-search__species-value')).toHaveValue(new RegExp(speciesId))",
+      "confidence": "verbatim",
+      "note": "mechanism: hidden input holding the chosen species ids for the commodity search."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-027",
+      "statement": "More than one species can be chosen on What are you importing? (horse and pig together reach commodity details), and saving leads to /reason-for-import.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:24-36, 254",
+      "quote": "for (const s of species) await chooseSpecies(page, s.search, s.id)\n  await saveAndContinue(page)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-028",
+      "statement": "The walks use these demo species: cattle (cattle-bos-taurus, Bos taurus, 0102), chicken (Gallus domesticus, 010511), cat (Felis catus, 01061900), horse (\"Equus cabalus\", 0101), cattle semen (Bos taurus, 05111000) and pig (pig-sus-scrofa).",
+      "kind": "data",
+      "ref": "e2e/support/journey.js:111-117; e2e/snagging.fit.spec.js:254",
+      "quote": "cattle: { search: 'cattle', id: 'cattle-bos-taurus', latin: 'Bos taurus', code: '0102', name: 'Cattle' },\n  chicken: { search: 'chicken', id: 'chicken-gallus-domesticus', latin: 'Gallus domesticus', code: '010511', name: 'Chicken' },",
+      "confidence": "verbatim",
+      "note": "Demo fixture data the prototype hard-codes; per the programme goal it is evidence of nothing but what the prototype shows. The horse Latin name is spelled 'Equus cabalus' in the source."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-029",
+      "statement": "S09: the main import reason page (/reason-for-import) has a heading the snag is about.",
+      "kind": "copy",
+      "ref": "e2e/snagging.fit.spec.js:203-205",
+      "quote": "test('S09 Main import reason: heading'",
+      "confidence": "verbatim",
+      "note": "The heading's wording is not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-030",
+      "statement": "S10: the main import reason radios (importReason) offer Internal market, Transhipment or onward travel, Transit, and Temporary admission horses, and each reveals fields under it.",
+      "kind": "data",
+      "ref": "e2e/snagging.fit.spec.js:207-217",
+      "quote": "'Internal market': 'internal-market',\n      'Transhipment or onward travel': 'transhipment',\n      Transit: 'transit',\n      'Temporary admission horses': 'temporary-admission'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-031",
+      "statement": "Internal market reveals an internal market purpose question (radios internalMarketPurpose, Breeding among the options).",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:145-149",
+      "quote": "if (reason === 'Internal market' && purpose) {\n    await page.locator(`input[name=\"internalMarketPurpose\"][value=\"${purpose}\"]`).check()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-032",
+      "statement": "Transhipment or onward travel reveals a destination country select (#transhipment-destination-country), which S10 photographs focused.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:218-220; e2e/support/journey.js:150",
+      "quote": "await page.locator('#transhipment-destination-country').focus()\n    await shoot(page, 'S10', 'transhipment-select-focused')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-033",
+      "statement": "Transit reveals an exit border control post select (#transit-exit-border-control-post) and a destination country select (#transit-destination-country).",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:151-154",
+      "quote": "if (exitPort) await page.locator('#transit-exit-border-control-post').selectOption(exitPort)\n    if (transitCountry) await page.locator('#transit-destination-country').selectOption(transitCountry)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-034",
+      "statement": "S11: Temporary admission horses reveals an exit date (#temporary-admission-exit-date) with a date picker calendar, and a port of exit select (#temporary-admission-port-of-exit).",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:224-231; e2e/support/journey.js:155-158",
+      "quote": "await openCalendar(page, '#temporary-admission-exit-date')\n    await shoot(page, 'S11', 'calendar-open')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-035",
+      "statement": "S12: with Temporary admission horses chosen, an exit date filled and no port of exit, Save and continue shows the page in an error state, so the port of exit is required.",
+      "kind": "rule",
+      "ref": "e2e/snagging.fit.spec.js:233-238",
+      "quote": "await fillDate(page, '#temporary-admission-exit-date', dateFromToday(60))\n    await shoot(page, 'S12', 'exit-date-filled')\n    await saveAndContinue(page)\n    await shoot(page, 'S12', 'error')",
+      "confidence": "inferred",
+      "note": "Inferred from the 'error' state name; the snag itself is about the spacing between the exit date and the port of exit."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-036",
+      "statement": "The error message shown when the temporary admission port of exit is missing is not asserted.",
+      "kind": "copy",
+      "ref": "e2e/snagging.fit.spec.js:237-238",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-037",
+      "statement": "The other main import reason options' internal market purposes, transit and transhipment select options are not listed in this slice.",
+      "kind": "data",
+      "ref": "e2e/snagging.fit.spec.js:207-222",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-038",
+      "statement": "Saving Internal market with purpose Breeding leads to /consignment-details.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:30-36",
+      "quote": "await answerReason(page)\n  await expect(page).toHaveURL(urlFor('/consignment-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-039",
+      "statement": "S13: the commodity details page (/consignment-details) shows a table of the selected commodities.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:248-251",
+      "quote": "test('S13 Commodity details: selected commodities table'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-040",
+      "statement": "Commodity details asks for the number of animals for each chosen species (numberOfAnimals[<species id>]).",
+      "kind": "data",
+      "ref": "e2e/support/journey.js:162-167",
+      "quote": "await page.locator(`input[name=\"numberOfAnimals[${speciesId}]\"]`).fill(String(value))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-041",
+      "statement": "S14: with two commodities each commodity has its own title, with spacing above it the snag is about.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:253-255",
+      "quote": "test('S14 Commodity details: spacing above each commodity title'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-042",
+      "statement": "S14: saving commodity details for two commodities with nothing entered shows the page in an error state, so the number of animals is required.",
+      "kind": "rule",
+      "ref": "e2e/snagging.fit.spec.js:256-258",
+      "quote": "await page.goto(url('/consignment-details'))\n    await saveAndContinue(page)\n    await shoot(page, 'S14', 'two-commodities-error')",
+      "confidence": "inferred",
+      "note": "Inferred from the state name; the error messages are not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-043",
+      "statement": "Saving commodity details with a number of cattle leads to /animal-identification-details.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:38-42",
+      "quote": "await answerConsignmentDetails(page, { [SPECIES.cattle.id]: count })\n  await expect(page).toHaveURL(urlFor('/animal-identification-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-044",
+      "statement": "Identification details asks for each animal's ear tag and passport (labels \"Ear tag\" and \"Passport\"), with a save button per species (value save:<species id>).",
+      "kind": "data",
+      "ref": "e2e/snagging.fit.spec.js:111-116",
+      "quote": "await page.getByLabel('Ear tag').fill(`UK12345670000${n}`)\n  await page.getByLabel('Passport').fill(`PP-00${n}`)\n  await page.locator(`button[value=\"save:${SPECIES.cattle.id}\"]`).click()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-045",
+      "statement": "S15: saved animals appear in a table on identification details that shows each animal's species.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:269-273",
+      "quote": "test('S15 Identification details: species in the saved animals table'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-046",
+      "statement": "S16: identification details is laid out with grey panels, photographed before and after one animal is saved, at desktop and phone width, and with JavaScript off.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:275-282",
+      "quote": "test('S16 Identification details: page layout and grey panels'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-047",
+      "statement": "S17: after saving the first of two cattle, the page asks for the next one with \"Enter details for Domestic cattle (Bos taurus) 2 of 2\".",
+      "kind": "copy",
+      "ref": "e2e/snagging.fit.spec.js:284-287",
+      "quote": "await expect(page.locator('main')).toContainText('Enter details for Domestic cattle (Bos taurus) 2 of 2')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-048",
+      "statement": "S17: the snag is about where the saved animals appear after one is added, photographed at desktop, phone width and with JavaScript off.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:284-290",
+      "quote": "test('S17 Identification details: where saved animals appear after adding one'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-049",
+      "statement": "S18: for the last animal the button reads \"Save and finish\".",
+      "kind": "copy",
+      "ref": "e2e/snagging.fit.spec.js:292-297",
+      "quote": "await page.getByRole('button', { name: 'Save and finish' }).click()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-050",
+      "statement": "S18: once every animal is entered, each saved animal has a remove button (value remove:<species id>:<index>) and the page shows text the snag is about.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:292-300",
+      "quote": "await expect(page.locator(`button[value=\"remove:${SPECIES.cattle.id}:1\"]`)).toBeVisible()\n    await shoot(page, 'S18', 'all-animals-saved')",
+      "confidence": "verbatim",
+      "note": "The text shown once every animal is entered is not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-051",
+      "statement": "With one animal, filling its ear tag and passport and choosing Save and continue leads to /additional-animal-details.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:525-530",
+      "quote": "await page.getByLabel('Ear tag').fill('UK123456700001')\n    await page.getByLabel('Passport').fill('PP-001')\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/additional-animal-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-052",
+      "statement": "Additional animal details asks what the animals are certified for (radios certificationPurpose, including Further keeping and Slaughter) and whether there are unweaned animals (radios unweanedAnimals, Yes or No); saving leads to /arrival-details.",
+      "kind": "data",
+      "ref": "e2e/support/journey.js:186-190; e2e/snagging.fit.spec.js:531-532",
+      "quote": "if (purpose) await page.locator(`input[name=\"certificationPurpose\"][value=\"${purpose}\"]`).check()\n  if (unweaned) await page.locator(`input[name=\"unweanedAnimals\"][value=\"${unweaned}\"]`).check()",
+      "confidence": "verbatim",
+      "note": "'No' for unweaned animals is the value the walk uses; 'Yes' is inferred as its pair."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-053",
+      "statement": "S19: arrival details (/arrival-details) has a date of arrival (#arrival-date-at-port) with a hint and a date picker calendar.",
+      "kind": "copy",
+      "ref": "e2e/snagging.fit.spec.js:310-315",
+      "quote": "test('S19 Arrival details: date of arrival hint'\n    await openCalendar(page, '#arrival-date-at-port')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-054",
+      "statement": "S20: the port of entry on arrival details has a hint.",
+      "kind": "copy",
+      "ref": "e2e/snagging.fit.spec.js:317-319",
+      "quote": "test('S20 Arrival details: port of entry hint'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-055",
+      "statement": "S21: the port of entry is a search box (#port-of-entry); typing \"Heath\" suggests Heathrow, and clicking the suggestion chooses it.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:321-329",
+      "quote": "await typeInto(page, '#port-of-entry', 'Heath')\n    await expect(page.locator('button.app-country-search__option', { hasText: 'Heathrow' }).first()).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-056",
+      "statement": "S22: means of transport is a native select (#means-of-transport) whose options include Road and Air.",
+      "kind": "data",
+      "ref": "e2e/snagging.fit.spec.js:331-339; e2e/support/journey.js:195",
+      "quote": "// A native select cannot be photographed open, so list its options in place.\n    await page.locator('#means-of-transport').evaluate((select) => {",
+      "confidence": "verbatim",
+      "note": "Road and Air come from the walks that select them; the full option list is photographed, not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-057",
+      "statement": "S23: arrival details asks for a transport identification (#transport-identification) with a hint, and a transport document reference (#transport-document-reference).",
+      "kind": "data",
+      "ref": "e2e/snagging.fit.spec.js:341-343; e2e/support/journey.js:196-197",
+      "quote": "test('S23 Arrival details: transport identification hint'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-058",
+      "statement": "Saving arrival details with Road as means of transport (port Dover) leads to /transit-countries.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:54-58",
+      "quote": "await answerArrival(page, { means: 'Road', port: { search: 'Dover', option: 'Dover' }, transportId: 'AB12 CDE' })\n  await expect(page).toHaveURL(urlFor('/transit-countries'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-059",
+      "statement": "Saving arrival details with Air as means of transport leads straight to /transporter, skipping transit countries.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:60-64",
+      "quote": "await answerArrival(page, { means: 'Air' })\n  await expect(page).toHaveURL(urlFor('/transporter'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-060",
+      "statement": "S24: the transit countries page is headed \"Which countries will the consignment travel through?\" and has a country search box (#transit-country-search); typing \"Bel\" suggests Belgium.",
+      "kind": "copy",
+      "ref": "e2e/snagging.fit.spec.js:353-359",
+      "quote": "test('S24 Which countries will the consignment travel through?: search box'\n    await typeInto(page, '#transit-country-search', 'Bel')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-061",
+      "statement": "S25: choosing a suggestion adds that country to the transit list, and more can be added: Belgium then Germany gives two countries.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:361-373",
+      "quote": "await shoot(page, 'S25', 'one-country-added')\n    await typeInto(page, '#transit-country-search', 'Ger')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-062",
+      "statement": "S26: the transporter details page (/transporter) has a search box (#transporter-search) that filters the transporter list as you type (\"Aber\").",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:383-388",
+      "quote": "await typeInto(page, '#transporter-search', 'Aber')\n    await shoot(page, 'S26', 'filtered-aber')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-063",
+      "statement": "Transporter details lists transporters as radios (transporterId, such as aberdeen-livestock); choosing one and saving leads to /upload-documents.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:208-211; e2e/snagging.fit.spec.js:535-536",
+      "quote": "await page.locator(`input[name=\"transporterId\"][value=\"${transporterId}\"]`).check()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-064",
+      "statement": "S27: transporter details has an add a transporter link, and the snag is about where it sits.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:390-392",
+      "quote": "test('S27 Transporter details: where the add a transporter link sits'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-065",
+      "statement": "S28: upload documents (/upload-documents) has a date of issue (#date-of-issue) with a date picker calendar.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:402-407",
+      "quote": "test('S28 Upload documents: date of issue picker'\n    await openCalendar(page, '#date-of-issue')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-066",
+      "statement": "S29: upload documents has a state before any document is added, which the snag is about.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:409-411",
+      "quote": "test('S29 Upload documents: before any document is added'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-067",
+      "statement": "Each document asks for a document type (select #document-type, options including itahc and air-waybill), a document reference, a date of issue and a file attachment.",
+      "kind": "data",
+      "ref": "e2e/support/journey.js:215-223; e2e/snagging.fit.spec.js:419",
+      "quote": "await page.locator('#document-type').selectOption(type)\n  await page.locator('#document-reference').fill(reference)\n  await fillDate(page, '#date-of-issue', issued)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-068",
+      "statement": "Choosing a file keeps its name in the form (attachmentFileName) before the document is added.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:219-222",
+      "quote": "await expect(page.locator('input[name=\"attachmentFileName\"]')).toHaveValue(file.name)",
+      "confidence": "verbatim",
+      "note": "mechanism: hidden field holding the chosen attachment's file name."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-069",
+      "statement": "S31: the add another action adds the document as a row in the uploaded documents table, one row per document (one after the first, two after the second).",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:413-424",
+      "quote": "await clickAction(page, 'add-another')\n    await expect(page.locator('table.app-upload-documents-table tbody tr')).toHaveCount(1)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-070",
+      "statement": "Saving upload documents after a document is added leads to /roles-and-addresses.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:537-540",
+      "quote": "await clickAction(page, 'add-another')\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/roles-and-addresses'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-071",
+      "statement": "S32: the consignment addresses page (/roles-and-addresses) links to five address pages: place of origin, consignor or exporter, consignee, importer and place of destination; choosing an address on each returns to it.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:225-240; e2e/snagging.fit.spec.js:434-437",
+      "quote": "'place-of-origin': ['placeOfOriginAddressId', 'green-valley-livestock-farm'],\n  'consignor-or-exporter': ['consignorAddressId', 'nordic-livestock-export'],\n  consignee: ['consigneeAddressId', 'northern-livestock-imports-consignee'],\n  importer: ['importerAddressId', 'britannia-trade-livestock'],\n  'place-of-destination': ['placeOfDestinationAddressId', 'riverside-holding-facility']",
+      "confidence": "verbatim",
+      "note": "The address ids are demo address-book fixtures."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-072",
+      "statement": "S32: consignment addresses has an \"Add a CPH number\" link; entering the CPH number and saving returns to /roles-and-addresses.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:438-441",
+      "quote": "await page.locator('main').getByRole('link', { name: 'Add a CPH number' }).click()\n    await fillCph(page)\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/roles-and-addresses'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-073",
+      "statement": "S32: the snag is about the consignment addresses page's layout, empty and complete, at desktop and phone width.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:434-444",
+      "quote": "test('S32 Consignment addresses: page layout, empty and complete'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-074",
+      "statement": "S33: place of origin (/place-of-origin) has an address search bar (#place-of-origin-search) that filters its addresses (\"Green\"), and consignor or exporter (/consignor-or-exporter) has one too (#consignor-search, \"Nordic\").",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:446-458",
+      "quote": "await typeInto(page, '#place-of-origin-search', 'Green')\n    await shoot(page, 'S33', 'filtered-green')",
+      "confidence": "verbatim",
+      "note": "Both are photographed with JavaScript off as well."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-075",
+      "statement": "S36: each address selection page shows the addresses to choose from as radios, and the snag is about how each address is shown; consignee is also photographed with one chosen.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:460-469",
+      "quote": "test('S36 Address selection pages: how each address is shown'\n    await page.locator(`input[name=\"${CORE_ADDRESSES.consignee[0]}\"]`).first().check()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-076",
+      "statement": "The CPH number page (/cph-number) has three boxes: county, parish and holding (such as 12, 345 and 6789).",
+      "kind": "data",
+      "ref": "e2e/support/journey.js:242-246; e2e/snagging.fit.spec.js:473",
+      "quote": "await page.locator('#cph-number-county').fill(county)\n  await page.locator('#cph-number-parish').fill(parish)\n  await page.locator('#cph-number-holding').fill(holding)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-077",
+      "statement": "S37: typing a CPH number moves focus to the next box: typing 12 in county then carrying on types the parish and holding without a click.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:471-480",
+      "quote": "test('S37 CPH number: typing moves to the next box'\n    await page.keyboard.type('12', { delay: 60 })\n    await shoot(page, 'S37', 'county-typed-focus-moved')",
+      "confidence": "verbatim",
+      "note": "The focus move is photographed, not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-078",
+      "statement": "S37: with JavaScript off the CPH number is photographed after typing 123456789 continuously from the county box, showing how the boxes behave without the focus move.",
+      "kind": "non-functional",
+      "ref": "e2e/snagging.fit.spec.js:481-485",
+      "quote": "await shootNoJs(browser, page, 'S37', 'typed-continuously', async (p) => {\n      await p.locator('#cph-number-county').click()\n      await p.keyboard.type('123456789', { delay: 60 })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-079",
+      "statement": "S34: review your notification (/review-notification) with answers still missing is reachable before the journey is complete, and its Continue button can be pressed.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:84-92, 496-500",
+      "quote": "test('S34 Review your notification: answers still missing'\n    await submitForm(page, 'Continue')\n    await shoot(page, 'S34', 'after-refused-continue')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-080",
+      "statement": "S35: with answers missing, Continue on review your notification is refused and the user stays on /review-notification.",
+      "kind": "rule",
+      "ref": "e2e/snagging.fit.spec.js:502-506",
+      "quote": "await submitForm(page, 'Continue')\n    await expect(page).toHaveURL(urlFor('/review-notification'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-081",
+      "statement": "S35: a refused submit may show an error summary whose links lead to the pages with missing answers; the test follows the first link only when there is one.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:507-512",
+      "quote": "const firstError = page.locator('.govuk-error-summary__list a').first()\n    if (await firstError.count()) {\n      await firstError.click()",
+      "confidence": "inferred",
+      "note": "The guard means the suite does not assert an error summary exists, nor where its links lead or what they say."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-082",
+      "statement": "The error messages on a refused review submit are not asserted.",
+      "kind": "copy",
+      "ref": "e2e/snagging.fit.spec.js:502-515",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-083",
+      "statement": "S38: after the consignment addresses are complete, Save and continue on consignment addresses leads to the notification hub (/notification-hub).",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:541-546",
+      "quote": "await fillCph(page)\n    await saveAndContinue(page)\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/notification-hub'))",
+      "confidence": "verbatim",
+      "note": "The first save is on the CPH page and returns to consignment addresses; the second is on consignment addresses."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-084",
+      "statement": "The full live-animals journey runs: origin of the import, what are you importing, main import reason, commodity details, identification details, additional animal details, arrival details, transporter (for air), upload documents, consignment addresses, then the notification hub.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:519-546",
+      "quote": "await expect(page).toHaveURL(urlFor('/additional-animal-details'))\n    await answerAdditionalDetails(page, { purpose: 'Further keeping', unweaned: 'No' })\n    await expect(page).toHaveURL(urlFor('/arrival-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-085",
+      "statement": "S38: with every answer given, Continue on review your notification leads to the declaration (/declaration).",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:547-551",
+      "quote": "await shoot(page, 'S38', 'review-complete')\n    await submitForm(page, 'Continue')\n    await expect(page).toHaveURL(urlFor('/declaration'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-086",
+      "statement": "S38: the declaration has a confirmation checkbox (#declaration-confirmed); ticking it and pressing Continue submits the notification and shows the import notification submitted page (/notification-submitted).",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:552-555",
+      "quote": "await page.locator('#declaration-confirmed').check()\n    await submitForm(page, 'Continue')\n    await expect(page).toHaveURL(urlFor('/notification-submitted'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-087",
+      "statement": "S38: the submit screen confirms \"import notification submitted\"; its wording is photographed, not asserted.",
+      "kind": "copy",
+      "ref": "e2e/snagging.fit.spec.js:519",
+      "quote": "test('S38 Submit screen: import notification submitted'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-088",
+      "statement": "Whether review your notification is reached from the hub by a link is not shown: the snag tests open /review-notification by its URL.",
+      "kind": "behaviour",
+      "ref": "e2e/snagging.fit.spec.js:90, 547",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p9-089",
+      "statement": "Every snag test records the pages it visits, redirect hops and POSTs included, so the trace index can say which prototype URLs each trace covers.",
+      "kind": "non-functional",
+      "ref": "e2e/support/fixtures.js:15-45",
+      "quote": "Every test records the pages it visits (main-frame navigations, in order) so\n * the collected trace index can say which prototype URLs each trace covers.",
+      "confidence": "verbatim",
+      "note": "mechanism: test fixture writing visited pages to test-results/meta; not product behaviour."
+    }
+  ]
+}

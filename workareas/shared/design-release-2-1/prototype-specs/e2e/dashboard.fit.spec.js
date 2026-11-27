@@ -62,21 +62,34 @@ test.describe('overall dashboard', () => {
     await expect(page).toHaveTitle('Import notification service')
     await expectHeading(page, 'Import notification service')
     const main = page.locator('main')
-    await expect(main).toContainText('Choose a prototype version to work on. Each version has its own journey and dashboard, with a shared address book.')
-    await expect(main).toContainText('A duplicate of Design release 2 for making changes without affecting the original version.')
-    await expect(page.locator('a', { hasText: 'Start design release 2.1' })).toHaveAttribute('href', '/design-release-2.1')
+    await expect(main).toContainText('Choose a version of the prototype. Each one has its own journey, dashboard and saved data. They all share one address book.')
+    await expect(main).toContainText('The latest design for importing live animals and germinal products. It adds a dashboard, templates and an address book to the first journey, and has the newest changes.')
+    await expect(page.locator('a', { hasText: 'Start design release 2' })).toHaveAttribute('href', '/design-release-2.1')
     await capture(page, testInfo)
   })
 })
 
+const notificationCard = (page, reference) => page.locator(`article[aria-label="Notification ${reference}"]`)
+
+async function expectCard (page, reference, { status, quantityLabel = 'Number of animals', viewHref = url(`/review-notification?reference=${reference}`) }) {
+  const card = notificationCard(page, reference)
+  await expect(card.locator('dt')).toHaveText(['Commodity', 'Arrival date', 'Consignee', 'Notification status', quantityLabel, 'Origin', 'Consignor'])
+  await expect(card.locator('.app-dr2-dashboard-notification-card__field', { hasText: 'Notification status' }).locator('dd')).toHaveText(status)
+  await expect(card.getByRole('link')).toHaveText(['View'])
+  await expect(card.getByRole('link', { name: 'View' })).toHaveAttribute('href', viewHref)
+}
+
+const DASHBOARD_TABS = [/Submitted\s+\(2\)/, /Draft and Amend\s+\(3\)/, 'Past']
+
 test.describe('category dashboards', () => {
   test('live animals: summary, search, filters, tabs and notification cards', async ({ page }, testInfo) => {
-    await test.step('in-progress tab', async () => {
+    const main = page.locator('main')
+
+    await test.step('submitted tab', async () => {
       await page.goto(url('/live-animals'))
       await expect(page).toHaveTitle('Dashboard - Import notification service - GOV.UK')
       await expectHeading(page, 'Live animals')
       await expectBackLink(page, url())
-      const main = page.locator('main')
       await expect(main.getByRole('button', { name: 'Create new' })).toHaveAttribute('href', url('/create-notification?category=live-animals'))
       await expect(main.getByRole('heading', { name: 'Summary' })).toBeVisible()
       await expect(main.getByRole('heading', { name: 'Action needed' })).toBeVisible()
@@ -86,12 +99,13 @@ test.describe('category dashboards', () => {
       await expect(main.getByLabel('Search by')).toBeVisible()
       await expect(main).toContainText('Keyword, notification number, commodity, consignee or consignor')
       await expect(main.locator('#dashboard-sort option')).toHaveText(['Select one', 'Newest first', 'Oldest first', 'Arrival date'])
-      await expect(main.locator('.govuk-tabs__tab')).toHaveText([/In progress\s+\(2\)/, 'Draft', 'Completed'])
-      await expect(main.getByRole('heading', { name: 'Notifications in progress' })).toBeVisible()
-      await expect(main).toContainText('GBN-AG-26-7K8M2P')
-      await expect(main).toContainText('ITAHC is missing')
-      await expect(main.getByRole('link', { name: 'View', exact: true }).first()).toHaveAttribute('href', url('/review-notification?reference=GBN-AG-26-7K8M2P'))
-      await expect(main.getByRole('link', { name: 'Copy as new' }).first()).toHaveAttribute('href', url('/notifications/copy-as-new?reference=GBN-AG-26-7K8M2P'))
+      await expect(main.locator('.govuk-tabs__tab')).toHaveText(DASHBOARD_TABS)
+      await expect(main.getByRole('heading', { name: 'Submitted notifications' })).toBeVisible()
+      await expect(main).toContainText('Notifications you have submitted. You can still change them and add documents.')
+      await expect(main.locator('.app-dr2-dashboard-notification-card__reference')).toHaveText(['GBN-AG-26-7K8M2P', 'GBN-AG-26-7K8M2U'])
+      await expect(notificationCard(page, 'GBN-AG-26-7K8M2P')).toContainText('ITAHC is missing')
+      await expectCard(page, 'GBN-AG-26-7K8M2P', { status: 'Submitted' })
+      await expectCard(page, 'GBN-AG-26-7K8M2U', { status: 'Submitted' })
       await capture(page, testInfo, 'in-progress')
     })
 
@@ -104,24 +118,40 @@ test.describe('category dashboards', () => {
       await expect(filters).toContainText('For example, 27/3/2026')
       await expect(filters.getByText('Start date')).toBeVisible()
       await expect(filters.getByText('End date')).toBeVisible()
-      await expect(page.locator('#dashboard-filter-status option')).toHaveText(['Select one', 'Action required', 'Submitted', 'Completed'])
+      await expect(page.locator('#dashboard-filter-status option')).toHaveText(['All statuses', 'Draft', 'Amend', 'Submitted', 'Past'])
+      await expect(filters.getByLabel('Only show notifications that need action')).not.toBeChecked()
+      await expect(filters.getByRole('button', { name: 'Apply filters' })).toBeVisible()
       await capture(page, testInfo, 'filters-open')
     })
 
-    await test.step('draft tab', async () => {
-      await page.getByRole('tab', { name: 'Draft' }).click()
+    await test.step('draft and amend tab: drafts and notifications being amended', async () => {
+      await page.getByRole('tab', { name: /Draft and Amend/ }).click()
       await expect(page).toHaveURL(/tab=drafts/)
-      await expect(page.locator('main').getByRole('heading', { name: 'Draft notifications' })).toBeVisible()
-      await expect(page.locator('main')).toContainText('GBN-AG-26-7K8M2S')
+      await expect(main.getByRole('heading', { name: 'Draft notifications' })).toBeVisible()
+      await expect(main).toContainText('Notifications you have started but not submitted, and notifications that are being amended.')
+      await expect(main.locator('.app-dr2-dashboard-notification-card__reference')).toHaveText(['GBN-AG-26-7K8M2S', 'GBN-AG-26-7K8M3F', 'GBN-AG-26-7K8M3G'])
+      await expectCard(page, 'GBN-AG-26-7K8M2S', { status: 'Draft' })
+      await expectCard(page, 'GBN-AG-26-7K8M3F', { status: 'Amend', viewHref: url('/notifications/amend?reference=GBN-AG-26-7K8M3F&resume=1') })
+      await expectCard(page, 'GBN-AG-26-7K8M3G', { status: 'Amend', viewHref: url('/notifications/amend?reference=GBN-AG-26-7K8M3G&resume=1') })
       await capture(page, testInfo, 'drafts')
     })
 
-    await test.step('completed tab', async () => {
-      await page.getByRole('tab', { name: 'Completed' }).click()
+    await test.step('past tab', async () => {
+      await page.getByRole('tab', { name: 'Past' }).click()
       await expect(page).toHaveURL(/tab=completed/)
-      await expect(page.locator('main').getByRole('heading', { name: 'Completed notifications' })).toBeVisible()
-      await expect(page.locator('main')).toContainText('GBN-AG-26-7K8M2W')
+      await expect(main.getByRole('heading', { name: 'Past notifications' })).toBeVisible()
+      await expect(main).toContainText('Notifications that have been processed. They move here 2 weeks after the commodity arrival date.')
+      await expectCard(page, 'GBN-AG-26-7K8M2W', { status: 'Past' })
       await capture(page, testInfo, 'completed')
+    })
+
+    await test.step('an amend card opens the notification being amended', async () => {
+      await page.goto(url('/live-animals?tab=drafts'))
+      await notificationCard(page, 'GBN-AG-26-7K8M3F').getByRole('link', { name: 'View' }).click()
+      await expect(page).toHaveURL(urlFor('/review-notification'))
+      await expect(page.locator('.app-dr2-notification-status')).toContainText('Amend')
+      await expect(page.locator('.app-dr2-notification-status')).toContainText('GBN-AG-26-7K8M3F')
+      await capture(page, testInfo, 'amend-resumed')
     })
 
     await test.step('search and sort submit as a GET to the category list', async () => {
@@ -136,15 +166,78 @@ test.describe('category dashboards', () => {
     })
   })
 
-  test('germinal products: packages instead of animals', async ({ page }, testInfo) => {
+  test('live animals filters: needs action and status replace the tabs with filtered results', async ({ page }, testInfo) => {
+    const main = page.locator('main')
+
+    await test.step('only notifications that need action', async () => {
+      await page.goto(url('/live-animals?needsAction=1'))
+      await page.locator('.app-dr2-dashboard-filters__summary').click()
+      await expect(page.getByLabel('Only show notifications that need action')).toBeChecked()
+      await expect(main.locator('.govuk-tabs__tab')).toHaveCount(0)
+      await expect(main.getByRole('heading', { name: 'Filtered results' })).toBeVisible()
+      await expect(main.getByRole('status')).toHaveText(/1 notification matches your filters\.\s+Clear filters/)
+      await expect(main.locator('.app-dr2-dashboard-notification-card__reference')).toHaveText(['GBN-AG-26-7K8M2P'])
+      await expectCard(page, 'GBN-AG-26-7K8M2P', { status: 'Submitted' })
+      await capture(page, testInfo, 'needs-action')
+    })
+
+    await test.step('one status', async () => {
+      await page.goto(url('/live-animals'))
+      await page.locator('.app-dr2-dashboard-filters__summary').click()
+      await page.locator('#dashboard-filter-status').selectOption('amend')
+      await page.getByRole('button', { name: 'Apply filters' }).click()
+      await expect(page).toHaveURL(/status=amend/)
+      await expect(main.getByRole('status')).toHaveText(/2 notifications match your filters\.\s+Clear filters/)
+      await expect(main.locator('.app-dr2-dashboard-notification-card__reference')).toHaveText(['GBN-AG-26-7K8M3F', 'GBN-AG-26-7K8M3G'])
+      await capture(page, testInfo, 'status-amend')
+    })
+
+    await test.step('clear filters brings the tabs back', async () => {
+      await main.getByRole('link', { name: 'Clear filters' }).click()
+      await expect(page).toHaveURL(urlFor('/live-animals'))
+      await expect(main.locator('.govuk-tabs__tab')).toHaveText(DASHBOARD_TABS)
+    })
+  })
+
+  test('germinal products: quantity in units or pieces, and amend examples that open in amend', async ({ page }, testInfo) => {
+    const main = page.locator('main')
+    const quantityLabel = 'Quantity (unit/pieces)'
     await page.goto(url('/germinal-products'))
     await expectHeading(page, 'Germinal products')
-    const main = page.locator('main')
     await expect(main.getByRole('button', { name: 'Create new' })).toHaveAttribute('href', url('/create-notification?category=germinal-products'))
-    await expect(main).toContainText('GBN-GP-26-7K8M2Q')
-    await expect(main).toContainText('Cattle, Semen')
-    await expect(main).toContainText('Number of packages')
+    await expect(main.locator('.govuk-tabs__tab')).toHaveText(DASHBOARD_TABS)
+    await expect(main.locator('.app-dr2-dashboard-notification-card__reference')).toHaveText(['GBN-GP-26-7K8M2Q', 'GBN-GP-26-7K8M2V'])
+    await expectCard(page, 'GBN-GP-26-7K8M2Q', { status: 'Submitted', quantityLabel })
+    await expect(notificationCard(page, 'GBN-GP-26-7K8M2Q')).toContainText('Cattle, Semen')
+    await expect(notificationCard(page, 'GBN-GP-26-7K8M2V')).toContainText('ITAHC is missing')
     await capture(page, testInfo, 'in-progress')
+
+    await test.step('draft and amend tab', async () => {
+      await page.getByRole('tab', { name: /Draft and Amend/ }).click()
+      await expect(main.locator('.app-dr2-dashboard-notification-card__reference')).toHaveText(['GBN-GP-26-7K8M2T', 'GBN-GP-26-7K8M3H', 'GBN-GP-26-7K8M3J'])
+      await expectCard(page, 'GBN-GP-26-7K8M2T', { status: 'Draft', quantityLabel })
+      await expectCard(page, 'GBN-GP-26-7K8M3H', { status: 'Amend', quantityLabel, viewHref: url('/notifications/amend?reference=GBN-GP-26-7K8M3H&resume=1') })
+      await expectCard(page, 'GBN-GP-26-7K8M3J', { status: 'Amend', quantityLabel, viewHref: url('/notifications/amend?reference=GBN-GP-26-7K8M3J&resume=1') })
+      await expect(notificationCard(page, 'GBN-GP-26-7K8M3J')).toContainText('Horse, Embryos/Ova')
+      await capture(page, testInfo, 'drafts')
+    })
+
+    await test.step('past tab', async () => {
+      await page.getByRole('tab', { name: 'Past' }).click()
+      await expect(main.locator('.app-dr2-dashboard-notification-card__reference')).toHaveText(['GBN-GP-26-7K8M2R', 'GBN-GP-26-7K8M2Y', 'GBN-GP-26-7K8M3B', 'GBN-GP-26-7K8M3D'])
+      await expectCard(page, 'GBN-GP-26-7K8M2R', { status: 'Past', quantityLabel })
+      await capture(page, testInfo, 'completed')
+    })
+
+    await test.step('a germinal amend example opens as germinal products being amended', async () => {
+      await page.goto(url('/germinal-products?tab=drafts'))
+      await notificationCard(page, 'GBN-GP-26-7K8M3H').getByRole('link', { name: 'View' }).click()
+      await expect(page).toHaveURL(urlFor('/review-notification'))
+      await expect(page.locator('.app-dr2-notification-status')).toContainText('Amend')
+      await expect(page.locator('.app-dr2-notification-status')).toContainText('GBN-GP-26-7K8M3H')
+      await expectHeading(page, 'Review your notification')
+      await capture(page, testInfo, 'amend-resumed')
+    })
   })
 })
 

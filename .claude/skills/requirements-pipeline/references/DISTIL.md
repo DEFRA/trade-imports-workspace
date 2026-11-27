@@ -322,7 +322,7 @@ These hold whoever runs a step. The briefs carry each one to the agent that appl
   start. One question per decision.
 - **No relayed list is trusted.** A light agent that relays tim's output is checked against another count: the
   partition's parts against characterise, the verify ranges against the claim count, the verdicts against the
-  claims, the working set against the status, the areas against the plan, the questions against coverage's own
+  claims, the status against tim's own counts and work list, the working set against the status, the areas against the plan, the questions against coverage's own
   count. A relay that disagrees is asked again once, and twice wrong fails the step. The verify ranges themselves
   are worked out by the workflow from the claim count, never retyped.
 - **A doubt is a question, never a plain reading.** Where a source or ruling cannot be met as written in some part
@@ -362,7 +362,7 @@ These hold whoever runs a step. The briefs carry each one to the agent that appl
   Shared files (a journey's flow, the layout, shared copy) go in a foundation theme in an early wave. A theme holding
   most of the rows is a smell.
 - **Re-distilling keeps every id**: requirements, conflicts and rows. A `todo` or `blocked` row is rewritten to the
-  latest rulings, and a blocked row whose blocker a ruling removed becomes `todo`. A row built or set aside never
+  latest rulings, its dependencies and theme included where a ruling changes what it waits for, and a blocked row whose blocker a ruling removed becomes `todo`. A row built or set aside never
   changes. Nobody resets a status by hand.
 
 ## 4. When the run stops early

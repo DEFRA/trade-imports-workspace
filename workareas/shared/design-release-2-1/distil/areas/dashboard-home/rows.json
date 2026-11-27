@@ -78,24 +78,44 @@
         {
           "source": "ruling:interaction-designer-2026-11-09",
           "ref": "templates dropped for now, so the home offers one primary action"
+        },
+        {
+          "source": "repo:perftests",
+          "ref": "src/k6/readiness.js:94, :103"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-075, p3-076"
         }
       ],
-      "repos": ["insfrontend", "tests", "perftests"],
+      "repos": [
+        "insfrontend",
+        "tests",
+        "perftests"
+      ],
       "kind": "feat",
       "status": "blocked",
       "gate": "Once unblocked and built, look at the new home on a local stack before the glance cards and drill-downs are built on it: the caption and heading, the 'Create new' button kept under them, the category sections and where their View dashboard links land, and that the rewritten INS end-to-end specs no longer depend on the removed table.",
       "openQuestions": [
         "Blocked: Sam's 9 October rulings block the front door dashboard's summary information (the overall home's per-category sections, counts and glance cards, the status-change cards and their drill-downs) until its requirements firm up and are agreed; the area is then re-distilled (ruling:sam-2026-10-09-templates claim 1; ruling:sam-2026-10-09-pm claim 52). Who: whoever owns the front door dashboard's requirements (the rulings do not name them) must firm them up and agree them with Sam.",
-        "Blocked: req-1905's readiness probe and req-1848's performance-suite check of the home match the home's heading exactly (c-146), so they change only in the increment that changes it; changing them first breaks every performance run on main, so they wait with the rest of the overall home and keep today's heading until it lands. Who: the same owner of the front door dashboard's requirements."
+        "Blocked: req-1848 and req-1905 check the home's heading exactly (c-146), so the performance suite's heading check and readiness probe change only in the increment that changes that heading; changed first, they break every performance run on main. They wait with the rest of the overall home. Who: whoever owns the front door dashboard's requirements must firm them up and agree them with Sam."
       ],
-      "notes": "Rewritten against the requirements as they now stand, keeping the row's id. The 'Use template' button has gone from the row: c-416 parks templates, so req-964's button is out of scope and the home offers 'Create new' alone (req-951, req-1014); the first criterion is an exhaustive positive check on the home's main content, which proves both the removed table and the absent second button without naming either. The duplicated readiness criteria the last distil left in this row (three criteria stated twice) are now stated once. | Combines the home shell, the category sections and their links, and the home's error, Welsh, accessibility and performance-suite requirements: all are the same page and the same set-up, so building them apart would repeat the same review and ladder. req-971's three-section order completes when the Germinal products section row lands. | req-1905 belongs to the layout-and-sign-in area, not this one, but has sat in this row since the last distil and must stay with req-1848 so the performance suite is never broken on main. The combiner should keep it here and not let the layout-and-sign-in draft take it into a second row. | The home changes the front door's dashboard feature folder (controller, template, copy and fit spec), which the split-off type-question-and-templates theme owns, its view-model, which the split-off overview-and-review theme owns, the tests repo's INS dashboard page object, which type-question-and-templates owns, and the performance suite's front-door script, which the split-off address-book theme owns. Every one of these requirements was already in this row, in the ins-dashboard theme, when those themes split off, so none is a later adoption to hand to a pickUp list. The row builds only after type-question-and-templates lands, so its changes to those files never conflict; they are listed in shared, not touches. | Carry over externalDependsOn on the split-off theme's rows (inc-149 and inc-153) and keep ins-dashboard depending on type-question-and-templates. The first pointer's workarea still reads shared/design-release-2-1/themes/type-question, from before the theme was renamed; it is fixed, so it is carried over unchanged for the combiner to leave alone.",
+      "notes": [
+        "Carried over from the existing row unchanged in substance: none of its requirements moved in this re-distil.",
+        "Combines the home shell, the category sections and their links, and the home's error, Welsh, accessibility and performance-suite requirements: all are the same page and the same set-up, so building them apart would repeat the same review and ladder. req-971's three-section order completes when the Germinal products section row lands.",
+        "req-1905 belongs to the layout-and-sign-in area, not dashboard-home, but has sat in this row since an earlier distil and stays with req-1848 so the performance suite is never broken on main.",
+        "The home changes the front door's dashboard feature folder (controller, template, copy and fit spec), which the split-off type-question-and-templates theme owns, its view-model, which the split-off overview-and-review theme owns, the tests repo's INS dashboard page object, which type-question-and-templates owns, and the performance suite's front-door script, which the split-off address-book theme owns. Every one of these requirements was already in this row, in the ins-dashboard theme, when those themes split off, so none is a later adoption for a pickUp list; those files are in shared, not touches. The row builds only after type-question-and-templates lands.",
+        "The externalDependsOn on the split-off theme's inc-149 is carried over unchanged.",
+        "Re-distil 27 November, second pass: none of this row's requirements changed, so it is carried over as it stands. req-1905 belongs to the layout-and-sign-in area; it stays in this row with req-1848 so the readiness probe and the heading it follows land together and the performance suite is never broken on main."
+      ],
       "touches": [
-        "insfrontend:src/server/app/services/ins-backend",
-        "perftests:src/k6/pages.js",
+        "insfrontend:src/server/app/features/dashboard/page.js",
+        "insfrontend:src/server/app/features/dashboard/fit",
+        "tests:tests/ins/e2e/features/notification-dashboard-navigation.spec.ts",
+        "tests:tests/ins/a11y/dashboard-views.spec.ts",
+        "tests:tests/ins/a11y/dashboard-viewports.spec.ts",
         "perftests:src/k6/readiness.js",
-        "perftests:src/config/endpoints.js",
-        "tests:tests/ins/e2e/features/overall-dashboard",
-        "tests:tests/ins/e2e/features/notification-dashboard-navigation.spec.ts"
+        "perftests:src/k6/pages.js"
       ],
       "shared": [
         "insfrontend:src/server/app/features/dashboard/controller.js",
@@ -107,31 +127,28 @@
         "perftests:src/k6/front-door.js"
       ],
       "dependsOn": [],
+      "theme": "ins-dashboard",
       "externalDependsOn": [
         {
           "workarea": "shared/design-release-2-1/themes/type-question",
           "id": "inc-149"
-        },
-        {
-          "workarea": "shared/design-release-2-1/themes/type-question-and-templates",
-          "id": "inc-153"
         }
       ],
       "existingRow": "inc-128"
     },
     {
       "title": "The Action needed page lists the organisation's notifications needing action",
-      "detail": "Each category's Action needed glance card opens a page listing the notifications the trader must act on: a submitted notification still missing a required document, or with no animal identifier where one is required. The front door lists those notifications, across every category or only the one it is showing, scoped to the signed-in organisation, with an intro block, a results line, eight notifications a page and the same notification card the category list uses. A notification submitted with outstanding items keeps the status Submitted, so this page, not its card, is where the trader sees that something is outstanding. It waits until the front door dashboard's requirements are firmed up and agreed, and until the outstanding-actions alert is designed and the animals backend records a notification's outstanding items again.",
+      "detail": "Each category's Action needed glance card opens a page listing the notifications the trader must act on: a submitted notification still missing a required document, or with no animal identifier where one is required. The front door lists those notifications, across every category or only the one it is showing, scoped to the signed-in organisation, with an intro block, a results line, eight notifications a page and the same notification card the category list uses. A notification submitted with outstanding items keeps the status Submitted, which the drill-down shows as plain text rather than a tag, so this page, not its card, is where the trader sees that something is outstanding. It waits until the front door dashboard's requirements are firmed up and agreed, and until the outstanding-actions alert is designed and the animals backend records a notification's outstanding items again.",
       "acceptanceCriteria": [
         "The 'View tasks' link opens a page at /actions whose browser title is 'Tasks requiring your attention - Import notification service - GOV.UK', showing the caption 'Action needed', the h1 'Tasks requiring your attention' and the description 'Add missing information or upload documents to prevent your consignment from being delayed.', the three together as one intro block styled to match the home's intro (prototype:dr2-1-source app/routes.js:11708-11710, app/views/design-release-2.1/dashboard-actions.html:34-36; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:153-159)",
-        "A live animals notification submitted without its ITAHC or health certificate is listed, carrying the status tag 'Submitted'; once the certificate is uploaded and the notification re-submitted, the page lists it no longer (trace:prototype-dr2-1 action-needed action 14-16; trace:e2e trace-e2e-p15-087; ruling:sam-2026-11-16 ruling-sam-2026-11-16-p1-004)",
+        "A live animals notification submitted without its ITAHC or health certificate is listed, its card showing the status as the plain text 'Submitted'; once the certificate is uploaded and the notification re-submitted, the page lists it no longer (trace:prototype-dr2-1 action-needed action 14-16; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-084; trace:e2e trace-e2e-p15-087; ruling:sam-2026-11-16 ruling-sam-2026-11-16-p1-004, p1-012)",
         "A live animals notification submitted with its certificate but with a species that needs identifiers and none identified is listed; once one identifier is filled for each record, the page lists it no longer (prototype:dr2-1-source prototype-dr2-1-source-p11-149; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-188)",
         "The page lists only submitted notifications missing a required document or a required animal identifier, one identifier being enough for a record to count as identified: a draft notification, and a submitted one with every required document and identifier, are absent from it (trace:prototype-dr2-1 action-needed snapshot 14)",
         "A trader signed in for one organisation sees only that organisation's notifications on the page, and a fresh organisation with none sees 'Show 0 of 0 results' (repo:insfrontend repo-insfrontend-p1-068; trace:ins-fit trace-ins-fit-p4-046)",
         "Opened with no category, the page lists action-needed notifications of every category; opened for live animals it lists only live-animals ones, a notification with no stored category counting as live animals; an unrecognised category lists every category (prototype:dr2-1-source app/routes.js:6745-6747, 9027-9028; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:162-169)",
         "The page's 'Back' link goes to the live animals notification list at the live-animals set root in the animals frontend while it is showing live animals, and to the home while it is showing every category or an unrecognised one (prototype:dr2-1-source app/views/design-release-2.1/dashboard-actions.html:12-24; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:156, 167)",
         "The list sits under a visually hidden h2 'Notifications needing action', preceded by 'Show 1-8 of <total> results', or 'Show 0 of 0 results' when there are none; with more than eight notifications the page shows eight at a time, and following a page link keeps the sort and the category (prototype:dr2-1-source app/views/design-release-2.1/dashboard-actions.html:43-89, app/routes.js:6630-6688, 9050; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:160-161)",
-        "Each listed notification is shown with the same notification card as the live animals list, whose content is the notification's reference, its facts, its status tag and the links its status gives it (trace:prototype-dr2-1 action-needed action 15-16; document:dr1-parity-notes inc-030; ruling:sam-2026-11-16 ruling-sam-2026-11-16-p1-007)",
+        "Each listed notification is shown with the same notification card as the live animals list, whose content is the notification's reference, its facts, its status and the links its status gives it (trace:prototype-dr2-1 action-needed action 15-16; document:dr1-parity-notes inc-030; ruling:sam-2026-11-16 ruling-sam-2026-11-16-p1-007)",
         "The page's main content holds only its intro block, its search and sort form, its results line and its list; opening it with a delay-filter query parameter shows the same list as opening it without one (trace:prototype-dr2-1 action-needed snapshot 14; prototype:dr2-1-source app/routes.js:9022-9023, 9043-9045)",
         "The service navigation's 'Dashboard' item is marked current on the page (prototype:dr2-1-source app/routes.js:8876, 9063; repo:insfrontend repo-insfrontend-p1-076)",
         "With the front door's stub mode on, which is never on in production, the page lists the built-in stub's notifications; otherwise it reads them from the notification read model, and the read model's log for that read carries the page request's trace id (repo:insfrontend repo-insfrontend-p1-062, p1-063)",
@@ -153,7 +170,8 @@
         "req-1014",
         "req-1015",
         "req-1019",
-        "req-1022"
+        "req-1022",
+        "req-2766"
       ],
       "sources": [
         {
@@ -162,7 +180,7 @@
         },
         {
           "source": "trace:prototype-dr2-1",
-          "ref": "dashboard--at-a-glance-drill-downs-action-needed-lists-notifications-needing-action"
+          "ref": "dashboard--at-a-glance-drill-downs-action-needed-lists-notifications-needing-action; trace-prototype-dr2-1-p15-084"
         },
         {
           "source": "prototype:dr2-1-specs",
@@ -190,30 +208,50 @@
         },
         {
           "source": "ruling:sam-2026-11-16",
-          "ref": "ruling-sam-2026-11-16-p1-004, p1-007"
+          "ref": "ruling-sam-2026-11-16-p1-004, p1-007, p1-012"
         },
         {
           "source": "ruling:sam-2026-11-19",
           "ref": "ruling-sam-2026-11-19-p1-020"
         }
       ],
-      "repos": ["insbackend", "insfrontend", "tests"],
-      "gate": "Once unblocked and built, look at what 'Action needed' means in practice before the glance-card counts and the search build on it: which submitted notifications the missing-document and missing-identifier rule lists, that a listed notification's card reads 'Submitted', and that every category filter and Back link lands where it should.",
+      "repos": [
+        "insbackend",
+        "insfrontend",
+        "tests"
+      ],
       "kind": "feat",
       "status": "blocked",
+      "gate": "Once unblocked and built, look at what 'Action needed' means in practice before the glance-card counts and the search build on it: which submitted notifications the missing-document and missing-identifier rule lists, that a listed notification's card reads 'Submitted' as plain text, and that every category filter and Back link lands where it should.",
       "openQuestions": [
         "Blocked: Sam's 9 October rulings block the front door dashboard's summary information, including the Action needed drill-down (ruling:sam-2026-10-09-pm p3-059), until its requirements firm up and are agreed; the area is then re-distilled, settling how the action-needed state and the category reach the INS read model. Who: whoever owns the front door dashboard's requirements (the rulings do not name them) must firm them up and agree them with Sam.",
         "Blocked: Sam's 16 November ruling makes the outstanding-actions alert the dashboard designs introduce the only way a notification's outstanding actions are shown, and Sam's 19 November ruling has the animals backend stop storing a notification's outstanding items and the rule that works them out until that alert arrives (c-417); this list is that rule's reader. Who: whoever designs the outstanding-actions alert (the rulings do not name them) must design it, and whoever owns the animals backend must re-add the outstanding-items rule with it."
       ],
-      "notes": "Rewritten against the requirements as they now stand, keeping the row's id. c-417 withdraws the 'Submitted action required' status, so the criteria no longer give a listed notification an 'Action required' tag, and the card criterion is now an exhaustive positive list of the card's content, which proves there is no missing-document message on it (req-996) without quoting the messages the last distil's criteria carried. The row's openQuestions gain the alert and outstanding-items blocker the November rulings added. | Combines the Action needed page, its list rule, the organisation scoping (req-1019) and the read-model request (req-1022): the page is the first INS list the home leads to, so none of them can be observed apart from it. | Depends on the rows that record the action-needed state on the animals backend's record (inc-131 and inc-147 in the animals-dashboard theme). Whether those two rows still record it is that area's to settle now the outstanding-items rule is held back; the ordering need itself stands. | The germinal products half of req-987's Back rule and req-2193's germinal list rule are observed in the Germinal products section row. The Status updated drill-down's Back link and current navigation item, for req-987 and req-967, are observed in that row, and the Inspection required half of req-994 and req-1015 in that one. | Changes no code a theme split off early owns: the drill-down is its own feature folder in the front door.",
+      "notes": [
+        "Rewritten against the requirements as they now stand, keeping the row's id. req-2766 is new in this re-distil (c-494): on every drill-down a submitted notification's status reads 'Submitted' as plain text, while a notification being amended keeps its Amend tag. This row builds the drill-down card, so it carries req-2766 and states its Submitted half here; the Amend half is observed in the Inspection required and Status updated rows, which can list an amended notification. The reconciler settled the Draft half on 27 November: no drill-down lists a draft notification, so req-2766 states only its Submitted and Amend halves.",
+        "The card criterion is an exhaustive positive list of the card's content, so it proves there is nothing else on the card (req-996) without quoting withdrawn copy.",
+        "Combines the Action needed page, its list rule, the organisation scoping (req-1019) and the read-model request (req-1022): the page is the first INS list the home leads to, so none of them can be observed apart from it.",
+        "Depends on the rows that record the action-needed state on the animals backend's record (inc-131 and inc-147 in the animals-dashboard theme). Whether those two rows still record it is that area's to settle now the outstanding-items rule is held back; the ordering need itself stands.",
+        "The germinal products half of req-987's Back rule and req-2193's germinal list rule are observed in the Germinal products section row. The Status updated drill-down's Back link and current navigation item, for req-987 and req-967, are observed in that row, and the Inspection required half of req-994 and req-1015 in that one.",
+        "Changes no code a theme split off early owns: the drill-down is its own feature folder in the front door. The card it reuses may sit in the dashboard view-model, which the split-off overview-and-review theme owns, so that folder is in shared.",
+        "Re-distil 27 November, second pass: nothing behind this row changed."
+      ],
       "touches": [
         "insfrontend:src/server/app/features/action-needed",
         "insfrontend:src/server/app/services/ins-backend",
         "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification",
+        "tests:page-objects/ins/action-needed-page.ts",
         "tests:tests/ins/e2e/features/action-needed"
       ],
-      "shared": [],
-      "dependsOn": ["inc-128", "inc-131", "inc-147"],
+      "shared": [
+        "insfrontend:src/server/app/features/dashboard/view-model"
+      ],
+      "dependsOn": [
+        "inc-128",
+        "inc-126",
+        "inc-147"
+      ],
+      "theme": "ins-dashboard",
       "existingRow": "inc-132"
     },
     {
@@ -228,7 +266,11 @@
         "Page links keep the chosen sort, the search text and the category (prototype:dr2-1-source app/views/design-release-2.1/dashboard-actions.html:43-87; trace:prototype-dr2-1 action-needed action 25)",
         "With Welsh selected, the search label, the hint, the sort label and the sort options show in Welsh, recorded as machine drafts (repo:insfrontend repo-insfrontend-p1-086)"
       ],
-      "requirements": ["req-990", "req-991", "req-992"],
+      "requirements": [
+        "req-990",
+        "req-991",
+        "req-992"
+      ],
       "sources": [
         {
           "source": "prototype:dr2-1-source",
@@ -255,23 +297,36 @@
           "ref": "ruling-sam-2026-10-09-pm-p3-059"
         }
       ],
-      "repos": ["insbackend", "insfrontend", "tests"],
+      "repos": [
+        "insbackend",
+        "insfrontend",
+        "tests"
+      ],
       "kind": "feat",
       "status": "blocked",
       "gate": null,
       "openQuestions": [
         "Blocked: Sam's 9 October rulings block the front door dashboard's summary information, naming the Action needed drill-down's search and sort (ruling:sam-2026-10-09-pm p3-059), until its requirements firm up and are agreed; the area is then re-distilled. Who: whoever owns the front door dashboard's requirements (the rulings do not name them) must firm them up and agree them with Sam."
       ],
-      "notes": "Kept apart from the Action needed page row so that row stays reviewable in one sitting, and because this one changes what the read model stores and searches (the consignee and the consignor). | The same search form, sort select and results line are reused by the blocked Inspection required row, which proves its own half of req-990, req-992 and req-994. | Carried forward with its id and its wording; the read-model criterion is new, so the row states the search's own data need rather than leaving it in the detail only.",
+      "notes": [
+        "Carried over from the existing row unchanged: nothing behind it moved in this re-distil.",
+        "Kept apart from the Action needed page row so that row stays reviewable in one sitting, and because this one changes what the read model stores and searches (the consignee and the consignor).",
+        "The same search form, sort select and results line are reused by the blocked Inspection required row, which proves its own half of req-990, req-992 and req-994.",
+        "Re-distil 27 November, second pass: nothing behind this row changed."
+      ],
       "touches": [
         "insfrontend:src/server/app/features/action-needed",
         "insfrontend:src/server/app/services/ins-backend",
         "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification",
-        "insbackend:src/main/resources",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/service",
+        "tests:page-objects/ins/action-needed-page.ts",
         "tests:tests/ins/e2e/features/action-needed"
       ],
       "shared": [],
-      "dependsOn": ["inc-132"],
+      "dependsOn": [
+        "inc-132"
+      ],
+      "theme": "ins-dashboard",
       "existingRow": "inc-133"
     },
     {
@@ -285,7 +340,12 @@
         "The Action needed card shows its count in the default count colour (trace:prototype-dr2-1 overall-dashboard action 30)",
         "When the counts cannot be loaded the home still shows its heading and sections, shows the recoverable error message and responds with HTTP status 500; with Welsh selected the card's copy shows in Welsh, recorded as a machine draft; the home still has no serious or critical axe violations (repo:insfrontend repo-insfrontend-p1-058, p1-079, p1-086)"
       ],
-      "requirements": ["req-973", "req-975", "req-976", "req-978"],
+      "requirements": [
+        "req-973",
+        "req-975",
+        "req-976",
+        "req-978"
+      ],
       "sources": [
         {
           "source": "prototype:dr2-1-source",
@@ -312,7 +372,10 @@
           "ref": "trace-e2e-p15-109"
         }
       ],
-      "repos": ["insfrontend", "tests"],
+      "repos": [
+        "insfrontend",
+        "tests"
+      ],
       "kind": "feat",
       "status": "blocked",
       "gate": null,
@@ -320,19 +383,27 @@
         "Blocked: Sam's 9 October rulings block the front door dashboard's summary information, naming this glance card (ruling:sam-2026-10-09-pm p3-060), until its requirements firm up and are agreed; the area is then re-distilled, settling how the category reaches the INS read model. Who: whoever owns the front door dashboard's requirements (the rulings do not name them) must firm them up and agree them with Sam.",
         "Blocked: the count reads the rule that works out a notification's outstanding items, which Sam's 19 November ruling has the animals backend stop storing until the outstanding-actions alert of Sam's 16 November ruling arrives (c-417). Who: whoever designs that alert must design it, and whoever owns the animals backend must re-add the outstanding-items rule with it."
       ],
-      "notes": "Combines every live-animals glance-card requirement that is not waiting on an outside feed: they share the home's template and the card styling. Depends on the home row for the sections and on the Action needed page row, because the count is that list's total. | req-975's germinal products half is observed in the Germinal products section row. req-978's blue Status updates and Inspection required counts are observed in the Status updated row and the plants-cards row, which build those cards. | The category comes from the animals backend's record (c-296); how it reaches the read model is the re-distil's to settle. The live animals Status updates card (req-974) is held with its blocked drill-down (c-148). | Carried forward with its id. Its openQuestions gain the outstanding-items blocker req-973 and req-976 now carry; the criteria are unchanged in substance, the fourth stating the section's only two glance cards, which proves there is no third. | Changes the home's template and copy in the front door's dashboard feature folder, which the split-off type-question-and-templates theme owns; it builds only after that theme lands, through the home row, so those files are in shared rather than touches.",
+      "notes": [
+        "Carried over from the existing row unchanged: nothing behind it moved in this re-distil.",
+        "Combines every live-animals glance-card requirement that is not waiting on an outside feed: they share the home's template and the card styling. Depends on the home row for the sections and on the Action needed page row, because the count is that list's total.",
+        "req-975's germinal products half is observed in the Germinal products section row. req-978's blue Status updates and Inspection required counts are observed in the Status updated row and the plants-cards row, which build those cards.",
+        "The category comes from the animals backend's record (c-296); how it reaches the read model is the re-distil's to settle. The live animals Status updates card (req-974) is held with its blocked drill-down (c-148).",
+        "Changes the home's template and copy in the front door's dashboard feature folder, which the split-off type-question-and-templates theme owns; it builds only after that theme lands, through the home row, so those files are in shared rather than touches.",
+        "Re-distil 27 November, second pass: req-978 is reworded without naming the design release; what it asks is unchanged, so the colour criteria stand."
+      ],
       "touches": [
         "insfrontend:src/server/app/services/ins-backend",
-        "tests:tests/ins/e2e/features/overall-dashboard"
+        "tests:tests/ins/e2e/features/organisation-scoped-dashboard.spec.ts"
       ],
       "shared": [
-        "insfrontend:src/server/app/features/dashboard/controller.js",
         "insfrontend:src/server/app/features/dashboard/template.njk",
-        "insfrontend:src/server/app/features/dashboard/copy",
-        "insfrontend:src/server/app/features/dashboard/view-model",
-        "tests:page-objects/ins/dashboard-page.ts"
+        "insfrontend:src/server/app/features/dashboard/copy"
       ],
-      "dependsOn": ["inc-128", "inc-132"],
+      "dependsOn": [
+        "inc-128",
+        "inc-132"
+      ],
+      "theme": "ins-dashboard",
       "existingRow": "inc-134"
     },
     {
@@ -342,6 +413,7 @@
         "The Live animals and Germinal products sections each show a 'Status updates' glance card reading 'Changes in the past 24 hours', its count in blue, with a 'View updates' link that opens the Status updated page showing only that category; each count equals the number of notifications that page lists for that category for the signed-in organisation (prototype:dr2-1-source app/views/design-release-2.1/dashboard-home.html:64-69, 73-98; trace:prototype-dr2-1 overall-dashboard action 35)",
         "The 'View updates' link opens a page at /changes whose browser title is 'Changes in past 24 hours - Import notification service - GOV.UK', showing the caption 'Status updated', the h1 'Changes in past 24 hours' and the description 'Notifications that have progressed, or been validated, rejected, cancelled, or replaced in the past 24 hours.' together as one intro block styled to match the home's intro (prototype:dr2-1-source app/routes.js:11712-11714, app/views/design-release-2.1/dashboard-changes.html:31-33; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:174-179)",
         "The page groups the signed-in organisation's notifications of the category shown whose outcome changed in the past 24 hours under h2 sections 'Passed inspection', 'Needs inspection' and 'Delayed', in that order, showing a section only when at least one notification falls in it (prototype:dr2-1-source app/routes.js:6809-6825; trace:prototype-dr2-1 status-updated action 12-14, 21-22)",
+        "On the page, a submitted notification's card shows its status as the plain text 'Submitted', and a notification being amended shows its Amend status as a tag (trace:prototype-dr2-1 status-updated action 14; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-084; ruling:sam-2026-11-16 ruling-sam-2026-11-16-p1-012)",
         "The page's main content holds only its intro block and its grouped lists; its 'Back' link goes to the notification list of the category it is showing, in that category's own frontend, and to the home while it is showing every category; the service navigation's 'Dashboard' item is marked current on it (prototype:dr2-1-source app/views/design-release-2.1/dashboard-changes.html:9-53; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:173-188)",
         "The page shows the recoverable error message with HTTP status 500 when the read model cannot be loaded, shows its copy in Welsh with Welsh selected, recorded as a machine draft, and has no serious or critical axe violations (repo:insfrontend repo-insfrontend-p1-058, p1-079, p1-086)"
       ],
@@ -362,7 +434,7 @@
         },
         {
           "source": "trace:prototype-dr2-1",
-          "ref": "dashboard--at-a-glance-drill-downs-status-updated-lists-changes-in-the-past-24-hours"
+          "ref": "dashboard--at-a-glance-drill-downs-status-updated-lists-changes-in-the-past-24-hours; trace-prototype-dr2-1-p15-084"
         },
         {
           "source": "prototype:dr2-1-specs",
@@ -375,9 +447,17 @@
         {
           "source": "ruling:sam-2026-10-09-pm",
           "ref": "ruling-sam-2026-10-09-pm-p3-062"
+        },
+        {
+          "source": "ruling:sam-2026-11-16",
+          "ref": "ruling-sam-2026-11-16-p1-012"
         }
       ],
-      "repos": ["insbackend", "insfrontend", "tests"],
+      "repos": [
+        "insbackend",
+        "insfrontend",
+        "tests"
+      ],
       "kind": "feat",
       "status": "blocked",
       "gate": null,
@@ -385,21 +465,31 @@
         "Blocked: the authorities' import-checking systems, outside this programme, must send inspection and delay outcomes (passed inspection, needs inspection, delayed) for each notification to the services; no service in the workspace receives them today and the INS read model holds no such state (DR1 inc-014). Who: the programme owner must agree the outcome feed with the authorities' systems team.",
         "Blocked: Sam's 9 October rulings also block this as front door dashboard summary information (ruling:sam-2026-10-09-pm p3-062) until its requirements firm up and are agreed; the area is then re-distilled. Who: whoever owns the front door dashboard's requirements (the rulings do not name them) must firm them up and agree them with Sam."
       ],
-      "notes": "Cards and page kept together: each count is the page's own list, and both wait on the same two blockers. The outcome feed's own integration will need a further repo (a stub or the gateway) once it is agreed, so this row's repos are a floor. | Builds the Germinal products section's Status updates card, the half of req-979 that waits on req-977's count, so it depends on that row. The plants section's 'View updates' link is built with the blocked plants-cards row. req-987's Back-link rule and req-967's current navigation item are observed here for this page; both requirements sit in the Action needed row. | req-1003 (sections for validated, rejected, cancelled and replaced) is out of scope and not built. | Carried forward with its id and wording; nothing in the requirements behind it moved this time. | The cards change the home's template and copy in the front door's dashboard feature folder, which the split-off type-question-and-templates theme owns, and its view-model, which overview-and-review owns; both are in shared, and the row builds after those themes land through the home row.",
+      "notes": [
+        "Cards and page kept together: each count is the page's own list, and both wait on the same two blockers. The outcome feed's own integration will need a further repo (a stub or the gateway) once it is agreed, so this row's repos are a floor.",
+        "Gains one criterion in this re-distil: req-2766's status presentation on this drill-down (Submitted as plain text, Amend as its tag). req-2766 sits in the Action needed row, which builds the drill-down card.",
+        "Builds the Germinal products section's Status updates card, the half of req-979 that waits on req-977's count, so it depends on that row. The plants section's 'View updates' link is built with the blocked plants-cards row. req-987's Back-link rule and req-967's current navigation item are observed here for this page; both requirements sit in the Action needed row.",
+        "req-1003 (sections for validated, rejected, cancelled and replaced) is out of scope and not built.",
+        "The cards change the home's template and copy in the front door's dashboard feature folder, which the split-off type-question-and-templates theme owns, and its view-model, which overview-and-review owns; both are in shared, and the row builds after those themes land through the home row.",
+        "Re-distil 27 November, second pass: nothing behind this row changed."
+      ],
       "touches": [
         "insfrontend:src/server/app/features/status-updated",
         "insfrontend:src/server/app/services/ins-backend",
         "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification",
-        "insbackend:src/main/resources",
+        "tests:page-objects/ins/status-updated-page.ts",
         "tests:tests/ins/e2e/features/status-updated"
       ],
       "shared": [
         "insfrontend:src/server/app/features/dashboard/template.njk",
         "insfrontend:src/server/app/features/dashboard/copy",
-        "insfrontend:src/server/app/features/dashboard/view-model",
-        "tests:page-objects/ins/dashboard-page.ts"
+        "insfrontend:src/server/app/features/dashboard/view-model"
       ],
-      "dependsOn": ["inc-134", "inc-145"],
+      "dependsOn": [
+        "inc-134",
+        "inc-145"
+      ],
+      "theme": "ins-dashboard",
       "existingRow": "inc-143"
     },
     {
@@ -411,6 +501,7 @@
         "The details end with a link whose text is exactly 'Read the guidance on what you need to do at a border inspection', opening https://www.gov.uk/guidance/sanitary-and-phytosanitary-sps-checks-at-border-control-posts-bcps in a new tab (prototype:dr2-1-specs e2e/dashboard.fit.spec.js:202-209)",
         "The page's 'Back' link goes to the home whatever category it is opened with (prototype:dr2-1-source app/views/design-release-2.1/dashboard-inspection.html:13-25; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:190-212)",
         "The page lists, under a visually hidden h2 'Notifications chosen for inspection', every one of the signed-in organisation's notifications chosen for inspection across all categories, each carrying whichever of the service's own statuses it now holds, including one whose status has moved on since it was chosen; opening the page with a category in the query lists the same notifications (prototype:dr2-1-source app/routes.js:6753-6755, 7442, 9094; trace:prototype-dr2-1 inspection-required snapshot 14; ruling:sam-2026-11-16 ruling-sam-2026-11-16-p1-017)",
+        "On the page, a submitted notification's card shows its status as the plain text 'Submitted', and a notification being amended shows its Amend status as a tag (trace:prototype-dr2-1 inspection-required action 25; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-084; ruling:sam-2026-11-16 ruling-sam-2026-11-16-p1-012)",
         "The page has the same 'Search by' form and hint, 'Sort by:' select and 'Show <first>-<last> of <total> results' line as the Action needed page, shows eight notifications at a time, and its page links keep the sort (prototype:dr2-1-source app/views/design-release-2.1/dashboard-inspection.html:52-95, app/routes.js:6757-6807, 9108)",
         "The page's main content holds only its intro block, the border-inspection details, its search and sort form, its results line and its list; the service navigation's 'Dashboard' item is marked current on it (trace:prototype-dr2-1 inspection-required snapshot 14; repo:insfrontend repo-insfrontend-p1-076)",
         "The page shows the recoverable error message with HTTP status 500 when the read model cannot be loaded, shows its copy in Welsh with Welsh selected, recorded as a machine draft, and has no serious or critical axe violations (repo:insfrontend repo-insfrontend-p1-058, p1-079, p1-086)"
@@ -434,7 +525,7 @@
         },
         {
           "source": "trace:prototype-dr2-1",
-          "ref": "dashboard--at-a-glance-drill-downs-inspection-required-lists-consignments-due-at-the-bcp"
+          "ref": "dashboard--at-a-glance-drill-downs-inspection-required-lists-consignments-due-at-the-bcp; trace-prototype-dr2-1-p15-084"
         },
         {
           "source": "prototype:dr2-1-specs",
@@ -450,10 +541,14 @@
         },
         {
           "source": "ruling:sam-2026-11-16",
-          "ref": "ruling-sam-2026-11-16-p1-017"
+          "ref": "ruling-sam-2026-11-16-p1-012, p1-017"
         }
       ],
-      "repos": ["insbackend", "insfrontend", "tests"],
+      "repos": [
+        "insbackend",
+        "insfrontend",
+        "tests"
+      ],
       "kind": "feat",
       "status": "blocked",
       "gate": null,
@@ -461,16 +556,24 @@
         "Blocked: the authorities' import-checking systems, outside this programme, must send which notifications are chosen for inspection to the services; no service in the workspace receives that today and the INS read model holds no such state (DR1 inc-014). Who: the programme owner must agree that feed with the authorities' systems team.",
         "Blocked: Sam's 9 October rulings also block this drill-down as front door dashboard summary information (ruling:sam-2026-10-09-pm p3-062) until its requirements firm up and are agreed; the area is then re-distilled. Who: whoever owns the front door dashboard's requirements (the rulings do not name them) must firm them up and agree them with Sam."
       ],
-      "notes": "Kept as one row: the page without its list would always show 'Show 0 of 0 results', so neither half can be observed apart. Reuses the search form, sort select and results line built for the Action needed page, and proves their Inspection required half of req-990, req-992 and req-994. The plants section's 'View requirements' link is built with the blocked plants-cards row. The feed's own integration will need a further repo once it is agreed. | Rewritten against req-1011 as it now stands, keeping the row's id: c-417 keeps 'Completed' out as a notification status until a real source of completion exists, so the list criterion no longer names it and says instead that a listed notification carries whichever of the service's own statuses it now holds.",
+      "notes": [
+        "Kept as one row: the page without its list would always show 'Show 0 of 0 results', so neither half can be observed apart. Reuses the search form, sort select and results line built for the Action needed page, and proves their Inspection required half of req-990, req-992 and req-994. The plants section's 'View requirements' link is built with the blocked plants-cards row. The feed's own integration will need a further repo once it is agreed.",
+        "Gains one criterion in this re-distil: req-2766's status presentation on this drill-down (Submitted as plain text, Amend as its tag). req-2766 sits in the Action needed row, which builds the drill-down card.",
+        "c-417 keeps 'Completed' out as a notification status until a real source of completion exists, so the list criterion says a listed notification carries whichever of the service's own statuses it now holds.",
+        "Re-distil 27 November, second pass: nothing behind this row changed."
+      ],
       "touches": [
         "insfrontend:src/server/app/features/inspection-required",
         "insfrontend:src/server/app/services/ins-backend",
         "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification",
-        "insbackend:src/main/resources",
+        "tests:page-objects/ins/inspection-required-page.ts",
         "tests:tests/ins/e2e/features/inspection-required"
       ],
       "shared": [],
-      "dependsOn": ["inc-133"],
+      "dependsOn": [
+        "inc-133"
+      ],
+      "theme": "ins-dashboard",
       "existingRow": "inc-144"
     },
     {
@@ -484,7 +587,10 @@
         "Following the germinal products 'View tasks', the Action needed page's 'Back' link goes to the germinal products notification list at the germinal products set root in the animals frontend (prototype:dr2-1-source app/views/design-release-2.1/dashboard-actions.html:12-24)",
         "With Welsh selected the section's heading, link and card copy show in Welsh, recorded as machine drafts; the home still has no serious or critical axe violations (repo:insfrontend repo-insfrontend-p1-079, p1-086)"
       ],
-      "requirements": ["req-979", "req-2193"],
+      "requirements": [
+        "req-979",
+        "req-2193"
+      ],
       "sources": [
         {
           "source": "prototype:dr2-1-source",
@@ -511,7 +617,10 @@
           "ref": "ruling-sam-2026-11-10-p1-002"
         }
       ],
-      "repos": ["insfrontend", "tests"],
+      "repos": [
+        "insfrontend",
+        "tests"
+      ],
       "kind": "feat",
       "status": "blocked",
       "gate": null,
@@ -519,20 +628,29 @@
         "Blocked: Sam's 9 October rulings block the front door dashboard's summary information, naming the front door home's germinal section (ruling:sam-2026-10-09-pm p3-061, c-297), until its requirements firm up and are agreed; the area is then re-distilled. Who: whoever owns the front door dashboard's requirements (the rulings do not name them) must firm them up and agree them with Sam.",
         "Blocked: req-2193's germinal rule reads the rule that works out a notification's outstanding items, which Sam's 19 November ruling has the animals backend stop storing until the outstanding-actions alert of Sam's 16 November ruling arrives (c-417). Who: whoever designs that alert must design it, and whoever owns the animals backend must re-add the outstanding-items rule with it, for the germinal set's documents as well as live animals'."
       ],
-      "notes": "Depends on the live-animals glance-card row for the card pattern and the count, and on the germinal products set's own list at its set root (inc-141), which View dashboard and the Back link open (c-295). Completes req-971's three-section order, and observes req-975's germinal half and req-987's germinal Back-link half. | req-979 also names a germinal Status updates card; its count is req-977, blocked on the authorities' outcome feed, so that card is built with the blocked Status updated row (c-148). | req-2193 is new since the last distil: c-366 settles that the germinal pages take live animals as their reference, so the needs-action rule applies to the documents the germinal set asks for, with no animal-identifier test. It is drafted into this row rather than the Action needed page row because this row already builds the germinal card, its count and the germinal filter of that page, and already depends on the germinal set's own list; putting it in the Action needed row would add a second cross-theme dependency for no gain. Its own code is the drill-down's germinal filter and this card, both in the front door, so it is not a requirement to hand to a split-off theme's pickUp. | Changes the home's template and copy in the front door's dashboard feature folder, which the split-off type-question-and-templates theme owns, and its view-model, which overview-and-review owns; it builds only after those themes land, through the home row, so those files are in shared rather than touches.",
+      "notes": [
+        "Carried over from the existing row unchanged: nothing behind it moved in this re-distil.",
+        "Depends on the live-animals glance-card row for the card pattern and the count, and on the germinal products set's own list at its set root (inc-141), which View dashboard and the Back link open (c-295). Completes req-971's three-section order, and observes req-975's germinal half and req-987's germinal Back-link half.",
+        "req-979 also names a germinal Status updates card; its count is req-977, blocked on the authorities' outcome feed, so that card is built with the blocked Status updated row (c-148).",
+        "req-2193 (c-366) sits here rather than in the Action needed page row because this row already builds the germinal card, its count and the germinal filter of that page, and already depends on the germinal set's own list. Its code is the drill-down's germinal filter and this card, both in the front door, so it is not a requirement to hand to a split-off theme's pickUp.",
+        "Changes the home's template and copy in the front door's dashboard feature folder, which the split-off type-question-and-templates theme owns, and its view-model, which overview-and-review owns; it builds only after those themes land, through the home row, so those files are in shared rather than touches.",
+        "Re-distil 27 November, second pass: nothing behind this row changed."
+      ],
       "touches": [
         "insfrontend:src/server/app/features/action-needed",
         "insfrontend:src/server/app/services/ins-backend",
-        "tests:tests/ins/e2e/features/overall-dashboard",
         "tests:tests/ins/e2e/features/action-needed"
       ],
       "shared": [
         "insfrontend:src/server/app/features/dashboard/template.njk",
         "insfrontend:src/server/app/features/dashboard/copy",
-        "insfrontend:src/server/app/features/dashboard/view-model",
-        "tests:page-objects/ins/dashboard-page.ts"
+        "insfrontend:src/server/app/features/dashboard/view-model"
       ],
-      "dependsOn": ["inc-134", "inc-141"],
+      "dependsOn": [
+        "inc-134",
+        "inc-141"
+      ],
+      "theme": "ins-dashboard",
       "existingRow": "inc-145"
     },
     {
@@ -543,7 +661,9 @@
         "Each plants card's count equals the number of notifications its page lists for plants for the signed-in organisation (repo:insfrontend repo-insfrontend-p1-068)",
         "The Status updates and Inspection required counts show in blue, and the Action needed count in the default count colour (trace:prototype-dr2-1 overall-dashboard action 30)"
       ],
-      "requirements": ["req-982"],
+      "requirements": [
+        "req-982"
+      ],
       "sources": [
         {
           "source": "prototype:dr2-1-source",
@@ -562,7 +682,10 @@
           "ref": "ruling-sam-2026-10-09-pm-p3-062"
         }
       ],
-      "repos": ["insfrontend", "tests"],
+      "repos": [
+        "insfrontend",
+        "tests"
+      ],
       "kind": "feat",
       "status": "blocked",
       "gate": null,
@@ -570,18 +693,27 @@
         "Blocked: the plants services (trade-imports-plants-frontend and trade-imports-plants-backend) must publish their notifications to the INS read model in trade-imports-ins-backend before the plants glance cards can count or list anything. Who: whoever owns the plants services must add that publishing first.",
         "Blocked: Sam's 9 October rulings also block these cards as front door dashboard summary information (ruling:sam-2026-10-09-pm p3-062) until its requirements firm up and are agreed; the area is then re-distilled. Who: whoever owns the front door dashboard's requirements (the rulings do not name them) must firm them up and agree them with Sam."
       ],
-      "notes": "Depends on the Status updated and Inspection required rows as well as the live-animals card row, because two of its three links open those pages; both wait on the authorities' feeds, so this row needs them as well as the plants publishing. | trade-imports-plants-backend is not one of the programme's repos; its publishing is outside this row. | Carried forward with its id and wording; nothing in req-982 moved this time. | Changes the home's template and copy in the front door's dashboard feature folder, which the split-off type-question-and-templates theme owns; it builds only after that theme lands, through the home row, so those files are in shared rather than touches.",
+      "notes": [
+        "Carried over from the existing row unchanged: nothing behind it moved in this re-distil.",
+        "Depends on the Status updated and Inspection required rows as well as the live-animals card row, because two of its three links open those pages; both wait on the authorities' feeds, so this row needs them as well as the plants publishing.",
+        "trade-imports-plants-backend is not one of the programme's repos; its publishing is outside this row.",
+        "Changes the home's template and copy in the front door's dashboard feature folder, which the split-off type-question-and-templates theme owns; it builds only after that theme lands, through the home row, so those files are in shared rather than touches.",
+        "Re-distil 27 November, second pass: nothing behind this row changed."
+      ],
       "touches": [
         "insfrontend:src/server/app/services/ins-backend",
-        "tests:tests/ins/e2e/features/overall-dashboard"
+        "tests:tests/ins/e2e/features/organisation-scoped-dashboard.spec.ts"
       ],
       "shared": [
         "insfrontend:src/server/app/features/dashboard/template.njk",
-        "insfrontend:src/server/app/features/dashboard/copy",
-        "insfrontend:src/server/app/features/dashboard/view-model",
-        "tests:page-objects/ins/dashboard-page.ts"
+        "insfrontend:src/server/app/features/dashboard/copy"
       ],
-      "dependsOn": ["inc-134", "inc-143", "inc-144"],
+      "dependsOn": [
+        "inc-134",
+        "inc-143",
+        "inc-144"
+      ],
+      "theme": "ins-dashboard",
       "existingRow": "inc-146"
     }
   ],

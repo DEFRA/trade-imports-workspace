@@ -38,7 +38,7 @@ test.describe('upload documents', () => {
     await expectHeading(page, 'Upload documents')
     const main = page.locator('main')
     await expect(main).toContainText('Documents')
-    await expect(main).toContainText('You must attach an ITAHC if this consignment requires one. If you do not have it now, you can add it later. All documents should be uploaded before the consignment arrives at the UK port. Documents must be in English and you must upload all pages.')
+    await expect(main).toContainText('You must attach an health certificate if this consignment requires one. If you do not have it now, you can add it later. All documents should be uploaded before the consignment arrives at the UK port. Documents must be in English and you must upload all pages.')
     await expect(main).toContainText('import licences or authorisations')
     await expect(main).toContainText('commercial documents or invoices')
     await expect(main).toContainText('Check which additional documents you must upload')
@@ -83,7 +83,7 @@ test.describe('upload documents', () => {
     await expect(page).toHaveURL(urlFor('/roles-and-addresses'))
   })
 
-  test('a complete document is listed with its virus check status, and can be removed', async ({ page }, testInfo) => {
+  test('a complete document is listed with its virus check status, and removed after a confirmation page', async ({ page }, testInfo) => {
     await fillDocument(page, { reference: 'ITAHC-001', issued: dateFromToday(-2) })
     await expect(page.locator('main')).toContainText('itahc.pdf')
     await capture(page, testInfo, 'file-chosen')
@@ -104,9 +104,29 @@ test.describe('upload documents', () => {
     await page.waitForTimeout(4000)
     await expect(table.locator('.app-upload-documents-table__status')).toHaveText('Scanning for virus')
 
-    await table.getByRole('button', { name: 'Remove' }).click()
-    await expect(page).toHaveURL(urlFor('/upload-documents'))
-    await expect(page.locator('table.app-upload-documents-table')).toHaveCount(0)
+    await test.step('remove opens a confirmation page, and no, cancel keeps the document', async () => {
+      await table.getByRole('link', { name: 'Remove' }).click()
+      await expect(page).toHaveURL(/\/design-release-2\.1\/upload-documents\/[^/]+\/delete$/)
+      await expect(page).toHaveTitle('Delete this document? - Import notification service - GOV.UK')
+      await expectHeading(page, 'Delete this document?')
+      const main = page.locator('main')
+      await expect(main.locator('.govuk-inset-text')).toHaveText('This will remove the document from this notification.')
+      await expect(main.locator('.govuk-summary-list__key')).toHaveText(['Document reference', 'Document type', 'Date of issue', 'File'])
+      await expect(main.locator('.govuk-summary-list__value')).toHaveText(['ITAHC-001', 'Intra Trade Animal Health Certificate (ITAHC)', dateFromToday(-2), 'itahc.pdf'])
+      await expect(main).toContainText('This action cannot be undone.')
+      await expectBackLink(page, url('/upload-documents'))
+      await capture(page, testInfo)
+      await main.getByRole('link', { name: 'No, cancel' }).click()
+      await expect(page).toHaveURL(urlFor('/upload-documents'))
+      await expect(table.locator('tbody tr')).toHaveCount(1)
+    })
+
+    await test.step('yes, delete removes it', async () => {
+      await table.getByRole('link', { name: 'Remove' }).click()
+      await page.locator('main').getByRole('button', { name: 'Yes, delete' }).click()
+      await expect(page).toHaveURL(urlFor('/upload-documents'))
+      await expect(page.locator('table.app-upload-documents-table')).toHaveCount(0)
+    })
   })
 })
 

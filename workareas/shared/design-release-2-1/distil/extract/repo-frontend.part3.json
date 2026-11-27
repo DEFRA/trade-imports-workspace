@@ -1,12 +1,12 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 3 read the animals frontend's repo-root fit suite and the three cross-page fit specs in full: fit/live-animals-journey.js (1,910 lines, the shared driver every fit spec imports), fit/journey-smoke.fit.spec.js (366 lines, 9 tests in one describe, 'live-animals journey glue'), fit/sign-in.js (9 lines), playwright.config.js (76 lines), and src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js (5 tests), page-title.fit.spec.js (2 tests) and service-navigation.fit.spec.js (7 tests). The driver has three layers: generic page helpers (axe, overflow, computed-style probes, error summary, Back link, date picker, grid columns, journey form, save-control shape assertions), per-page answer helpers that fill one page and assert the page Save and continue opens (a LANDINGS table of slug and heading for 12 landings), and whole-journey helpers (startNotificationAtOrigin, startNotification, completeAnswerSections, submitCompleteNotification, amendFromList). Values come from src/server/app/sets/live-animals/journeys/linear/flow/fixtures/happy-path.json, read here for the values the driver fills, and species rows from the commodities search test-support module. Covered: the happy path page by page with its URLs, fields, options, buttons and values; sign-in through the stub-auth route; the suite's own set-up (two Playwright projects, base URL, stub-mode web server, no seed step); what each of the 9 smoke tests asserts and that the suite stops at the draft notification view without declaring; the section caption rule and the one page it exempts; the page title rule; and the service navigation items, highlighting and destinations. Not claimed here, because the partition gives them to the feature parts: each page's own copy, hints, validation messages and per-page save-control shape, which this part records only as the rule the driver's shared helpers hold a page to.",
+  "structure": "Part 3 read the repo-root fit suite in full: fit/live-animals-journey.js (1895 lines, the shared driver every live-animals fit spec imports: sign-in re-export, accessibility, overflow, GOV.UK style and layout helpers, error summary and Back link helpers, the date picker and search box helpers, URL and journey id helpers, the journey form and declaration post, notification view helpers, the happy-path fixture and arrival date, one answer helper per journey page, the LANDINGS table of the ten pages Save and continue lands on, the task-row walk completeAnswerSections, review, submit, amend, cancel-amend, delete and no-JavaScript helpers, and the three save-control shape checks), fit/journey-smoke.fit.spec.js (355 lines, ten tests on the journey glue: Save and continue through the entry guard, one pass to the draft view, Back then Save and continue, three Back-target tests, the incomplete review, the stranger session, Back in reverse to Overview, and collection changes on the review trail), fit/sign-in.js (stub sign-in), playwright.config.js (journeys and features projects, timeouts, stub-mode web server), and the three cross-page feature specs section-caption.fit.spec.js (five tests), page-title.fit.spec.js (two tests) and service-navigation.fit.spec.js (seven tests). It covers the happy path's pages, fields, values and buttons in order, sign-in, what the smoke spec asserts and where it stops (the draft notification view), the caption, title and navigation rules with their exemption and their untested pages, and the suite's own set-up. Since the earlier extract the contact address page has gone from the driver and the smoke spec: consignment addresses now leads straight to the notification view, and the accessibility check gained a second false-positive filter for the GOV.UK file upload button. Each page's own copy belongs to the feature parts.",
   "claims": [
     {
       "id": "repo-frontend-p3-001",
       "statement": "The live-animals journey is mounted under the path /live-animals, and every notification page sits under /live-animals/notifications/<notification id>.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:51 with src/server/app/sets/live-animals/set.js:6 and fit/live-animals-journey.js:352",
+      "ref": "fit/live-animals-journey.js:50,358-359 with src/server/app/sets/live-animals/set.js:6",
       "quote": "export const journeyUrl = (page, slug = '') =>\n  `${BASE}/notifications/${journeyIdFromPage(page)}${slug ? `/${slug}` : ''}`",
       "confidence": "verbatim"
     },
@@ -14,7 +14,7 @@
       "id": "repo-frontend-p3-002",
       "statement": "A journey page's URL may carry a from= query holding the trail of pages the trader came through, and the page is the same page with or without it.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:335-336",
+      "ref": "fit/live-animals-journey.js:335-342",
       "quote": "export const urlUnderBase = (pathPattern) =>\n  new RegExp(`^https?://[^/]+${BASE}${pathPattern}(?:[?&]from=[^#]*)?$`)",
       "confidence": "verbatim"
     },
@@ -31,7 +31,7 @@
       "id": "repo-frontend-p3-004",
       "statement": "A test that needs a transporter store no other test shares signs in as a fresh organisation whose id is fit- followed by a random UUID, so the transporter it adds is the newest in that organisation's own store.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1890-1891",
+      "ref": "fit/live-animals-journey.js:1869-1876",
       "quote": "export const signInWithOwnTransporterStore = (page) =>\n  signIn(page, { organisationId: `fit-${randomUUID()}` })",
       "confidence": "verbatim",
       "note": "mechanism: isolates a test's transporter list by organisation id; it works on the transporter store the service keeps per organisation."
@@ -80,7 +80,7 @@
       "id": "repo-frontend-p3-010",
       "statement": "The suite seeds no notification data before a journey: each test signs in and then creates its own notification from the set dashboard, so the only data it starts from is the stub reference data and stub address book the service serves in stub mode.",
       "kind": "behaviour",
-      "ref": "playwright.config.js:57-75 with fit/live-animals-journey.js:665-672",
+      "ref": "playwright.config.js:57-75 with fit/live-animals-journey.js:666-678",
       "quote": "export const startNotificationAtOrigin = async (page) => {\n  await page.goto(BASE)\n  await page.getByRole('button', { name: 'Start a new notification' }).click()",
       "confidence": "inferred",
       "note": "It follows because the config declares no globalSetup and no seeding step, and every driver entry point begins at the dashboard's start button."
@@ -89,7 +89,7 @@
       "id": "repo-frontend-p3-011",
       "statement": "The set dashboard at /live-animals offers a Start a new notification button, and pressing it creates a notification and opens its origin page at /live-animals/notifications/<id>/origin.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:665-672",
+      "ref": "fit/live-animals-journey.js:671-678",
       "quote": "await page.getByRole('button', { name: 'Start a new notification' }).click()\n  await expect(page).toHaveURL(urlUnderBase('/notifications/[^/]+/origin'))",
       "confidence": "verbatim"
     },
@@ -97,7 +97,7 @@
       "id": "repo-frontend-p3-012",
       "statement": "A country, port or transit country is chosen through one field that is an enhanced search box when JavaScript runs and a native select when it does not: with JavaScript the trader types a query and picks the named option, without it the option is selected in the select.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:684-700",
+      "ref": "fit/live-animals-journey.js:680-706",
       "quote": "if ((await field.evaluate((el) => el.tagName)) === 'SELECT') {\n    await field.selectOption({ label: optionName })\n    return\n  }\n  await field.click()\n  await field.fill(query)\n  await page.getByRole('option', { name: optionName, exact: true }).click()",
       "confidence": "verbatim"
     },
@@ -105,7 +105,7 @@
       "id": "repo-frontend-p3-013",
       "statement": "The origin page asks for the country of origin, then a Yes or No answer on whether a region of origin code is needed; answering No and saving opens the commodities search page.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:712-716",
+      "ref": "fit/live-animals-journey.js:718-722",
       "quote": "export const answerOriginEntry = async (page) => {\n  await chooseCountryOfOrigin(page)\n  await page.getByRole('radio', { name: 'No' }).check()\n  await saveAndExpectLanding(page, LANDINGS.commodities)\n}",
       "confidence": "verbatim"
     },
@@ -113,7 +113,7 @@
       "id": "repo-frontend-p3-014",
       "statement": "Answering Yes on the origin page reveals a region of origin code box labelled \"Enter the region of origin code\", and the page also takes an optional box labelled \"Your internal reference for this consignment (optional)\".",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1087-1095",
+      "ref": "fit/live-animals-journey.js:1079-1097",
       "quote": "await page.getByRole('radio', { name: 'Yes' }).check()\n  await page\n    .getByLabel('Enter the region of origin code', { exact: true })\n    .fill(regionCode)\n  await page\n    .getByLabel('Your internal reference for this consignment (optional)')\n    .fill(internalReference)",
       "confidence": "verbatim"
     },
@@ -121,7 +121,7 @@
       "id": "repo-frontend-p3-015",
       "statement": "The happy path's origin answers are the country France, region of origin code 75 (the part of FR-75 after the country prefix) and internal reference Imports456GB.",
       "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/fixtures/happy-path.json:4-7 read by fit/live-animals-journey.js:627-635,1081-1085",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/fixtures/happy-path.json:4-7 read by fit/live-animals-journey.js:633-641,1083-1086",
       "quote": "\"countryOfOrigin\": \"FR\",\n    \"regionOfOriginCodeRequirement\": \"yes\",\n    \"regionOfOriginCode\": \"FR-75\",\n    \"internalReferenceNumber\": \"Imports456GB\",",
       "confidence": "verbatim",
       "note": "The fixture is the repo's own happy-path test data, not a field specification: V4 settles what the origin page captures."
@@ -130,7 +130,7 @@
       "id": "repo-frontend-p3-016",
       "statement": "The origin country field is a select with the id countryOfOrigin-select, so a country the reference list does not offer can only reach the page by adding an option to that select.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:766-775",
+      "ref": "fit/live-animals-journey.js:766-781",
       "quote": "export const chooseOutOfListCountry = (page, code = 'XX') =>\n  page\n    .locator('select#countryOfOrigin-select')",
       "confidence": "verbatim",
       "note": "mechanism: appends an option to the origin country select so a test can post a code the list does not hold; it works on the country reference list the page renders."
@@ -139,7 +139,7 @@
       "id": "repo-frontend-p3-017",
       "statement": "On the commodities search page a species is found by typing its Latin name into the search box and pressing a Search button, then ticking that species' checkbox inside the group named by its commodity code.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:843-862",
+      "ref": "fit/live-animals-journey.js:849-868",
       "quote": "export const searchCommodities = async (page, query) => {\n  await commoditySearchBox(page).fill(query)\n  await page.getByRole('button', { name: 'Search', exact: true }).click()\n}",
       "confidence": "verbatim"
     },
@@ -147,7 +147,7 @@
       "id": "repo-frontend-p3-018",
       "statement": "The chosen species are listed in a selection summary that groups them under their commodity label, each with a Remove control, and the summary offers a Clear all control.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:910-945",
+      "ref": "fit/live-animals-journey.js:916-951",
       "quote": "export const pressClearAll = (page) =>\n  page\n    .getByRole('button', { name: commoditiesCopy.search.selected.clearAll })\n    .click()",
       "confidence": "verbatim"
     },
@@ -155,7 +155,7 @@
       "id": "repo-frontend-p3-019",
       "statement": "Saving the commodities search page opens the main import reason page, and the happy path chooses the species Bos taurus under the cattle commodity code.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1102-1108 with src/server/app/sets/live-animals/journeys/linear/features/commodities/search/test-support.js:31-35",
+      "ref": "fit/live-animals-journey.js:1104-1110 with src/server/app/sets/live-animals/journeys/linear/features/commodities/search/test-support.js:31-35",
       "quote": "export const answerWhatYouAreImporting = async (\n  page,\n  chosen = BOS_TAURUS_ROW\n) => {\n  await selectSpecies(page, [chosen])\n  await saveAndExpectLanding(page, LANDINGS.importReason)\n}",
       "confidence": "verbatim"
     },
@@ -163,15 +163,23 @@
       "id": "repo-frontend-p3-020",
       "statement": "The main import reason page asks for a reason as radios, and choosing Internal market reveals a second group, Purpose in the internal market, whose Breeding option the happy path chooses; saving then opens the commodity details page.",
       "kind": "behaviour",
-      "ref": "fit/journey-smoke.fit.spec.js:86-95 with fit/live-animals-journey.js:1228-1230",
+      "ref": "fit/journey-smoke.fit.spec.js:85-95 with fit/live-animals-journey.js:1230-1232",
       "quote": "await page.getByRole('radio', { name: 'Internal market' }).check()\n    await expect(\n      page.getByRole('group', { name: 'Purpose in the internal market' })\n    ).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-129",
+      "statement": "The main import reason page can be opened by its own address once origin is answered, with the commodities still unanswered.",
+      "kind": "behaviour",
+      "ref": "fit/live-animals-journey.js:803-814",
+      "quote": "Starts a notification, answers origin and opens the import reason page by address, leaving commodities unanswered.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p3-021",
       "statement": "The commodity details page, at the slug consignment-details, asks for Number of animals and Number of packages (when required); saving opens the animal identification page at commodities/identification.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1116-1126",
+      "ref": "fit/live-animals-journey.js:1118-1128",
       "quote": "await page.getByLabel('Number of animals').fill(line.numberOfAnimalsQuantity)\n  await page\n    .getByLabel('Number of packages (when required)')\n    .fill(line.numberOfPackages)\n  await saveAndExpectLanding(page, LANDINGS.animalIdentification)",
       "confidence": "verbatim",
       "note": "The happy path fills 1 animal and 5 packages (happy-path.json commodityLines[0])."
@@ -180,7 +188,7 @@
       "id": "repo-frontend-p3-022",
       "statement": "When several species are chosen, the commodity details page shows one level 3 heading per species with that species' own Number of animals box beneath it, in the order the headings appear.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:869-886",
+      "ref": "fit/live-animals-journey.js:875-892",
       "quote": "return page\n    .getByRole('textbox', { name: 'Number of animals', exact: true })\n    .nth(position)",
       "confidence": "verbatim",
       "note": "mechanism: finds a species' own count box by the position of its level 3 heading; it works on the per-species panels the page renders."
@@ -189,7 +197,7 @@
       "id": "repo-frontend-p3-023",
       "statement": "The animal identification page takes an Ear tag for a cattle animal, and the happy path enters UK123456789012; saving opens the additional details page.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1128-1140",
+      "ref": "fit/live-animals-journey.js:1130-1142",
       "quote": "await page\n    .getByLabel('Ear tag', { exact: true })\n    .fill(unit.animalIdentifierEarTag)\n  await saveAndExpectLanding(page, LANDINGS.additionalDetails)",
       "confidence": "verbatim"
     },
@@ -197,7 +205,7 @@
       "id": "repo-frontend-p3-024",
       "statement": "The animal identification page saves one animal at a time: Save and add another keeps the page open for the next animal and Save and finish ends the collection, so animals the line still declares stay outstanding while Save and add another is used.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1142-1165",
+      "ref": "fit/live-animals-journey.js:1144-1167",
       "quote": "name:\n          index === microchips.length - 1 && !leavesAnimalsOutstanding\n            ? 'Save and finish'\n            : 'Save and add another'",
       "confidence": "verbatim"
     },
@@ -205,7 +213,7 @@
       "id": "repo-frontend-p3-025",
       "statement": "Each saved animal shows as a row in its species' table with a Remove control that takes the animal off the card.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1204-1218",
+      "ref": "fit/live-animals-journey.js:1190-1220",
       "quote": "await row\n    .getByRole('button', { name: commoditiesCopy.identification.removeRow })\n    .click()",
       "confidence": "verbatim"
     },
@@ -213,7 +221,7 @@
       "id": "repo-frontend-p3-026",
       "statement": "Saving the animal identification page with no animal identified still opens the additional details page, so identifying an animal is not needed to carry on.",
       "kind": "rule",
-      "ref": "fit/journey-smoke.fit.spec.js:99-112",
+      "ref": "fit/journey-smoke.fit.spec.js:96-111",
       "quote": "await save()\n    await expect(\n      page.getByRole('heading', {\n        name: additionalDetailsCopy.title,\n        exact: true\n      })\n    ).toBeVisible()",
       "confidence": "verbatim"
     },
@@ -221,7 +229,7 @@
       "id": "repo-frontend-p3-027",
       "statement": "The additional details page asks what the animals are certified for, the happy path choosing Slaughter, and asks \"Does the consignment contain any unweaned animals?\" as its own group, answered No; saving opens the arrival details page.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1233-1261",
+      "ref": "fit/live-animals-journey.js:1235-1263",
       "quote": "await page\n      .getByRole('group', {\n        name: 'Does the consignment contain any unweaned animals?'\n      })\n      .getByRole('radio', { name: 'No' })\n      .check()",
       "confidence": "verbatim"
     },
@@ -229,7 +237,7 @@
       "id": "repo-frontend-p3-028",
       "statement": "Leaving the certified-for or unweaned question unanswered and leaving the additional details page by Save and return to overview takes the trader to the overview rather than refusing the page.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1256-1259",
+      "ref": "fit/live-animals-journey.js:1258-1261",
       "quote": "if (leavesCertifiedFor || leavesUnweaned) {\n    await saveAndExpectOverview(page)\n    return\n  }",
       "confidence": "verbatim"
     },
@@ -237,7 +245,7 @@
       "id": "repo-frontend-p3-029",
       "statement": "The arrival details page, at the slug port-of-entry and headed \"Arrival details\", asks for the arrival date at the port of entry, the port of entry, the means of transport, a transport identification and a transport document reference.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1370-1382",
+      "ref": "fit/live-animals-journey.js:1373-1385",
       "quote": "await page\n    .getByLabel('Arrival date at port of entry')\n    .fill(ARRIVAL_DATE_IN_WINDOW)\n  await choosePortOfEntry(page)\n  await chooseMeansOfTransport(page, values.meansOfTransport)",
       "confidence": "verbatim"
     },
@@ -245,16 +253,25 @@
       "id": "repo-frontend-p3-030",
       "statement": "The arrival date the happy path enters is one month after today, so the date always falls inside the window the page accepts.",
       "kind": "data",
-      "ref": "fit/live-animals-journey.js:637-638",
+      "ref": "fit/live-animals-journey.js:643-644",
       "quote": "const arrivalDate = addUtcMonths(new Date(), 1)\nexport const ARRIVAL_DATE_IN_WINDOW = formatDateText(arrivalDate)",
       "confidence": "verbatim",
       "note": "mechanism: computes a date inside the arrival window rather than using the fixture's fixed 12/12/2026; it works on the arrival date the page validates."
     },
     {
+      "id": "repo-frontend-p3-127",
+      "statement": "An arrival date is shown back to the trader as the day, the three-letter month and the year, such as \"3 Mar 2026\", while it is typed into the arrival details page in the date text format the calendar helper writes.",
+      "kind": "copy",
+      "ref": "fit/live-animals-journey.js:643-664",
+      "quote": "return `${date.getUTCDate()} ${shortMonths[date.getUTCMonth()]} ${date.getUTCFullYear()}`",
+      "confidence": "inferred",
+      "note": "The driver exports ARRIVAL_DATE_IN_WINDOW_DISPLAY for specs that read the date back; where it is shown is the feature parts' claim."
+    },
+    {
       "id": "repo-frontend-p3-031",
       "statement": "A port of entry is offered as its name and code joined by a hyphen, such as \"Aberdeen Harbour - GB ABD\", which is the port the happy path chooses.",
       "kind": "copy",
-      "ref": "fit/live-animals-journey.js:823-831 with src/server/app/services/_capture/fixtures/ports-of-entry.json:92-96",
+      "ref": "fit/live-animals-journey.js:829-837 with src/server/app/services/_capture/fixtures/ports-of-entry.json:92-96",
       "quote": "const chosenOption = option ?? `${fixturePort.name} - ${fixturePort.code}`",
       "confidence": "verbatim"
     },
@@ -262,7 +279,7 @@
       "id": "repo-frontend-p3-032",
       "statement": "The means of transport is a plain select with the id meansOfTransport, and the happy path chooses the option ROAD_VEHICLE.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1365-1368 with the happy-path fixture's meansOfTransport",
+      "ref": "fit/live-animals-journey.js:1368-1371 with the happy-path fixture's meansOfTransport",
       "quote": "export const MEANS_OF_TRANSPORT_SELECT = 'select#meansOfTransport'",
       "confidence": "verbatim"
     },
@@ -270,7 +287,7 @@
       "id": "repo-frontend-p3-033",
       "statement": "Saving the arrival details by road opens the transit countries page, while saving it by air (AIRPLANE) skips transit countries and opens the transporter details page.",
       "kind": "rule",
-      "ref": "fit/live-animals-journey.js:1384-1387,1445-1451",
+      "ref": "fit/live-animals-journey.js:1387-1390,1448-1454",
       "quote": "export const saveArrivalByAir = (page) =>\n  saveArrivalWithMeans(page, 'AIRPLANE', { landing: LANDINGS.transporters })",
       "confidence": "verbatim"
     },
@@ -278,7 +295,7 @@
       "id": "repo-frontend-p3-034",
       "statement": "On the transit countries page a country is chosen and then added with an \"Add country\" button, which puts the country in a table of the countries added; the happy path adds France and then Belgium.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1389-1403",
+      "ref": "fit/live-animals-journey.js:1392-1406",
       "quote": "await page.getByRole('button', { name: 'Add country', exact: true }).click()\n  await expect(page.getByRole('cell', { name, exact: true })).toBeVisible()",
       "confidence": "verbatim"
     },
@@ -286,7 +303,7 @@
       "id": "repo-frontend-p3-035",
       "statement": "Saving the transit countries page opens the transporter details page.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1399-1403",
+      "ref": "fit/live-animals-journey.js:1402-1406",
       "quote": "await saveAndExpectLanding(page, LANDINGS.transporters)",
       "confidence": "verbatim"
     },
@@ -294,7 +311,7 @@
       "id": "repo-frontend-p3-036",
       "statement": "The transporter details page lists the organisation's transporters as radios, one of which is chosen; the happy path chooses the commercial transporter García Livestock Transport SL and saving opens the accompanying documents page.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1579-1584",
+      "ref": "fit/live-animals-journey.js:1582-1587",
       "quote": "export const answerTransporter = async (page) => {\n  await page\n    .getByRole('radio', { name: values.commercialTransporter.name })\n    .check()\n  await saveAndExpectLanding(page, LANDINGS.documents)\n}",
       "confidence": "verbatim"
     },
@@ -302,7 +319,7 @@
       "id": "repo-frontend-p3-037",
       "statement": "A transporter chosen on the list and saved stays chosen: reopening the transporters page shows that transporter's radio checked.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1501-1507",
+      "ref": "fit/live-animals-journey.js:1497-1510",
       "quote": "await expect(\n    page.getByRole('radio', { name: transporter.name })\n  ).toBeChecked()",
       "confidence": "verbatim"
     },
@@ -310,7 +327,7 @@
       "id": "repo-frontend-p3-038",
       "statement": "The transporter list has an Add a transporter button that opens a type question, \"Choose a transporter type\", whose Commercial and Private options each lead, through the question's own Continue button, to that type's own add page.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1528-1577",
+      "ref": "fit/live-animals-journey.js:1526-1580",
       "quote": "await continueTransporterType(page).click()\n  await expect(\n    page.getByRole('heading', {\n      name: destinationTitle[transporterType]\n    })\n  ).toBeVisible()",
       "confidence": "verbatim"
     },
@@ -318,7 +335,7 @@
       "id": "repo-frontend-p3-039",
       "statement": "After a transporter is added the transporter list is shown again under a success banner naming the transporter that was added.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1893-1910",
+      "ref": "fit/live-animals-journey.js:1878-1895",
       "quote": "await expect(\n    page.getByText(transportCopy.transporters.addedBanner.text(name))\n  ).toBeVisible()",
       "confidence": "verbatim"
     },
@@ -326,7 +343,7 @@
       "id": "repo-frontend-p3-040",
       "statement": "The accompanying documents page takes a Document reference, a Document type chosen from a select, a Date of issue entered as day/month/year in one box, and a file; Save and add another saves the entry and keeps the page open.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:991-1004",
+      "ref": "fit/live-animals-journey.js:997-1010",
       "quote": "await page\n    .getByLabel('Date of issue')\n    .fill(`${issued.day}/${issued.month}/${issued.year}`)\n  await setUploadFile(page, entry.filename)\n  await page.getByRole('button', { name: 'Save and add another' }).click()",
       "confidence": "verbatim"
     },
@@ -334,15 +351,23 @@
       "id": "repo-frontend-p3-041",
       "statement": "An uploaded document is listed in a table row that shows the document's scan state, reading \"Check completed\" once the file has been scanned clean.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1670-1680 with features/documents/copy/copy.en.js:97-98",
+      "ref": "fit/live-animals-journey.js:1655-1665 with features/documents/copy/copy.en.js scanTags.complete",
       "quote": "await expect(\n    documentRowFor(page, itahc.accompanyingDocumentReference)\n  ).toContainText(documentsCopy.scanTags.complete)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-128",
+      "statement": "The overview's documents row is a link reading \"Upload documents\", which opens the accompanying documents page.",
+      "kind": "behaviour",
+      "ref": "fit/live-animals-journey.js:988-995 with fit/journey-smoke.fit.spec.js:307 and features/hub/copy/copy.en.js:59",
+      "quote": "await page.getByRole('link', { name: 'Upload documents' }).click()\n  await expect(\n    page.getByRole('heading', { name: documentsCopy.title })\n  ).toBeVisible()",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p3-042",
       "statement": "The consignment addresses page offers one add link per party: Add a consignor, Add a place of origin, Add a consignee, Add an importer and Add a place of destination; each opens a picker where an address of the organisation's book is chosen by radio, and saving returns to the addresses page.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1266-1291",
+      "ref": "fit/live-animals-journey.js:1268-1290",
       "quote": "const parties = [\n    ['Add a consignor', partyPickerName(values.consignor)],\n    ['Add a place of origin', partyPickerName(values.placeOfOrigin)],\n    ['Add a consignee', partyPickerName(values.consignee)],\n    ['Add an importer', partyPickerName(values.importer)]\n  ]",
       "confidence": "verbatim"
     },
@@ -350,7 +375,7 @@
       "id": "repo-frontend-p3-043",
       "statement": "The consignment addresses page also offers an \"Add a CPH number\" link, opening a page headed \"Add the county parish holding number (CPH)\" with separate County, Parish and Holding number boxes; saving returns to the addresses page, headed \"Consignment addresses\".",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1293-1318",
+      "ref": "fit/live-animals-journey.js:1296-1321",
       "quote": "await page.getByLabel('County', { exact: true }).fill(county)\n  await page.getByLabel('Parish', { exact: true }).fill(parish)\n  await page.getByLabel('Holding number', { exact: true }).fill(holding)",
       "confidence": "verbatim",
       "note": "The happy path's CPH is 12/345/6789, split on the slashes into the three boxes."
@@ -359,7 +384,7 @@
       "id": "repo-frontend-p3-044",
       "statement": "The consignment addresses page offers an \"Add a permanent address\" link, and a permanent address card is answered either by choosing \"Same as the place of destination (POD)\" or by choosing \"Enter a new address\" and filling the address in by hand.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1320-1346",
+      "ref": "fit/live-animals-journey.js:1323-1349",
       "quote": "await card\n      .getByRole('radio', { name: 'Same as the place of destination (POD)' })\n      .check()",
       "confidence": "verbatim"
     },
@@ -367,7 +392,7 @@
       "id": "repo-frontend-p3-045",
       "statement": "A hand-entered permanent address takes Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County (optional), Postcode or Zip code, Email address and Phone number, in that order.",
       "kind": "data",
-      "ref": "fit/live-animals-journey.js:1347-1356",
+      "ref": "fit/live-animals-journey.js:1349-1365",
       "quote": "const PERMANENT_ADDRESS_FIELD_LABELS = {\n    nameOrOrganisationName: 'Name or organisation name',\n    addressLine1: 'Address line 1',\n    addressLine2: 'Address line 2 (optional)',\n    townOrCity: 'Town or city',\n    county: 'County (optional)',\n    postcode: 'Postcode or Zip code',\n    email: 'Email address',\n    phone: 'Phone number'\n  }",
       "confidence": "verbatim"
     },
@@ -375,23 +400,24 @@
       "id": "repo-frontend-p3-046",
       "statement": "A permanent address card is a region named by its heading, which reads the species and the animal's number, such as \"Felis catus 1\", so one card is shown for each animal that needs a permanent address.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1326-1339",
+      "ref": "fit/live-animals-journey.js:1329-1342",
       "quote": "@param {string} cardHeading - the card's title, such as \"Felis catus 1\".",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p3-047",
-      "statement": "Saving the consignment addresses page opens the contact address picker at consignment/contact/select, where the contact address is chosen by radio from the organisation's book.",
+      "id": "repo-frontend-p3-119",
+      "statement": "Once every party and the CPH number are added, Save and continue on the consignment addresses page opens the notification view, which shows the notification as a draft; no contact address page comes between them.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1286-1291,1586-1594",
-      "quote": "await saveAndExpectLanding(page, LANDINGS.contactAddress)",
-      "confidence": "verbatim"
+      "ref": "fit/live-animals-journey.js:1278-1294",
+      "quote": "await addPlaceOfDestination(page)\n  await answerCphNumberFromAddLink(page)\n  await save(page)\n  await expectDraftReview(page)",
+      "confidence": "verbatim",
+      "note": "The driver holds no contact address step anywhere: no landing, no helper and no task row for one."
     },
     {
       "id": "repo-frontend-p3-048",
       "statement": "An address in a party picker is shown by the name on the record, and a party answered from the address book shows the name that book record carries.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:338-342",
+      "ref": "fit/live-animals-journey.js:344-348",
       "quote": "export const partyPickerName = (party) =>\n  party?.name ?? stubNameById.get(party?.addressId)",
       "confidence": "verbatim",
       "note": "mechanism: resolves a fixture party to the name its picker row shows, by the record's own name or by looking its address id up in the stub book."
@@ -400,24 +426,24 @@
       "id": "repo-frontend-p3-049",
       "statement": "The notification overview is the notification's root page, headed \"Overview\", and each part of the notification is opened from it by a link reading that task row's title.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:728-741,1065-1068",
+      "ref": "fit/live-animals-journey.js:729-747,1067-1070",
       "quote": "export const openFromOverviewRow = async (page, rowTitle) => {\n  await openOverview(page)\n  await page.getByRole('link', { name: rowTitle }).click()\n}",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p3-050",
-      "statement": "The whole notification can be answered one overview task row at a time, in the order: Where is this consignment coming from?, What are you importing?, Commodity details, Identification details, Main import reason, Additional details, Consignment addresses, Arrival details, Transit countries, Transport details, Contact address for this consignment.",
+      "id": "repo-frontend-p3-120",
+      "statement": "The whole notification can be answered one overview task row at a time, in the order: Where is this consignment coming from?, What are you importing?, Commodity details, Identification details, Main import reason, Additional details, Consignment addresses, Arrival details, Transit countries, Transport details; Transport details is the last row the walk answers.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1606-1661",
-      "quote": "await task('Where is this consignment coming from?')\n  await answerOriginDetails(page)\n  await openOverview(page)\n\n  await answerWhatYouAreImportingFromOverview(page)\n  await task('Commodity details')",
+      "ref": "fit/live-animals-journey.js:1589-1646 with features/hub/copy/copy.en.js:28-59",
+      "quote": "await task('Arrival details')\n  await answerArrivalDetails(page)\n  await openOverview(page)\n  if (!skipTransitCountries) {\n    await task('Transit countries')\n    await answerTransitCountries(page)\n    await openOverview(page)\n  }\n  await task('Transport details')\n  await answerTransporter(page)\n  await openOverview(page)\n}",
       "confidence": "verbatim",
-      "note": "This order is the driver's own walk of the task rows, and it differs from the Save and continue order, where the main import reason comes before the commodity details."
+      "note": "This order is the driver's own walk of the task rows, and it differs from the Save and continue order, where the main import reason comes before the commodity details. The walk leaves the Upload documents row unanswered; a document is added only when a test asks for one."
     },
     {
       "id": "repo-frontend-p3-051",
       "statement": "A notification is opened for review by a \"Review and submit\" button on the overview, which opens the notification view at the slug notification-view.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1663-1668",
+      "ref": "fit/live-animals-journey.js:1648-1653",
       "quote": "await page.getByRole('button', { name: 'Review and submit' }).click()\n  await expect(page).toHaveURL(\n    urlUnderBase('/notifications/[^/]+/notification-view')\n  )",
       "confidence": "verbatim"
     },
@@ -425,7 +451,7 @@
       "id": "repo-frontend-p3-052",
       "statement": "A draft notification's view is headed by the notification's own reference, shows the status Draft and ends with one control only, the review's submit button.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:490-523",
+      "ref": "fit/live-animals-journey.js:491-529",
       "quote": "export const expectDraftReview = async (page) => {\n  await expect(notificationReferenceHeading(page)).toBeVisible()\n  await expect(\n    viewHeaderTag(page, sharedAppCopy.journeyStrip.draft)\n  ).toBeVisible()\n  await expectDraftReviewEndsWithContinue(page)\n}",
       "confidence": "verbatim"
     },
@@ -433,7 +459,7 @@
       "id": "repo-frontend-p3-053",
       "statement": "A complete notification is submitted from the notification view by pressing Continue, ticking a declaration checkbox that begins \"I confirm that I have reviewed\", then pressing Continue again, and the notification keeps the same reference through the submission.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1690-1706",
+      "ref": "fit/live-animals-journey.js:1667-1691",
       "quote": "await page.getByRole('button', { name: 'Continue' }).click()\n  await page\n    .getByRole('checkbox', { name: /I confirm that I have reviewed/ })\n    .check()\n  await page.getByRole('button', { name: 'Continue' }).click()\n  return journeyIdFromPage(page)",
       "confidence": "verbatim"
     },
@@ -441,7 +467,7 @@
       "id": "repo-frontend-p3-054",
       "statement": "A submitted notification is amended from the set dashboard's list, by a button reading \"Amend notification\" and the notification's reference.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1708-1713",
+      "ref": "fit/live-animals-journey.js:1693-1698",
       "quote": "await page\n    .getByRole('button', { name: `Amend notification ${reference}` })\n    .click()",
       "confidence": "verbatim"
     },
@@ -449,7 +475,7 @@
       "id": "repo-frontend-p3-055",
       "statement": "While a notification is being amended a journey strip offers a Cancel amend link, and following it after a change abandons that change.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1762-1773",
+      "ref": "fit/live-animals-journey.js:1747-1758",
       "quote": "export const cancelAmendLink = (page) =>\n  page.locator('.app-journey-strip').getByRole('link', {\n    name: sharedAppCopy.journeyStrip.cancelAmend,\n    exact: true\n  })",
       "confidence": "verbatim"
     },
@@ -457,7 +483,7 @@
       "id": "repo-frontend-p3-056",
       "statement": "An amendment changes an answer through a Change link on the notification view, such as \"Change origin of import\", which opens the question page; saving it carries on to the next journey page.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1749-1760",
+      "ref": "fit/live-animals-journey.js:1734-1745",
       "quote": "await page.getByRole('link', { name: 'Change origin of import' }).click()",
       "confidence": "verbatim"
     },
@@ -465,7 +491,7 @@
       "id": "repo-frontend-p3-057",
       "statement": "A notification is deleted from its view by a Delete control among the notification actions, which opens a confirmation page with its own level 1 heading rather than a pop-up.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1737-1747",
+      "ref": "fit/live-animals-journey.js:1722-1732",
       "quote": "export const deleteFromReview = async (page, confirmationTitle) => {\n  await page\n    .getByRole('button', {\n      name: sharedAppCopy.notificationActions.delete.text,\n      exact: true\n    })\n    .click()",
       "confidence": "verbatim"
     },
@@ -473,7 +499,7 @@
       "id": "repo-frontend-p3-058",
       "statement": "Each journey page's answers are posted by one form whose method is post, and the page's save controls sit inside it.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:417-426",
+      "ref": "fit/live-animals-journey.js:423-432",
       "quote": "export const JOURNEY_FORM_SELECTOR = 'form[method=\"post\"]'",
       "confidence": "verbatim"
     },
@@ -481,16 +507,25 @@
       "id": "repo-frontend-p3-059",
       "statement": "A journey page's form carries a concurrency token alongside its answers, which is posted back as the page rendered it.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:428-435",
+      "ref": "fit/live-animals-journey.js:434-467",
       "quote": "Every other field the form\n * holds, the concurrency token included, is sent as the page rendered it.",
       "confidence": "verbatim",
       "note": "mechanism: reposts a page's own form to another path with chosen fields replaced; it works on the hidden fields the journey form renders."
     },
     {
+      "id": "repo-frontend-p3-125",
+      "statement": "A notification's declaration is posted to /live-animals/notifications/<id>/declaration from the journey form, carrying the form's own fields as the page rendered them.",
+      "kind": "behaviour",
+      "ref": "fit/live-animals-journey.js:434-467",
+      "quote": "const declarationPath = new URL(journeyUrl(page, 'declaration'), page.url())\n    .pathname",
+      "confidence": "inferred",
+      "note": "mechanism: a driver helper that reposts a page's form to the declaration path; the route's existence is read from the path the helper targets."
+    },
+    {
       "id": "repo-frontend-p3-060",
       "statement": "A journey page offering all three save controls shows them in the order Save and continue, Save and return to overview, Cancel and return to overview, with Save and return to overview as the form's last button.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1804-1834 with src/server/app/shared/copy.en.js:61-65",
+      "ref": "fit/live-animals-journey.js:1789-1819 with src/server/app/shared/copy.en.js saveActions",
       "quote": "await expect(saveControls).toHaveText([\n    sharedAppCopy.saveActions.saveAndContinue,\n    saveAndReturnToHubLabel,\n    cancelAndReturnToHubLabel\n  ])\n  await expect(form.getByRole('button').last()).toHaveText(\n    saveAndReturnToHubLabel\n  )",
       "confidence": "verbatim",
       "note": "The shared copy reads 'Save and continue', 'Save and return to overview' and 'Cancel and return to overview'. Which pages show all three is each feature part's claim; this is the shape the driver holds a page to."
@@ -499,7 +534,7 @@
       "id": "repo-frontend-p3-061",
       "statement": "A journey page outside the task-row journey ends with its primary button alone, as the form's last control and inside the form's last visible block, and offers no Save and return to overview.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1836-1858",
+      "ref": "fit/live-animals-journey.js:1821-1843",
       "quote": "await expect(lastControl).toHaveText(primaryName)\n  await expect(saveAndReturnToHub(page)).toHaveCount(0)",
       "confidence": "verbatim"
     },
@@ -507,7 +542,7 @@
       "id": "repo-frontend-p3-062",
       "statement": "A page reached from outside a notification ends with its primary button and a cancel button that returns to the dashboard, and offers neither of the overview return controls.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1860-1882",
+      "ref": "fit/live-animals-journey.js:1845-1867",
       "quote": "await expect(buttons).toHaveText([primaryName, cancelName])\n  await expect(saveAndReturnToHub(page)).toHaveCount(0)\n  await expect(cancelAndReturnToHub(page)).toHaveCount(0)",
       "confidence": "verbatim"
     },
@@ -515,7 +550,7 @@
       "id": "repo-frontend-p3-063",
       "statement": "A page's errors are shown in an error summary the browser announces as an alert, and following a summary link puts the focus in the field the message is about.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:241,281-287",
+      "ref": "fit/live-animals-journey.js:247,278-293",
       "quote": "export const errorSummary = (page) => page.getByRole('alert')",
       "confidence": "verbatim"
     },
@@ -523,7 +558,7 @@
       "id": "repo-frontend-p3-064",
       "statement": "Every journey page offers a Back link reading \"Back\".",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:254-261",
+      "ref": "fit/live-animals-journey.js:260-267",
       "quote": "export const backLink = (page) =>\n  page.getByRole('link', { name: 'Back', exact: true })",
       "confidence": "verbatim"
     },
@@ -531,15 +566,23 @@
       "id": "repo-frontend-p3-065",
       "statement": "A date field with a calendar uses the Ministry of Justice date picker: a \"Choose date\" button beside the box opens a dialog, and the calendar must end above the next question on the page rather than overlapping it.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:355-367,598-625",
+      "ref": "fit/live-animals-journey.js:361-373,604-631",
       "quote": "const dateToggleOf = (page, label) =>\n  datePickerOf(page, label).getByRole('button', { name: 'Choose date' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-126",
+      "statement": "Each day in a date picker's calendar is a button named by the full date, such as \"Monday 3 March 2025\".",
+      "kind": "copy",
+      "ref": "fit/live-animals-journey.js:375-380",
+      "quote": "/** The accessible name of a date's calendar button, such as \"Monday 3 March 2025\", for the date's UTC day. */",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p3-066",
       "statement": "A search box is joined flush to its one search button, which is the only button in the box's wrapper, and the box's hint is its accessible description; the pair must come to a set width.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:549-581",
+      "ref": "fit/live-animals-journey.js:555-587",
       "quote": "await expect(box).toHaveAccessibleDescription(search.hint)\n  await expect(wrapper.getByRole('button')).toHaveCount(1)",
       "confidence": "verbatim"
     },
@@ -547,7 +590,7 @@
       "id": "repo-frontend-p3-067",
       "statement": "With JavaScript off, pressing Enter in a search box searches on the server, which keeps the term the trader typed in the box and refuses nothing.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:583-596",
+      "ref": "fit/live-animals-journey.js:589-602",
       "quote": "await Promise.all([page.waitForEvent('load'), box.press('Enter')])\n  await expect(box).toHaveValue(term)\n  await expect(errorSummary(page)).toHaveCount(0)",
       "confidence": "verbatim"
     },
@@ -555,7 +598,7 @@
       "id": "repo-frontend-p3-068",
       "statement": "A page must not overflow sideways, and the suite checks pages at a 360 by 740 phone viewport and a 1280 by 720 desktop viewport.",
       "kind": "non-functional",
-      "ref": "fit/live-animals-journey.js:95-125,289-290",
+      "ref": "fit/live-animals-journey.js:101-131,295-296",
       "quote": "export const PHONE_VIEWPORT = { width: 360, height: 740 }\nexport const DESKTOP_VIEWPORT = { width: 1280, height: 720 }",
       "confidence": "verbatim"
     },
@@ -563,23 +606,31 @@
       "id": "repo-frontend-p3-069",
       "statement": "A page must have no serious or critical accessibility violation against WCAG 2.0 A and AA, WCAG 2.1 A and AA and WCAG 2.2 AA.",
       "kind": "non-functional",
-      "ref": "fit/live-animals-journey.js:74-93",
+      "ref": "fit/live-animals-journey.js:79-99",
       "quote": ".withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p3-070",
-      "statement": "The accessibility check ignores one finding as a false positive: an aria-allowed-attr violation reported only against GOV.UK radio or checkbox inputs, which is how the GOV.UK conditional reveal is built.",
+      "statement": "The accessibility check ignores, as a false positive, an aria-allowed-attr violation reported only against GOV.UK radio or checkbox inputs, which is how the GOV.UK conditional reveal is built.",
       "kind": "constraint",
-      "ref": "fit/live-animals-journey.js:68-72",
+      "ref": "fit/live-animals-journey.js:67-71,92",
       "quote": "const isGovukConditionalRevealFalsePositive = (violation) =>\n  violation.id === 'aria-allowed-attr' &&\n  violation.nodes.every((node) =>\n    /govuk-(radios|checkboxes)__input/.test(node.html)\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-124",
+      "statement": "The accessibility check also ignores, as a false positive, a label-content-name-mismatch violation reported only against the GOV.UK file upload button.",
+      "kind": "constraint",
+      "ref": "fit/live-animals-journey.js:73-77,93",
+      "quote": "const isGovukFileUploadFalsePositive = (violation) =>\n  violation.id === 'label-content-name-mismatch' &&\n  violation.nodes.every((node) =>\n    /class=\"govuk-file-upload-button[ \"]/.test(node.html)\n  )",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p3-071",
       "statement": "Save and continue carries a fresh notification from the start button through the origin page, the commodities search, the main import reason, the commodity details, the animal identification and the additional details to the arrival details page, in that order.",
       "kind": "behaviour",
-      "ref": "fit/journey-smoke.fit.spec.js:63-116",
+      "ref": "fit/journey-smoke.fit.spec.js:62-115",
       "quote": "test('Save and continue carries a fresh notification through the entry guard on past the additional details', async ({",
       "confidence": "verbatim"
     },
@@ -587,7 +638,7 @@
       "id": "repo-frontend-p3-072",
       "statement": "A notification page can be opened straight by its own address once the notification exists, and the origin page in particular can be reopened by address both before and after the journey has moved on.",
       "kind": "behaviour",
-      "ref": "fit/journey-smoke.fit.spec.js:74-75,121-124",
+      "ref": "fit/journey-smoke.fit.spec.js:73-74,120-123",
       "quote": "await page.goto(journeyUrl(page, 'origin'))\n    await expect(heading(originCopy.title)).toBeVisible()\n    await save()\n    await expect(heading(commoditiesCopy.search.title)).toBeVisible()",
       "confidence": "verbatim"
     },
@@ -595,15 +646,15 @@
       "id": "repo-frontend-p3-073",
       "statement": "Once the entry page is answered the notification's root address shows the Overview, so the entry guard no longer sends the trader back to the origin page.",
       "kind": "rule",
-      "ref": "fit/journey-smoke.fit.spec.js:118-119",
+      "ref": "fit/journey-smoke.fit.spec.js:117-118",
       "quote": "await page.goto(journeyUrl(page))\n    await expect(heading(hubCopy.title)).toBeVisible()",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p3-074",
-      "statement": "Save and continue carries a new notification from the origin page to the notification view in one pass, through the main import reason, commodity details, animal identification, additional details, arrival details, transit countries, transporter details, accompanying documents, consignment addresses and contact address pages, and the view shows the notification as a draft.",
+      "id": "repo-frontend-p3-121",
+      "statement": "Save and continue carries a new notification from the origin page to the notification view in one pass, through the commodities search, main import reason, commodity details, animal identification, additional details, arrival details, transit countries, transporter details, accompanying documents and consignment addresses pages, and the view shows the notification as a draft.",
       "kind": "behaviour",
-      "ref": "fit/journey-smoke.fit.spec.js:127-160",
+      "ref": "fit/journey-smoke.fit.spec.js:126-150 with fit/live-animals-journey.js:1278-1294",
       "quote": "test('Save and continue carries a new notification through to the review page in one pass', async ({",
       "confidence": "verbatim"
     },
@@ -611,7 +662,7 @@
       "id": "repo-frontend-p3-075",
       "statement": "Saving the accompanying documents page with no document added carries on to the consignment addresses page, so a document is not needed to go on.",
       "kind": "rule",
-      "ref": "fit/journey-smoke.fit.spec.js:145-152",
+      "ref": "fit/journey-smoke.fit.spec.js:144-149",
       "quote": "await expect(page).toHaveURL(\n      urlUnderBase('/notifications/[^/]+/accompanying-documents')\n    )\n    await page.getByRole('button', { name: 'Save and continue' }).click()\n\n    await answerConsignmentAddresses(page)",
       "confidence": "verbatim"
     },
@@ -619,7 +670,7 @@
       "id": "repo-frontend-p3-076",
       "statement": "Following Back to an earlier page and pressing Save and continue there carries the trader on to the next step rather than back to where they came from, and the earlier page still shows the answers already given.",
       "kind": "behaviour",
-      "ref": "fit/journey-smoke.fit.spec.js:162-183",
+      "ref": "fit/journey-smoke.fit.spec.js:152-173",
       "quote": "await followBack(page)\n    await expect(exactHeading(page, commoditiesCopy.search.title)).toBeVisible()\n    await expectSpeciesSelected(page, BOS_TAURUS_ROW)\n\n    await saveAndContinue()\n    await expect(exactHeading(page, importReasonCopy.title)).toBeVisible()",
       "confidence": "verbatim"
     },
@@ -627,7 +678,7 @@
       "id": "repo-frontend-p3-077",
       "statement": "Back from the commodity details page opens the main import reason page, Back from the additional details page opens the identification details page, and Back from the transit countries page opens the arrival details page, each matching the way Save and continue arrived there.",
       "kind": "behaviour",
-      "ref": "fit/journey-smoke.fit.spec.js:185-225",
+      "ref": "fit/journey-smoke.fit.spec.js:175-215",
       "quote": "test('after Save and continue, Back from Commodity details opens Main import reason', async ({",
       "confidence": "verbatim"
     },
@@ -635,23 +686,23 @@
       "id": "repo-frontend-p3-078",
       "statement": "Back steps through the pages Save and continue visited in reverse order and then ends on the Overview at the notification's root address.",
       "kind": "behaviour",
-      "ref": "fit/journey-smoke.fit.spec.js:267-304",
+      "ref": "fit/journey-smoke.fit.spec.js:257-293",
       "quote": "await followBack(page)\n    await expect(page).toHaveURL(urlUnderBase('/notifications/[^/]+'))\n    await expect(exactHeading(page, hubCopy.title)).toBeVisible()",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p3-079",
-      "statement": "Saving the contact address page of an incomplete notification ends on the notification view, which names what is still outstanding in an error summary headed \"There is a problem\", reading \"Complete main import reason\" and \"Complete consignment addresses\".",
+      "id": "repo-frontend-p3-122",
+      "statement": "Save and continue on the consignment addresses page of an incomplete notification ends on the notification view, which names what is still outstanding in an error summary headed \"There is a problem\", reading \"Complete main import reason\" and \"Complete consignment addresses\".",
       "kind": "behaviour",
-      "ref": "fit/journey-smoke.fit.spec.js:227-243",
-      "quote": "await expect(summary).toContainText('There is a problem')\n    await expect(summary).toContainText('Complete main import reason')\n    await expect(summary).toContainText('Complete consignment addresses')",
+      "ref": "fit/journey-smoke.fit.spec.js:217-233",
+      "quote": "await page.goto(journeyUrl(page, 'addresses'))\n    await page.getByRole('button', { name: 'Save and continue' }).click()\n\n    await expect(page).toHaveURL(\n      urlUnderBase('/notifications/[^/]+/notification-view')\n    )\n    await expectDraftReview(page)\n    const summary = errorSummary(page)\n    await expect(summary).toContainText('There is a problem')\n    await expect(summary).toContainText('Complete main import reason')\n    await expect(summary).toContainText('Complete consignment addresses')",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p3-080",
       "statement": "A notification created in another session and holding no answers is not shown to a different browser session: opening its overview address sends that session to the notification's entry page, the origin page.",
       "kind": "rule",
-      "ref": "fit/journey-smoke.fit.spec.js:245-265",
+      "ref": "fit/journey-smoke.fit.spec.js:235-255",
       "quote": "await expect(strangerPage).toHaveURL(`${hubUrl}/origin`)",
       "confidence": "verbatim"
     },
@@ -659,7 +710,7 @@
       "id": "repo-frontend-p3-081",
       "statement": "A change made to a collection from the notification view keeps the review trail on the page's address, through removing and adding entries and through each post, until the page is left by its own Save and continue.",
       "kind": "behaviour",
-      "ref": "fit/journey-smoke.fit.spec.js:306-365",
+      "ref": "fit/journey-smoke.fit.spec.js:295-354",
       "quote": "test('collection changes from check answers keep the trail until their explicit exits', async ({",
       "confidence": "verbatim"
     },
@@ -667,15 +718,23 @@
       "id": "repo-frontend-p3-082",
       "statement": "On the animal identification page reached from the notification view, Save and add another is not offered and the page offers Save and continue instead, which carries on to the additional details page.",
       "kind": "behaviour",
-      "ref": "fit/journey-smoke.fit.spec.js:336-341",
+      "ref": "fit/journey-smoke.fit.spec.js:325-330",
       "quote": "await expect(\n      page.getByRole('button', { name: 'Save and add another' })\n    ).toHaveCount(0)\n    await page.getByRole('button', { name: 'Save and continue' }).click()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-131",
+      "statement": "On the animal identification page each saved animal has a remove button named by its number, such as \"Remove animal 1\", and removing an animal there keeps the page on the review trail.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:317-324",
+      "quote": "await page\n      .getByRole('button', { name: 'Remove animal 1', exact: true })\n      .click()\n    await expect(page).toHaveURL(identificationOnTheReviewTrail)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p3-083",
       "statement": "A changed animal identifier and a newly added document both show on the notification view afterwards, so a change made on the review trail reaches the view.",
       "kind": "behaviour",
-      "ref": "fit/journey-smoke.fit.spec.js:342-364",
+      "ref": "fit/journey-smoke.fit.spec.js:331-353",
       "quote": "await openNotificationView(page)\n    await expect(page.getByText('UK000000000002')).toBeVisible()",
       "confidence": "verbatim"
     },
@@ -683,7 +742,7 @@
       "id": "repo-frontend-p3-084",
       "statement": "The notification view offers a \"Change document 1\" link that opens the accompanying documents page on the review trail, and saving it from there opens the consignment addresses page.",
       "kind": "behaviour",
-      "ref": "fit/journey-smoke.fit.spec.js:351-360",
+      "ref": "fit/journey-smoke.fit.spec.js:340-349",
       "quote": "await page.getByRole('link', { name: 'Change document 1' }).click()\n    await expect(page).toHaveURL(documentsOnTheReviewTrail)",
       "confidence": "verbatim"
     },
@@ -691,7 +750,7 @@
       "id": "repo-frontend-p3-085",
       "statement": "The journey smoke spec stops at the draft notification view: it never ticks the declaration and never submits a notification, so nothing it proves covers submission, amendment or deletion.",
       "kind": "behaviour",
-      "ref": "fit/journey-smoke.fit.spec.js:1-366",
+      "ref": "fit/journey-smoke.fit.spec.js:1-355",
       "quote": "await expectDraftReview(page)",
       "confidence": "inferred",
       "note": "It follows because no test in the file reaches the declaration checkbox or the driver's submitCompleteNotification, amendFromList or deleteFromReview helpers, which other fit specs use."
@@ -700,7 +759,7 @@
       "id": "repo-frontend-p3-086",
       "statement": "A consignment question page shows a caption naming the section it belongs to, in the page's main content immediately above the page's level 1 heading.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js:26-35 with fit/live-animals-journey.js:217-233",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js:26-35 with fit/live-animals-journey.js:217-239",
       "quote": "test('names the section immediately above the heading of a consignment question', async ({",
       "confidence": "verbatim"
     },
@@ -759,6 +818,14 @@
       "kind": "copy",
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/page-title.fit.spec.js:30-45",
       "quote": "await expect(page).toHaveTitle(\n      `${errorTitlePrefix}${originCopy.title} - ${serviceName} - ${govukSuffix}`\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-130",
+      "statement": "Answering Yes on the origin page's region question and saving with no region of origin code shows the error \"Enter the region of origin code\" as a link in the error summary.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/page-title.fit.spec.js:30-41 with features/origin/copy/copy.en.js:28",
+      "quote": "await expect(\n      errorSummaryLinks(page, originCopy.errors.regionCodeRequired)\n    ).toBeVisible() … regionCodeRequired: 'Enter the region of origin code',",
       "confidence": "verbatim"
     },
     {
@@ -831,7 +898,7 @@
       "id": "repo-frontend-p3-102",
       "statement": "A page can be opened again with JavaScript switched off in the same signed-in session, so the same page and URL must work without JavaScript.",
       "kind": "non-functional",
-      "ref": "fit/live-animals-journey.js:1715-1735",
+      "ref": "fit/live-animals-journey.js:1700-1720",
       "quote": "const context = await browser.newContext({\n    javaScriptEnabled: false,\n    storageState: await page.context().storageState()\n  })",
       "confidence": "verbatim"
     },
@@ -839,15 +906,23 @@
       "id": "repo-frontend-p3-103",
       "statement": "The notification view shows each part of the notification as a region named by its own heading, and a part that is incomplete shows a validation message that is both a link in the page's error summary and visible at the part it names.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:463-483",
+      "ref": "fit/live-animals-journey.js:469-489",
       "quote": "await expect(page.getByRole('link', { name: message })).toHaveAttribute(\n      'href',\n      anchor\n    )\n    await expect(page.locator(anchor).getByText(message)).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-133",
+      "statement": "On the notification view, the outstanding-card messages for the main import reason and the additional details each link to their own card, at #main-import-reason and #additional-details.",
+      "kind": "behaviour",
+      "ref": "fit/live-animals-journey.js:472-489",
+      "quote": "message: checkAnswersCopy.errors.cards.mainImportReason,\n      anchor: '#main-import-reason'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p3-104",
       "statement": "A notification's status is shown in a journey strip, whose statuses are Draft, Submitted, Amend and Deleted.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:512-515 with src/server/app/shared/copy.en.js:66-72",
+      "ref": "fit/live-animals-journey.js:518-521 with src/server/app/shared/copy.en.js journeyStrip",
       "quote": "export const journeyStrip = (page) => page.locator('.app-journey-strip')",
       "confidence": "verbatim"
     },
@@ -855,26 +930,17 @@
       "id": "repo-frontend-p3-105",
       "statement": "Each posting control in the notification view's header belongs to its own form, which a control names by the form's id rather than sitting inside it.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:503-510",
+      "ref": "fit/live-animals-journey.js:509-516",
       "quote": "const formId = await button.getAttribute('form')\n  const page = button.page()\n  return {\n    form: page.locator(`form[id=\"${formId}\"]`),\n    submitButtons: page.locator(`button[form=\"${formId}\"]`)\n  }",
       "confidence": "verbatim",
       "note": "mechanism: resolves the form a header button posts and the buttons that post it; it works on the forms the notification view's header renders."
     },
     {
-      "id": "repo-frontend-p3-106",
-      "statement": "The contact address page has its own wording for the Save and return to overview control rather than using the shared wording.",
-      "kind": "copy",
-      "ref": "fit/live-animals-journey.js:1654-1660",
-      "quote": "await saveAndReturnToHub(\n    page,\n    contactCopy.saveActions.saveAndReturnToHub\n  ).click()",
-      "confidence": "verbatim",
-      "note": "The words themselves are the contact feature part's claim; this records that the page overrides the shared label."
-    },
-    {
-      "id": "repo-frontend-p3-107",
-      "statement": "The twelve pages the journey's Save and continue lands on are the commodities search, the main import reason, the commodity details at consignment-details, the animal identification at commodities/identification, the additional details, the arrival details at port-of-entry, the transit countries, the transporters, the accompanying documents, the consignment addresses, and the contact address picker at consignment/contact/select.",
+      "id": "repo-frontend-p3-123",
+      "statement": "The ten pages the journey's Save and continue lands on, each checked by its URL slug and its heading, are the commodities search, the main import reason, the commodity details at consignment-details, the animal identification at commodities/identification, the additional details, the arrival details at port-of-entry, the transit countries, the transporters, the accompanying documents and the consignment addresses.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1010-1043",
-      "quote": "export const LANDINGS = {\n  commodities: { slug: 'commodities', title: commoditiesCopy.search.title },\n  importReason: { slug: 'import-reason', title: importReasonCopy.title },",
+      "ref": "fit/live-animals-journey.js:1016-1055",
+      "quote": "documents: { slug: 'accompanying-documents', title: documentsCopy.title },\n  addresses: { slug: 'addresses', title: addressesCopy.hub.title }\n}",
       "confidence": "verbatim",
       "note": "Each landing is checked by both its URL slug and its level 1 heading, so a landing is wrong if either differs."
     },
@@ -882,7 +948,7 @@
       "id": "repo-frontend-p3-108",
       "statement": "A journey page is left for the overview by a Save and return to overview button and the overview is reached again by the notification's root address, both of which show the Overview heading.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1060-1068",
+      "ref": "fit/live-animals-journey.js:1062-1070",
       "quote": "export const saveAndExpectOverview = async (page) => {\n  await saveAndReturnToHub(page).click()\n  await expectOverview(page)\n}",
       "confidence": "verbatim"
     },
@@ -890,7 +956,7 @@
       "id": "repo-frontend-p3-109",
       "statement": "Pressing Save and continue on the commodity details page with a species count entered unlocks the later sections of the overview, so the arrival, documents and addresses rows can then be opened.",
       "kind": "rule",
-      "ref": "fit/live-animals-journey.js:947-957",
+      "ref": "fit/live-animals-journey.js:953-963",
       "quote": "export const unlockSections = async (page, chosen = FELIS_CATUS_ROW) => {\n  await answerCountryOfOrigin(page)\n  await answerWhatYouAreImportingFromOverview(page, chosen)",
       "confidence": "inferred",
       "note": "It follows from the helper's name and from every later-page helper (openDocuments, openArrival, openAddresses) calling it before following the overview link for that page."
@@ -899,7 +965,7 @@
       "id": "repo-frontend-p3-110",
       "statement": "A document is uploaded as a file chosen through a file input, and the suite allows up to 60 seconds for the file to be attached.",
       "kind": "non-functional",
-      "ref": "fit/live-animals-journey.js:959-974",
+      "ref": "fit/live-animals-journey.js:965-980",
       "quote": "const setFileTimeoutMs = 60_000\n  return page.locator('input[type=\"file\"]').setInputFiles(",
       "confidence": "verbatim"
     },
@@ -907,7 +973,7 @@
       "id": "repo-frontend-p3-111",
       "statement": "The suite exercises two document files that never pass a clean scan, one holding a virus and one whose scan never finishes.",
       "kind": "data",
-      "ref": "fit/live-animals-journey.js:525-526",
+      "ref": "fit/live-animals-journey.js:531-532",
       "quote": "export const INFECTED_DOCUMENT_FILE_NAME = 'virus-invoice.pdf'\nexport const STILL_SCANNING_DOCUMENT_FILE_NAME = 'never-scans.pdf'",
       "confidence": "verbatim"
     },
@@ -915,16 +981,25 @@
       "id": "repo-frontend-p3-112",
       "statement": "The happy path's document is an ITAHC, reference GBHC1234567890, issued 12 December 2025, in the file itahc-certificate.pdf; the driver's own ITAHC uses the reference GBHC0000000001.",
       "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/fixtures/happy-path.json documents[0] with fit/live-animals-journey.js:1671",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/fixtures/happy-path.json documents[0] with fit/live-animals-journey.js:1656",
       "quote": "const itahc = documentNamed('GBHC0000000001', 'itahc.pdf')",
       "confidence": "verbatim",
       "note": "Test data, not a field specification: V4 settles what a document entry captures."
     },
     {
+      "id": "repo-frontend-p3-132",
+      "statement": "A second document added from the review trail in the smoke spec is a commercial invoice, type value COMMERCIAL_INVOICE, reference INV-2026-0042, issued 3 January 2026, in the file commercial-invoice.pdf; the driver's own ITAHC entries are issued 3 January 2026.",
+      "kind": "data",
+      "ref": "fit/journey-smoke.fit.spec.js:334-339 with fit/live-animals-journey.js:542-547",
+      "quote": "accompanyingDocumentReference: 'INV-2026-0042',\n      accompanyingDocumentType: 'COMMERCIAL_INVOICE',\n      accompanyingDocumentDateOfIssue: { day: '3', month: '1', year: '2026' },\n      filename: 'commercial-invoice.pdf'",
+      "confidence": "verbatim",
+      "note": "Test data, not a field specification."
+    },
+    {
       "id": "repo-frontend-p3-113",
       "statement": "The suite's canned transporters are one private and one commercial record taken from the transporter service, so both types are offered on the transporter list.",
       "kind": "data",
-      "ref": "fit/live-animals-journey.js:1486-1492",
+      "ref": "fit/live-animals-journey.js:1489-1495",
       "quote": "export const cannedPrivateTransporter = parties().find(\n  (record) => record.type === PRIVATE\n)",
       "confidence": "verbatim"
     },
@@ -932,7 +1007,7 @@
       "id": "repo-frontend-p3-114",
       "statement": "A notification's own reference is the identifier in its URL, and the same reference is the heading of its notification view, so the trader sees one reference throughout.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:344-350,493-498",
+      "ref": "fit/live-animals-journey.js:350-356,499-504",
       "quote": "export const notificationReferenceHeading = (page) =>\n  page.getByRole('heading', {\n    level: 1,\n    name: journeyIdFromPage(page),\n    exact: true\n  })",
       "confidence": "verbatim"
     },
@@ -940,7 +1015,7 @@
       "id": "repo-frontend-p3-115",
       "statement": "The suite holds pages to a GOV.UK two-thirds or full-width grid column and reads the browser's own GOV.UK colour tokens, visually hidden style and primary button colour rather than fixing values in the test, so a page must stay inside the GOV.UK toolbox's own styles.",
       "kind": "non-functional",
-      "ref": "fit/live-animals-journey.js:136-209,392-415",
+      "ref": "fit/live-animals-journey.js:133-215,398-421",
       "quote": "export const govukColourOf = async (page, token) => {\n  const { color } = await measureReferenceElement(page, {\n    tagName: 'span',\n    cssText: `color: var(--govuk-${token}-colour)`,",
       "confidence": "verbatim",
       "note": "mechanism: measures a throwaway reference element to read what GOV.UK Frontend computes; it works on the service's compiled stylesheet."
@@ -949,7 +1024,7 @@
       "id": "repo-frontend-p3-116",
       "statement": "Two elements the suite expects to wrap onto separate lines must end on the same right edge, within one pixel, once the layout has settled.",
       "kind": "non-functional",
-      "ref": "fit/live-animals-journey.js:301-327",
+      "ref": "fit/live-animals-journey.js:307-333",
       "quote": "const edgeTolerancePx = 1",
       "confidence": "verbatim"
     },
@@ -957,19 +1032,18 @@
       "id": "repo-frontend-p3-117",
       "statement": "Nothing in this part says what a journey page does when the stub address book or the reference data service cannot be reached: every helper assumes the stub answers.",
       "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1-1910 and fit/journey-smoke.fit.spec.js:1-366",
+      "ref": "fit/live-animals-journey.js:1-1895 and fit/journey-smoke.fit.spec.js:1-355",
       "quote": "",
       "confidence": "gap",
-      "note": "Looked through both files for a failure or unavailability path: the driver has no helper that makes a dependency fail, and the smoke spec has no such test. The shared copy does hold an addressHandshake.errors.unavailable message, which belongs to the shared-copy part."
+      "note": "Looked through both files for a failure or unavailability path: the driver has no helper that makes a dependency fail, and the smoke spec has no such test."
     },
     {
-      "id": "repo-frontend-p3-118",
-      "statement": "The fit suite is run with a built front end and no slow motion, and in continuous integration on port 3050 with every worker, two retries and a 15 minute global timeout.",
-      "kind": "non-functional",
-      "ref": "package.json:20-23",
-      "quote": "\"test:fit\": \"npm run build:frontend && DEMO_SLOWMO=0 DEMO_PACE_MS=0 playwright test\",",
-      "confidence": "verbatim",
-      "note": "package.json is not named in the part's read list; it is cited here because the config's webServer command, npm run fit:start, is defined there and the part covers the suite's own set-up."
+      "id": "repo-frontend-p11-087",
+      "statement": "Save and continue from transit countries opens the transporter list.",
+      "kind": "behaviour",
+      "ref": "fit/live-animals-journey.js:1402-1406 with src/server/app/sets/live-animals/journeys/linear/flow/flow.js:59",
+      "quote": "export const answerTransitCountries = async (page) => {\n  await addTransitCountry(page, 'France')\n  await addTransitCountry(page, 'Belgium')\n  await saveAndExpectLanding(page, LANDINGS.transporters)\n} … pages: [portOfEntryPage, transitCountriesPage, transportersPage]",
+      "confidence": "verbatim"
     }
   ]
 }

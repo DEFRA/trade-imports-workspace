@@ -1,6 +1,6 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 6, Arrival details. Read in full every file of src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/ (page.js, fields.js, controller.js, template.njk, arrival-bounds.js, evaluation.js, copy/copy.en.js, copy/copy.cy.js and the three test files arrival-bounds.test.js, controller.test.js, copy/copy.test.js, plus arrival-details.fit.spec.js), and for context journeys/linear/features/timing-windows.js, obligations/sections/arrival.js and the parts of src/server/app/shared/kit.js the page uses (pageRoutes, dateField, readDate, base, errorSummary, recoverableSave, nextTarget), src/server/app/shared/paths.js, src/server/app/shared/copy.en.js (saveActions and validatorDefaults), src/server/app/sets/high-risk-plants/set.js (SET_BASE), features/arrival-status/statuses.js, features/place-of-destination/page.js, fit/set-base.js and the fit harness helpers the spec calls (describeDatePickerLook, expectThreeSaveControls, chooseTypeAheadOption, expectNoSeriousOrCriticalViolations). Covered: the one page at /high-risk-plants/notifications/{journeyId}/arrival-details, its route, caption, heading and save controls; its three fields (arrivalDate always, arrivalTime and proposedPlaceOfLanding for potatoes only) with every label, hint, option text and component; the three date states (potatoes, not-yet-arrived, already-arrived) and the wording each gives; every validation rule and its message in English and machine-draft Welsh; the arrival-bounds today-in-London cap; the stale-port recovery on GET; what the page commits and what it purges when the commodity type changes; the 26 tests of arrival-details.fit.spec.js (the shared describeDatePickerLook block adds four more) and the unit tests of the controller, the bounds helper and the copy. The arrival-status question itself (part 5), the obligation manifest and timing windows (part 12) and the shared kit (part 13) are claimed elsewhere and read here only as context.",
+  "structure": "Part 6, Arrival details. Read in full every file of src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/: page.js (slug and maturity), controller.js (GET and POST handlers, the date state chosen from commodity scope and arrival status, the date, time and place-of-landing rules, the stale-port check, the recoverable save), fields.js (the three field names and the three date states), template.njk (MoJ date picker, GOV.UK time input, accessible-autocomplete place of landing, save actions), arrival-bounds.js and its test (the today cap in Europe/London), evaluation.js (the three scalar bindings), copy/copy.en.js, copy/copy.cy.js and copy/copy.test.js, controller.test.js and arrival-details.fit.spec.js (26 own tests plus the four describeDatePickerLook adds). Read as context only: timing-windows.js, obligations/sections/arrival.js and shared/kit.js (pageRoutes, redirectOnStaleAction, recoverableSave, readDate, dateField). One page covered: arrival-details at /high-risk-plants/notifications/{journeyId}/arrival-details, asked in three wordings (potatoes, not yet arrived, already arrived), with time and place of landing for potatoes only. Since the earlier extract the slice's code is unchanged; only a test helper name in controller.test.js and kit.js's stale-refusal and logging internals moved, so every earlier claim is kept, two kit line references are updated and one claim on the save-fallback log is added.",
   "claims": [
     {
       "id": "repo-plantsfrontend-p6-001",
@@ -115,7 +115,7 @@
       "id": "repo-plantsfrontend-p6-014",
       "statement": "The arrival date is asked as one text box with a calendar picker, typed as d/m/yyyy, ten characters wide, and the answer is shown back as d/m/yyyy text.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/template.njk:3, template.njk:18, src/server/app/shared/kit.js:399-426, controller.test.js:194",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/template.njk:3, template.njk:18, src/server/app/shared/kit.js:407-434, controller.test.js:194",
       "quote": "{% from \"moj/components/date-picker/macro.njk\" import mojDatePicker %}\n...\n    {{ mojDatePicker(dateField) }}",
       "confidence": "verbatim",
       "note": "kit.dateField gives the field classes 'govuk-input--width-10' and the form group the 'app-date-picker' class, and renders the value as `d/m/yyyy`; the kit itself is part 13's claim."
@@ -556,7 +556,7 @@
       "id": "repo-plantsfrontend-p6-067",
       "statement": "The page's form posts a cross-site request token and a concurrency token with the answers, and an action posted against a stale notification is redirected rather than saved.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/template.njk:15-16, src/server/app/shared/kit.js:349-354",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/template.njk:15-16, src/server/app/shared/kit.js:330-363",
       "quote": "<input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
       "confidence": "verbatim",
       "note": "The stale-action redirect comes from kit.pageRoutes wrapping the POST handler in redirectOnStaleAction; part 13 claims the kit."
@@ -650,6 +650,15 @@
       "quote": "export const DATE_STATES = Object.freeze([\n  POTATO_ARRIVAL,\n  ALREADY_ARRIVED,\n  NOT_YET_ARRIVED\n])",
       "confidence": "verbatim",
       "note": "The copy test fails if either language labels or hints a state the page cannot ask in, or misses one it can."
+    },
+    {
+      "id": "repo-plantsfrontend-p6-079",
+      "statement": "When a save on the page falls back to the recoverable-error banner, the fallback is logged once at warn with the journey id and route, carrying the failure itself unless its refusal was already logged when it was raised.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js:175-188, src/server/app/shared/kit.js:289-328",
+      "quote": "Runs a save and answers a recoverable backend failure with the page's\n * fallback, logging the fallback taken once at warn, with the failure as `err`\n * unless its refusal was logged when it was raised.",
+      "confidence": "verbatim",
+      "note": "The page reaches this through kit.recoverableSave; part 13 claims the kit itself. A stale-concurrency refusal is rethrown rather than given the banner."
     }
   ]
 }

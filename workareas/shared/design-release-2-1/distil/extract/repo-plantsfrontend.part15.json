@@ -1,6 +1,6 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 15, the set's journey specification. Read in full: src/server/app/sets/high-risk-plants/spec/journey-spec.json (2,814 lines) and src/server/app/sets/high-risk-plants/spec/fixtures/happy-path.json (one line). journey-spec.json has seven top-level keys: specVersion (1), journey (high-risk-plants-import-notification), sources (7 entries: the PHNNS policy docx, two Confluence pages, the mural images, the prototype repo, the live-animals frontend repo and the engine skeleton commit, all status extracting), behaviours (98 entries, each id/source/status/detail with later '| Ruling:' and '| Ruled at D<n>-<docket>' supersessions appended in place, and an optional decision id), fieldGroups (one, address), sections (8 flow sections holding 15 pages: start [dashboard, hub], commodity [commodity-type, commodities, commodity-details], origin [origin], arrival [arrival-status, arrival-details], destination [place-of-destination], parties [consignor-select, identification-numbers], contact [consignment-contact-select], review [notification-view, declaration, confirmation], the review section alone gated on readyForCheckYourAnswers) and obligations (29: commodityType, the commodityLines collection and its nine per-line members, countryOfOrigin, arrivalStatus, arrivalDate, arrivalTime, proposedPlaceOfLanding, placeOfDestination, consignor, three identification numbers, consignmentNumber, contactAddress, declaration and the four system values referenceNumber, dateOfNotification, notificationStatus, lateNotificationIndicator). Covered: specVersion and journey, every source entry, every behaviour by id, the address field group, every section and page with its route, copy, collects and gates, every obligation with its level, mandate, widget, values, validation and conditional gate, and the places where the specification and the repo have moved apart. The spec/fixtures/happy-path.json beside it holds no values. Stops short of spec/decisions.json, spec/conflicts.json, spec/backlog-extras.json and spec/panel/ (parts 16 and 17).",
+  "structure": "Part 15 read src/server/app/sets/high-risk-plants/spec/journey-spec.json (2814 lines) and spec/fixtures/happy-path.json (one line). The specification has seven top-level keys: specVersion 1; journey high-risk-plants-import-notification; 7 sources (policy paper, Confluence user needs, Confluence requirements, mural, design prototype, live animals frontend, skeleton); 98 behaviours, each with id, source, status, detail and an optional ruling decision; one fieldGroup (address); 8 sections (start, commodity, origin, arrival, destination, parties, contact, review) with a gate, title and pages, each page with its pattern, caption, route, collects and notes; and 29 obligations, each with its level (appliesAt), kind, mandate, input widget, values and format, label, hint, error copy, enforcement at continue, animals relation and ruled notes. The happy-path fixture is one line, schema_version 1 with an empty values object. Claims run in file order: sources, behaviours, sections and pages, the address field group, obligations, then the fixture, plus inferred and gap claims where the specification and the pages disagree or the specification states something no page implements. Since the earlier extract at a88175f the only change in this slice is that the persistence port's finalise operation is now named submit (records.submit, stub submit) in behaviours persistence-mapper-a-only, mi-metrics-eight, live-access-synchronous-submission and nfr-available-24x7-and-load and in obligations dateOfNotification and lateNotificationIndicator; every earlier claim is kept, with its quote brought up to the current verbatim text.",
   "claims": [
     {
       "id": "repo-plantsfrontend-p15-001",
@@ -136,7 +136,7 @@
       "statement": "The dashboard's Start a new notification button creates the record, mints its reference and opens the commodity type question.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:732-734 (dashboard startButton, startAction)",
-      "quote": "\"startButton\": \"Start a new notification\",\n          \"startAction\": \"POST /notifications creates the record (reference minted) and redirects to commodity-type\"",
+      "quote": "\"startAction\": \"POST /notifications creates the record (reference minted) and redirects to commodity-type\"",
       "confidence": "verbatim"
     },
     {
@@ -956,7 +956,7 @@
       "statement": "The plants journey asks no reason for import and no purpose question, so it uses none of the import reason and purpose, transport reference or commercial transporter services the platform carries.",
       "kind": "constraint",
       "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:367 (behaviours import-reason-purpose-service-unused)",
-      "quote": "No plants source asks a reason-for-import or purpose question (the potato 'intended use' and the optional 'use' are free-text per-line matters) — so the plants journey does not use this service and the platform's transport-reference and commercial-transporters services are likewise unused.",
+      "quote": "No plants source asks a reason-for-import or purpose question — the potato 'intended use' and the optional 'use' are free-text per-line matters — so the plants journey does not use this service and the platform's transport-reference and commercial-transporters services are likewise unused.",
       "confidence": "verbatim"
     },
     {
@@ -1196,7 +1196,7 @@
       "statement": "The journey's share of the management information is coded values for the commodity type, category, genus and ISO country of origin, and the record's created and submitted timestamps; it measures nothing itself and adds no question for reporting.",
       "kind": "non-functional",
       "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:561 (behaviours mi-metrics-eight, ruled d-082)",
-      "quote": "the journey owes metrics 1-3 coded values (commodityType, category, genus as input.values; countryOfOrigin as ISO 3166-1 alpha-2) and metric 6 two envelope timestamps (createdAt at create, submittedAt = dateOfNotification at finalise); it measures nothing itself and adds no question for MI",
+      "quote": "the journey owes metrics 1-3 coded values (commodityType, category, genus as input.values; countryOfOrigin as ISO 3166-1 alpha-2) and metric 6 two envelope timestamps (createdAt at create, submittedAt = dateOfNotification at submit); it measures nothing itself and adds no question for MI",
       "confidence": "verbatim"
     },
     {
@@ -1421,7 +1421,7 @@
       "statement": "The categories a line may hold depend on the notification's commodity type: seed and ware potatoes for potatoes, plants for planting and trees for planting for plants, and the five wood values for wood and cut trees, and the page offers only those.",
       "kind": "rule",
       "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations category input.valuesByCommodityType)",
-      "quote": "\"valuesByCommodityType\":{\"potatoes\":[\"seed-potatoes\",\"ware-potatoes\"],\"plants-for-planting\":[\"plants-for-planting\",\"trees-for-planting\"],\"wood-and-cut-trees\":[\"conifer-wood-with-bark\",\"conifer-wood-without-bark\",\"cut-coniferous-trees\",\"hardwood-round-surface\",\"hardwood-chips\"]}",
+      "quote": "the page offers only the values for the chosen notification-level commodityType",
       "confidence": "verbatim"
     },
     {
@@ -1429,7 +1429,7 @@
       "statement": "A wood notification's category question is hinted that preservative-treated wood does not need to be notified unless it is cut coniferous trees more than 3 metres high, and the plants options are hinted to separate shrubs and cuttings from trees, whose height will be asked.",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations category input.hintByCommodityType, valueHintsByValue)",
-      "quote": "\"wood-and-cut-trees\":\"Preservative-treated wood does not need to be notified, unless it is cut coniferous trees more than 3 metres high.\"",
+      "quote": "\"wood-and-cut-trees\": \"Preservative-treated wood does not need to be notified, unless it is cut coniferous trees more than 3 metres high.\"",
       "confidence": "verbatim"
     },
     {
@@ -1557,7 +1557,7 @@
       "statement": "A country outside the allowed list is refused with a message naming the countries that are allowed, such as Select Poland, Portugal, Romania or Spain for ware potatoes, and on check your answers with Select a country of origin that matches the commodities in the consignment.",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations countryOfOrigin narrowingErrorCopy, cyaErrorCopy)",
-      "quote": "\"ware-potatoes\":\"Select Poland, Portugal, Romania or Spain – ware potatoes from other countries do not need to be notified\"",
+      "quote": "\"ware-potatoes\": \"Select Poland, Portugal, Romania or Spain – ware potatoes from other countries do not need to be notified\"",
       "confidence": "verbatim"
     },
     {
@@ -1565,7 +1565,7 @@
       "statement": "A plants or wood notification must say whether the consignment has arrived in Great Britain, offered as Yes, it has already arrived and No, it has not arrived yet.",
       "kind": "data",
       "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations arrivalStatus)",
-      "quote": "\"values\":[\"already-arrived\",\"not-yet-arrived\"],\"valueLabels\":\"Yes, it has already arrived | No, it has not arrived yet\"",
+      "quote": "\"valueLabels\": \"Yes, it has already arrived | No, it has not arrived yet\"",
       "confidence": "verbatim"
     },
     {
@@ -1581,7 +1581,7 @@
       "statement": "A notification must give one arrival date, whose label changes with the consignment: Expected date of arrival for potatoes, Expected date of landing in Great Britain before arrival, and Date the consignment first arrived in Great Britain once it has arrived.",
       "kind": "data",
       "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations arrivalDate input.labelByState)",
-      "quote": "\"labelByState\":{\"potatoes\":\"Expected date of arrival\",\"not-yet-arrived\":\"Expected date of landing in Great Britain\",\"already-arrived\":\"Date the consignment first arrived in Great Britain\"}",
+      "quote": "\"already-arrived\": \"Date the consignment first arrived in Great Britain\"",
       "confidence": "verbatim"
     },
     {
@@ -1589,7 +1589,7 @@
       "statement": "The arrival date is hinted with the example 27/3/2026, and a potato notification is told to enter the date the potatoes arrived if they already have.",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations arrivalDate input.hintByState)",
-      "quote": "\"potatoes\":\"For example, 27/3/2026. If the potatoes have already arrived, enter the date they arrived.\"",
+      "quote": "\"potatoes\": \"For example, 27/3/2026. If the potatoes have already arrived, enter the date they arrived.\"",
       "confidence": "verbatim"
     },
     {
@@ -1637,7 +1637,7 @@
       "statement": "Every notification must give a place of destination, picked from the address book, whose label reads Place of destination before arrival and Where the consignment is now once it has arrived, and which accepts an address anywhere in the United Kingdom.",
       "kind": "data",
       "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations placeOfDestination)",
-      "quote": "\"labelByState\":{\"potatoes\":\"Place of destination\",\"not-yet-arrived\":\"Place of destination\",\"already-arrived\":\"Where the consignment is now\"}",
+      "quote": "\"already-arrived\": \"Where the consignment is now\"",
       "confidence": "verbatim"
     },
     {
@@ -1757,7 +1757,7 @@
       "statement": "Every notification carries a date of notification stamped by the persistence layer at submission rather than from the browser clock, shown on the confirmation, the read-only view and the list card's Date submitted.",
       "kind": "data",
       "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations dateOfNotification)",
-      "quote": "stamped by the persistence layer at each finalise (backend NotificationService.write LocalDateTime.now(); stub finalise ISO now), never from the browser clock",
+      "quote": "stamped by the persistence layer at each submit (backend NotificationService.write LocalDateTime.now(); stub submit ISO now), never from the browser clock",
       "confidence": "verbatim"
     },
     {
@@ -1765,7 +1765,7 @@
       "statement": "Resubmitting after an amendment moves the date of notification to the latest submission, and the first submission's date is neither kept nor shown.",
       "kind": "rule",
       "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations dateOfNotification notes, ruled d-062)",
-      "quote": "after a re-submit from AMEND this is the latest submission — the backend re-stamps submittedAt (NotificationService.write) and the stub finalise re-stamps — matching animals Date submitted; the first-submission date is not separately kept or shown",
+      "quote": "after a re-submit from AMEND this is the latest submission — the backend re-stamps submittedAt (NotificationService.write) and the stub submit re-stamps — matching animals Date submitted; the first-submission date is not separately kept or shown",
       "confidence": "verbatim"
     },
     {
@@ -1773,7 +1773,7 @@
       "statement": "Every notification carries a status of DRAFT, SUBMITTED, AMEND or DELETED, shown as Draft, Submitted, Amending or Deleted on the journey strip, the list card and the confirmation, with machine-drafted Welsh labels.",
       "kind": "data",
       "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations notificationStatus)",
-      "quote": "\"values\":[\"DRAFT\",\"SUBMITTED\",\"AMEND\",\"DELETED\"],\"valueLabels\":\"Draft | Submitted | Amending | Deleted\"",
+      "quote": "\"valueLabels\": \"Draft | Submitted | Amending | Deleted\"",
       "confidence": "verbatim"
     },
     {
@@ -1813,7 +1813,7 @@
       "statement": "The late flag is set once, at the first submission from draft, and is left alone when a notification is resubmitted after an amendment, even though the submitted date moves.",
       "kind": "rule",
       "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations lateNotificationIndicator input.derivation)",
-      "quote": "Computed by one pure helper (review/lateness.js) at the FIRST submission only — committed as a system value in fulfilment immediately before records.finalise when the journey is DRAFT — and left untouched when finalising from AMEND",
+      "quote": "Computed by one pure helper (review/lateness.js) at the FIRST submission only — committed as a system value in fulfilment immediately before records.submit when the journey is DRAFT — and left untouched when finalising from AMEND",
       "confidence": "verbatim"
     },
     {

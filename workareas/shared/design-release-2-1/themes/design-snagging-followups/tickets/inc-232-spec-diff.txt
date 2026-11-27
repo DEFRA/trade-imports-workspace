@@ -1,0 +1,263 @@
+h3. What the specification now says
+
+In animals and plants, "Save and return to overview" now makes the same checks as "Save and continue": a missing or invalid answer keeps the user on the page with an error for each, what they entered kept and nothing saved. Upload documents now adds a complete document from every save button and refuses a part-filled one.
+
+This is generated from the Behaviour Spec as merged to main.
+
+h4. [Live animals: journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-flow/spec.md]
+
+The rule for pages the hub links to now says Save and return makes the same checks as Save and continue, instead of saving a page with a required answer left blank.
+
+h5. Changed: Save and return to overview refuses a page with a required answer missing
+
+This used to return to Overview with no error and the answer saved; it now keeps the user on the page with both errors.
+
+* *GIVEN* the Main import reason page with "Transit" chosen and its port of exit and destination country left blank
+* *WHEN* the user selects "Save and return to overview"
+* *THEN* they stay on the page, which shows "Select a port of exit" and "Select a destination country"
+* *AND* "Transit" is still chosen
+* *AND* nothing is saved
+
+h5. Changed: Commodity details with the number of animals blank is refused on save and return
+
+Only the name changed (it was "Commodity details keeps its checks on save and return"), as Commodity details is no longer the one exception.
+
+* *GIVEN* the Commodity details page with the number of animals left blank
+* *WHEN* the user selects "Save and return to overview"
+* *THEN* they stay on the page, which shows "Enter the number of animals"
+* *AND* nothing is saved
+
+h4. [Live animals: what are you importing (commodity selection)|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/commodity-selection/spec.md]
+
+The rule now refuses an empty selection on both save buttons, and a selection already saved stays as it was.
+
+h5. Changed: Save and return to overview with nothing chosen shows the same error
+
+This used to return to Overview with no error; it now stays on the page with "Select a commodity".
+
+* *GIVEN* the user is on the commodity selection page with nothing chosen
+* *WHEN* they save and return to overview
+* *THEN* they stay on the page, which shows "Select a commodity" in the error summary and inline on the search field
+* *AND* the commodity selection task reads "To do"
+
+h5. Changed: Save and return to overview after clearing a saved selection is refused and keeps the saved selection
+
+This used to empty the saved selection; it now refuses the save and keeps the selection.
+
+* *GIVEN* the user has a saved selection and clears it on the commodity selection page
+* *WHEN* they save and return to overview
+* *THEN* they stay on the page, which shows "Select a commodity"
+* *AND* reopening the page shows the saved selection still chosen
+
+h4. [Live animals: main reason for import|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/import-reason/spec.md]
+
+Two rules changed: a partly answered reveal is now refused on either save button, and Save and return now makes the checks of Save and continue, clearing a reason no longer chosen only once the new one is saved.
+
+h5. Changed: Save and return to overview refuses a partly answered reveal, keeping the reveal open
+
+This used to save and return to Overview; it now stays on the page with both errors and the reveal open.
+
+* *GIVEN* the user has chosen "Transit" and left the port of exit and the destination country blank
+* *WHEN* they save and return to overview
+* *THEN* they stay on the page, which shows "Select a port of exit" and "Select a destination country"
+* *AND* "Transit" is still chosen, with the reveal open
+* *AND* nothing is saved
+
+h5. Changed: Transit without a port of exit is refused and keeps the country
+
+This used to save and show Overview; it now stays on the page asking for the port of exit.
+
+* *GIVEN* the user has chosen "Transit" and given a destination country but no port of exit
+* *WHEN* they save and return to overview
+* *THEN* they stay on the page, which shows "Select a port of exit"
+* *AND* the destination country they gave is still held
+* *AND* nothing is saved
+
+h5. Changed: Changing the reason clears the saved purpose
+
+The user now also gives a port of exit and a destination country, so the save goes through.
+
+* *GIVEN* the user has saved "Internal market" with a purpose
+* *WHEN* they change the reason to "Transit", give a port of exit and a destination country, and save and return to overview
+* *THEN* choosing "Internal market" again shows no purpose chosen
+
+h4. [Live animals: origin of the import|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/origin-of-import/spec.md]
+
+The rule now refuses a required region code left empty on either save button.
+
+h5. Changed: Save and return to overview refuses "Yes" with the code left blank
+
+This used to return to Overview with "Yes" saved; it now stays on the page with the region code error.
+
+* *GIVEN* the user has chosen a country and answered that a region code is required
+* *WHEN* they leave the region code empty and save and return to overview
+* *THEN* they remain on the origin of the import page
+* *AND* an error says "Enter the region of origin code", with "Yes" still chosen
+* *AND* nothing is saved
+
+h4. [Live animals: upload documents|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/upload-documents/spec.md]
+
+The rule now says every save button keeps a started document: a part-filled one is refused with an error for each missing detail, and a complete one is added. The virus-scan rule was reworded with no change in meaning.
+
+h5. Changed: Save and return to overview with every detail filled in adds the document and shows Overview
+
+This used to refuse a filled-in form and ask the user to choose the file again and use the add action; a complete document is now added.
+
+* *GIVEN* the user has filled in the reference, document type, date of issue and chosen a file
+* *WHEN* they save and return to overview
+* *THEN* Overview is shown
+* *AND* reopening Upload documents lists the document, its row showing the type chosen
+
+h5. Changed: Save and continue with only the document type says what is missing
+
+The file error now reads "Upload a document" instead of asking the user to choose a file and use the add action.
+
+* *GIVEN* the user has chosen a document type and filled in nothing else
+* *WHEN* they save and continue
+* *THEN* errors say the reference and the date of issue are required
+* *AND* an error on the file says "Upload a document"
+* *AND* the user stays on the upload documents page
+
+h5. Changed: Save and continue with an untouched form leaves the page
+
+Only the wording changed: "continue" now names the "Save and continue" button.
+
+* *GIVEN* the user has added nothing and filled in nothing
+* *WHEN* they save and continue
+* *THEN* Overview is shown
+
+h5. Added: Save and return to overview with a part-filled document is refused
+
+* *GIVEN* the user has filled in only the reference
+* *WHEN* they save and return to overview
+* *THEN* they stay on the upload documents page, with an error for each of the document type, the date of issue and the file
+* *AND* the reference they typed is still on the form
+* *AND* no document is added
+
+h5. Added: A reference, date of issue and attachment with no document type is refused on save and continue
+
+* *GIVEN* the user has filled in the reference and the date of issue, chosen a file and left the document type unchosen
+* *WHEN* they save and continue
+* *THEN* the page shows "Select a document type"
+* *AND* no document is added
+
+h5. Added: The same rules hold without JavaScript
+
+* *GIVEN* the user has no JavaScript
+* *WHEN* they save and return to overview with every detail filled in
+* *THEN* Overview is shown and reopening Upload documents lists the document
+* *WHEN* they save and return to overview with only the reference filled in
+* *THEN* they stay on the upload documents page with an error for each detail not given, and no document is added
+
+h5. Added: A complete document saved with Save and continue is added and held while it is scanned
+
+* *GIVEN* the user has filled in the reference, document type, date of issue and chosen a file
+* *WHEN* they save and continue
+* *THEN* the document is added and listed as "Scanning for virus"
+* *AND* they stay on the upload documents page, which shows "You cannot continue until all documents have been scanned or removed"
+* *AND* the same holds while amending for "Save and return" and "Save and continue"
+
+h5. Added: While amending, an untouched form leaves by the button chosen
+
+* *GIVEN* a notification being amended, with the upload documents page opened from a Change link and nothing filled in
+* *WHEN* the user selects "Save and return"
+* *THEN* the review is shown
+* *WHEN* they instead select "Save and continue"
+* *THEN* the page after upload documents is shown, not the review
+
+h5. Added: Save and add another with a part-filled document is refused
+
+* *GIVEN* the user has filled in some but not all of the reference, document type, date of issue and file
+* *WHEN* they select "Save and add another"
+* *THEN* they stay on the upload documents page, with an error for each detail not given
+* *AND* the values they typed are still on the form
+* *AND* no document is added
+
+h4. [Plants: journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-flow/spec.md]
+
+The rule for pages the hub links to now says Save and return makes the same checks as Save and continue.
+
+h5. Changed: Save and return to overview refuses a blank arrival details page
+
+This used to return to Overview with no error; it now stays on the page with an error for each missing answer.
+
+* *GIVEN* a potatoes notification is on the arrival details with nothing answered
+* *WHEN* the user selects "Save and return to overview"
+* *THEN* they stay on the page, which shows an error for each missing answer
+* *AND* nothing is saved
+
+h4. [Plants: arrival details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/arrival-details/spec.md]
+
+The rule now refuses a page with required answers missing on either save button.
+
+h5. Changed: Save and return to overview refuses a blank page, naming each missing answer
+
+This used to return to Overview with no error; it now shows an error summary naming each missing answer.
+
+* *GIVEN* a potatoes notification is on the arrival details with nothing answered
+* *WHEN* they save and return to overview
+* *THEN* an error summary names the missing date, time and place of landing
+* *AND* nothing is saved, so the arrival task row does not read "Completed"
+
+h4. [Plants: arrival status|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/arrival-status/spec.md]
+
+The rule now refuses a missing status on either save button.
+
+h5. Changed: Save and return to overview with nothing chosen shows the error and focuses the first option
+
+This used to return to Overview with no error; it now shows the error and focuses the first option.
+
+* *GIVEN* the user is on the arrival-status page with nothing chosen
+* *WHEN* they save and return to overview
+* *THEN* an error summary is shown, naming the missing arrival status, and nothing is saved
+* *WHEN* they follow the error
+* *THEN* the first status option is focused
+
+h4. [Plants: commodity type|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/commodity-type/spec.md]
+
+The rule now refuses a missing type on either save button and keeps the commodity lines already held.
+
+h5. Changed: Save and return to overview with nothing chosen shows the error and keeps the lines
+
+This used to return to Overview with no error; it now shows the error and keeps the commodity lines.
+
+* *GIVEN* the user is on the commodity-type page with nothing chosen and the notification holds commodity lines
+* *WHEN* they save and return to overview
+* *THEN* an error summary is shown, naming the missing commodity type, and nothing is saved
+* *AND* the commodity lines are still held
+
+h4. [Plants: identification numbers|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/identification-numbers/spec.md]
+
+The rule now refuses a blank mandatory field on either save button, as it already did for length and consignment number format.
+
+h5. Changed: Save and return to overview with a mandatory field blank is refused
+
+This used to return to Overview with no error; it now stays on the page with an error for that field.
+
+* *GIVEN* the user is on identification numbers with a mandatory field on offer
+* *WHEN* they leave that field blank and save and return to overview
+* *THEN* they stay on the page, which shows an error for that field
+* *AND* nothing is saved
+
+h4. [Plants: origin of the import|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/origin/spec.md]
+
+The rule now refuses a missing country on either save button.
+
+h5. Changed: Save and return to overview with no country chosen shows the error
+
+This used to return to Overview with no error; it now shows an error naming the missing country of origin.
+
+* *GIVEN* the user is on the origin of the import page with no country chosen
+* *WHEN* they save and return to overview
+* *THEN* an error summary is shown, naming the missing country of origin, and nothing is saved
+
+h4. Test links
+
+Each spec file above has a matching coverage file. Its links now point to the renamed and new scenarios and to the tests rewritten to prove the refusals, in the animals frontend, plants frontend and tests repo.
+
+h4. Pull requests
+
+* [trade-imports-animals-frontend #436|https://github.com/DEFRA/trade-imports-animals-frontend/pull/436]
+* [trade-imports-plants-frontend #120|https://github.com/DEFRA/trade-imports-plants-frontend/pull/120]
+* [trade-imports-ins-tests #59|https://github.com/DEFRA/trade-imports-ins-tests/pull/59]
+* [trade-imports-workspace #162|https://github.com/DEFRA/trade-imports-workspace/pull/162]

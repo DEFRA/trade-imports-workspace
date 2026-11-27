@@ -1,0 +1,510 @@
+{
+  "area": "reference-lists",
+  "requirements": [
+    {
+      "id": "req-2256",
+      "statement": "The reference-data service reaches MDM and the Trade Platform token endpoint at the addresses its own configuration gives (MDM_SERVICE_URL and TRADE_PLATFORM_AUTH_URL, which default to the stub on port 8087), and each frontend reaches reference-data at the address its own configuration gives (TRADE_IMPORTS_REFERENCE_DATA_URL, port 8086 by default), so the country and port lists load in CDP, in the local Docker stack and in the CI Docker stack with no hard-coded host or port.",
+      "why": "Sam's 4 November ruling: every link between services works in CDP, the local Docker stack and the CI Docker stack the pull request end-to-end runs use, each taking its address from that service's own configuration and none from a hard-coded host or port. Countries and ports come from real MDM in CDP test and from the stub locally and in CDP dev, so the address has to be configuration.",
+      "claims": [
+        "repo-referencedata-p3-003",
+        "repo-referencedata-p3-005",
+        "repo-referencedata-p3-006",
+        "repo-referencedata-p3-034",
+        "repo-referencedata-p3-035",
+        "repo-referencedata-p3-041",
+        "repo-referencedata-p3-043",
+        "repo-stub-p2-034",
+        "ruling-sam-2026-11-04-p1-020",
+        "ruling-sam-2026-11-04-p1-021",
+        "ruling-sam-2026-11-04-p1-022",
+        "ruling-sam-2026-11-04-p1-023",
+        "ruling-sam-2026-11-04-p1-024",
+        "ruling-sam-2026-10-09-p1-130"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-referencedata-p3-034 and p3-035 show MDM and the token endpoint read from MDM_SERVICE_URL and TRADE_PLATFORM_AUTH_URL, defaulting to the stub at localhost:8087 (repo-stub-p2-034); p3-003 and p3-005 show the service on PORT (8086 by default) and the animals frontend calling it through TRADE_IMPORTS_REFERENCE_DATA_URL; p3-041 routes egress through HTTP_PROXY in CDP. p3-043 shows the stack's dependency on the stub locally. Earlier wording cited frontend claims this area's working set no longer holds; the statement now names the reference-data and stub links this area owns.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2259",
+      "statement": "A port whose MDM traffic value is missing, or is not Airport, Port or Rail, stays in the port of entry list with no type, in its own group after the rail ports, A to Z by name, and reference-data logs a warning once for each such port code and traffic value.",
+      "why": "The 9 October ruling orders the list airports, seaports, rail from MDM's traffic field, builds every list against reference-data as it is, and keeps whatever MDM serves. Every port MDM serves today carries one of the three values, so this group is empty today; keeping any other port, rather than dropping it, keeps the list MDM's content.",
+      "claims": [
+        "repo-referencedata-p1-034",
+        "repo-referencedata-p1-035",
+        "repo-referencedata-p1-036",
+        "repo-referencedata-p1-065",
+        "repo-referencedata-p1-066",
+        "repo-referencedata-p1-067",
+        "repo-stub-p2-030",
+        "ruling-sam-2026-10-09-p1-004",
+        "ruling-sam-2026-10-09-p1-131",
+        "ruling-sam-2026-10-09-p1-173",
+        "ruling-sam-2026-10-09-p1-174"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Reference-data already does this: repo-referencedata-p1-034 lists such a port with type null, p1-036 puts ports of unknown type after the rail ports, p1-035 and p1-065 warn once per port code and traffic value, and p1-067 proves it with a 'Ferry' port and a port with no traffic. repo-stub-p2-030 shows every port in the stub's MDM capture is Airport, Port or Rail, so no port falls into this group today.",
+      "conflicts": [
+        "c-384"
+      ]
+    },
+    {
+      "id": "req-2872",
+      "statement": "Reference-data's GET /countries answers 200 OK with a JSON array in which each country has a code (MDM's effectiveAlpha2, such as DE), a name (MDM's effectiveAlias, such as Germany) and a subDivisions list of code and name (such as ES-CN, Canary Islands); MDM's other country fields and each subdivision's blocs are not passed on, and a country with no subdivisions has an empty list.",
+      "why": "The origin, transit, destination, transporter and address-book country lists all read this one shape, and a territory reaches callers as a subdivision of its parent country.",
+      "claims": [
+        "repo-referencedata-p1-001",
+        "repo-referencedata-p1-003",
+        "repo-referencedata-p1-004",
+        "repo-referencedata-p1-005",
+        "repo-referencedata-p1-006",
+        "repo-referencedata-p1-007",
+        "repo-referencedata-p1-008",
+        "repo-referencedata-p1-009",
+        "repo-referencedata-p1-011",
+        "repo-referencedata-p1-012",
+        "repo-referencedata-p1-024",
+        "repo-referencedata-p1-024-m1",
+        "repo-referencedata-p1-052",
+        "repo-referencedata-p1-053",
+        "repo-referencedata-p1-055",
+        "repo-referencedata-p3-002"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-referencedata-p1-004 to p1-012 give the shape and mapping; p1-052, p1-053 and p1-055 prove it (DE / Germany, Spain with ES-CN, Austria with an empty list).",
+      "conflicts": []
+    },
+    {
+      "id": "req-2873",
+      "statement": "A subdivision MDM gives without a code is left out of its country's subdivisions, and the subdivisions that remain keep the order MDM gives them.",
+      "why": "A subdivision without a code cannot be chosen or stored, and reference-data sorts only the countries themselves.",
+      "claims": [
+        "repo-referencedata-p1-010",
+        "repo-referencedata-p1-073"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-referencedata-p1-010 drops subdivisions with no code; p1-073 shows subdivisions come back in MDM's order.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2874",
+      "statement": "The countries list runs A to Z by name and never holds the United Kingdom or its subdivisions, such as Northern Ireland, so the unfiltered list holds 249 of MDM's 250 country records.",
+      "why": "Imports into Great Britain never come from the United Kingdom itself; the one frontend list that needs the United Kingdom (an address country) adds it itself.",
+      "claims": [
+        "repo-referencedata-p1-013",
+        "repo-referencedata-p1-014",
+        "repo-referencedata-p1-051",
+        "repo-referencedata-p1-054",
+        "repo-referencedata-p1-060",
+        "repo-stub-p5-085",
+        "repo-stub-p5-086",
+        "repo-stub-p5-087",
+        "repo-stub-p5-090",
+        "repo-stub-p5-091",
+        "repo-stub-p5-122",
+        "ruling-ian-2026-11-06-p1-041",
+        "ruling-ian-2026-11-06-p1-042",
+        "ruling-sam-2026-10-09-p1-162"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-referencedata-p1-013 sorts by name and p1-014 drops GB and its subdivisions, proven by p1-051, p1-054 and p1-060. The stub's capture holds GB with no effectiveAlias and an unnamed GB-NIR subdivision (repo-stub-p5-085 to p5-091), which never reach callers.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2875",
+      "statement": "GET /countries takes one optional blocks value: when given, a country is listed only if MDM gives it a block of exactly that name marked includeCountry true, or gives it no blocks at all; when not given, every country but the United Kingdom is listed.",
+      "why": "Each country list keeps the MDM block it uses today (GBNAG_SPS_EX where it is filtered), and a change of block is a content question for the list's owner.",
+      "claims": [
+        "repo-referencedata-p1-002",
+        "repo-referencedata-p1-015",
+        "repo-referencedata-p1-016",
+        "repo-referencedata-p1-017",
+        "repo-referencedata-p1-061",
+        "ruling-sam-2026-10-09-p1-145",
+        "ruling-sam-2026-10-09-p1-146"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-referencedata-p1-015 to p1-017 give the filter, and p1-060 and p1-061 prove it (Martinique dropped when its GBNAG_SPS_EX block says includeCountry false; nothing dropped with no blocks value).",
+      "conflicts": []
+    },
+    {
+      "id": "req-2876",
+      "statement": "Reference-data asks MDM for countries at GET /mdm/geo/countries with system GBNAG and the caller's blocks value, and for ports at GET /mdm/trade/bcp/poes with system GBNAG, each call carrying the Ocp-Apim-Subscription-Key header and a bearer token from the Trade Platform token endpoint that is reused until it expires.",
+      "why": "This is the contract the real MDM through APIM and the stub both answer, so the lists are the same shape in every environment.",
+      "claims": [
+        "repo-referencedata-p1-020",
+        "repo-referencedata-p1-021",
+        "repo-referencedata-p1-022",
+        "repo-referencedata-p1-023",
+        "repo-referencedata-p1-059",
+        "repo-referencedata-p1-063",
+        "repo-referencedata-p3-035",
+        "repo-referencedata-p3-035-m1",
+        "repo-referencedata-p3-036",
+        "repo-referencedata-p3-037"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-referencedata-p1-020 to p1-023 give both calls, proven by p1-059 and p1-063; p3-035-m1 shows the token reused until its expiry.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2877",
+      "statement": "Reference-data's GET /ports-of-entry takes no query parameters and answers 200 OK with a JSON array in which each port has MDM's code and name and a type; MDM's port id is not passed on.",
+      "why": "The port of entry and port of exit lists read this one shape, and the type is what orders the list.",
+      "claims": [
+        "repo-referencedata-p1-027",
+        "repo-referencedata-p1-028",
+        "repo-referencedata-p1-029",
+        "repo-referencedata-p1-030",
+        "repo-referencedata-p1-069",
+        "repo-referencedata-p1-064"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-referencedata-p1-027 to p1-030 give the endpoint, proven by p1-069 ({\"code\":\"GB ABD\",\"name\":\"Aberdeen Harbour\",\"type\":\"seaport\"}) and p1-064.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2880",
+      "statement": "Every port MDM returns for system GBNAG is in the ports list: the list is never narrowed by port type or by what a port may handle, and only the whole country and port lists are served, never a single country or port by its code.",
+      "why": "MDM carries no approved-for-animals flag on a port, so no exit-only or commodity-only port list is built.",
+      "claims": [
+        "repo-referencedata-p1-039",
+        "repo-referencedata-p1-071",
+        "repo-referencedata-p1-072",
+        "repo-stub-p6-009",
+        "ruling-sam-2026-10-09-p1-005",
+        "ruling-sam-2026-10-09-p1-166"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-referencedata-p1-039 and p1-072 show no filter between MDM's result and the response; p1-071 shows each controller has one root GET and no lookup by code.",
+      "conflicts": [
+        "c-342"
+      ]
+    },
+    {
+      "id": "req-2881",
+      "statement": "Every country, territory and port name in the lists is MDM's own, served unchanged: country names in MDM's ISO short-name style (such as 'United States of America (the)', 'Moldova (the Republic of)', 'Western Sahara*' and 'Curacao'), territories MDM holds both as a country's subdivision and as a country record of their own (such as Martinique and the Canary Islands), and port names with MDM's duplicates and misspellings (such as two 'Port of Sheerness', two 'Pembroke Port', 'Teestort', 'TILBURY' and 'Portsmouth  Port').",
+      "why": "A reference list's content is MDM's, reaching the service through reference-data; where it differs from the design that is MDM's content to change, never a reason to edit a list in code or to block a row. The duplicate and misspelt ports are in real MDM and go to the MDM team.",
+      "claims": [
+        "repo-referencedata-p1-006",
+        "repo-referencedata-p1-031",
+        "repo-referencedata-p3-008",
+        "repo-stub-p3-013",
+        "repo-stub-p3-014",
+        "repo-stub-p3-015",
+        "repo-stub-p3-016",
+        "repo-stub-p4-009",
+        "repo-stub-p4-009-m1",
+        "repo-stub-p5-110",
+        "repo-stub-p5-111",
+        "repo-stub-p5-116",
+        "repo-stub-p5-117",
+        "repo-stub-p5-118",
+        "repo-stub-p5-119",
+        "repo-stub-p6-024",
+        "repo-stub-p6-025",
+        "repo-stub-p6-027",
+        "repo-stub-p6-029",
+        "repo-stub-p6-030",
+        "ruling-sam-2026-10-09-p1-129",
+        "ruling-sam-2026-10-09-p1-131",
+        "ruling-sam-2026-10-09-p1-132",
+        "ruling-sam-2026-10-09-p1-134",
+        "ruling-sam-2026-10-09-p1-163",
+        "ruling-sam-2026-10-09-p1-168",
+        "ruling-ian-2026-11-11-p1-012",
+        "document-dr1-parity-notes-p1-037"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-referencedata-p1-006 and p1-031 pass MDM's names through unchanged; repo-stub-p3-014 to p3-016, p5-116 to p5-119 show MDM's country spellings, p4-009-m1 and p5-111 the territories held twice, and p6-024 to p6-030 the duplicate and misspelt ports, all as MDM serves them.",
+      "conflicts": [
+        "c-001",
+        "c-048"
+      ]
+    },
+    {
+      "id": "req-2882",
+      "statement": "When MDM or the token endpoint cannot be reached, takes longer than 3 seconds to connect or to answer, answers 502, 503 or 504, or answers the countries or ports call with no body or no result list, reference-data answers 503 with the title 'Service Unavailable' and the detail 'Reference data is unavailable. Please try again later.'",
+      "why": "A caller can tell a passing MDM outage from a fault, and the page that reads the list can show its own error rather than an empty list.",
+      "claims": [
+        "repo-referencedata-p1-019",
+        "repo-referencedata-p1-026",
+        "repo-referencedata-p1-040",
+        "repo-referencedata-p1-041",
+        "repo-referencedata-p1-062",
+        "repo-referencedata-p3-024",
+        "repo-referencedata-p3-025",
+        "repo-referencedata-p3-026",
+        "repo-referencedata-p3-028",
+        "repo-referencedata-p3-038"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-referencedata-p1-019, p1-040 and p1-041 treat a missing body or result as MDM unavailable, p3-024 to p3-026 and p3-028 answer it 503, and p3-038 sets the 3-second timeouts.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2883",
+      "statement": "When MDM returns no countries, GET /countries answers 200 OK with an empty list.",
+      "why": "An empty list is a valid answer from MDM, unlike a missing body.",
+      "claims": [
+        "repo-referencedata-p1-018",
+        "repo-referencedata-p1-057"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-referencedata-p1-018 answers an empty MDM result with an empty list, and p1-057 shows the next request asks MDM again.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2884",
+      "statement": "Every error reference-data answers itself is an RFC 7807 problem detail with a type, a title, a detail and, when the request has one, a traceId: 400 'Validation Error' or 'Bad Request' for a bad request, and 500 'Internal Server Error' with 'An unexpected error occurred. Please try again later.' for any other MDM or token endpoint error and any unexpected fault, never the fault's own message.",
+      "why": "Callers handle one error shape, and nothing internal leaks into an answer.",
+      "claims": [
+        "repo-referencedata-p3-020",
+        "repo-referencedata-p3-021",
+        "repo-referencedata-p3-022",
+        "repo-referencedata-p3-023",
+        "repo-referencedata-p3-027",
+        "repo-referencedata-p3-029",
+        "repo-referencedata-p3-030",
+        "repo-referencedata-p3-031",
+        "repo-referencedata-p3-032"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-referencedata-p3-020 to p3-023 and p3-030 give the problem details; p3-027 and p3-029 send other MDM and token errors to the 500 handler. p3-031 and p3-032 note the unreachable 404 and 409 handlers and Spring's own 404 for an unknown path, which stay as they are.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2885",
+      "statement": "Reference-data caches MDM's countries, separately for each blocks value, and MDM's ports for 60 minutes by default (CACHE_MDM_TTL_MINUTES), at most 20 entries each, never caches an empty or missing answer, and sorts and maps the cached lists on every request.",
+      "why": "The lists change rarely, so callers are not held up by MDM, while a change in MDM reaches callers within the hour.",
+      "claims": [
+        "repo-referencedata-p1-042",
+        "repo-referencedata-p1-043",
+        "repo-referencedata-p1-044",
+        "repo-referencedata-p1-045",
+        "repo-referencedata-p1-046",
+        "repo-referencedata-p1-047",
+        "repo-referencedata-p1-048",
+        "repo-referencedata-p1-056",
+        "repo-referencedata-p1-058",
+        "repo-referencedata-p1-070",
+        "repo-referencedata-p3-039"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-referencedata-p1-042 to p1-048 give the caches, proven by p1-056, p1-058 and p1-070.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2886",
+      "statement": "Reference-data counts and times every countries and ports-of-entry request, logs MDM's trace id from the x-ms-middleware-request-id header when MDM sends one and warns when it does not, and exposes /health (with no details and no dependence on MDM), /metrics, /info and /cache.",
+      "why": "Operators can follow a list request into MDM, and an MDM outage never restarts the service.",
+      "claims": [
+        "repo-referencedata-p1-025",
+        "repo-referencedata-p1-049",
+        "repo-referencedata-p1-050",
+        "repo-referencedata-p3-042",
+        "repo-referencedata-p3-042-m1"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-referencedata-p1-049 and p1-050 count lookups, p1-025 logs the trace id, and p3-042 and p3-042-m1 give the actuator endpoints.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2887",
+      "statement": "Reference-data is the one shared service for MDM-sourced reference lists: it serves countries, ports of entry and commodities from MDM and holds none of its own, serves no border control posts beyond ports of entry, owns no notification, address or user data, and records its decisions as ADRs under doc/adr/.",
+      "why": "ADR 0002 keeps reference domains in one service until one grows large enough for its own, and MDM is the source of truth for every list.",
+      "claims": [
+        "repo-referencedata-p3-001",
+        "repo-referencedata-p3-004",
+        "repo-referencedata-p3-007",
+        "repo-referencedata-p3-008",
+        "repo-referencedata-p3-009",
+        "repo-referencedata-p3-010",
+        "repo-referencedata-p3-011",
+        "repo-referencedata-p3-013",
+        "repo-referencedata-p3-015",
+        "repo-referencedata-p3-016",
+        "repo-referencedata-p3-017",
+        "repo-referencedata-p3-018",
+        "repo-referencedata-p3-019",
+        "ruling-sam-2026-10-09-p1-130"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-referencedata-p3-013 to p3-018 give ADRs 0001 and 0002; p3-008 to p3-011 give what the service does and does not hold.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2888",
+      "statement": "The reference-data workspace page and ADR 0002 describe the service as it is: the ports list grouped by port type, the animals frontend's port list call, and ports of entry and commodities as domains it serves.",
+      "why": "Out of scope: a documentation correction, not a behaviour or a page the design changes. The page says both lists are sorted by name while the README and the code group ports by type, the page leaves ports out of the animals frontend's calls, and ADR 0002 still lists ports and commodities as planned. It goes to the report.",
+      "claims": [
+        "repo-referencedata-p3-005",
+        "repo-referencedata-p3-006",
+        "repo-referencedata-p3-012",
+        "repo-referencedata-p3-014"
+      ],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "repo-referencedata-p3-012 shows the page saying both lists are sorted by name; p3-014 shows ADR 0002 not updated.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2889",
+      "statement": "Reference-data serves a transporter list, an accompanying document types list and a certification purposes list.",
+      "why": "Out of scope: no source asks reference-data to serve these lists. Each organisation's transporters are its own records in the address book, a commercial transporter's country is set to Northern Ireland with no reference-data lookup, and an approved-transporters list managed in MDM is parked, so nothing asks reference-data for transporters; the document type and certification purpose options are fields V4 specifies, which their own areas carry.",
+      "claims": [
+        "repo-referencedata-p3-044",
+        "repo-referencedata-p3-045",
+        "repo-referencedata-p3-046",
+        "ruling-ian-2026-11-06-p1-014",
+        "ruling-ian-2026-11-06-p1-038"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "repo-referencedata-p3-044 to p3-046 show no endpoint, model or MDM call for any of the three.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2890",
+      "statement": "Commodity search and the species check in reference-data match MDM's search behaviour: prefix and word-start matching, a page size from 1 to 100, and MDM's own punctuation.",
+      "why": "Out of scope for this area: the commodity catalogue and commodity search wait until commodities come from MDM, and the commodities area carries the search contract. Recorded here because the reference-data contract page holds it.",
+      "claims": [
+        "repo-referencedata-p3-040",
+        "repo-referencedata-p3-012-m1",
+        "repo-referencedata-p3-012-m2",
+        "repo-referencedata-p3-012-m3",
+        "repo-referencedata-p3-012-m4",
+        "repo-referencedata-p3-012-m5"
+      ],
+      "status": "out-of-scope",
+      "delta": "exists",
+      "deltaNote": "repo-referencedata-p3-040 and p3-012-m1 to m5 describe today's commodity search contract and MDM's behaviour.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2891",
+      "statement": "GET /countries lists a country MDM gives with no name rather than failing the whole request, and a port MDM gives with no name sorts after the named ports of its group.",
+      "why": "Out of scope: no record MDM serves today triggers either case. The United Kingdom is the only country with no effectiveAlias and is dropped before the sort, and every port has a name. It is a latent fault in a service the programme does not otherwise change, so it goes to the report.",
+      "claims": [
+        "repo-referencedata-p1-013-m1",
+        "repo-referencedata-p1-037-m1",
+        "repo-stub-p5-085"
+      ],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "repo-referencedata-p1-013-m1 shows a country with no effectiveAlias fails the sort; p1-037-m1 shows a nameless port sorts first in its group.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2894",
+      "statement": "The stub reads each saved MDM response once, when it starts, answers every call from that copy with the header x-ms-middleware-request-id: stub-trace-id, and fails to start, logging the file's name and 'Failed to read from json file: <file>', when a saved response is missing or unreadable.",
+      "why": "Reference-data reads MDM's trace id header, and a broken fixture shows at start-up rather than as a wrong list.",
+      "claims": [
+        "repo-stub-p2-014",
+        "repo-stub-p2-015",
+        "repo-stub-p2-016",
+        "repo-stub-p2-017",
+        "repo-stub-p2-018",
+        "repo-stub-p2-026",
+        "repo-stub-p2-031",
+        "repo-stub-p6-008",
+        "repo-stub-p6-010"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-stub-p2-014 and p6-010 load once at start; p2-015 and p6-008 send the trace header; p2-018 and p2-031 give the read failure.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2897",
+      "statement": "The stub's README lists the two integrations it stands in for reference-data: trade-token, the Trade Platform OAuth token endpoint at POST /tenant/oauth2/v2.0/token, and mdm, 'MDM reference data through APIM: countries, border control posts and products', owned by the MDM / data platform team, with no added delay by default and interim SLA targets of p50 100 ms, p95 400 ms and p99 1,000 ms, each overridable.",
+      "why": "Perf runs set the stub to the SLA latency, and the interim targets stand until the volumetrics page confirms MDM's latency.",
+      "claims": [
+        "repo-stub-p2-034",
+        "repo-stub-p2-035",
+        "repo-stub-p2-036",
+        "repo-stub-p2-037",
+        "repo-stub-p2-038",
+        "repo-stub-p2-039",
+        "repo-stub-p2-040",
+        "repo-stub-p2-041"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-stub-p2-034 to p2-041 give the README's integration entries, latency profile and SLA defaults.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2898",
+      "statement": "The stub offers an error, empty or slow ports answer and inactive port records to test against, and its tests cover an invalid saved file, a block named in another letter case, the count of Port records, the order beyond the first record and the ignored system value.",
+      "why": "Out of scope: no source asks for it. The stub mirrors MDM's real data, which holds no inactive port, and the goal changes no stub behaviour beyond the tidy-up. The gaps go to the report.",
+      "claims": [
+        "repo-stub-p2-032",
+        "repo-stub-p2-033",
+        "repo-stub-p6-034",
+        "repo-stub-p6-035",
+        "repo-stub-p6-036"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "repo-stub-p6-035 and p6-036 show no inactive port and no failure answer; p2-032, p2-033 and p6-034 show the untested cases.",
+      "conflicts": []
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c-384",
+      "about": "Where a port whose MDM traffic value is missing, or is not Airport, Port or Rail, sits in the port of entry list once the list is grouped by port type.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "The port list is ordered airports first, then seaports, then rail, with rail in its own group after seaports.",
+          "claim": "ruling-sam-2026-10-09-p1-173"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "Every reference list is built now against reference-data as it is, and its content is what MDM serves.",
+          "claim": "ruling-sam-2026-10-09-p1-131"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "Every port in MDM's raw responses carries a traffic value of Airport, Port or Rail.",
+          "claim": "ruling-sam-2026-10-09-p1-004"
+        },
+        {
+          "source": "repo:referencedata",
+          "says": "The ports list runs airports, seaports, rail ports, then ports of unknown type.",
+          "claim": "repo-referencedata-p1-036"
+        },
+        {
+          "source": "repo:referencedata",
+          "says": "A port whose traffic is missing or unknown is still listed, with type null.",
+          "claim": "repo-referencedata-p1-034"
+        },
+        {
+          "source": "repo:stub",
+          "says": "Every port in the stub's MDM capture has traffic Airport, Port or Rail.",
+          "claim": "repo-stub-p2-030"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The 9 October ruling ranks first: its three groups order every port MDM serves today, since every MDM port carries Airport, Port or Rail, and it builds every list against reference-data as it is with whatever MDM serves. Reference-data as it is keeps any other port in the list, with no type, in a group of its own after the rail ports, so that is adopted unchanged (req-2259). Nothing is overruled: reference-data's handling does not contradict the ruling's three groups, it only covers a case MDM's data does not hold today."
+    }
+  ]
+}

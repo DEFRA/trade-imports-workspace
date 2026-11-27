@@ -1,0 +1,87 @@
+{
+  "id": "inc-030",
+  "title": "With JavaScript, transit countries are added as they are picked and removed in place, announced as 'Added' and 'Removed'",
+  "detail": "A trader says which countries the consignment travels through by picking each one from a country search. With JavaScript the picked country joins the list of added countries straight away, Remove takes one off without reloading the page, and a screen reader hears 'Added <country>' and 'Removed <country>'. Without JavaScript the page keeps working exactly as it does today, so this enhancement waits: design must say whether adding on pick, removing without a page load and the 'Added'/'Removed' wording are strongly needed and which tested library should provide them. It is built as design says, or dropped if design drops it. However it is built, the saved answer stays a list of country codes and every check on the transit list stays.",
+  "acceptanceCriteria": [
+    "With JavaScript, choosing a country from the transit country search adds a row for it to the added-countries table straight away, with no page load, and clears the search box ready for the next country (prototype:dr2-1-specs prototype-dr2-1-specs-p2-093, prototype-dr2-1-specs-p4-029; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-055)",
+    "With JavaScript, the controls on the transit countries page are the country search, a Remove control on each added-countries row, and the page's save buttons (trace:prototype-dr2-1 trace-prototype-dr2-1-p8-056; prototype:dr2-1-specs prototype-dr2-1-specs-p2-095)",
+    "With JavaScript, Remove on an added-countries row takes that country off the list with no page load and leaves the other countries listed in the order they were added (prototype:dr2-1-source prototype-dr2-1-source-p6-072; prototype:dr2-1-specs prototype-dr2-1-specs-p2-095; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-058)",
+    "Adding a country announces 'Added <country>' in the page's polite live region, such as 'Added Germany' (trace:prototype-dr2-1 trace-prototype-dr2-1-p8-055, trace-prototype-dr2-1-p13-072)",
+    "Adding the country that takes the list to twelve announces 'Added <country>' and 'Maximum of 12 countries reached. Remove a country to add another.' in the same announcement (repo:frontend repo-frontend-p11-096; trace:animals-fit trace-animals-fit-p17-048)",
+    "Removing a country announces 'Removed <country>' in the page's polite live region, such as 'Removed Belgium' (trace:prototype-dr2-1 trace-prototype-dr2-1-p8-058; repo:frontend repo-frontend-p11-095)",
+    "Each Remove control's accessible name names its own country, such as 'Remove Germany', on a row added with JavaScript as well as on a row the page renders itself (repo:frontend repo-frontend-p11-091)",
+    "With JavaScript, the list holds each country at most once and at most twelve countries, and a pick that would break either rule leaves the list as it was (repo:frontend repo-frontend-p11-074, repo-frontend-p11-077)",
+    "The countries listed when the trader saves are stored against the notification as country codes, whether they were added with JavaScript or without it (repo:frontend repo-frontend-p11-102)",
+    "Without JavaScript the page still adds a country with its 'Add country' button and takes one off with its Remove button, saves the list and announces 'Added <country>' or 'Removed <country>' for each change (repo:frontend repo-frontend-p11-103, repo-frontend-p11-070, repo-frontend-p11-092; repo:tests repo-tests-p1-119, repo-tests-p1-120, repo-tests-p1-122)"
+  ],
+  "dependsOn": [],
+  "theme": "waiting-on-design",
+  "status": "blocked",
+  "kind": "feat",
+  "repos": [
+    "frontend",
+    "tests"
+  ],
+  "sources": [
+    {
+      "source": "prototype:dr2-1-source",
+      "ref": "prototype-dr2-1-source-p6-072"
+    },
+    {
+      "source": "prototype:dr2-1-specs",
+      "ref": "prototype-dr2-1-specs-p2-093, p2-095, p4-029"
+    },
+    {
+      "source": "trace:prototype-dr2-1",
+      "ref": "trace-prototype-dr2-1-p8-055, p8-056, p8-058, p12-094, p13-072, p13-074"
+    },
+    {
+      "source": "ruling:sam-2026-10-09-pm",
+      "ref": "ruling-sam-2026-10-09-pm-p1-033, p1-046, p1-047, p1-061, p1-062"
+    },
+    {
+      "source": "repo:frontend",
+      "ref": "repo-frontend-p11-070, p11-071, p11-072-m1, p11-074, p11-077, p11-091, p11-092, p11-093, p11-094, p11-095, p11-096, p11-102, p11-103"
+    },
+    {
+      "source": "repo:tests",
+      "ref": "repo-tests-p1-119, p1-120, p1-122"
+    },
+    {
+      "source": "trace:animals-fit",
+      "ref": "trace-animals-fit-p17-019, p17-043, p17-044, p17-048"
+    },
+    {
+      "source": "trace:e2e",
+      "ref": "trace-e2e-p10-053, p10-057, p10-058"
+    },
+    {
+      "source": "document:dr1-parity-backlog",
+      "ref": "document-dr1-parity-backlog-p8-001"
+    }
+  ],
+  "requirements": [
+    "req-348",
+    "req-349",
+    "req-353",
+    "req-354"
+  ],
+  "openQuestions": [
+    "Design answers design question 4 (transit countries) of the 9 October afternoon ruling: are adding on pick, removing without a page load and the 'Added'/'Removed' wording strongly needed, and from which tested library? Built as design says, or dropped if design drops it. The EUDPA-719 spike is the open item (S25 in snagging/discussion.md)."
+  ],
+  "notes": [
+    "Every requirement here carries blockedBy design question 4 (ruling-sam-2026-10-09-pm-p1-061, p1-062), so the row stays blocked and sits in the waiting-on-design theme (ruling-sam-2026-10-09-pm-p1-046), apart from rows that build now.",
+    "Combines req-348 (add on pick), req-349 (remove in place), req-353 ('Added' wording, with the cap message in the same announcement) and req-354 ('Removed' wording): one design question, one client behaviour, one page and one review.",
+    "The no-JavaScript criterion and the Remove accessible-name, stored-code and list-check criteria carry c-006, c-045 and c-047 forward, so the enhancement cannot be built by replacing behaviour the rulings fixed. Animals only: transit is never mirrored to plants.",
+    "Waits on the split-off arrival-and-transit theme's inc-029 (the same page's title and redirect) through externalDependsOn, as it did before this re-distil; that pointer is unchanged.",
+    "Re-distil 2 November: req-348, req-349, req-353 and req-354 are unchanged in substance, so this row keeps its text. Rewritten for the wording rules: the title drops its 'Waiting on design:' prefix, the first criterion no longer quotes the 'Add country' button as absent but enumerates the controls the page has with JavaScript, and the conflict ids c-006, c-045 and c-047 have moved out of the provenance brackets into these notes. Checked against animals-frontend origin/main: the page is features/transport/transit-countries/ with _added-countries-table.njk, rows.js, remove-action.js and the #transit-countries-status live region; MAX_TRANSITED_COUNTRIES is 12 and the limit copy is 'Maximum of 12 countries reached. Remove a country to add another.'; today's announcements are '<country> added.' and '<country> removed.'.",
+    "No claim listed here is in any conflict's overruled set: the prototype's hidden array of country names, which c-047 overruled, is deliberately not cited, and nor are the traces of it."
+  ],
+  "gate": null,
+  "externalDependsOn": [
+    {
+      "workarea": "shared/design-release-2-1/themes/arrival-and-transit",
+      "id": "inc-029"
+    }
+  ]
+}

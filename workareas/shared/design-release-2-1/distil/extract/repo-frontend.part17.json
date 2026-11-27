@@ -1,7 +1,15 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 17 read the live-animals `documents` feature folder as it works without JavaScript: `page.js` (id/slug `accompanying-documents`, maturity `agreed`), `controller.js` (439 lines: the four routes GET page, POST page, GET `/status`, GET `/{uploadId}/file`, plus the claim-on-return, remove, retry and continue handlers), `template.njk` (190 lines: guidance block, additional-documents details expander, the add-a-document form inside a `govuk-summary-card` headed \"File upload\", the added-documents `govukTable`, the refresh fallback link and the save actions), `validate.js` (the stored-list staleness check), `evaluation.js` (the six document leaves bound to the `documents` group), `upload-config.js` (the eight accepted file types, the 50MB cap, the accept attribute and the attachment-type derivation), `test-support.js`, every file under `form/` (`errors.js`, `payload.js`), `contracts/` (`max-documents.js`, `documents-added-anchor.js`, `add-document-anchor.js`, `upload-id.js`, `remove-action.js`, `upload-session.js`), `handlers/` (`claim-upload.js`, `load-page.js`, `add-form-session.js`, `unsaved-claim.js`, `reads/download.js`) and `view-model/` (`render.js`, `rows.js`, `refresh.js`, `fragments/document-type.js`, `fragments/status.js`, `fragments/text.js`) except the co-located `*.test.js`, both copy locales in full, and the three fit specs `fit/entry.fit.spec.js` (2 tests), `fit/guidance.fit.spec.js` (5 tests) and `fit/upload.fit.spec.js` (1,050 lines, 32 tests across nine describes: page, reference validation, type validation, date validation, file validation, oversize validation, continue, saved rows, capacity and accessibility, no-JavaScript, and browser history). It also read, as supporting provenance only, `services/document-types/stub.js` (the 13 document type codes and 8 attachment type codes), `services/document-uploads/claim-contract.js` (reference max length 58 and the allowed-character pattern), `obligations/sections/documents.js` (0..15 documents, which fields are mandatory), `download-content-type.js` (what the file route serves), `scan-poll.js` (the three scan statuses) and the flow's section caption for the documents section. It covers the documents page's route, heading, caption and entry; the guidance and its expander; every field of the add-a-document form with its label, hint, options and rules; every validation message; the uploaded-documents table column by column with the status wording for each state; remove and download; where Continue leads; what the three fit specs prove; the English copy keys these pages use with Welsh key parity; and the upload-session, claim and row-building mechanisms. It leaves the scan-status page, the polling endpoint's client behaviour, `scan/`, `client/` and `fit/scan-status.fit.spec.js` and `fit/drop-zone.fit.spec.js` to part 18.",
+  "structure": "Part 17 read the documents feature folder (src/server/app/sets/live-animals/journeys/linear/features/documents/) on main, as it works without JavaScript: page.js (id and slug accompanying-documents, maturity agreed), controller.js (four routes: GET and POST of the page, GET of /status, GET of /{uploadId}/file; the get, post, remove, retry, leave and refuse handlers), template.njk (caption, h1, guidance paragraphs and bullets, the additional-documents details and table, the form with its hidden tokens, the File upload summary card with reference input, type select, date picker, file upload and the Save and add another button, the added-documents table, the refresh link and still-checking hint, the shared save actions, the live region), validate.js (stale saved document check), evaluation.js (the six fields a document binds), upload-config.js (accepted types, 50MB limit, attachment type from extension), test-support.js (stand-in upload session), form/errors.js and form/payload.js (every add-time rule and its message, field order, empty form), contracts/ (max documents, the two error anchors, upload id pattern and ownership, remove action, upload session handle and return path), handlers/ (claim-upload, unsaved-claim, add-form-session, load-page, reads/download), view-model/ (render, rows, refresh, fragments for document type, status and text), copy/copy.en.js and copy.cy.js in full, and the three fit specs entry.fit.spec.js (2 tests), guidance.fit.spec.js (5 tests) and upload.fit.spec.js (about 45 tests in 10 describe blocks: page, reference, type, date, file, oversize, continue, saved rows, capacity and accessibility, without JavaScript, browser history). The document-types service and the flow's section-caption copy were read as supporting provenance only. Claims cover: route, caption, heading and how a trader reaches the page; the guidance verbatim; every add-form field with label, hint, options and requiredness; the file field's hint, accepted types and size; every validation message; the capacity rule; the uploaded-documents table with every column, cell, status tag and action; removal and its failure paths; download; where Continue and Save and return lead and what blocks them; the upload-session and claim mechanism; the Welsh copy; and gaps (no remove confirmation, no add confirmation, per-file vs total size). The scan-status polling client and the oversize client script are part 18's; claims kept from part 18's earlier ids describe the server side of those that this slice shows.",
   "claims": [
+    {
+      "id": "repo-frontend-p1-035",
+      "statement": "The accompanying documents page collects the documents collection, and so owns every answer inside a document.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:52",
+      "quote": "export const meta = { ...page, collects: ['documents'], validation }",
+      "confidence": "verbatim"
+    },
     {
       "id": "repo-frontend-p17-001",
       "statement": "The documents page is reached at the notification-scoped path ending `accompanying-documents`, and its page id is the same word.",
@@ -26,15 +34,6 @@
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:6 and template.njk:22",
       "quote": "title: 'Upload documents'",
       "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p17-004",
-      "statement": "The page's section caption above the heading reads \"Documents\".",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/copy/copy.en.js:15",
-      "quote": "documents: 'Documents'",
-      "confidence": "verbatim",
-      "note": "The caption comes from the flow's shared section-caption copy; the template renders it with `sectionCaption(caption)` (template.njk:21)."
     },
     {
       "id": "repo-frontend-p17-005",
@@ -187,15 +186,6 @@
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:74-89 and fit/upload.fit.spec.js:231-250",
       "quote": "types: {\n    ITAHC: 'ITAHC (Intra Trade Animal Health Certificate)',\n    VETERINARY_HEALTH_CERTIFICATE:\n      'Other veterinary certificate / veterinary declaration',\n    SELF_DECLARATION: 'Self-declaration',\n    JOURNEY_LOG: 'Journey log',\n    IMPORT_PERMIT: 'Import permit / authorisation',\n    CITES_PERMIT_OR_CERTIFICATE: 'CITES permit/certificate',\n    AIR_WAYBILL: 'Air waybill',\n    SEA_WAYBILL: 'Sea waybill',\n    RAIL_WAYBILL: 'Rail waybill',\n    BILL_OF_LADING: 'Bill of lading',\n    COMMERCIAL_INVOICE: 'Commercial invoice',\n    PACKING_OR_SPECIES_LIST: 'Packing list / species list',\n    OTHER: 'Other supporting documents'\n  }",
       "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p17-024",
-      "statement": "The list of document types the select offers comes from a document-types service, which today answers from a stub holding the thirteen codes in that order.",
-      "kind": "integration",
-      "ref": "src/server/app/services/document-types/index.js:1-5 and services/document-types/stub.js:1-15",
-      "quote": "export const DOCUMENT_TYPE_OPTIONS = [\n  'ITAHC',\n  'VETERINARY_HEALTH_CERTIFICATE',\n  'SELF_DECLARATION',\n  'JOURNEY_LOG',\n  'IMPORT_PERMIT',\n  'CITES_PERMIT_OR_CERTIFICATE',\n  'AIR_WAYBILL',\n  'SEA_WAYBILL',\n  'RAIL_WAYBILL',\n  'BILL_OF_LADING',\n  'COMMERCIAL_INVOICE',\n  'PACKING_OR_SPECIES_LIST',\n  'OTHER'\n]",
-      "confidence": "verbatim",
-      "note": "Read as supporting provenance for the select's options; the service folder itself is outside this part's read."
     },
     {
       "id": "repo-frontend-p17-025",
@@ -1055,6 +1045,366 @@
       "quote": "await expect(addButton).not.toHaveAttribute(\n      'formaction',\n      uploadPathBeforeRestore\n    )\n    await expect(addButton).toHaveAttribute('formaction', /upload-and-scan/)",
       "confidence": "verbatim",
       "note": "Driven by the page's own script listening for a persisted `pageshow`; documents/client/restored-page.js is part 18's."
+    },
+    {
+      "id": "repo-frontend-p18-002",
+      "statement": "A document whose scan has completed shows the status \"Check completed\" in a green tag.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:11-15, copy/copy.en.js:98",
+      "quote": "COMPLETE: {\n    text: copy.scanTags.complete,\n    classes: 'govuk-tag--green',\n    announcement: copy.announce.safe\n  }",
+      "confidence": "verbatim",
+      "note": "copy.scanTags.complete is 'Check completed'."
+    },
+    {
+      "id": "repo-frontend-p18-003",
+      "statement": "A document still being scanned shows the status \"Scanning for virus\" in a blue tag.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:36, copy/copy.en.js:103",
+      "quote": "PENDING: { text: copy.scanTags.scanning, classes: 'govuk-tag--blue' }",
+      "confidence": "verbatim",
+      "note": "copy.scanTags.scanning is 'Scanning for virus'."
+    },
+    {
+      "id": "repo-frontend-p18-004",
+      "statement": "A document the upload service rejected for a reason the page has no wording for shows the status \"Rejected\" in a red tag.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:8,16-20, copy/copy.en.js:99",
+      "quote": "const REFUSED_TAG_CLASSES = 'govuk-tag--red'\n...\n  REJECTED: {\n    text: copy.scanTags.rejected,\n    classes: REFUSED_TAG_CLASSES,\n    announcement: copy.announce.rejected\n  }",
+      "confidence": "verbatim",
+      "note": "copy.scanTags.rejected is 'Rejected'."
+    },
+    {
+      "id": "repo-frontend-p18-005",
+      "statement": "A document rejected because the file contains a virus shows the status \"Virus found\" in a red tag.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:21-25, copy/copy.en.js:100",
+      "quote": "REJECTED_FILE_VIRUS: {\n    text: copy.scanTags.virusFound,\n    classes: REFUSED_TAG_CLASSES,\n    announcement: copy.announce.virusFound\n  }",
+      "confidence": "verbatim",
+      "note": "copy.scanTags.virusFound is 'Virus found'."
+    },
+    {
+      "id": "repo-frontend-p18-006",
+      "statement": "A document rejected because the file could not be uploaded shows the status \"Upload failed\" in a red tag.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:26-30, copy/copy.en.js:101",
+      "quote": "REJECTED_FILE_UPLOAD_FAILED: {\n    text: copy.scanTags.uploadFailed,\n    classes: REFUSED_TAG_CLASSES,\n    announcement: copy.announce.uploadFailed\n  }",
+      "confidence": "verbatim",
+      "note": "copy.scanTags.uploadFailed is 'Upload failed'."
+    },
+    {
+      "id": "repo-frontend-p18-007",
+      "statement": "A document rejected because the file could not be downloaded shows the status \"Download failed\" in a red tag.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:31-35, copy/copy.en.js:102",
+      "quote": "REJECTED_FILE_DOWNLOAD_FAILED: {\n    text: copy.scanTags.downloadFailed,\n    classes: REFUSED_TAG_CLASSES,\n    announcement: copy.announce.downloadFailed\n  }",
+      "confidence": "verbatim",
+      "note": "copy.scanTags.downloadFailed is 'Download failed'."
+    },
+    {
+      "id": "repo-frontend-p18-008",
+      "statement": "A document whose scan state the page has no tag for shows the status \"Unknown\" in a grey tag.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:51-54,64, copy/copy.en.js:104",
+      "quote": "export const UNKNOWN_TAG = {\n  text: copy.scanTags.unknown,\n  classes: 'govuk-tag--grey'\n}\n...\n  const tag = SCAN_STATUS_TAGS[tagKey] ?? UNKNOWN_TAG",
+      "confidence": "verbatim",
+      "note": "copy.scanTags.unknown is 'Unknown'."
+    },
+    {
+      "id": "repo-frontend-p18-009",
+      "statement": "Which status a rejected document shows is chosen by the reason the upload service gave, falling back to the plain rejection wording when the page has no wording for that reason.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:46-49",
+      "quote": "export const tagKeyFor = ({ scanStatus, rejectionReason }) => {\n  const perReason = `${scanStatus}_${rejectionReason}`\n  return SCAN_STATUS_TAGS[perReason] ? perReason : scanStatus\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: maps a backend scan result (status plus rejection reason) to the tag key the status cell shows."
+    },
+    {
+      "id": "repo-frontend-p18-010",
+      "statement": "Every status tag is preceded by a visually hidden label reading \"Virus check status for\" and the document's reference, so a screen-reader user hears which document a status belongs to.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:61-69, copy/copy.en.js:106",
+      "quote": "// The hidden label sits outside the tag the client rewrites in place, so it\n// survives a polled status change and names the document for every state.\nexport const statusTagHtml = (tagKey, reference) => {\n  const tag = SCAN_STATUS_TAGS[tagKey] ?? UNKNOWN_TAG\n  return (\n    `<span class=\"govuk-visually-hidden\">${escapeHtml(copy.scanStatusHidden(reference))}</span>` +",
+      "confidence": "verbatim",
+      "note": "copy.scanStatusHidden is `Virus check status for ${reference}`."
+    },
+    {
+      "id": "repo-frontend-p18-014",
+      "statement": "The page asks for each document's scan status under its own path with \"/status\" on the end.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:419-424, client/scan-status/page.js:1-2",
+      "quote": "    path: pageRoutePath(`${page.slug}/status`),\n...\nexport const pagePath = () => window.location.pathname\nexport const STATUS_ENDPOINT = `${pagePath()}/status`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p18-015",
+      "statement": "The scan-status request answers with a list of the notification's uploaded documents, each as its upload identifier, its scan status and the status wording key it should show.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:173-180, scan/status.js:38-45",
+      "quote": "  return h.response({ documents: scanned(documents) })\n...\nexport const scanned = (documents) =>\n  documents\n    .filter(({ entry }) => entry.uploadId)\n    .map((item) => ({\n      uploadId: item.entry.uploadId,\n      scanStatus: item.scanStatus,\n      tagKey: tagKeyFor(item)\n    }))",
+      "confidence": "verbatim",
+      "note": "mechanism: documents with no upload identifier are left out of the answer."
+    },
+    {
+      "id": "repo-frontend-p18-016",
+      "statement": "Each scan-status request re-reads every document's status from the upload service rather than using a cached one.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:175-178",
+      "quote": "  const documents = await withScanStatus(\n    state.collectionView(answers, ['documents'], evaluation),\n    { refresh: true, request }\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p18-023",
+      "statement": "The still-checking hint is rendered by the server on every load of the page and is hidden unless the page has already been refreshed 10 times with a document still scanning.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:166, view-model/render.js:118-119",
+      "quote": "<p id=\"js-timeout-message\" class=\"govuk-hint\" {% if not timedOut %}hidden{% endif %}>{{ copy.stillChecking }}</p>\n...\n      anyPending,\n      timedOut: anyPending && attempt >= MAX_POLL_ATTEMPTS,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p18-024",
+      "statement": "Without JavaScript the documents page offers a \"Refresh virus scan status\" link whenever a document is still being scanned, so a trader can see the scan finish.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:161-165, copy/copy.en.js:94",
+      "quote": "          {% if anyPending %}\n            <p id=\"js-refresh-fallback\" class=\"govuk-body\">\n              <a href=\"{{ refreshHref }}\" class=\"govuk-link\">{{ copy.refreshStatus }}</a>\n            </p>\n          {% endif %}",
+      "confidence": "verbatim",
+      "note": "copy.refreshStatus is 'Refresh virus scan status'."
+    },
+    {
+      "id": "repo-frontend-p18-027",
+      "statement": "The refresh link and the page the browser returns to carry a count of how many refreshes have happened, so the service knows when to show the still-checking hint.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/refresh.js:6-30, view-model/render.js:120",
+      "quote": "export const getAttempt = (request) => {\n  const parsed = Number.parseInt(request.query?.attempt ?? '0', 10)\n  return Number.isNaN(parsed) ? 0 : parsed\n}\n...\n      refreshHref: refreshHref(request, attempt + 1, extra.uploadSession),",
+      "confidence": "verbatim",
+      "note": "mechanism: an unreadable count is read as nought, and the refresh href also carries the handle of an open upload session so a part-filled add form is not lost."
+    },
+    {
+      "id": "repo-frontend-p18-033",
+      "statement": "Status announcements are made through one visually hidden polite live region at the foot of the page that is read out whole each time it changes.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:179-184, client/scan-status/announce.js:1-14",
+      "quote": "  <div id=\"js-scan-status-announcer\"\n       class=\"govuk-visually-hidden\"\n       aria-live=\"polite\"\n       aria-atomic=\"true\"\n       data-settled-href=\"{{ refreshHref }}\"\n       data-scan-copy=\"{{ scanCopyJson }}\"></div>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p18-034",
+      "statement": "Entering the scanning state announces nothing, because only settled states carry an announcement.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:36, client/scan-status/announce.js:9-14",
+      "quote": "PENDING: { text: copy.scanTags.scanning, classes: 'govuk-tag--blue' }\n...\nexport const announce = (message) => {\n  const region = announcer()\n  if (region && message) {\n    region.textContent = message\n  }\n}",
+      "confidence": "inferred",
+      "note": "Follows because the pending presentation has no announcement property and announce() does nothing without a message."
+    },
+    {
+      "id": "repo-frontend-p18-036",
+      "statement": "The status wording, tag colour and announcement for every state are handed to the browser with the page, so a status that changes without a reload reads exactly as a server-rendered one does.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:56-59, template.njk:184, client/scan-status/announce.js:4-7",
+      "quote": "export const scanCopyJson = JSON.stringify({\n  ...SCAN_STATUS_TAGS,\n  UNKNOWN: UNKNOWN_TAG\n})",
+      "confidence": "verbatim",
+      "note": "mechanism: the browser reads the wording from the announcer's data attribute rather than holding its own copy."
+    },
+    {
+      "id": "repo-frontend-p18-045",
+      "statement": "The file field on the documents page is a drop zone: a trader can drop a file onto it as well as choose one.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:107-118, client/index.js:1-9",
+      "quote": "            {{ govukFileUpload({\n              id: \"file\",\n              name: \"file\",\n              label: { text: copy.file.label, classes: \"govuk-label--s\" },\n              hint: { html: fileHintHtml },\n              attributes: { accept: acceptAttribute },\n              javascript: true,",
+      "confidence": "verbatim",
+      "note": "The drop zone is the govuk-frontend FileUpload component, enhanced by createAll(FileUpload); no bespoke drop handling is written."
+    },
+    {
+      "id": "repo-frontend-p18-057",
+      "statement": "The file-size limit is 50MB, counted as 50,000,000 bytes.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:40-44",
+      "quote": "const MAX_FILE_SIZE_MB = 50\nconst BYTES_PER_MEGABYTE = 1_000_000\nexport const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * BYTES_PER_MEGABYTE\nexport const MAX_FILE_SIZE_LABEL = `${MAX_FILE_SIZE_MB}MB`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p18-063",
+      "statement": "The error summary the browser builds carries the service-wide error summary heading, taken from the page rather than written in the script.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:15-17, client/oversize-validation/error-summary.js:66-70",
+      "quote": "      <div id=\"js-error-summary-container\"\n           data-error-summary-title=\"{{ sharedCopy.errorSummary.title }}\"\n           data-error-prefix=\"{{ copy.errors.hiddenPrefix }}\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p18-069",
+      "statement": "The service refuses an oversize file on the server as well, with the same \"The selected file must be smaller than 50MB\" message, so the limit holds without JavaScript.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/form/errors.js:17,34, upload-config.js:45-46",
+      "quote": "import { fileTypeMessage, oversizeMessage } from '../upload-config.js'\n...\n  [FILE_TOO_LARGE]: oversizeMessage(copy),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p18-070",
+      "statement": "The size limit and the oversize wording the browser checks against are carried on the add-document form, so the browser and the server work to one limit and one message.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:54-56, view-model/render.js:60,63",
+      "quote": "  <form method=\"post\" novalidate\n        data-max-file-size=\"{{ maxFileSize }}\"\n        data-oversize-error=\"{{ oversizeFileMessage }}\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p18-082",
+      "statement": "A document the trader downloads is sent with instructions to the browser not to guess its type.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/handlers/reads/download.js:7-12",
+      "quote": "export const fileResponse = (h, streamed) =>\n  h\n    .response(Readable.fromWeb(streamed.body))\n    .header('Content-Type', resolveDownloadContentType(streamed.headers))\n    .header('Content-Disposition', resolveContentDisposition(streamed.headers))\n    .header('X-Content-Type-Options', 'nosniff')",
+      "confidence": "verbatim",
+      "note": "mechanism: how a download's content type and presentation are chosen; claimed in general terms as the handling of uploaded files a trader fetches back."
+    },
+    {
+      "id": "repo-frontend-p17-128",
+      "statement": "The page's section caption above the heading reads \"Documents\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/copy/copy.en.js:15 and features/documents/template.njk:21",
+      "quote": "documents: 'Documents'",
+      "confidence": "verbatim",
+      "note": "The caption copy lives in the flow's shared section-caption copy; the documents template renders it with `{{ sectionCaption(caption) }}`."
+    },
+    {
+      "id": "repo-frontend-p17-129",
+      "statement": "The document types the select offers, and the set a saved document's type is checked against, come from a document-types service that today answers from a stub listing the thirteen type codes in the order the select shows them.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/document-type.js:4-14, validate.js:6,19 and services/document-types/index.js:1-3, stub.js:1-15",
+      "quote": "export const documentTypes = () => DOCUMENT_TYPE_OPTIONS",
+      "confidence": "verbatim",
+      "note": "The service folder is outside this part's read and was opened only to say where the list comes from. Each option's text is the code's label under `types` in the page copy."
+    },
+    {
+      "id": "repo-frontend-p17-130",
+      "statement": "A row whose saved document type has no label in the page copy shows \"Not provided\" in its Document type cell.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/rows.js:57 and view-model/fragments/text.js:10",
+      "quote": "{ text: cellText(copy.types[entry.accompanyingDocumentType]) },",
+      "confidence": "verbatim",
+      "note": "mechanism: the type cell is built with the same not-provided fallback as the reference cell."
+    },
+    {
+      "id": "repo-frontend-p17-131",
+      "statement": "The Attachment control's button reads \"Choose file\", followed by \"or drop file\", and before a file is chosen it shows \"No file chosen\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:59-61 and template.njk:114-116",
+      "quote": "chooseButton: 'Choose file',\n    dropInstruction: 'or drop file',\n    noFileChosen: 'No file chosen',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p17-132",
+      "statement": "The Attachment control announces \"Entered drop zone\" and \"Left drop zone\" as a file is dragged over it and away.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:62-63 and template.njk:117-118",
+      "quote": "enteredDropZone: 'Entered drop zone',\n    leftDropZone: 'Left drop zone'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p17-133",
+      "statement": "Each row's Remove button submits the page form with an action naming that row's position in the list, so the server removes the document at that position.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/contracts/remove-action.js:9-21 and controller.js:397-399",
+      "quote": "const removeAction = actionsPrefixed('remove:')",
+      "confidence": "verbatim",
+      "note": "mechanism: the button's action value is `remove:` followed by the zero-based index of the document in the documents collection."
+    },
+    {
+      "id": "repo-frontend-p17-134",
+      "statement": "Each upload session the page opens is limited to the 50MB file size and the MIME types of the eight accepted file types, and is recorded against the notification so its result can be matched later.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/handlers/add-form-session.js:11-34 and upload-config.js:18-20,43",
+      "quote": "maxFileSize: MAX_FILE_SIZE_BYTES,\n    mimeTypes: ALLOWED_MIME_TYPES",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p17-135",
+      "statement": "When an upload session cannot be opened or recorded against the notification, the page still renders, with the add form closed because it has nowhere to post the file.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:61-71 and view-model/render.js:24-32,80-81",
+      "quote": "const uploadFormUnavailable = !extra.uploadPath",
+      "confidence": "verbatim",
+      "note": "mechanism: a failed session is logged and answered as no fields, which leaves no upload path; the closed-form wording is claimed in repo-frontend-p17-057."
+    },
+    {
+      "id": "repo-frontend-p17-136",
+      "statement": "Taking on an uploaded document tells the upload service the document's type, its reference and its date of issue as an ISO date.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/handlers/claim-upload.js:48-57",
+      "quote": "documentUploads.claim({\n      uploadId: upload.uploadId,\n      documentType: entry.accompanyingDocumentType,\n      documentReference: entry.accompanyingDocumentReference,\n      dateOfIssue: isoDateFromDateParts(entry.accompanyingDocumentDateOfIssue)\n    })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p17-137",
+      "statement": "The Refresh virus scan status link carries the handle of the upload session the add form is posting to, so the reloaded page reuses that session rather than opening a new one.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/refresh.js:21-29 and contracts/upload-session.js:68-72",
+      "quote": "return uploadSession\n    ? withQuery(refresh, OPEN_SESSION_KEY, uploadSession)\n    : refresh",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p17-138",
+      "statement": "Save and continue and Save and return to overview post the whole form, file included, through the upload service when an upload session is open, so a complete document is saved by either button as well as by Save and add another.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:122,171-176, controller.js:139-140 and fit/upload.fit.spec.js:656-661",
+      "quote": "uploadPath: saveButtonsUploadPath",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p17-139",
+      "statement": "The add form posts its file to the upload service's upload-and-scan address, and a fresh session gives the add button a different address.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js:1030-1049",
+      "quote": "await expect(addButton).toHaveAttribute('formaction', /upload-and-scan/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p17-140",
+      "statement": "A started document submitted straight to the page, not through an upload session, is refused with its field errors, and the \"Upload a document\" error is added only when an upload session is open.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:344-372",
+      "quote": "addForm.uploadPath ? fileRequiredFieldError() : {}",
+      "confidence": "verbatim",
+      "note": "mechanism: works on the posted reference, type and date of issue when no file went through the upload service."
+    },
+    {
+      "id": "repo-frontend-p17-141",
+      "statement": "Pressing Save and add another on an untouched form shows the error summary with an error on the document type.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js:915-925 and handlers/claim-upload.js:103-111",
+      "quote": "await submitAdd(page)\n    await expect(errorSummary(page)).toBeVisible()\n    await expect(page.locator('#accompanyingDocumentType-error')).toBeVisible()",
+      "confidence": "verbatim",
+      "note": "Asking to add another counts as starting a document, so an empty add is validated rather than left unclaimed."
+    },
+    {
+      "id": "repo-frontend-p17-142",
+      "statement": "A refused wrong-type file leaves the \"ZIP files are not allowed for security reasons\" bullet showing in the file hint.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js:512-532",
+      "quote": "await expect(page.getByText(copy.file.noZipFiles)).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p17-143",
+      "statement": "A downloaded file carries the content disposition the upload service gave it.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/handlers/reads/download.js:7-11",
+      "quote": ".header('Content-Disposition', resolveContentDisposition(streamed.headers))",
+      "confidence": "verbatim",
+      "note": "download-content-type.js, which resolves it, is outside this part's read."
+    },
+    {
+      "id": "repo-frontend-p17-144",
+      "statement": "A downloaded document comes back with a 200 status and the file's own bytes: a PDF is served as application/pdf and begins with the PDF signature.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js:811-832",
+      "quote": "expect(response.headers()['content-type']).toContain('application/pdf')\n    expect(response.headers()['x-content-type-options']).toBe('nosniff')\n    expect((await response.text()).startsWith('%PDF-')).toBe(true)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p17-145",
+      "statement": "The added-documents table can be linked to: it sits in an element with the id `documents-added`, which the capacity error links to.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:147 and contracts/documents-added-anchor.js:1",
+      "quote": "export const DOCUMENTS_ADDED_ANCHOR = '#documents-added'",
+      "confidence": "verbatim"
     }
   ]
 }

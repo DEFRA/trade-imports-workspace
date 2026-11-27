@@ -1,0 +1,123 @@
+{
+  "source": "repo:addressbook",
+  "structure": "repos/trade-imports-address-book is a small Java / Spring Boot service: the org-scoped address book API and system of record for address records (MongoDB). Paths below are from the repo root. Production code is about 1,900 lines under src/main/java/uk/gov/defra/trade/imports/addressbook/: address/ (10 files, about 1,065 lines: Address entity, AddressRequest create/update body with Bean Validation messages, AddressStatus, OperatorResponse, OperatorPageResponse, OperatorMapper, AddressExpiryIndex, OperatorRepository, OperatorService 222 lines, OperatorController 367 lines with five endpoints under /organisation/{orgId}/addresses: GET list (page, q, countryCode), POST create, GET /{operator-id}, PUT /{operator-id}, DELETE /{operator-id}), exceptions/ (5 files, about 245 lines: RFC 7807 problem and validation-problem responses), filter/ (3 files, about 260 lines; IdentityHeaderFilter enforces the caller organisation header), configuration/ (Mongo, address TTL, Jackson, OpenAPI, metrics, proxy, TLS), service/EmfMetricsPublisher. Config: src/main/resources/application.yml (120 lines) and compose/mongo/10-init.js. Contract: docs/openapi/operators.yml (491 lines) and docs/openapi/api-contract.locked.yaml (441 lines). Tests: 16 integration tests under src/test/java/.../integration/ and unit tests under src/test/java/.../address, exceptions, filter (about 3,800 lines on the address domain). README.md (274 lines) documents the API overview, security and trust boundary, soft delete (tombstones), non-prod address expiry and indexes. Rulings: there is no rulings ledger file in the repo; rulings appear inline in code comments and schema descriptions as cv-NNN references (for example cv-011 countryCode stored as given, cv-044 address book is untyped and unroled, cv-048 countryCode filter is resolved by the frontend), and each part claims the cv-NNN rulings in its own files. Scope leaves out: CI workflows (.github/), Dockerfile, docker/dev-run.sh, compose.yml and compose/floci, proxy, TLS, metrics, logging, tracing and health-check plumbing (configuration/ProxyConfig, tls/, MetricsConfig, OpenApiConfig, JacksonConfig, AwsConfig, filter/RequestTracingFilter, filter/HealthCheckFilter, service/EmfMetricsPublisher and their tests), and docs/review/ (EUDPA-58-review.md and items.trade-imports-address-book.json, a closed code-review ledger whose 190 items are all Fix/Done or Auto-Resolved, with no won't-fix judgement that departs from the code). Cut into 4 parts along the API's own seams: the address record and its validation, the single-address lifecycle (create, read, update, delete), listing and search, and organisation scoping and caller identity.",
+  "parts": [
+    {
+      "part": 1,
+      "title": "The address record and its validation",
+      "scope": "What an address is: every stored and returned field, the create/update body and its validation rules and error messages, the status values, the response shape, persistence (Mongo collection, indexes) and non-prod expiry. Stops at the endpoints that use the record (part 2 and 3) and the organisation check (part 4).",
+      "read": [
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressStatus.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapper.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressExpiryIndex.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfig.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/MongoConfig.java",
+        "src/main/resources/application.yml",
+        "compose/mongo/10-init.js",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapperTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponseTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressExpiryIndexTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfigTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressExpiryIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorIndexIT.java",
+        "README.md (sections: MongoDB, Soft delete (tombstones), Address expiry (non-prod only), Indexes)",
+        "docs/openapi/operators.yml (the address request and response schemas only)"
+      ],
+      "covers": [
+        "Every field of the address request body (name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email, and the rejected type and role): whether it is required, its length limits, its format check, and every validation error message verbatim",
+        "Every field of the stored Address entity and of OperatorResponse, including server-assigned fields (id, organisationId, status or deleted flag, timestamps) and how server-assigned fields in a body are ignored",
+        "Every AddressStatus value and what it means",
+        "Every cv-NNN ruling cited in these files (at least cv-011 and cv-044), quoted",
+        "The Mongo collection, every index and the non-prod address expiry (TTL) rule and its config keys in application.yml",
+        "What the validation and mapper tests, AddressExpiryIT and OperatorIndexIT prove about the record"
+      ],
+      "prefix": "repo-addressbook-p1"
+    },
+    {
+      "part": 2,
+      "title": "Single-address lifecycle: create, read, update, delete",
+      "scope": "The four single-address endpoints: POST /organisation/{orgId}/addresses, GET, PUT and DELETE /organisation/{orgId}/addresses/{operator-id}, their service logic, success and error responses (problem JSON), and soft delete. Reads the shared controller, service, repository and contract files in full but claims only these four operations; the list endpoint belongs to part 3 and the orgId-versus-header check to part 4.",
+      "read": [
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorRepository.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/exceptions/Problem.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/exceptions/ValidationProblem.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/exceptions/GlobalExceptionHandler.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/exceptions/BadRequestException.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/exceptions/NotFoundException.java",
+        "docs/openapi/operators.yml",
+        "docs/openapi/api-contract.locked.yaml",
+        "README.md (section: API overview)",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressGetIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressUpdateIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressDeleteIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorComplianceIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorServiceTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/exceptions/GlobalExceptionHandlerTest.java"
+      ],
+      "covers": [
+        "Create (POST): request, 201 response, Location header, organisationId stamping, and every error response (400 validation problem with its errors map, 404, 500)",
+        "Get one (GET /{operator-id}): 200 response, 404 for missing, deleted or other-organisation addresses",
+        "Update (PUT /{operator-id}): full replace semantics, what may and may not change, every error response",
+        "Delete (DELETE /{operator-id}): soft delete or tombstone behaviour, response code, repeat delete and get-after-delete behaviour",
+        "The problem JSON shape (type, title, status, detail, errors) and how each exception maps to it",
+        "Every cv-NNN ruling cited in the controller, service, repository or contract for these four operations, quoted",
+        "What each test in AddressCrudIT, AddressGetIT, AddressUpdateIT, AddressDeleteIT, OperatorComplianceIT, OperatorServiceTest (single-address cases) and GlobalExceptionHandlerTest proves"
+      ],
+      "prefix": "repo-addressbook-p2"
+    },
+    {
+      "part": 3,
+      "title": "Listing and searching addresses",
+      "scope": "GET /organisation/{orgId}/addresses: pagination (1-based page, page size, totals), the q search over name, townOrCity and postcode, the countryCode filter, sort order, which statuses are listed, and the page response shape. Reads the shared controller, service, repository and contract files in full but claims only the list operation.",
+      "read": [
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorRepository.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorPageResponse.java",
+        "docs/openapi/operators.yml",
+        "docs/openapi/api-contract.locked.yaml",
+        "README.md (section: API overview)",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorRepositoryIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorServiceTest.java"
+      ],
+      "covers": [
+        "The list endpoint's parameters (page, q, countryCode), their defaults and limits, and every error response (400 out-of-range or non-numeric page, 404, 500)",
+        "Page size, page numbering, totals and every field of OperatorPageResponse",
+        "Search rules: which fields q matches, case sensitivity, partial-word matching, how q and countryCode combine",
+        "Sort order of the list and that only ACTIVE (not deleted) addresses are listed",
+        "Every cv-NNN ruling cited for listing or search (at least cv-048), quoted",
+        "What each test in OperatorListIT, AddressSearchIT, OperatorRepositoryIT and OperatorServiceTest (list and search cases) proves"
+      ],
+      "prefix": "repo-addressbook-p3"
+    },
+    {
+      "part": 4,
+      "title": "Organisation scoping and caller identity",
+      "scope": "How the service knows who is calling and keeps each organisation to its own addresses: the identity headers IdentityHeaderFilter requires, which paths it exempts, the authoriseOrg check between path orgId and the organisation header in OperatorController, and the trust boundary the README states. Claims the scoping rules only; the per-endpoint behaviour belongs to parts 2 and 3.",
+      "read": [
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java",
+        "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java (the authoriseOrg check and header parameters)",
+        "README.md (section: Security and trust boundary)",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java"
+      ],
+      "covers": [
+        "Every identity header the service reads or requires, and the response when one is missing or malformed",
+        "Which paths are exempt from the identity check",
+        "The rule that a path orgId not matching the caller's organisation header is a 404, and that one organisation can never read, change, list or delete another's addresses",
+        "The trust boundary stated in the README, in general terms only (no exploit detail)",
+        "What each test in IdentityHeaderFilterTest and AddressScopingIT proves"
+      ],
+      "prefix": "repo-addressbook-p4"
+    }
+  ]
+}

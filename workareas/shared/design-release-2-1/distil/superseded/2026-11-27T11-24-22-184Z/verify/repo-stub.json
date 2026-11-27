@@ -1,0 +1,710 @@
+{
+  "source": "repo:stub",
+  "extractHash": "617e5fa94b485c0cd45d6616dee68e785f671122c05235bbf826156828c90567",
+  "verdicts": [
+    {
+      "id": "repo-stub-p1-001",
+      "holds": true,
+      "reason": "AddressLookupSimulatorController.java:41 is exactly @GetMapping(\"/simulator/address-lookup/v2.1/addresses\"); the class comment at line 21 says it simulates GET /addresses on the DEFRA address lookup gateway."
+    },
+    {
+      "id": "repo-stub-p1-002",
+      "holds": true,
+      "reason": "application.yml:106 carries the quoted EUDPA-390 comment verbatim, and line 115 names ins-backend's Entra token request as the caller. The controller ref at line 21 says plan Step 6 rather than EUDPA-390, so that half of the ref is loose."
+    },
+    {
+      "id": "repo-stub-p1-003",
+      "holds": true,
+      "reason": "Lines 44-45 declare postcode and find as @RequestParam(required = false), exactly as quoted."
+    },
+    {
+      "id": "repo-stub-p1-004",
+      "holds": true,
+      "reason": "Line 55: String term = postcode != null ? postcode : find; so a non-null postcode always wins."
+    },
+    {
+      "id": "repo-stub-p1-005",
+      "holds": true,
+      "reason": "The comment at lines 51-54 is quoted verbatim, and the single switch over term at line 60 treats both parameters identically."
+    },
+    {
+      "id": "repo-stub-p1-006",
+      "holds": true,
+      "reason": "Lines 56-58: when term is null, 400 with application/json and the quoted body containing \"Either postcode or find is required\"."
+    },
+    {
+      "id": "repo-stub-p1-007",
+      "holds": true,
+      "reason": "Sound inference: a Java string switch (line 60) compares with equals, so case or spacing variants fall to default -> NO_RESULTS_FIXTURE (line 75). No normalisation of term happens before the switch."
+    },
+    {
+      "id": "repo-stub-p1-008",
+      "holds": true,
+      "reason": "Line 61 is quoted verbatim; jsonOk (lines 88-90) answers 200 with application/json and THREE_ADDRESSES_FIXTURE holds three results."
+    },
+    {
+      "id": "repo-stub-p1-009",
+      "holds": true,
+      "reason": "Line 62: ResponseEntity.noContent().build(), a 204 with no body."
+    },
+    {
+      "id": "repo-stub-p1-010",
+      "holds": true,
+      "reason": "Lines 63-64: 400, application/json, body {\"statusCode\":400,\"message\":\"Requested postcode is not valid\"} as quoted."
+    },
+    {
+      "id": "repo-stub-p1-011",
+      "holds": true,
+      "reason": "Lines 65-66: 503 SERVICE_UNAVAILABLE, application/json, body with message \"Service Unavailable\". The 'throttled' label comes from the test name at line 126."
+    },
+    {
+      "id": "repo-stub-p1-012",
+      "holds": true,
+      "reason": "Line 67 quoted verbatim: 200 OK with text/html body <html><body>Bad Gateway</body></html>. The 'proxy-error' label comes from the test name at line 134."
+    },
+    {
+      "id": "repo-stub-p1-013",
+      "holds": true,
+      "reason": "Line 68 routes TT1 1TT to delayedOk(); lines 79-86 sleep 15_000 ms then return jsonOk(THREE_ADDRESSES_FIXTURE)."
+    },
+    {
+      "id": "repo-stub-p1-014",
+      "holds": true,
+      "reason": "Line 74 quoted verbatim; the comment at lines 69-70 gives the purpose (demonstrate the find half without deploying)."
+    },
+    {
+      "id": "repo-stub-p1-015",
+      "holds": true,
+      "reason": "Comment at lines 70-73 quoted verbatim and supports the statement exactly."
+    },
+    {
+      "id": "repo-stub-p1-016",
+      "holds": true,
+      "reason": "Line 75 default -> jsonOk(NO_RESULTS_FIXTURE); lines 160-162 hold { \"header\": { \"totalResults\": \"0\" }, \"results\": [] }."
+    },
+    {
+      "id": "repo-stub-p1-017",
+      "holds": true,
+      "reason": "Both success fixtures (lines 151-152 and 161) have header.totalResults as a string and a results array. 'Successful JSON answer' correctly excludes the 400/503 JSON error bodies, which have no header."
+    },
+    {
+      "id": "repo-stub-p1-018",
+      "holds": true,
+      "reason": "Each result object at lines 153-155 has exactly the twelve listed keys and no county; the class comment at line 143 also says 'no county field'."
+    },
+    {
+      "id": "repo-stub-p1-019",
+      "holds": true,
+      "reason": "Comment at lines 142-144 quoted verbatim; the fixture shows uprn and buildingNumber as quoted strings too, which the statement adds from lines 153-155."
+    },
+    {
+      "id": "repo-stub-p1-020",
+      "holds": true,
+      "reason": "Line 153 matches the quote and every field value in the statement."
+    },
+    {
+      "id": "repo-stub-p1-021",
+      "holds": true,
+      "reason": "Line 154 matches the quote and every field value in the statement."
+    },
+    {
+      "id": "repo-stub-p1-022",
+      "holds": true,
+      "reason": "Line 155 matches the quote and every field value in the statement."
+    },
+    {
+      "id": "repo-stub-p1-023",
+      "holds": true,
+      "reason": "All three entries at lines 153-155 have town LONDON and postcode SW1A 1AA, and the same THREE_ADDRESSES_FIXTURE is returned for SW1A 1AA, TT1 1TT and both free-text terms (lines 61, 68/85, 74)."
+    },
+    {
+      "id": "repo-stub-p1-024",
+      "holds": true,
+      "reason": "Javadoc at line 142 quoted verbatim."
+    },
+    {
+      "id": "repo-stub-p1-025",
+      "holds": true,
+      "reason": "Javadoc at lines 144-147 quoted verbatim and the statement follows. Kind would sit better as data or constraint than rule."
+    },
+    {
+      "id": "repo-stub-p1-026",
+      "holds": true,
+      "reason": "Class Javadoc lines 21-23 quoted verbatim; validateBearer (lines 92-128) checks the Bearer scheme, signature, audience and expiry, and is called first at line 46. Stated in general terms only."
+    },
+    {
+      "id": "repo-stub-p1-027",
+      "holds": true,
+      "reason": "unauthorized() at lines 136-139 answers 401 with the quoted body; the Javadoc at lines 130-134 says it is word for word the real gateway's dev 401 of 2026-09-17. Every failing branch of validateBearer returns it."
+    },
+    {
+      "id": "repo-stub-p1-028",
+      "holds": true,
+      "reason": "Javadoc lines 133-134 quoted verbatim; unauthorized() sets no WWW-Authenticate header, and the test at line 78 asserts its absence."
+    },
+    {
+      "id": "repo-stub-p1-029",
+      "holds": true,
+      "reason": "Lines 46-49 run validateBearer before the term is computed at line 55, so the 401 precedes the 400 and every reserved term."
+    },
+    {
+      "id": "repo-stub-p1-030",
+      "holds": true,
+      "reason": "application.yml:114-119: address-lookup-simulator.expected-audience with the ADDRESS_LOOKUP_SIMULATOR_EXPECTED_AUDIENCE override, and the comment at lines 115-116 quoted verbatim; the controller reads it at line 36."
+    },
+    {
+      "id": "repo-stub-p1-031",
+      "holds": true,
+      "reason": "application.yml:117-118 quoted verbatim; the controller's audience check (line 120) requires the configured api:// value, and the test at lines 65-79 proves the bare identifier is refused."
+    },
+    {
+      "id": "repo-stub-p1-032",
+      "holds": true,
+      "reason": "Test at lines 41-50 asserts 200, JSON content type, \"totalResults\": \"3\" and DOWNING STREET, as stated."
+    },
+    {
+      "id": "repo-stub-p1-033",
+      "holds": true,
+      "reason": "Test at lines 52-63 asserts subBuildingName BUCKINGHAM PALACE, country ENGLAND, match \"1\" and not containsString(\"county\"); quoted comment is at line 54."
+    },
+    {
+      "id": "repo-stub-p1-034",
+      "holds": true,
+      "reason": "Test at lines 65-79 sends a bare-GUID audience and asserts 401, the exact body and header().doesNotExist(WWW_AUTHENTICATE); the comment at lines 67-68 is quoted verbatim."
+    },
+    {
+      "id": "repo-stub-p1-035",
+      "holds": true,
+      "reason": "Test comment at lines 76-77 quoted verbatim and supports the statement; it is a recorded rationale, not something the stub itself enforces."
+    },
+    {
+      "id": "repo-stub-p1-036",
+      "holds": true,
+      "reason": "Test at lines 81-88 sends find=Buckingham Palace and asserts 200 and BUCKINGHAM PALACE in the body."
+    },
+    {
+      "id": "repo-stub-p1-037",
+      "holds": true,
+      "reason": "Test at lines 90-98 sends find=Buckingham and asserts 200 and \"totalResults\": \"0\"; comment at line 92 quoted verbatim."
+    },
+    {
+      "id": "repo-stub-p1-038",
+      "holds": true,
+      "reason": "Test at lines 100-106 sends no term and asserts 400 and the message; quote at line 105."
+    },
+    {
+      "id": "repo-stub-p1-039",
+      "holds": true,
+      "reason": "Test at lines 108-114 asserts ZZ1 1ZZ -> isNoContent()."
+    },
+    {
+      "id": "repo-stub-p1-040",
+      "holds": true,
+      "reason": "Test at lines 116-123 asserts QQ1 1QQ -> 400 and \"Requested postcode\" in the body."
+    },
+    {
+      "id": "repo-stub-p1-041",
+      "holds": true,
+      "reason": "Test at lines 125-131 asserts XX1 1XX -> isServiceUnavailable(); the body is not asserted."
+    },
+    {
+      "id": "repo-stub-p1-042",
+      "holds": true,
+      "reason": "Test at lines 133-140 asserts YY1 1YY -> 200 and text/html content type."
+    },
+    {
+      "id": "repo-stub-p1-043",
+      "holds": true,
+      "reason": "The four tests sit at lines 142-181: no Authorization header, audience api://SomethingElse, expiry 60 s in the past, and a token signed by a different SimulatorSigningKeys instance; each asserts 401 only."
+    },
+    {
+      "id": "repo-stub-p1-044",
+      "holds": true,
+      "reason": "Gap confirmed: the 14 tests send no TT1 1TT, no find=Downing Street, never send postcode and find together, and the XX1 1XX and YY1 1YY tests assert status/content type only, not the bodies."
+    },
+    {
+      "id": "repo-stub-p1-045",
+      "holds": true,
+      "reason": "Class Javadoc lines 24-25 quoted verbatim; the switch at lines 60-76 has no truncation or find-specific fixture. The inference that it is still unbuilt is sound and the note correctly flags that find is partly wired through the free-text terms."
+    },
+    {
+      "id": "repo-stub-p1-046",
+      "holds": true,
+      "reason": "Gap confirmed: the only addresses are the three at lines 153-155, all LONDON, SW1A 1AA, ENGLAND and language EN."
+    },
+    {
+      "id": "repo-stub-p1-047",
+      "holds": true,
+      "reason": "Gap confirmed: README.md names only trade-token and mdm in its tables (lines 13-16, 40-43); line 57 mentions 'the other simulators' in passing but never names the address lookup simulator, its path or its postcodes. grep for address, lookup and simulator in docs/repos/trade-imports-stub.md finds nothing."
+    },
+    {
+      "id": "repo-stub-p2-001",
+      "holds": true,
+      "reason": "CountriesController.java:21 is @GetMapping(value = \"/mdm/geo/countries\") as quoted."
+    },
+    {
+      "id": "repo-stub-p2-002",
+      "holds": true,
+      "reason": "Line 17 defines the header name and line 23 declares @RequestHeader(OCP_APIM_SUBSCRIPTION_KEY) with no required=false, so Spring rejects a missing header with its default 400; the note correctly says the 400 is framework behaviour."
+    },
+    {
+      "id": "repo-stub-p2-003",
+      "holds": true,
+      "reason": "Sound inference: ocpApimSubscriptionKey is bound at line 23 and never used in lines 27-32."
+    },
+    {
+      "id": "repo-stub-p2-004",
+      "holds": true,
+      "reason": "Sound inference: system is bound at line 24 as optional and never used in the method body."
+    },
+    {
+      "id": "repo-stub-p2-005",
+      "holds": true,
+      "reason": "Sound inference: blocks is bound at line 25 as optional and never read; lines 27-28 always load the whole countriesResponse.json. The note's reference-data detail is outside this source and labelled as such."
+    },
+    {
+      "id": "repo-stub-p2-006",
+      "holds": true,
+      "reason": "Lines 27-32 load responses/countriesResponse.json as MdmCountry[] and answer ResponseEntity.ok() with the list, as quoted."
+    },
+    {
+      "id": "repo-stub-p2-007",
+      "holds": true,
+      "reason": "Line 31: .header(\"x-ms-middleware-request-id\", \"stub-trace-id\")."
+    },
+    {
+      "id": "repo-stub-p2-008",
+      "holds": true,
+      "reason": "MdmCountry.java:15-29 declares exactly the fifteen listed fields, independent as Boolean, subDivisions as List<MdmSubDivision> and blocks as List<MdmBlock>."
+    },
+    {
+      "id": "repo-stub-p2-009",
+      "holds": true,
+      "reason": "MdmBlock.java:15-17: name String, includeCountry Boolean, tags List<String>."
+    },
+    {
+      "id": "repo-stub-p2-010",
+      "holds": true,
+      "reason": "MdmSubDivision.java:15-17 has code (MdmCodedValue), name and List<String> blocs; MdmCodedValue.java:14 holds a single String value."
+    },
+    {
+      "id": "repo-stub-p2-011",
+      "holds": true,
+      "reason": "jq length on countriesResponse.json is 31; names run Austria ... Switzerland in alphabetical order (\"Netherlands (the)\" sits between Malta and Norway). The quote is the first record's name at line 3."
+    },
+    {
+      "id": "repo-stub-p2-012",
+      "holds": true,
+      "reason": "countriesResponse.json lines 3-23: Austria, longName \"the Republic of Austria\", AT, AUT, blocks [GBNAG_SPS_EX includeCountry true], subDivisions []; first of 31."
+    },
+    {
+      "id": "repo-stub-p2-013",
+      "holds": true,
+      "reason": "countriesResponse.json lines 26-46: Belgium, longName \"the Kingdom of Belgium\", BE, BEL, blocks [GBNAG_SPS_EX], subDivisions []; second of 31."
+    },
+    {
+      "id": "repo-stub-p2-014",
+      "holds": true,
+      "reason": "countriesResponse.json:49-69: Bulgaria, longName and codes as quoted, blocks GBNAG_SPS_EX, subDivisions []; third record."
+    },
+    {
+      "id": "repo-stub-p2-015",
+      "holds": true,
+      "reason": "countriesResponse.json:72-92: Croatia HR/HRV, \"the Republic of Croatia\", GBNAG_SPS_EX, no subdivisions; fourth record."
+    },
+    {
+      "id": "repo-stub-p2-016",
+      "holds": true,
+      "reason": "countriesResponse.json:95-115: Cyprus CY/CYP, \"the Republic of Cyprus\", GBNAG_SPS_EX, no subdivisions; fifth record."
+    },
+    {
+      "id": "repo-stub-p2-017",
+      "holds": true,
+      "reason": "countriesResponse.json:118-138: Czechia CZ/CZE, \"the Czech Republic\", GBNAG_SPS_EX, no subdivisions; sixth record."
+    },
+    {
+      "id": "repo-stub-p2-018",
+      "holds": true,
+      "reason": "countriesResponse.json:141-161: Denmark DK/DNK, \"the Kingdom of Denmark\", GBNAG_SPS_EX, no subdivisions; seventh record."
+    },
+    {
+      "id": "repo-stub-p2-019",
+      "holds": true,
+      "reason": "countriesResponse.json:164-184: Estonia EE/EST, \"the Republic of Estonia\", GBNAG_SPS_EX, no subdivisions; eighth record."
+    },
+    {
+      "id": "repo-stub-p2-020",
+      "holds": true,
+      "reason": "countriesResponse.json:187-207: Finland FI/FIN, \"the Republic of Finland\", GBNAG_SPS_EX, no subdivisions; ninth record."
+    },
+    {
+      "id": "repo-stub-p2-021",
+      "holds": true,
+      "reason": "countriesResponse.json:210-267: France FR/FRA, \"the French Republic\", six subdivisions with exactly the codes and names listed (lines 230-267), GBNAG_SPS_EX; tenth record."
+    },
+    {
+      "id": "repo-stub-p2-022",
+      "holds": true,
+      "reason": "countriesResponse.json:270-290: Germany DE/DEU, \"the Federal Republic of Germany\", GBNAG_SPS_EX, no subdivisions; 11th record."
+    },
+    {
+      "id": "repo-stub-p2-023",
+      "holds": true,
+      "reason": "countriesResponse.json:293-313: Greece GR/GRC, \"the Hellenic Republic\", GBNAG_SPS_EX, no subdivisions; 12th record."
+    },
+    {
+      "id": "repo-stub-p2-024",
+      "holds": true,
+      "reason": "countriesResponse.json:316-336: Hungary HU/HUN, longName \"Hungary\", GBNAG_SPS_EX, no subdivisions; 13th record."
+    },
+    {
+      "id": "repo-stub-p2-025",
+      "holds": true,
+      "reason": "countriesResponse.json:339-359: Iceland IS/ISL, \"the Republic of Iceland\", GBNAG_SPS_EX, no subdivisions; 14th record."
+    },
+    {
+      "id": "repo-stub-p2-026",
+      "holds": true,
+      "reason": "countriesResponse.json:362-382: Ireland IE/IRL, longName \"Ireland\", GBNAG_SPS_EX, no subdivisions; 15th record."
+    },
+    {
+      "id": "repo-stub-p2-027",
+      "holds": true,
+      "reason": "countriesResponse.json:385-405: Italy IT/ITA, \"the Republic of Italy\", GBNAG_SPS_EX, no subdivisions; 16th record."
+    },
+    {
+      "id": "repo-stub-p2-028",
+      "holds": true,
+      "reason": "countriesResponse.json:408-428: Latvia LV/LVA, \"the Republic of Latvia\", GBNAG_SPS_EX, no subdivisions; 17th record."
+    },
+    {
+      "id": "repo-stub-p2-029",
+      "holds": true,
+      "reason": "countriesResponse.json:431-451: Liechtenstein LI/LIE, \"the Principality of Liechtenstein\", GBNAG_SPS_EX, no subdivisions; 18th record."
+    },
+    {
+      "id": "repo-stub-p2-030",
+      "holds": true,
+      "reason": "countriesResponse.json:454-474: Lithuania LT/LTU, \"the Republic of Lithuania\", GBNAG_SPS_EX, no subdivisions; 19th record."
+    },
+    {
+      "id": "repo-stub-p2-031",
+      "holds": true,
+      "reason": "countriesResponse.json:477-497: Luxembourg LU/LUX, \"the Grand Duchy of Luxembourg\", GBNAG_SPS_EX, no subdivisions; 20th record."
+    },
+    {
+      "id": "repo-stub-p2-032",
+      "holds": true,
+      "reason": "countriesResponse.json:500-520: Malta MT/MLT, \"the Republic of Malta\", GBNAG_SPS_EX, no subdivisions; 21st record."
+    },
+    {
+      "id": "repo-stub-p2-033",
+      "holds": true,
+      "reason": "countriesResponse.json:523-543: \"Netherlands (the)\" NL/NLD, \"the Kingdom of the Netherlands\", GBNAG_SPS_EX, no subdivisions; 22nd record."
+    },
+    {
+      "id": "repo-stub-p2-034",
+      "holds": true,
+      "reason": "countriesResponse.json:546-566: Norway NO/NOR, \"the Kingdom of Norway\", GBNAG_SPS_EX, no subdivisions; 23rd record."
+    },
+    {
+      "id": "repo-stub-p2-035",
+      "holds": true,
+      "reason": "countriesResponse.json:569-589: Poland PL/POL, \"the Republic of Poland\", GBNAG_SPS_EX, no subdivisions; 24th record."
+    },
+    {
+      "id": "repo-stub-p2-036",
+      "holds": true,
+      "reason": "countriesResponse.json:592-625: Portugal PT/PRT, \"the Portuguese Republic\", subdivisions Madeira PT-30 and Azores PT-20 (lines 612-625), GBNAG_SPS_EX; 25th record."
+    },
+    {
+      "id": "repo-stub-p2-037",
+      "holds": true,
+      "reason": "countriesResponse.json:628-648: Romania RO/ROU, longName \"Romania\", GBNAG_SPS_EX, no subdivisions; 26th record."
+    },
+    {
+      "id": "repo-stub-p2-038",
+      "holds": true,
+      "reason": "countriesResponse.json:651-671: Slovakia SK/SVK, \"the Slovak Republic\", GBNAG_SPS_EX, no subdivisions; 27th record."
+    },
+    {
+      "id": "repo-stub-p2-039",
+      "holds": true,
+      "reason": "countriesResponse.json:674-694: Slovenia SI/SVN, \"the Republic of Slovenia\", GBNAG_SPS_EX, no subdivisions; 28th record."
+    },
+    {
+      "id": "repo-stub-p2-040",
+      "holds": true,
+      "reason": "countriesResponse.json:697-724: Spain ES/ESP, \"the Kingdom of Spain\", one subdivision Canary Islands ES-CN (lines 717-724), GBNAG_SPS_EX; 29th record."
+    },
+    {
+      "id": "repo-stub-p2-041",
+      "holds": true,
+      "reason": "countriesResponse.json:727-747: Sweden SE/SWE, \"the Kingdom of Sweden\", GBNAG_SPS_EX, no subdivisions; 30th record."
+    },
+    {
+      "id": "repo-stub-p2-042",
+      "holds": true,
+      "reason": "countriesResponse.json:750-770: Switzerland CH/CHE, \"the Swiss Confederation\", GBNAG_SPS_EX, no subdivisions; 31st and last record (file length checked: 31)."
+    },
+    {
+      "id": "repo-stub-p2-043",
+      "holds": true,
+      "reason": "jq over the fixture: the set of distinct blocks arrays is exactly one, [{name GBNAG_SPS_EX, includeCountry true, tags []}], across all 31 records; no other block name appears."
+    },
+    {
+      "id": "repo-stub-p2-044",
+      "holds": true,
+      "reason": "jq: the only value of independent across all 31 records is false; quote at line 9 and repeated in every record."
+    },
+    {
+      "id": "repo-stub-p2-045",
+      "holds": true,
+      "reason": "jq: every record has statusName officially-assigned, system iso and the four system* fields null; quote lines 10-15."
+    },
+    {
+      "id": "repo-stub-p2-046",
+      "holds": true,
+      "reason": "jq: no record where effectiveAlias differs from name or effectiveLongName differs from longName; quote lines 3-8 is Austria's."
+    },
+    {
+      "id": "repo-stub-p2-047",
+      "holds": true,
+      "reason": "Inferred soundly from the 31 names: the 27 EU states (AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE) plus IS, LI, NO, CH. The quote (the block name) is a weak anchor for the statement, but the inference holds against the whole file."
+    },
+    {
+      "id": "repo-stub-p2-048",
+      "holds": true,
+      "reason": "Lines 118 and 523: names are \"Czechia\" and \"Netherlands (the)\", the ISO short-name forms; the long forms only appear in longName. Kind copy is a fair reading."
+    },
+    {
+      "id": "repo-stub-p2-049",
+      "holds": true,
+      "reason": "jq: only France, Portugal and Spain have non-empty subDivisions; counts 6, 2, 1 with the names listed at lines 230-267, 612-625, 717-724; the other 28 are []."
+    },
+    {
+      "id": "repo-stub-p2-050",
+      "holds": true,
+      "reason": "MdmSubDivision.java:17 declares List<String> blocs; jq shows every subdivision object in the fixture has only the keys code and name, so blocs is never populated."
+    },
+    {
+      "id": "repo-stub-p2-051",
+      "holds": true,
+      "reason": "PortsOfEntryController.java:21 @GetMapping(value = \"/mdm/trade/bcp/poes\"); the BCP reading of the path is a fair gloss."
+    },
+    {
+      "id": "repo-stub-p2-052",
+      "holds": true,
+      "reason": "PortsOfEntryController.java:17,23: @RequestHeader with no required=false, so Spring rejects a request without it; the value is never used in the method body, and a grep of src/main finds no other Ocp-Apim check."
+    },
+    {
+      "id": "repo-stub-p2-053",
+      "holds": true,
+      "reason": "PortsOfEntryController.java:24-26: system is optional and unused; the method has no other request parameter and always loads the whole fixture."
+    },
+    {
+      "id": "repo-stub-p2-054",
+      "holds": true,
+      "reason": "MdmPortsResponse.java:15 private List<MdmPortOfEntry> result; controller returns ResponseEntity.ok() with it (line 28); fixture lines 1-2 open {\"result\": [ while CountriesController returns List<MdmCountry>."
+    },
+    {
+      "id": "repo-stub-p2-055",
+      "holds": true,
+      "reason": "PortsOfEntryController.java:29 .header(\"x-ms-middleware-request-id\", \"stub-trace-id\")."
+    },
+    {
+      "id": "repo-stub-p2-056",
+      "holds": true,
+      "reason": "MdmPortOfEntry.java:14-16: three String fields id, code, name, and nothing else."
+    },
+    {
+      "id": "repo-stub-p2-057",
+      "holds": true,
+      "reason": "portsOfEntryResponse.json:3-80 read line by line: all 78 entries match the listed id, code and name in order, including GBSHS without a space (63) and the double space in \"Portsmouth  Port\" (66)."
+    },
+    {
+      "id": "repo-stub-p2-058",
+      "holds": true,
+      "reason": "jq: the id list equals the strings \"1\" to \"78\" in order."
+    },
+    {
+      "id": "repo-stub-p2-059",
+      "holds": true,
+      "reason": "Lines 27-28, 68-69, 76-77: HES Humber Bulk Terminal (25) precedes Harwich Port (26), Port of Middlesbrough (67) follows Portsmouth  Port (66) and Port of Tyne, TILBURY (74) precedes Teesside International Airport (75). Case-insensitively those are out of order, so the inference holds."
+    },
+    {
+      "id": "repo-stub-p2-060",
+      "holds": true,
+      "reason": "jq: no code fails startswith(\"GB\") (GBSHS included); names include airports (Heathrow Airport, line 29), ports and harbours (Port of Dover, line 59) and docks (Liverpool Docks, line 39)."
+    },
+    {
+      "id": "repo-stub-p2-061",
+      "holds": true,
+      "reason": "Lines 48-49: ids 46 and 47, codes GB PED and GB PEM, both named Pembroke Port; jq group_by confirms it is one of the two duplicate names."
+    },
+    {
+      "id": "repo-stub-p2-062",
+      "holds": true,
+      "reason": "Lines 65-66: id 63 code GBSHS and id 64 code GB SHS, both Port of Sheerness; jq confirms the duplicate name, and codes are all distinct."
+    },
+    {
+      "id": "repo-stub-p2-063",
+      "holds": true,
+      "reason": "Line 68: \"Portsmouth  Port\" with two spaces."
+    },
+    {
+      "id": "repo-stub-p2-064",
+      "holds": true,
+      "reason": "Lines 76, 79, 80: TILBURY (GB TIL), Tilbury 2 Ro-Ro Terminal (GB TILR), Tilbury Port (GB TILL)."
+    },
+    {
+      "id": "repo-stub-p2-065",
+      "holds": true,
+      "reason": "Line 78: { \"id\": \"76\", \"code\": \"GB TEE\", \"name\": \"Teestort\" }; reading it as a misspelling of Teesport is a sound inference."
+    },
+    {
+      "id": "repo-stub-p2-066",
+      "holds": true,
+      "reason": "Lines 59-61: Port of Dover GB DVR, Port of Dover (Eastern) GB DVRE, Port of Dover (Western) GB DVRW."
+    },
+    {
+      "id": "repo-stub-p2-067",
+      "holds": true,
+      "reason": "FileUtils.java:17-18 opens the classpath resource on every call; CountriesController.java:27-28 and PortsOfEntryController.java:26 call it inside the handler, with no caching or write path."
+    },
+    {
+      "id": "repo-stub-p2-068",
+      "holds": true,
+      "reason": "FileUtils.java:20-28: a null stream throws IllegalArgumentException \"File not found: \" + fileName, which the catch logs as \"Failed to read from JSON file: {}\" and rethrows as RuntimeException \"Failed to read from json file: \" + fileName. Statement matches; how the request fails (status) is not stated and the claim does not overreach on it."
+    },
+    {
+      "id": "repo-stub-p2-069",
+      "holds": true,
+      "reason": "FileUtilsTest.java:23-31 getObjectFromFile_deserializesCountriesFixtureAsArray asserts isNotEmpty, name and effectiveAlpha2 not blank on the first country."
+    },
+    {
+      "id": "repo-stub-p2-070",
+      "holds": true,
+      "reason": "FileUtilsTest.java:33-46: filters to ES, asserts one subdivision, code ES-CN, name Canary Islands."
+    },
+    {
+      "id": "repo-stub-p2-071",
+      "holds": true,
+      "reason": "FileUtilsTest.java:48-55: asserts response not null and result not null and not empty."
+    },
+    {
+      "id": "repo-stub-p2-072",
+      "holds": true,
+      "reason": "FileUtilsTest.java:57-68: hasSize(78), first code GB DYC and name Aberdeen Airport, codes contain GB EMA, GB EDI, GB DVR."
+    },
+    {
+      "id": "repo-stub-p2-073",
+      "holds": true,
+      "reason": "FileUtilsTest.java:70-76: responses/does-not-exist.json throws RuntimeException with message containing \"Failed to read from json file\"."
+    },
+    {
+      "id": "repo-stub-p2-074",
+      "holds": true,
+      "reason": "Within the slice only FileUtilsTest touches the MDM fixtures, and it reads files, not HTTP. Out-of-scope LatencyProfilesIT (lines 32-40) and FaultsIT (line 137) do call /mdm/geo/countries and /mdm/trade/bcp/poes over HTTP with an Ocp-Apim-Subscription-Key, but they assert only status, latency and fault bodies: none sends a request without the key, sends system or blocks, or checks the x-ms-middleware-request-id header. So the gap stands as scoped, and the note already names those tests."
+    },
+    {
+      "id": "repo-stub-p2-075",
+      "holds": true,
+      "reason": "application.yml:139-148 has interface-name \"MDM reference data through APIM: countries and border control posts\", owner MDM / data platform team, and paths /mdm/geo/countries and /mdm/trade/bcp/poes, as quoted."
+    },
+    {
+      "id": "repo-stub-p2-076",
+      "holds": true,
+      "reason": "application.yml:142-145 is quoted verbatim: profile defaults to zero-delay, agreed defaults to false. The p50/p95/p99 of 100/400/1000 ms are at lines 149-152, inside the ref range though not in the quote; README.md:21 confirms them as interim and unagreed."
+    },
+    {
+      "id": "repo-stub-p2-077",
+      "holds": true,
+      "reason": "README.md:11 and :16 say exactly this; the quote is verbatim with an elision between the two lines."
+    },
+    {
+      "id": "repo-stub-p2-078",
+      "holds": true,
+      "reason": "README.md:38 says the two integrations \"can be made to fail, so the resilience runs in trade-imports-performance-tests can show how trade-imports-reference-data copes\", and :43 lists both MDM paths. The quote is only the table row; the 'resilience runs' wording rests on line 38, inside the ref range."
+    },
+    {
+      "id": "repo-stub-p2-079",
+      "holds": true,
+      "reason": "Confirmed with jq: all 31 records carry only the GBNAG_SPS_EX block, and CountriesController.java:25 binds blocks but never uses it (lines 27-32 return the whole fixture). The consequence for a germinal list follows soundly; the gap is honestly scoped in the note."
+    },
+    {
+      "id": "repo-stub-p2-080",
+      "holds": true,
+      "reason": "jq over countriesResponse.json (772 lines) lists 31 countries: the 27 EU states plus Iceland, Liechtenstein, Norway and Switzerland. No non-European country is present."
+    },
+    {
+      "id": "repo-stub-p2-081",
+      "holds": true,
+      "reason": "MdmPortOfEntry.java:14-16 declares only id, code and name; jq over portsOfEntryResponse.json finds only the keys code, id, name (under result), across 78 entries. No type or mode field exists."
+    },
+    {
+      "id": "repo-stub-p2-082",
+      "holds": true,
+      "reason": "Same record and fixture as above carry no designation field, and PortsOfEntryController.java:24 reads only an optional system parameter, which it ignores. No commodity filter exists."
+    },
+    {
+      "id": "repo-stub-p2-083",
+      "holds": true,
+      "reason": "subDivisions lists open at countriesResponse.json lines 230 (France), 612 (Portugal) and 717 (Spain), matching the refs; jq shows each of the nine entries has only code and name, no blocs, although MdmSubDivision.java:17 defines a blocs field."
+    }
+  ],
+  "missed": [
+    {
+      "id": "repo-stub-p1-031-m1",
+      "statement": "When the simulator refuses a bearer because its audience does not match, it logs a warning naming the audience the token carried, so a developer can see from the stub's log which audience was sent. The other refusals (no bearer, bad signature, expiry) are not logged.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/federated/AddressLookupSimulatorController.java:120-122",
+      "quote": "log.warn(\"Address lookup simulator rejected a bearer with audience {}\", claims.getAudience());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-016-m1",
+      "statement": "The simulator has two different no-results answers: the reserved postcode ZZ1 1ZZ gives 204 with no body, while any unreserved term gives 200 with totalResults \"0\" and an empty results list, so a caller exercised against the stub meets both shapes.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/federated/AddressLookupSimulatorController.java:62, 75, 160-162",
+      "quote": "case \"ZZ1 1ZZ\" -> ResponseEntity.noContent().build();",
+      "confidence": "inferred",
+      "note": "Inferred by setting line 62 beside the default branch at line 75; p1-009 and p1-016 each record one half but no claim says the two coexist."
+    },
+    {
+      "id": "repo-stub-p2-021-m1",
+      "statement": "The fixture gives Reunion the subdivision code FR-LRE and spells the name without its accent; FR-LRE is not the ISO 3166-2 form the other French codes follow (two letters after FR-, such as FR-MQ or FR-GP), so a page or mapping keyed on ISO subdivision codes would not match Reunion from the stub.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/countriesResponse.json:249-254",
+      "quote": "\"code\": {\n          \"value\": \"FR-LRE\"\n        },\n        \"name\": \"Reunion\"",
+      "confidence": "inferred",
+      "note": "Inferred from the pattern of the five other French subdivision codes in the same list; whether live MDM also uses FR-LRE is not knowable from the stub."
+    },
+    {
+      "id": "repo-stub-p2-060-m1",
+      "statement": "The ports fixture holds no Northern Ireland port (such as Belfast or Larne): all 78 entries are Great Britain ports, so a journey that needs a Northern Ireland point of entry cannot be exercised against the stub.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:3-80 (every entry read)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked at every name and code in the fixture; none is in Northern Ireland."
+    },
+    {
+      "id": "repo-stub-p2-077-m1",
+      "statement": "The README says trade-imports-reference-data calls the Trade Platform OAuth token endpoint before MDM, and the stub answers that too, on POST /tenant/oauth2/v2.0/token, as a separate integration with its own latency profile.",
+      "kind": "integration",
+      "ref": "README.md:15",
+      "quote": "| `trade-token` | The Trade Platform OAuth token endpoint, called before MDM | `POST /tenant/oauth2/v2.0/token` |",
+      "confidence": "verbatim",
+      "note": "Not an MDM row itself, but it is how the MDM calls are reached; the token stub's own behaviour is outside this part."
+    },
+    {
+      "id": "repo-stub-p2-076-m1",
+      "statement": "The MDM integration's last-conformed date is empty by default, so the stub records that its MDM latency profile has never been conformed until a conformance run sets STUB_LATENCY_MDM_LAST_CONFORMED.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:144; README.md:25, 34",
+      "quote": "last-conformed: ${STUB_LATENCY_MDM_LAST_CONFORMED:}",
+      "confidence": "verbatim"
+    }
+  ]
+}

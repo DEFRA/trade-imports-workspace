@@ -1,860 +1,808 @@
 {
   "source": "trace:prototype-dr2-1",
-  "structure": "Part 11, the notification hub: the four traces of journeys.fit.spec.js › the notification hub, each opened and mined in full (actions, network log, snapshots). (1) journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do (59 actions): create-notification 302 to notification-type, live-animals chosen, Continue lands on origin-of-the-import, then a direct navigate to /design-release-2.1/notification-hub; snapshot at action 37 is the fresh hub. (2) journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving (33 actions): fresh hub, click 'Main import reason' to /reason-for-import?from=hub (snapshot action 16), choose Re-entry, Save and continue, back on the hub with that task 'Complete' (snapshot action 20). (3) journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section (63 actions): origin (France, no region), what-are-you-importing (cattle, Bos Taurus), reason (Internal market, Breeding), consignment-details (1 animal), then a direct navigate to /review-notification (snapshot action 37 to 47) and Continue, which re-renders the review (snapshot action 50). (4) journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed (27 actions): a fresh notification, direct navigate to /notification-submitted, 302 to /declaration (snapshot action 14). Pages covered, in journey order: the hub ('Overview', always shown once a notification exists), one hub task page as entered from the hub (Main import reason, with from=hub), the review page in its incomplete state, and the declaration page reached through the submitted-page guard. The intermediate question pages walked in trace 3 belong to other parts and are claimed here only as they show on the hub and review. Not reached in this slice, recorded as gaps: an 'In progress' or other task status, the 'Save and return to overview' button, clicking 'Review and submit' or 'Return to dashboard', the Delete flow, the declaration's unchecked-box error, and the submitted page itself.",
+  "structure": "Part 11, Review, declaration and notification submitted. Read in full: journeys.fit.spec.js (417 lines) and snagging.fit.spec.js (557 lines), and mined all 5 traces end to end: (T1) journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip, 55 actions; (T2) journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed.zip, 19 actions; (T3) snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip, 143 actions; (T4) snagging--review-your-notification-s34-review-your-notification-answers-still-missing.zip, 55 actions; (T5) snagging--review-your-notification-s35-review-your-notification-error-handling-on-a-refused-submit.zip, 75 actions. Every trace walks the opening run (create-notification, origin, what are you importing, reason, commodity details), which other parts own. Pages claimed here, in journey order: /review-notification (incomplete state in T1, T4, T5 at actions 40, 48, 57, 66; complete state in T3 action 119; refused Continue in T1 action 50, T4 action 48, T5 action 49; first error link followed in T5 action 57; a second, no-JavaScript context in T5 action 66), /declaration (T2 action 14, reached by the guard; T3 action 127, reached by Continue from a complete review), /notification-submitted (T3 action 136, after the declaration is confirmed; T2 action 13, refused with a 302 to /declaration). The review page always appears after the hub's Review and submit; the declaration only once the review is complete; the submitted page only once the declaration is confirmed. The declaration's error state, the germinal variant of the review and submitted pages, and the submitted notification viewed by reference are not rendered in these 5 traces; they are claimed from journeys.fit.spec.js assertions (all 156 tests passed), with their refs on the spec line. Network: every call is a same-origin page request to the prototype kit (GET and POST to review-notification, declaration, notification-submitted); no outbound data call was seen.",
   "claims": [
     {
       "id": "trace-prototype-dr2-1-p11-001",
-      "statement": "Starting a notification at /design-release-2.1/create-notification redirects to the notification type page.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do request 1",
-      "quote": "GET 302 create-notification; GET 200 notification-type",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-002",
-      "statement": "Choosing live animals as the notification type and continuing takes the user to the origin page, not to the hub.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do actions 9-12, requests 41-42",
-      "quote": "POST 302 notification-type; GET 200 origin-of-the-import",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-003",
-      "statement": "The notification hub lives at /design-release-2.1/notification-hub and can be opened directly once a notification has been started.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 13, request 81",
-      "quote": "Navigate to \"/design-release-2.1/notification-hub\"",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-004",
-      "statement": "The hub's page title is 'Overview - Import notification service - GOV.UK'.",
+      "statement": "The review page is at /review-notification and its document title is 'Review your notification - Import notification service - GOV.UK'.",
       "kind": "copy",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "Overview - Import notification service - GOV.UK",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-005",
-      "statement": "The hub's main heading is 'Overview'.",
-      "kind": "copy",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "<h1 class=\"app-notification-hub__title\">Overview</h1>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-006",
-      "statement": "Above the heading, the hub shows the notification's status as a 'Draft' tag while it has not been submitted.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "<strong class=\"govuk-tag app-dr2-review-status__tag app-dr2-review-status__tag--draft\">Draft</strong>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-007",
-      "statement": "Beside the status tag, the hub shows the notification's reference, which already exists for a fresh notification before any task is answered.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "<span class=\"app-dr2-notification-status__reference\">GBN-AG-26-0BEJ1Y</span>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-008",
-      "statement": "A live-animals notification reference takes the form GBN-AG-, a two-digit year, a hyphen and six upper-case letters or digits: three traces show GBN-AG-26-0BEJ1Y, GBN-AG-26-05GIU6 and GBN-AG-26-0M2F7E.",
-      "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37; trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving action 16; trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "GBN-AG-26-0BEJ1Y",
-      "confidence": "inferred",
-      "note": "The format is inferred from three examples, all generated in 2026; whether 26 is the year is an inference."
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-009",
-      "statement": "The hub has a 'Your commodities' section heading.",
-      "kind": "copy",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 17",
-      "quote": "Your commodities",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-010",
-      "statement": "Under 'Your commodities', an 'Animals' card shows the total number of animals in the consignment, 0 for a fresh notification.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "0\n\nAnimals\n\nTotal number of animals in this consignment",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-011",
-      "statement": "Under 'Your commodities', a 'Packages/boxes' card shows the total number of packages in the consignment, 0 for a fresh notification.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "0\n\nPackages/boxes\n\nTotal number of packages in this consignment",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-012",
-      "statement": "Each commodities card is a labelled region for assistive technology: 'Animals summary' and 'Packages summary'.",
-      "kind": "non-functional",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "<section class=\"app-notification-hub-card\" aria-label=\"Animals summary\"> ... <section class=\"app-notification-hub-card\" aria-label=\"Packages summary\">",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-013",
-      "statement": "The hub has a 'Notification tasklist' section heading above the task sections.",
-      "kind": "copy",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 20",
-      "quote": "Notification tasklist",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-014",
-      "statement": "The hub task list has six numbered sections, in this order: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Documents', '5. Consignment parties', '6. Contact address'.",
-      "kind": "copy",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do actions 21-26",
-      "quote": "1. About the consignment ... 2. Description of the goods ... 3. Transport and arrival ... 4. Documents ... 5. Consignment parties ... 6. Contact address",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-015",
-      "statement": "Section '1. About the consignment' holds three tasks: 'Where is this consignment coming from?', 'What are you importing?' and 'Main import reason'.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "1. About the consignment\nWhere is this consignment coming from?\nTo do\nWhat are you importing?\nTo do\nMain import reason\nTo do",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-016",
-      "statement": "Section '2. Description of the goods' holds two tasks: 'Commodity details' and 'Additional details'.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "2. Description of the goods\nCommodity details\nTo do\nAdditional details\nTo do",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-017",
-      "statement": "Section '3. Transport and arrival' holds two tasks: 'Arrival details' and 'Transport details'.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "3. Transport and arrival\nArrival details\nTo do\nTransport details\nTo do",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-018",
-      "statement": "Section '4. Documents' holds one task: 'Upload documents'.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "4. Documents\nUpload documents\nTo do",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-019",
-      "statement": "Section '5. Consignment parties' holds one task: 'Roles and addresses'.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "5. Consignment parties\nRoles and addresses",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-020",
-      "statement": "The 'Roles and addresses' task carries a hint under its link naming the parties it covers.",
-      "kind": "copy",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "Consignor or Exporter, Consignee, Importer and Place of Destination",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-021",
-      "statement": "Section '6. Contact address' holds one task: 'Contact address for this consignment'.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "6. Contact address\nContact address for this consignment\nTo do",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-022",
-      "statement": "The 'Where is this consignment coming from?' task links to the origin page with from=hub.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 38",
-      "quote": "href=\"/design-release-2.1/origin-of-the-import?from=hub\">Where is this consignment coming from?</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-023",
-      "statement": "The 'What are you importing?' task links to the what-are-you-importing page with from=hub.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "href=\"/design-release-2.1/what-are-you-importing?from=hub\">What are you importing?</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-024",
-      "statement": "The 'Main import reason' task links to the reason-for-import page with from=hub.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "href=\"/design-release-2.1/reason-for-import?from=hub\">Main import reason</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-025",
-      "statement": "The 'Commodity details' task links to the consignment-details page with from=hub.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "href=\"/design-release-2.1/consignment-details?from=hub\">Commodity details</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-026",
-      "statement": "The 'Additional details' task links to the additional-animal-details page with from=hub.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "href=\"/design-release-2.1/additional-animal-details?from=hub\">Additional details</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-027",
-      "statement": "The 'Arrival details' task links to the arrival-details page with from=hub.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "href=\"/design-release-2.1/arrival-details?from=hub\">Arrival details</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-028",
-      "statement": "The 'Transport details' task links to the transporter page with from=hub.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "href=\"/design-release-2.1/transporter?from=hub\">Transport details</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-029",
-      "statement": "The 'Upload documents' task links to the upload-documents page with from=hub.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "href=\"/design-release-2.1/upload-documents?from=hub\">Upload documents</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-030",
-      "statement": "The 'Roles and addresses' task links to the roles-and-addresses page with from=hub.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "href=\"/design-release-2.1/roles-and-addresses?from=hub\">Roles and addresses</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-031",
-      "statement": "The 'Contact address for this consignment' task links to the contact-address-for-consignment page with from=hub.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "href=\"/design-release-2.1/contact-address-for-consignment?from=hub\">Contact address for this consignment</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-032",
-      "statement": "On a fresh notification every one of the ten hub tasks shows a blue 'To do' tag.",
-      "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do actions 27-36",
-      "quote": "<strong class=\"govuk-tag govuk-tag--blue app-notification-hub-tasklist__tag\">\n  To do\n</strong>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-033",
-      "statement": "Every hub task is always a link, even on a fresh notification: no task is shown as unavailable or 'Cannot start yet'.",
-      "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "<a class=\"govuk-link app-notification-hub-tasklist__link\" href=\"/design-release-2.1/arrival-details?from=hub\">Arrival details</a>",
-      "confidence": "inferred",
-      "note": "Inferred from all ten tasks rendering as links with 'To do' on a notification where nothing is answered, so no task depends on another being done first."
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-034",
-      "statement": "Below the task list, a 'Review and submit' button (a link styled as a primary button) goes to /design-release-2.1/review-notification, whatever the task statuses.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 39",
-      "quote": "<a href=\"/design-release-2.1/review-notification\" role=\"button\" draggable=\"false\" class=\"govuk-button\" data-module=\"govuk-button\" data-govuk-button-init=\"\">\n  Review and submit\n</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-035",
-      "statement": "Beside it, a secondary 'Return to dashboard' button goes to the dashboard at /design-release-2.1.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 40",
-      "quote": "<a href=\"/design-release-2.1\" role=\"button\" draggable=\"false\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\" data-govuk-button-init=\"\">\n  Return to dashboard\n</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-036",
-      "statement": "The hub has no back link; the way out is the 'Return to dashboard' button or the service navigation.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "Dashboard->/design-release-2.1 ; Templates->/design-release-2.1/templates ; Address book->/design-release-2.1/address-book ; Manage account->#",
-      "confidence": "inferred",
-      "note": "A query for .govuk-back-link on the hub returned nothing; the quote is everything the header and navigation link to."
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-037",
-      "statement": "The service navigation on the hub links to 'Dashboard', 'Templates', 'Address book' and 'Manage account'; 'Manage account' goes nowhere ('#') in the prototype.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "Dashboard->/design-release-2.1 ; Templates->/design-release-2.1/templates ; Address book->/design-release-2.1/address-book ; Manage account->#",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-038",
-      "statement": "The hub's task list is built from custom app-notification-hub-* markup (sections with h3 headings and a list of link plus tag rows) rather than the GOV.UK Task list component, though it uses govuk-link, govuk-tag and govuk-button inside it; the GOV.UK Task list component, with its status tags and hint support, could replace it.",
-      "kind": "constraint",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "<ul class=\"app-notification-hub-tasklist\" role=\"list\"> ... <li class=\"app-notification-hub-tasklist__item app-notification-hub-tasklist__item--with-hint\">",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-039",
-      "statement": "The commodities totals are custom app-notification-hub-card tiles (a large value, a label and a caption), a pattern with no direct GOV.UK Frontend component.",
-      "kind": "constraint",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "<p class=\"app-notification-hub-card__value\">0</p>\n              <p class=\"app-notification-hub-card__label\">Animals</p>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-040",
-      "statement": "The status and reference strip above the heading is custom (app-dr2-notification-status), with a govuk-tag restyled by app-dr2-review-status__tag--draft.",
-      "kind": "constraint",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37",
-      "quote": "<div class=\"app-dr2-notification-status\">",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-041",
-      "statement": "Clicking a hub task link opens that task's page with from=hub in the URL; clicking 'Main import reason' opens /design-release-2.1/reason-for-import?from=hub.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving actions 14-15, request 120",
-      "quote": "GET 200 reason-for-import?from=hub",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-042",
-      "statement": "A task page opened from the hub carries the hub origin through the form as a hidden field from=hub.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving action 16",
-      "quote": "<input type=\"hidden\" name=\"from\" value=\"hub\">",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-043",
-      "statement": "On a task page opened from the hub, the back link goes to the hub.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving action 16",
-      "quote": "<a href=\"/design-release-2.1/notification-hub\" class=\"govuk-back-link\">Back</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-044",
-      "statement": "The Main import reason page has the title 'Main import reason - Import notification service - GOV.UK', the caption 'About the consignment' and the heading 'Main import reason', and shows the Draft tag and reference.",
-      "kind": "copy",
-      "ref": "trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving action 16",
-      "quote": "Draft\nGBN-AG-26-05GIU6\n\nAbout the consignment\n\nMain import reason",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-045",
-      "statement": "The Main import reason question is a radios fieldset whose legend, 'What is the main reason for importing the animals?', is visually hidden.",
-      "kind": "copy",
-      "ref": "trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving action 16",
-      "quote": "<legend class=\"govuk-fieldset__legend govuk-visually-hidden\">\n  \n    What is the main reason for importing the animals?",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-046",
-      "statement": "The main import reason (field importReason) offers five options, each with a hint: 'Internal market', 'Transhipment or onward travel', 'Transit', 'Re-entry' and 'Temporary admission horses'; none is selected on a fresh notification.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving action 16",
-      "quote": "Internal market\nFor imports of animals intended for sale or use in Great Britain (England, Scotland or Wales).\nTranshipment or onward travel\nFor animals intended for direct travel to a third country, that will stay only within the same port or airport in Great Britain while moving to another means of transport.\nTransit\nFor animals moving through Great Britain for direct travel to a third country, that will enter Great Britain at one port or airport and leave from a different one within England, Scotland or Wales.\nRe-entry\nFor animals authorised for re-entry, or rejected exports re-entering Great Britain.\nTemporary admission horses\nFor horses authorised for temporary entry.",
-      "confidence": "verbatim",
-      "note": "Recorded here as the page reached from the hub; the reason page's own part owns its full detail."
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-047",
-      "statement": "The Main import reason page holds a hidden MOJ date picker for a temporary admission exit date, so choosing 'Temporary admission horses' presumably reveals an exit date question.",
-      "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving action 16",
-      "quote": "aria-controls=\"datepicker-temporary-admission-exit-date\"",
-      "confidence": "inferred",
-      "note": "Only the date picker's controls were seen; the reveal was not driven in this slice."
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-048",
-      "statement": "A task page opened from the hub offers two submit buttons, 'Save and continue' (action=continue) and the secondary 'Save and return to overview' (action=hub).",
-      "kind": "copy",
-      "ref": "trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving action 16",
-      "quote": "<button type=\"submit\" value=\"continue\" name=\"action\" class=\"govuk-button\" data-module=\"govuk-button\" data-govuk-button-init=\"\">\n  Save and continue\n</button>\n<button type=\"submit\" value=\"hub\" name=\"action\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\" data-govuk-button-init=\"\">\n  Save and return to overview\n</button>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-049",
-      "statement": "A task page also has a 'Cancel and return to overview' link that goes to the hub without saving.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving action 16",
-      "quote": "Cancel and return to overview->/design-release-2.1/notification-hub",
-      "confidence": "verbatim",
-      "note": "That it discards the answer is read from the wording; the link was not clicked."
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-050",
-      "statement": "When a task page was opened from the hub, 'Save and continue' saves and returns the user to the hub rather than to the next question page.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving actions 16-19, requests 159-160",
-      "quote": "POST 302 reason-for-import; GET 200 notification-hub",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-051",
-      "statement": "Once a task is saved with a complete answer, its hub row shows a green 'Complete' tag; the other tasks stay 'To do'.",
-      "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving action 20",
-      "quote": "Main import reason Complete [govuk-tag govuk-tag--green app-notification-hub-tasklist__tag]",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-052",
-      "statement": "Choosing 'Re-entry' alone is enough to complete the Main import reason task: no follow-up question is needed for that reason.",
-      "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving actions 16-20",
-      "quote": "Check locator('input[name=\"importReason\"][value=\"Re-entry\"]')",
-      "confidence": "inferred",
-      "note": "Inferred from the test checking only Re-entry and the task then showing Complete."
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-053",
-      "statement": "The review page at /design-release-2.1/review-notification can be opened directly while tasks are still incomplete.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 36, request 239",
-      "quote": "GET 200 review-notification",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-054",
-      "statement": "The review page's title is 'Review your notification - Import notification service - GOV.UK' and its heading is 'Review your notification'.",
-      "kind": "copy",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40",
       "quote": "Review your notification - Import notification service - GOV.UK",
       "confidence": "verbatim"
     },
     {
-      "id": "trace-prototype-dr2-1-p11-055",
-      "statement": "The review page's back link goes to the hub.",
+      "id": "trace-prototype-dr2-1-p11-002",
+      "statement": "The review page's h1 is 'Review your notification'.",
+      "kind": "copy",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40",
+      "quote": "<h1 class=\"app-review-notification-page__title app-review-notification-page__title--dr2\">Review your notification</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-003",
+      "statement": "The review page is reached from the hub's 'Review and submit' button, and also by going to /review-notification directly.",
       "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
+      "ref": "journeys.fit.spec.js lines 171-172 and 371; trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 36",
+      "quote": "await page.locator('main').getByRole('button', { name: 'Review and submit' }).click()\n    await expect(page).toHaveURL(urlFor('/review-notification'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-004",
+      "statement": "The review page's back link goes to the notification hub.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40; trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
       "quote": "<a href=\"/design-release-2.1/notification-hub\" class=\"govuk-back-link\">Back</a>",
       "confidence": "verbatim"
     },
     {
-      "id": "trace-prototype-dr2-1-p11-056",
-      "statement": "The review page shows the Draft tag and the notification reference above the error summary and heading.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "Draft\nGBN-AG-26-0M2F7E\nThere is a problem",
+      "id": "trace-prototype-dr2-1-p11-005",
+      "statement": "Above the error summary and the h1, the review page shows a 'Draft' tag and a line giving the notification type and its reference.",
+      "kind": "copy",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40",
+      "quote": "<strong class=\"govuk-tag app-dr2-review-status__tag app-dr2-review-status__tag--draft\">Draft</strong>\n  <span class=\"app-dr2-notification-status__reference\">Live animals - GBN-AG-26-00PPC1</span>",
       "confidence": "verbatim"
     },
     {
-      "id": "trace-prototype-dr2-1-p11-057",
-      "statement": "Opening the review page with incomplete tasks shows a GOV.UK error summary titled 'There is a problem' straight away, on the GET, before the user presses anything.",
+      "id": "trace-prototype-dr2-1-p11-006",
+      "statement": "A notification's reference has the shape GBN-AG-26- followed by six letters and digits, such as GBN-AG-26-00PPC1, GBN-AG-26-0B1MCS and GBN-AG-26-01RQ30.",
+      "kind": "data",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40; trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119; trace snagging--review-your-notification-s35-review-your-notification-error-handling-on-a-refused-submit.zip action 66",
+      "quote": "Live animals - GBN-AG-26-0B1MCS",
+      "confidence": "inferred",
+      "note": "The shape is inferred from three references seen; 26 is likely the year. The traces do not show how the reference is generated."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-007",
+      "statement": "The review page groups the answers under five numbered h2 sections, in this order: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Uploaded documents', '5. Addresses'.",
+      "kind": "copy",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119; journeys.fit.spec.js line 43 and 177",
+      "quote": "const REVIEW_SECTIONS = ['1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Uploaded documents', '5. Addresses']",
+      "confidence": "verbatim",
+      "note": "The hub names section 4 '4. Documents' (journeys.fit.spec.js line 41); the review page names it '4. Uploaded documents'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-008",
+      "statement": "Section 1 has three cards: 'Origin of import', 'What are you importing?' and 'Main import reason', each with a Change link in its header.",
+      "kind": "copy",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "1. About the consignment\nOrigin of import\nChange\n...\nWhat are you importing?\nChange\n...\nMain import reason\nChange",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-009",
+      "statement": "The 'Origin of import' card shows the rows 'Country of origin', 'Region of origin code' and 'Internal reference number'.",
+      "kind": "data",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "Country of origin\nFrance\nRegion of origin code\nFR-75\nInternal reference number\nCATTLE-2026-01",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-010",
+      "statement": "The region of origin code shows as the country prefix and the code joined by a hyphen, such as FR-75 for France and code 75.",
       "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section actions 36-38",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119; snagging.fit.spec.js line 522",
+      "quote": "Region of origin code\nFR-75",
+      "confidence": "verbatim",
+      "note": "mechanism: the user enters 75 against the FR prefix box on the origin page; the review shows 'FR-75'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-011",
+      "statement": "An optional answer the user left out, such as no region of origin code or no internal reference, shows as 'Not applicable' on the review page, not as missing.",
+      "kind": "rule",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40",
+      "quote": "Region of origin code\nNot applicable\nInternal reference number\nNot applicable",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-012",
+      "statement": "The 'What are you importing?' card shows the rows 'Commodity code', written as the code then the commodity name in brackets, and 'Species'.",
+      "kind": "data",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "Commodity code\n0102 (Cattle)\nSpecies\nDomestic cattle (Bos taurus)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-013",
+      "statement": "The 'Main import reason' card shows the rows 'Main import reason' and, for internal market, 'Purpose in the market'.",
+      "kind": "data",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "Main import reason\nInternal market\nPurpose in the market\nBreeding",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-014",
+      "statement": "Section 2 has one card per commodity, titled with the commodity name and code ('Cattle (0102)'), with a Change link to the commodity details page.",
+      "kind": "copy",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "<h3 class=\"app-dr2-review-card__title\" id=\"review-commodity-cattle\">Cattle (0102)</h3> <a class=\"app-dr2-review-card__header-link\" href=\"/design-release-2.1/consignment-details\">Change</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-015",
+      "statement": "Within a commodity card, each species has an h4 heading with its name, then the rows 'Number of animals' and 'Number of packages (when required)'.",
+      "kind": "data",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "<h4 class=\"app-dr2-review-commodity-card__species-heading\">Domestic cattle (Bos taurus)</h4> ... Number of animals ... 1 ... Number of packages (when required) ... Not applicable",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-016",
+      "statement": "The 'Number of animals' row has its own Change link to the commodity details page, as well as the card's header Change link.",
+      "kind": "behaviour",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "<dt class=\"app-dr2-review-row__key\">Number of animals</dt> <dd class=\"app-dr2-review-row__value\"> 1 </dd> <dd class=\"app-dr2-review-row__action\"> <a class=\"app-dr2-review-row__change-link\" href=\"/design-release-2.1/consignment-details\">Change</a> </dd>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-017",
+      "statement": "When no packages were given, 'Number of packages (when required)' shows 'Not applicable'.",
+      "kind": "rule",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "Number of packages (when required)\nNot applicable",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-018",
+      "statement": "Once identification details are entered, the species block shows an 'Identification details' h5 and a table with an 'Animal' column, then one column per identifier (for cattle 'Passport' and 'Ear tag'), and a Change link to the identification details page.",
+      "kind": "data",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "<h5 class=\"app-dr2-review-commodity-card__identification-heading\">Identification details</h5> <dl class=\"app-dr2-review-identification-table\"> ... <dt class=\"app-dr2-review-identification-table__key\">Animal</dt> <dt class=\"app-dr2-review-identification-table__key\">Passport</dt> <dt class=\"app-dr2-review-identification-table__key\">Ear tag</dt> <dd class=\"app-dr2-review-identification-table__action\"> <a class=\"app-dr2-review-row__change-link\" href=\"/design-release-2.1/animal-identification-details\">Change</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-019",
+      "statement": "Each animal's row in the identification table is labelled with the species name and the animal's number, such as 'Domestic cattle (Bos taurus) 1'.",
+      "kind": "copy",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "<dd class=\"app-dr2-review-identification-table__animal\">Domestic cattle (Bos taurus) 1</dd> <dd class=\"app-dr2-review-identification-table__value\">PP-001</dd> <dd class=\"app-dr2-review-identification-table__value\">UK123456700001</dd>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-020",
+      "statement": "The review page shows no additional details card or rows, even when the user has answered the additional details page (purpose 'Further keeping', unweaned 'No').",
+      "kind": "behaviour",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119; snagging.fit.spec.js line 531",
+      "quote": "2. Description of the goods\nCattle (0102)\nChange\nDomestic cattle (Bos taurus)\nNumber of animals\n1\nChange\nNumber of packages (when required)\nNot applicable\nIdentification details",
+      "confidence": "inferred",
+      "note": "Inferred from absence: S38 answers additional details and the rendered review has no row for them. Neither spec asserts additional details on the review page, so this may be a prototype omission."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-021",
+      "statement": "When no identification details have been entered, the review page shows no identification details block and lists no error for them, although cattle need identification.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40",
+      "quote": "There is a problem\nComplete additional details\nComplete arrival details\nComplete transport details\nComplete consignment addresses",
+      "confidence": "inferred",
+      "note": "Inferred from absence: the notification has 1 cattle and no identifiers, and neither the error summary nor section 2 mentions identification."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-022",
+      "statement": "Section 3 has an 'Arrival details' card, with a Change link to the arrival details page, and the rows 'Port of entry', 'Arrival date at destination', 'Means of transport to the port of entry', 'Transport identification' and 'Transport document reference'.",
+      "kind": "data",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "Arrival details\nChange\nPort of entry\nLondon Heathrow - LHR\nArrival date at destination\n11/12/2026\nMeans of transport to the port of entry\nAir\nTransport identification\nBA0123\nTransport document reference\nAWB-123",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-023",
+      "statement": "The port of entry shows as its full name, a hyphen and its code, such as 'London Heathrow - LHR'.",
+      "kind": "rule",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "Port of entry\nLondon Heathrow - LHR",
+      "confidence": "verbatim",
+      "note": "mechanism: the user picks the 'Heathrow' option on arrival details (journeys.fit.spec.js port option 'Heathrow'); the review shows 'London Heathrow - LHR'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-024",
+      "statement": "Dates on the review page show as DD/MM/YYYY, such as 11/12/2026 for the arrival date and 25/11/2026 for a document's date of issue.",
+      "kind": "rule",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "Arrival date at destination\n11/12/2026",
+      "confidence": "verbatim",
+      "note": "mechanism: dates entered in a date input (day, month, year) show as one DD/MM/YYYY string."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-025",
+      "statement": "Section 3 has a 'Transport details' card, with a Change link to the transporter page, and the rows 'Name', 'Address', 'Country', 'Approval number' and 'Type'.",
+      "kind": "data",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "Transport details\nChange\nName\nAberdeen Livestock Ltd\nAddress\n\n15 Union Street\n\nAberdeen\n\nAB11 5BN\n\nCountry\nUnited Kingdom\nApproval number\nUK/ABERDEEN/T1/00092001\nType\nPrivate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-026",
+      "statement": "The transporter's address shows each line on its own line, with the country in its own 'Country' row.",
+      "kind": "rule",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "Address\n\n15 Union Street\n\nAberdeen\n\nAB11 5BN\n\nCountry\nUnited Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-027",
+      "statement": "When transit countries are given, the review page lists them: the poultry by rail and germinal journeys expect 'Belgium' on the review page.",
+      "kind": "data",
+      "ref": "journeys.fit.spec.js lines 270-273 and 179",
+      "quote": "reviewContains: ['Germany', 'Transit', 'Belgium', 'Danish Meat Export ApS']",
+      "confidence": "verbatim",
+      "note": "Not rendered in this part's traces; the spec asserts only that the text appears in main, not which card or row holds it."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-028",
+      "statement": "Section 4 has one card per uploaded document, titled 'Document 1' and on, with a Change link to the upload documents page that carries ?from=review.",
+      "kind": "behaviour",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "Change -> /design-release-2.1/upload-documents?from=review",
+      "confidence": "verbatim",
+      "note": "The documents Change link is the only review Change link carrying a from= parameter; the others link to the page with no return marker."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-029",
+      "statement": "A document card shows the rows 'Document reference', 'Document type', 'Date of issue' and 'Attachment', the attachment as its file name.",
+      "kind": "data",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "Document 1\nChange\nDocument reference\nITAHC-001\nDocument type\nIntra Trade Animal Health Certificate (ITAHC)\nDate of issue\n25/11/2026\nAttachment\nitahc.pdf",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-030",
+      "statement": "With no document uploaded, section 4 still shows a 'Document 1' card with one row, 'Document reference', reading 'Not applicable', and raises no error.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40",
+      "quote": "4. Uploaded documents\nDocument 1\nChange\nDocument reference\nNot applicable",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-031",
+      "statement": "Section 5 has one 'Consignment addresses' card, with a Change link to the roles and addresses page, and the rows 'Place of origin', 'Consignor', 'Consignee', 'Importer', 'Place of destination' and 'County parish holding (CPH) number'.",
+      "kind": "data",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "5. Addresses\nConsignment addresses\nChange\nPlace of origin\n...\nConsignor\n...\nConsignee\n...\nImporter\n...\nPlace of destination\n...\nCounty parish holding (CPH) number\n12/345/6789",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-032",
+      "statement": "Each party's address shows the name, then each street line on its own line, then the town, postcode and country joined on one line with commas.",
+      "kind": "rule",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "Place of origin\n\nGreen Valley Livestock Farm\n\n14 Meadow Lane\n\nLower Hartham\n\nUtrecht, 3511 AA, Netherlands",
+      "confidence": "verbatim",
+      "note": "mechanism: the address book holds town, postcode and country as separate fields; the review joins them as 'Utrecht, 3511 AA, Netherlands'. This differs from the transporter card, which puts each on its own line and the country in its own row."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-033",
+      "statement": "The CPH number shows as three parts separated by slashes, such as 12/345/6789.",
+      "kind": "rule",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119 and actions 108-110",
+      "quote": "County parish holding (CPH) number\n12/345/6789",
+      "confidence": "verbatim",
+      "note": "mechanism: entered as county '12', parish '345' and holding '6789' in three boxes; shown as '12/345/6789'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-034",
+      "statement": "When the permanent address is given for a pet, the review page shows it: the pet cats journey expects '4 High Street' on the review page.",
+      "kind": "data",
+      "ref": "journeys.fit.spec.js line 298",
+      "quote": "reviewContains: ['Spain', 'Companion animal not for resale or rehoming', 'Domestic cat (Felis catus)', '4 High Street']",
+      "confidence": "verbatim",
+      "note": "Not rendered in this part's traces; the spec does not say which card holds it."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-035",
+      "statement": "For a temporary admission horse, the review page shows the reason 'Temporary admission horses' and the port of exit 'Holyhead POE - GBHLY'.",
+      "kind": "data",
+      "ref": "journeys.fit.spec.js line 311",
+      "quote": "reviewContains: ['Temporary admission horses', 'Holyhead POE - GBHLY', 'Roadtrain Ltd']",
+      "confidence": "verbatim",
+      "note": "Not rendered in this part's traces."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-036",
+      "statement": "For germinal products, the review page shows the commodity as 'Cattle, Semen', with 'Total gross weight', 'Temperature', 'Quantity (unit/pieces)' and 'Number of packages' rows and the donor identification.",
+      "kind": "data",
+      "ref": "journeys.fit.spec.js line 336",
+      "quote": "reviewContains: ['Netherlands', 'Cattle, Semen', /Total gross weight\\s+12.5 kg/, /Temperature\\s+Frozen/, /Quantity \\(unit\\/pieces\\)\\s+20/, /Number of packages\\s+4/, 'BULL-007', 'Portuguese Livestock Lda']",
+      "confidence": "verbatim",
+      "note": "Not rendered in this part's traces; the germinal review layout is a gap here (see the gap claim)."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-037",
+      "statement": "The gross weight shows with its unit, such as '12.5 kg'.",
+      "kind": "rule",
+      "ref": "journeys.fit.spec.js line 336",
+      "quote": "/Total gross weight\\s+12.5 kg/",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-038",
+      "statement": "The review page ends with a form that posts to /review-notification, holding a 'Continue' button and a red 'Delete' button.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40",
+      "quote": "<form method=\"post\" action=\"/design-release-2.1/review-notification\" novalidate=\"\" class=\"app-review-notification-page__form\">\n      <div class=\"govuk-button-group\">\n        \n<button type=\"submit\" class=\"govuk-button\" data-module=\"govuk-button\" data-govuk-button-init=\"\">\n  Continue\n</button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-039",
+      "statement": "The review page's 'Delete' button is a warning-style link to /notifications/delete with the notification's reference.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40; journeys.fit.spec.js line 404",
+      "quote": "<a href=\"/design-release-2.1/notifications/delete?reference=GBN-AG-26-00PPC1\" role=\"button\" draggable=\"false\" class=\"govuk-button govuk-button--warning\" data-module=\"govuk-button\" data-govuk-button-init=\"\">\n  Delete\n</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-040",
+      "statement": "No trace in this part follows the review page's Delete button, so what deleting from the review page asks and where it goes are not shown here.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 41",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Delete is covered by the manage-notifications part, which may walk it."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-041",
+      "statement": "Change links on the review page go to the question page itself (for example /origin-of-the-import, /arrival-details); only the documents link marks a return to review. Where the user lands after saving a changed answer is not walked in this part.",
+      "kind": "behaviour",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "Change -> /design-release-2.1/origin-of-the-import\nChange -> /design-release-2.1/what-are-you-importing\nChange -> /design-release-2.1/reason-for-import",
+      "confidence": "gap",
+      "note": "No trace here clicks a review Change link; the eudpa-691 part covers Back and return-to-hub behaviour."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-042",
+      "statement": "When the notification is incomplete, the review page shows a GOV.UK error summary titled 'There is a problem' as soon as it loads, before the user presses Continue.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip actions 36-40",
       "quote": "<h2 class=\"govuk-error-summary__title\">\n      There is a problem\n    </h2>",
       "confidence": "verbatim"
     },
     {
-      "id": "trace-prototype-dr2-1-p11-058",
-      "statement": "The error summary lists one 'Complete ...' item per incomplete task, in task order.",
+      "id": "trace-prototype-dr2-1-p11-043",
+      "statement": "The error summary lists one item for each incomplete task, in journey order: 'Complete additional details', 'Complete arrival details', 'Complete transport details', 'Complete consignment addresses'.",
       "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 39",
-      "quote": "Complete additional details\nComplete arrival details\nComplete transport details\nComplete roles and addresses\nComplete contact address for this consignment",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40; journeys.fit.spec.js lines 396-401",
+      "quote": "Complete additional details\nComplete arrival details\nComplete transport details\nComplete consignment addresses",
       "confidence": "verbatim"
     },
     {
-      "id": "trace-prototype-dr2-1-p11-059",
-      "statement": "When Additional details is incomplete, the review error summary says 'Complete additional details' and links to the Additional details card.",
+      "id": "trace-prototype-dr2-1-p11-044",
+      "statement": "When additional details are incomplete, the review page lists the error 'Complete additional details'.",
       "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40",
       "quote": "<a href=\"#review-additional-animal-details\">Complete additional details</a>",
       "confidence": "verbatim"
     },
     {
-      "id": "trace-prototype-dr2-1-p11-060",
-      "statement": "When Arrival details is incomplete, the review error summary says 'Complete arrival details' and links to the Arrival details card.",
+      "id": "trace-prototype-dr2-1-p11-045",
+      "statement": "When arrival details are incomplete, the review page lists the error 'Complete arrival details', linking to the arrival details card.",
       "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40",
       "quote": "<a href=\"#review-arrival-details\">Complete arrival details</a>",
       "confidence": "verbatim"
     },
     {
-      "id": "trace-prototype-dr2-1-p11-061",
-      "statement": "When Transport details is incomplete, the review error summary says 'Complete transport details' and links to the Transport details card.",
+      "id": "trace-prototype-dr2-1-p11-046",
+      "statement": "When transport details are incomplete, the review page lists the error 'Complete transport details', linking to the transport details card.",
       "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40",
       "quote": "<a href=\"#review-transport-details\">Complete transport details</a>",
       "confidence": "verbatim"
     },
     {
-      "id": "trace-prototype-dr2-1-p11-062",
-      "statement": "When Roles and addresses is incomplete, the review error summary says 'Complete roles and addresses' and links to the Addresses card.",
+      "id": "trace-prototype-dr2-1-p11-047",
+      "statement": "When consignment addresses are incomplete, the review page lists the error 'Complete consignment addresses', linking to the consignment addresses card.",
       "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "<a href=\"#review-roles-and-addresses\">Complete roles and addresses</a>",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40",
+      "quote": "<a href=\"#review-roles-and-addresses\">Complete consignment addresses</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-048",
+      "statement": "The 'Complete additional details' error links to #review-additional-animal-details, but the page has no element with that id, so following it moves neither focus nor scroll.",
+      "kind": "behaviour",
+      "ref": "trace snagging--review-your-notification-s35-review-your-notification-error-handling-on-a-refused-submit.zip actions 53-57",
+      "quote": "hash: | scrollY:0 | active:BODY.govuk-template__body js-enabled govuk-frontend-supported# | target exists:false | first link:#review-additional-animal-details",
+      "confidence": "verbatim",
+      "note": "This is S35's 'first error link followed' state. The quote is the eval output on the snapshot, not page copy."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-049",
+      "statement": "An incomplete card on the review page is marked as in error: its wrapper takes an error modifier with a red left border, and a GOV.UK error message sits under its header repeating the summary's wording.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40; trace snagging--review-your-notification-s34-review-your-notification-answers-still-missing.zip action 48",
+      "quote": "<div class=\"app-dr2-review-card-wrapper app-dr2-review-card-wrapper--error\">\n ... <p class=\"govuk-error-message app-dr2-review-card__error-message\">\n      <span class=\"govuk-visually-hidden\">Error:</span>\n      Complete arrival details\n    </p>",
+      "confidence": "verbatim",
+      "note": "Computed style on the snapshot: wrapper border-left 5px solid rgb(212, 53, 28), padding 20px."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-050",
+      "statement": "An incomplete card still lists every one of its rows; each unanswered row has an empty value with only a visually hidden 'Missing' for screen readers.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40",
+      "quote": "<div class=\"app-dr2-review-row app-dr2-review-row--missing\">\n    <dt class=\"app-dr2-review-row__key\">Port of entry</dt>\n    <dd class=\"app-dr2-review-row__value app-dr2-review-row__value--missing\">\n      \n        <span class=\"govuk-visually-hidden\">Missing</span>",
+      "confidence": "verbatim",
+      "note": "The spec asserts main contains 'Missing' (journeys.fit.spec.js line 403); sighted users see an empty value. Snapshot computed style shows no ::before or ::after content on the missing value."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-051",
+      "statement": "An incomplete review shows no Change link on rows, only the card header's Change link.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40",
+      "quote": "<h3 class=\"app-dr2-review-card__title\" id=\"review-arrival-details\">Arrival details</h3>\n        \n          \n            <a class=\"app-dr2-review-card__header-link\" href=\"/design-release-2.1/arrival-details\">Change</a>",
+      "confidence": "inferred",
+      "note": "Inferred from the markup: only the 'Number of animals' row carries a row-level Change link, in both complete and incomplete states."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-052",
+      "statement": "Pressing Continue on an incomplete review posts the form and the server answers 200 with the review page again, still at /review-notification, with the same error summary.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 48-50 and request 287",
+      "quote": "POST http://localhost:3010/design-release-2.1/review-notification\n\n  General\n    status:    200 OK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-053",
+      "statement": "After a refused Continue, focus is not moved to the error summary: the active element is the page body.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 50",
+      "quote": "FOCUS:govuk-template__body js-enabled govuk-frontend-supported|BODY",
+      "confidence": "inferred",
+      "note": "Read from the trace snapshot, which may not keep focus state reliably. The error summary has data-module=\"govuk-error-summary\", which normally focuses itself on load."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-054",
+      "statement": "The incomplete review renders the same with JavaScript off: the error summary, the error cards and the missing rows all come from the server.",
+      "kind": "non-functional",
+      "ref": "trace snagging--review-your-notification-s35-review-your-notification-error-handling-on-a-refused-submit.zip action 66",
+      "quote": "BODYCLASS:govuk-template__body\n====\nDraft\nLive animals - GBN-AG-26-01RQ30\nThere is a problem\nComplete additional details",
+      "confidence": "verbatim",
+      "note": "The second context's body lacks the js-enabled class."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-055",
+      "statement": "A complete review has no error summary.",
+      "kind": "rule",
+      "ref": "journeys.fit.spec.js line 175; trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "await expect(page.locator('.govuk-error-summary')).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-056",
+      "statement": "The review page shows the notification's reference.",
+      "kind": "copy",
+      "ref": "journeys.fit.spec.js line 178",
+      "quote": "await expect(main).toContainText(reference)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-057",
+      "statement": "Pressing Continue on a complete review posts the form and redirects (302) to the declaration page.",
+      "kind": "behaviour",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip actions 122-124, requests 1055-1056",
+      "quote": "1055. 0:03.918  POST     302      review-notification\n  1056. 0:03.920  GET      200      declaration",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-058",
+      "statement": "The review page uses its own app-dr2-review card, row and identification-table classes rather than the GOV.UK summary list or summary card; the only govuk components in main are the tag, the error summary, the error message, the buttons and the button group.",
+      "kind": "constraint",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119 (class list)",
+      "quote": "app-dr2-review-card\napp-dr2-review-card-wrapper\n...\napp-dr2-review-identification-table\n...\ngovuk-button\ngovuk-button--warning\ngovuk-button-group\ngovuk-grid-column-full\ngovuk-grid-row\ngovuk-tag",
+      "confidence": "verbatim",
+      "note": "A GOV.UK Summary list with summary cards (one card per task, with a card-level Change action) could replace the cards and rows; the identification table could be a GOV.UK Table inside the card. The error card styling has no GOV.UK equivalent."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-059",
+      "statement": "The review page uses the full-width grid column, not two-thirds.",
+      "kind": "constraint",
+      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section.zip action 40",
+      "quote": "<div class=\"govuk-grid-column-full app-review-notification-page app-review-notification-page--dr2 app-review-notification-page--dr2-journey\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-060",
+      "statement": "The declaration page is at /declaration and its document title is 'Declaration - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed.zip action 14",
+      "quote": "Declaration - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-061",
+      "statement": "The declaration page's h1 is 'Declaration', with no caption, status tag or reference above it.",
+      "kind": "copy",
+      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed.zip action 14",
+      "quote": "<h1 class=\"app-declaration-page__title\">Declaration</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-062",
+      "statement": "The declaration page's back link goes to the review page.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed.zip action 14; journeys.fit.spec.js line 194",
+      "quote": "BACK:/design-release-2.1/review-notification",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p11-063",
-      "statement": "When the contact address is incomplete, the review error summary says 'Complete contact address for this consignment' and links to the Contact address card.",
-      "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "<a href=\"#review-contact-address\">Complete contact address for this consignment</a>",
+      "statement": "The declaration's first section has the h2 'I am the contact for the authorities and located in the UK.' and the paragraph 'I am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.'",
+      "kind": "copy",
+      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed.zip action 14",
+      "quote": "<h2 class=\"app-declaration-page__section-heading\" id=\"declaration-contact-heading\">I am the contact for the authorities and located in the UK.</h2>\n        <p class=\"app-declaration-page__section-text\">I am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.</p>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p11-064",
-      "statement": "Uploading documents is not required to submit: with no document ever added, the review lists no error for documents and shows 'Document 1' with 'Not applicable'.",
-      "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "4. Uploaded documents\nDocument 1\nChange\nDocument reference\nNot applicable",
-      "confidence": "inferred",
-      "note": "Inferred from the absence of a documents item in the error summary when the Upload documents task was never visited."
+      "statement": "The declaration's second section has the h2 'I confirm I am responsible for this consignment.', a paragraph on the period of responsibility, and a bulleted list of the two end points.",
+      "kind": "copy",
+      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed.zip action 14",
+      "quote": "I confirm I am responsible for this consignment.\n\nI am responsible from the submission of this notification to when it enters Great Britain. And I am responsible until it has either:\n\ncleared official checks at the border\nreached the Place of Destination as stated on the health certificate or notification",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p11-065",
-      "statement": "The review page groups its cards under six numbered headings: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Uploaded documents', '5. Consignment addresses' and '6. Contact address'. Sections 4 and 5 are named differently from the hub's '4. Documents' and '5. Consignment parties'.",
+      "statement": "The declaration's third section has the h2 'I confirm that I am accountable for:', a bulleted list of four costs and arrangements, and two paragraphs on acting for a third party.",
       "kind": "copy",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "1. About the consignment ... 2. Description of the goods ... 3. Transport and arrival ... 4. Uploaded documents ... 5. Consignment addresses ... 6. Contact address",
-      "confidence": "verbatim",
-      "note": "The naming difference between hub and review is recorded, not resolved."
+      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed.zip action 14",
+      "quote": "I confirm that I am accountable for:\nany payment for the official controls at the border\nany arrangements to re-dispatch the consignment\nany costs needed for quarantine or isolation of consignments\nany costs needed for destruction and disposal of consignments, when instructed by the authorities\n\nI am authorised as being accountable for these things if raising notifications on behalf of a third party.\n\nI can legally act on behalf of a third party in relation to the conditions of this declaration.",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p11-066",
-      "statement": "The review's 'Origin of import' card shows Country of origin, Region of origin code and Internal reference number, with 'Not applicable' for the ones not given, and a Change link to the origin page.",
+      "statement": "The user must tick one small checkbox, 'I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.', named declarationConfirmed with the value yes, inside a fieldset whose legend 'Declaration confirmation' is visually hidden.",
       "kind": "data",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "Origin of import\nChange\nCountry of origin\nFrance\nRegion of origin code\nNot applicable\nInternal reference number\nNot applicable",
+      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed.zip action 14",
+      "quote": "<legend class=\"govuk-fieldset__legend govuk-visually-hidden\">\n  \n    Declaration confirmation\n  \n  </legend>\n ... <div class=\"govuk-checkboxes govuk-checkboxes--small\" data-module=\"govuk-checkboxes\" data-govuk-checkboxes-init=\"\">\n ... <input class=\"govuk-checkboxes__input\" id=\"declaration-confirmed\" name=\"declarationConfirmed\" type=\"checkbox\" value=\"yes\">\n      <label class=\"govuk-label govuk-checkboxes__label\" for=\"declaration-confirmed\">\n        I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.\n      </label>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p11-067",
-      "statement": "The review's 'What are you importing?' card shows Commodity code, Common name and Species, with a Change link to the what-are-you-importing page.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "What are you importing?\nChange\nCommodity code\n0102\nCommon name\nCattle\nSpecies\nBos Taurus",
-      "confidence": "verbatim"
+      "statement": "The declaration checkbox starts unticked.",
+      "kind": "behaviour",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 127",
+      "quote": "Declaration - Import notification service - GOV.UK | 1204 | Date of declaration: 27 November 2026 | ERR:none | false",
+      "confidence": "verbatim",
+      "note": "The last field of the quote is the checkbox's checked state."
     },
     {
       "id": "trace-prototype-dr2-1-p11-068",
-      "statement": "The review's 'Main import reason' card shows the main import reason and, for Internal market, the purpose in the market, with a Change link to the reason page.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "Main import reason\nChange\nMain import reason\nInternal market\nPurpose in the market\nBreeding",
-      "confidence": "verbatim"
+      "statement": "Under the checkbox the page shows 'Date of declaration:' followed by today's date in bold, written as day, month name and year, such as '27 November 2026'.",
+      "kind": "copy",
+      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed.zip action 14",
+      "quote": "<p class=\"app-declaration-page__date\">\n        Date of declaration: <strong class=\"app-declaration-page__date-value\">27 November 2026</strong>\n      </p>",
+      "confidence": "verbatim",
+      "note": "The traces were recorded on 27 November 2026, so the date shown is the day of viewing."
     },
     {
       "id": "trace-prototype-dr2-1-p11-069",
-      "statement": "Under '2. Description of the goods', each commodity gets its own card titled with the common name and code, for example 'Cattle (0102)', with a species sub-heading and a Change link to consignment-details.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "<h3 class=\"app-dr2-review-card__title\" id=\"review-commodity-cattle\">Cattle (0102)</h3>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-070",
-      "statement": "For each species, the commodity card shows 'Number of animals' with its own row-level Change link, and 'Number of packages (when required)', shown as 'Not applicable' when not given.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "Bos Taurus\nNumber of animals\n1\nChange\nNumber of packages (when required)\nNot applicable",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-071",
-      "statement": "The review's 'Additional details' card lists 'Certified for' and 'Includes unweaned animals', with a Change link to additional-animal-details.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "Additional details\nChange\n\nError:\nComplete additional details\n\nCertified for\nMissing\nIncludes unweaned animals\nMissing",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-072",
-      "statement": "The review's 'Arrival details' card lists 'Port of entry', 'Arrival date at destination', 'Means of transport to the port of entry', 'Transport identification' and 'Transport document reference', with a Change link to arrival-details.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "Arrival details\nChange\n\nError:\nComplete arrival details\n\nPort of entry\nMissing\nArrival date at destination\nMissing\nMeans of transport to the port of entry\nMissing\nTransport identification\nMissing\nTransport document reference\nMissing",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-073",
-      "statement": "The review's 'Transport details' card lists the transporter's 'Name', 'Address', 'Country', 'Approval number' and 'Type', with a Change link to the transporter page.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "Transport details\nChange\n\nError:\nComplete transport details\n\nName\nMissing\nAddress\nMissing\nCountry\nMissing\nApproval number\nMissing\nType\nMissing",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-074",
-      "statement": "The review's 'Addresses' card lists 'Place of origin', 'Consignor', 'Consignee', 'Importer', 'Place of destination' and 'County parish holding (CPH) number', with a Change link to roles-and-addresses.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "5. Consignment addresses\nAddresses\nChange\n\nError:\nComplete roles and addresses\n\nPlace of origin\nMissing\nConsignor\nMissing\nConsignee\nMissing\nImporter\nMissing\nPlace of destination\nMissing\nCounty parish holding (CPH) number\nMissing",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-075",
-      "statement": "The review's 'Contact address' card lists 'Contact address', with a Change link to contact-address-for-consignment?from=review.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "<a class=\"app-dr2-review-card__header-link\" href=\"/design-release-2.1/contact-address-for-consignment?from=review\">Change</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-076",
-      "statement": "Only the Uploaded documents and Contact address Change links carry from=review; the other review Change links (origin, what-are-you-importing, reason, consignment-details, additional-animal-details, arrival-details, transporter, roles-and-addresses) carry no from parameter.",
+      "statement": "The declaration page ends with a 'Continue' button in a form that posts to /declaration.",
       "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "href=\"/design-release-2.1/upload-documents?from=review\">Change</a> ... href=\"/design-release-2.1/arrival-details\">Change</a>",
-      "confidence": "verbatim",
-      "note": "Where a Change link without from=review returns the user after saving is not shown in this slice."
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-077",
-      "statement": "Each incomplete task's review card shows an inline error message repeating the error summary item, and the card is given an error style.",
-      "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "<div class=\"app-dr2-review-card-wrapper app-dr2-review-card-wrapper--error\"> ... <p class=\"govuk-error-message app-dr2-review-card__error-message\">\n      <span class=\"govuk-visually-hidden\">Error:</span>\n      Complete additional details\n    </p>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-078",
-      "statement": "An unanswered row on the review shows an empty value with a visually hidden 'Missing' for screen readers, and the row gets a missing style.",
-      "kind": "copy",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 40",
-      "quote": "<dd class=\"app-dr2-review-row__value app-dr2-review-row__value--missing\">\n      \n        <span class=\"govuk-visually-hidden\">Missing</span>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-079",
-      "statement": "A complete task's review card shows no error, and an optional answer not given reads 'Not applicable'.",
-      "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "Region of origin code\nNot applicable",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-080",
-      "statement": "The review page ends with a 'Continue' submit button that posts to /design-release-2.1/review-notification.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "<form method=\"post\" action=\"/design-release-2.1/review-notification\" novalidate=\"\" class=\"app-review-notification-page__form\">",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-081",
-      "statement": "Beside Continue, a red warning 'Delete' button links to /design-release-2.1/notifications/delete with the notification reference.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 41",
-      "quote": "<a href=\"/design-release-2.1/notifications/delete?reference=GBN-AG-26-0M2F7E\" role=\"button\" draggable=\"false\" class=\"govuk-button govuk-button--warning\" data-module=\"govuk-button\" data-govuk-button-init=\"\">\n  Delete\n</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-082",
-      "statement": "Pressing Continue on a review with incomplete tasks keeps the user on the review page, re-rendered with the same error summary, and does not move on to the declaration.",
-      "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section actions 48-50, request 277",
-      "quote": "POST 200 review-notification",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-083",
-      "statement": "The review page's cards are custom app-dr2-review-card markup (a card header with a title and Change link, then a dl of rows), not the GOV.UK Summary list card; the Summary list with a card title and actions could replace it.",
-      "kind": "constraint",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section action 37",
-      "quote": "<section class=\"app-dr2-review-card\" aria-labelledby=\"review-import-details\">",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-084",
-      "statement": "Opening /design-release-2.1/notification-submitted before the declaration is confirmed redirects to /design-release-2.1/declaration.",
-      "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed actions 13-14, request 80",
-      "quote": "location: /design-release-2.1/declaration",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-085",
-      "statement": "The submitted-page guard checks only the declaration, not task completeness: a brand-new notification with every task still to do is sent to the declaration, not to the review page.",
-      "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed actions 7-14",
-      "quote": "GET 302 notification-submitted; GET 200 declaration",
-      "confidence": "inferred",
-      "note": "Inferred from the redirect target on a notification with nothing answered."
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-086",
-      "statement": "The declaration page's title is 'Declaration - Import notification service - GOV.UK' and its heading is 'Declaration'.",
-      "kind": "copy",
-      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed action 14",
-      "quote": "Declaration - Import notification service - GOV.UK || Declaration",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-087",
-      "statement": "The declaration page's back link goes to the review page.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed action 14",
-      "quote": "<a href=\"/design-release-2.1/review-notification\" class=\"govuk-back-link\">Back</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-088",
-      "statement": "The declaration page does not show the Draft tag or the notification reference.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed action 14",
-      "quote": "no status",
-      "confidence": "verbatim",
-      "note": "The quote is the eval result for the .app-dr2-notification-status lookup."
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-089",
-      "statement": "The declaration's first statement is about being the contact for the authorities and complying with Regulation (EU) 2017/625.",
-      "kind": "copy",
-      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed action 14",
-      "quote": "I am the contact for the authorities and located in the UK.\nI am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-090",
-      "statement": "The declaration's second statement is about responsibility for the consignment until it clears border checks or reaches its place of destination.",
-      "kind": "copy",
-      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed action 14",
-      "quote": "I confirm I am responsible for this consignment.\nI am responsible from the submission of this notification to when it enters Great Britain. And I am responsible until it has either:\ncleared official checks at the border\nreached the Place of Destination as stated on the health certificate or notification",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-091",
-      "statement": "The declaration's third statement lists the costs and arrangements the user is accountable for, and their authority to act for a third party.",
-      "kind": "copy",
-      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed action 14",
-      "quote": "I confirm that I am accountable for:\nany payment for the official controls at the border\nany arrangements to re-dispatch the consignment\nany costs needed for quarantine or isolation of consignments\nany costs needed for destruction and disposal of consignments, when instructed by the authorities\nI am authorised as being accountable for these things if raising notifications on behalf of a third party.\nI can legally act on behalf of a third party in relation to the conditions of this declaration.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-092",
-      "statement": "The declaration asks the user to tick a single small checkbox (field declarationConfirmed, value yes), unticked by default, inside a fieldset with the visually hidden legend 'Declaration confirmation'.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed action 14",
-      "quote": "<input class=\"govuk-checkboxes__input\" id=\"declaration-confirmed\" name=\"declarationConfirmed\" type=\"checkbox\" value=\"yes\">",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-093",
-      "statement": "The declaration checkbox label reads: 'I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.'",
-      "kind": "copy",
-      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed action 14",
-      "quote": "I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-094",
-      "statement": "The declaration page shows today's date as the date of declaration.",
-      "kind": "data",
-      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed action 14",
-      "quote": "Date of declaration: <strong class=\"app-declaration-page__date-value\">7 October 2026</strong>",
-      "confidence": "inferred",
-      "note": "Inferred as today's date because the trace ran on 7 October 2026."
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-095",
-      "statement": "The declaration page has a 'Continue' button that posts the form to /design-release-2.1/declaration.",
-      "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed action 14",
+      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed.zip action 14",
       "quote": "<form method=\"post\" action=\"/design-release-2.1/declaration\" novalidate=\"\" class=\"app-declaration-form\">",
       "confidence": "verbatim"
     },
     {
-      "id": "trace-prototype-dr2-1-p11-096",
-      "statement": "The declaration page uses a two-thirds column with custom app-declaration-page section markup around standard GOV.UK checkboxes, bullet lists and button.",
-      "kind": "constraint",
-      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed action 14",
-      "quote": "<div class=\"govuk-grid-column-two-thirds app-declaration-page\">",
+      "id": "trace-prototype-dr2-1-p11-070",
+      "statement": "Pressing Continue without ticking the checkbox shows an error summary with 'Confirm that you have reviewed and comply with this declaration'.",
+      "kind": "rule",
+      "ref": "journeys.fit.spec.js lines 197-198",
+      "quote": "await expectErrorSummary(page, ['Confirm that you have reviewed and comply with this declaration'])",
+      "confidence": "verbatim",
+      "note": "Asserted by the end-to-end journeys, which are other parts' traces; none of this part's traces renders the declaration's error state."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-071",
+      "statement": "This part's traces do not render the declaration error state, so whether the checkbox also carries an inline error message, and whether the error summary links to it, is not shown here.",
+      "kind": "rule",
+      "ref": "journeys.fit.spec.js lines 197-199",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-072",
+      "statement": "Ticking the checkbox and pressing Continue posts the declaration and redirects (302) to the submitted page.",
+      "kind": "behaviour",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip actions 130-133, requests 1096-1097",
+      "quote": "1096. 0:04.966  POST     302      declaration\n  1097. 0:04.975  GET      200      notification-submitted",
       "confidence": "verbatim"
     },
     {
-      "id": "trace-prototype-dr2-1-p11-097",
-      "statement": "The hub, task pages and review are served by a GOV.UK Prototype Kit app with no data calls to other services: every answer is a form post to the prototype, and state is held in the prototype's session.",
-      "kind": "integration",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section request 277",
-      "quote": "x-powered-by: Express; Cookie: govuk-prototype-kit-[REDACTED]",
+      "id": "trace-prototype-dr2-1-p11-073",
+      "statement": "The declaration page can be reached for a notification that is not complete: the guard on the submitted page sends a fresh notification, with only its type chosen, straight to the declaration, and the declaration shows no error for the incomplete notification.",
+      "kind": "behaviour",
+      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed.zip actions 7-14",
+      "quote": "Declaration\nI am the contact for the authorities and located in the UK.",
       "confidence": "inferred",
-      "note": "Inferred from the network logs of all four traces showing only page loads, form posts, static assets and the kit's browser-sync socket. The session cookie value is redacted."
+      "note": "Inferred: the trace chooses live animals only, then lands on /declaration with ERR:none. Whether confirming it would then submit an incomplete notification is not walked."
     },
     {
-      "id": "trace-prototype-dr2-1-p11-098",
-      "statement": "No trace in this slice shows a task in any state other than 'To do' or 'Complete', such as 'In progress' after a partial answer.",
+      "id": "trace-prototype-dr2-1-p11-074",
+      "statement": "The declaration page uses its own app-declaration-page section, heading and text classes around GOV.UK bullet lists, a small GOV.UK checkbox and a GOV.UK button, in the two-thirds column.",
+      "kind": "constraint",
+      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed.zip action 14",
+      "quote": "<div class=\"govuk-grid-column-two-thirds app-declaration-page\">",
+      "confidence": "verbatim",
+      "note": "The section headings and paragraphs could be govuk-heading-m and govuk-body; the check is a standard Checkboxes component with the small modifier."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-075",
+      "statement": "Going to /notification-submitted before the declaration is confirmed redirects (302) to /declaration.",
       "kind": "rule",
-      "ref": "journeys.fit.spec.js › the notification hub (all four traces)",
-      "quote": "",
-      "confidence": "gap"
+      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed.zip actions 13-14, requests 83-84",
+      "quote": "83. 0:00.217  GET      302      notification-submitted\n   84. 0:00.218  GET      200      declaration",
+      "confidence": "verbatim"
     },
     {
-      "id": "trace-prototype-dr2-1-p11-099",
-      "statement": "No trace in this slice presses 'Save and return to overview', so where it goes and whether it saves a partial answer are not shown.",
+      "id": "trace-prototype-dr2-1-p11-076",
+      "statement": "The submitted page is at /notification-submitted and its document title is 'Import notification submitted - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 136",
+      "quote": "Import notification submitted - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-077",
+      "statement": "The submitted page opens with a GOV.UK confirmation panel titled 'Import notification submitted', whose body reads 'Your reference number' with the reference in bold below it.",
+      "kind": "copy",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 136",
+      "quote": "<div class=\"govuk-panel govuk-panel--confirmation app-notification-submitted-page__panel\"> <h1 class=\"govuk-panel__title\">Import notification submitted</h1> <div class=\"govuk-panel__body\"> Your reference number<br><strong>GBN-AG-26-0B1MCS</strong> </div> </div>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-078",
+      "statement": "The reference on the submitted page is the same reference the notification was given when it was created.",
+      "kind": "rule",
+      "ref": "journeys.fit.spec.js lines 63 and 211; trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip actions 119 and 136",
+      "quote": "await expect(main).toContainText(reference)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-079",
+      "statement": "The submitted page has no back link.",
       "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-hub-task-link-returns-to-the-hub-after-saving",
-      "quote": "",
-      "confidence": "gap"
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 136",
+      "quote": "BACK:none",
+      "confidence": "verbatim"
     },
     {
-      "id": "trace-prototype-dr2-1-p11-100",
-      "statement": "No trace in this slice clicks 'Review and submit' or 'Return to dashboard' on the hub; only their link targets are seen.",
+      "id": "trace-prototype-dr2-1-p11-080",
+      "statement": "The submitted page's 'Transporting the consignment' section tells the user to tell the transporter the consignment must go directly to the place of destination, and that it may need to be inspected.",
+      "kind": "copy",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 136",
+      "quote": "Transporting the consignment\n\nTell the transporter that this consignment must go directly to the place of destination on entry to Great Britain.\n\nThe animals or consignment may need to be inspected.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-081",
+      "statement": "For live animals, the transport section adds that the animals must stay at the place of destination for the time on the health certificate, or 48 hours if no time is given.",
+      "kind": "copy",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 136",
+      "quote": "If so, the animals must stay at the place of destination for either:\n\nthe time stated on the health certificate\n48 hours if no time is specified",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-082",
+      "statement": "For germinal products, the transport section has no inspection stay list.",
+      "kind": "rule",
+      "ref": "journeys.fit.spec.js line 214",
+      "quote": "await expect(main.locator('[aria-labelledby=\"submitted-transport-heading\"] li')).toHaveText(j.germinal ? [] : LIVE_ANIMAL_INSPECTION_STAY)",
+      "confidence": "verbatim",
+      "note": "Not rendered in this part's traces. Whether the 'If so, the animals must stay...' lead-in paragraph is also dropped for germinal products is not asserted."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-083",
+      "statement": "The 'How to view or amend this notification' section says 'You can view or change this notification from your dashboard.' and gives two links: 'Return to your dashboard' to the dashboard and 'Create a new notification' to /create-notification.",
+      "kind": "copy",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 136; journeys.fit.spec.js lines 215-217",
+      "quote": "<h2 class=\"app-notification-submitted-page__section-heading\" id=\"submitted-amend-heading\">How to view or amend this notification</h2> <p class=\"govuk-body\">You can view or change this notification from your dashboard.</p> <p class=\"govuk-body\"> <a class=\"govuk-link\" href=\"/design-release-2.1\">Return to your dashboard</a> </p> <p class=\"govuk-body\"> <a class=\"govuk-link\" href=\"/design-release-2.1/create-notification\">Create a new notification</a> </p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-084",
+      "statement": "The 'Getting help' section gives the email importsriskmanagement@apha.gov.uk for help with import notifications for live animals or germinal products.",
+      "kind": "copy",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 136",
+      "quote": "To get help with import notifications for live animals or germinal products, email <a class=\"govuk-link\" href=\"mailto:importsriskmanagement@apha.gov.uk\">importsriskmanagement@apha.gov.uk</a>.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-085",
+      "statement": "The 'Getting help' section gives APHA's technical help contacts: telephone 0330 041 6999 and email APHAServiceDesk@apha.gov.uk, Monday to Friday, 8:30am to 5pm, except bank holidays.",
+      "kind": "copy",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 136",
+      "quote": "Contact the Animal and Plant Health Agency (APHA) if you need technical help with this service:\n\nTelephone: 0330 041 6999\nEmail: APHAServiceDesk@apha.gov.uk\n\nMonday to Friday, 8:30am to 5pm, except bank holidays",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-086",
+      "statement": "The 'Getting help' section links to HMRC's customs contact page and to GOV.UK call charges, both opening in a new tab.",
+      "kind": "copy",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 136",
+      "quote": "If you need help with your customs declaration, <a class=\"govuk-link\" href=\"https://www.gov.uk/government/organisations/hm-revenue-customs/contact/customs-international-trade-and-excise-enquiries\" rel=\"noreferrer noopener\" target=\"_blank\">contact HMRC</a>. </p> <p class=\"govuk-body\"> <a class=\"govuk-link\" href=\"https://www.gov.uk/call-charges\" rel=\"noreferrer noopener\" target=\"_blank\">Find out about call charges</a>",
+      "confidence": "verbatim",
+      "note": "The link text does not say it opens in a new tab."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-087",
+      "statement": "The submitted page uses the GOV.UK confirmation panel, govuk-body paragraphs, govuk-link links and GOV.UK bullet lists in the two-thirds column, with its own app-notification-submitted-page section headings.",
+      "kind": "constraint",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 136",
+      "quote": "<h2 class=\"app-notification-submitted-page__section-heading\" id=\"submitted-transport-heading\">Transporting the consignment</h2>",
+      "confidence": "verbatim",
+      "note": "The section headings could be govuk-heading-m; the rest is standard GOV.UK."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-088",
+      "statement": "Once submitted, the notification can be opened at /review-notification?reference=<reference>, where it shows its reference and the status 'Submitted'.",
       "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do",
+      "ref": "journeys.fit.spec.js lines 224-229",
+      "quote": "await page.goto(url(`/review-notification?reference=${reference}`))\n    await expect(page.locator('main')).toContainText(reference)\n    await expect(page.locator('main')).toContainText('Submitted')",
+      "confidence": "verbatim",
+      "note": "Not rendered in this part's traces."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-089",
+      "statement": "This part's traces never render a submitted notification on the review page, so its layout, whether Change links and the Delete button remain, and what Continue does there are not shown.",
+      "kind": "behaviour",
+      "ref": "journeys.fit.spec.js lines 224-229",
       "quote": "",
       "confidence": "gap"
     },
     {
-      "id": "trace-prototype-dr2-1-p11-101",
-      "statement": "No trace in this slice shows the commodities cards with non-zero totals, so how animal and package totals are counted is not shown.",
+      "id": "trace-prototype-dr2-1-p11-090",
+      "statement": "This part's traces never render the germinal products review page or submitted page, so the germinal card layout (gross weight, temperature, quantity, packages, donor rows) is shown only by text the spec asserts.",
       "kind": "data",
-      "ref": "trace journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do",
+      "ref": "journeys.fit.spec.js lines 314-337",
       "quote": "",
       "confidence": "gap"
     },
     {
-      "id": "trace-prototype-dr2-1-p11-102",
-      "statement": "No trace in this slice follows the review's Delete button, so the delete confirmation and its outcome are not shown.",
+      "id": "trace-prototype-dr2-1-p11-091",
+      "statement": "No trace in this part shows the review page for more than one commodity, more than one document, or a transit or transhipment reason, so how cards repeat is not shown.",
+      "kind": "data",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip action 119",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-092",
+      "statement": "Review, declaration and submission are all same-origin page requests to the prototype, held in its session; no call to another system was seen when submitting.",
+      "kind": "integration",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip requests 1016-1097",
+      "quote": "1016. 0:02.879  GET      200      review-notification\n  1055. 0:03.918  POST     302      review-notification\n  1056. 0:03.920  GET      200      declaration\n  1096. 0:04.966  POST     302      declaration\n  1097. 0:04.975  GET      200      notification-submitted",
+      "confidence": "verbatim",
+      "note": "The session cookie is a prototype kit cookie; its value is [REDACTED]."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-093",
+      "statement": "The traces show no backend that the submission is sent to, so the system that receives a submitted notification is not shown.",
+      "kind": "integration",
+      "ref": "trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip requests",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p11-094",
+      "statement": "Snag S34 (answers still missing) photographs the incomplete review page and the page after a refused Continue.",
       "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-review-with-tasks-missing-lists-each-incomplete-section",
-      "quote": "",
-      "confidence": "gap"
+      "ref": "snagging.fit.spec.js lines 496-500; trace snagging--review-your-notification-s34-review-your-notification-answers-still-missing.zip actions 41-50",
+      "quote": "await shoot(page, 'S34', 'missing-answers')\n    await submitForm(page, 'Continue')\n    await shoot(page, 'S34', 'after-refused-continue')",
+      "confidence": "verbatim",
+      "note": "The snag's own wording (snagging/snags.json) is not in this part's read; the rendered states are claimed above."
     },
     {
-      "id": "trace-prototype-dr2-1-p11-103",
-      "statement": "No trace in this slice submits the declaration with the box unticked, so its validation error copy is not shown here.",
-      "kind": "rule",
-      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p11-104",
-      "statement": "No trace in this slice reaches the notification-submitted page itself, so its content once the declaration is confirmed is not shown here.",
+      "id": "trace-prototype-dr2-1-p11-095",
+      "statement": "Snag S35 (error handling on a refused submit) photographs the refused Continue, the first error link followed, and the incomplete review with JavaScript off.",
       "kind": "behaviour",
-      "ref": "trace journeys--the-notification-hub-the-submitted-page-is-guarded-until-the-declaration-is-confirmed",
-      "quote": "",
-      "confidence": "gap"
+      "ref": "snagging.fit.spec.js lines 502-515; trace snagging--review-your-notification-s35-review-your-notification-error-handling-on-a-refused-submit.zip actions 41-68",
+      "quote": "await shoot(page, 'S35', 'after-refused-continue')\n    const firstError = page.locator('.govuk-error-summary__list a').first()",
+      "confidence": "verbatim"
     },
     {
-      "id": "trace-prototype-dr2-1-p11-105",
-      "statement": "The hub is shown only for a live-animals notification in this slice; whether other notification types get the same sections and tasks is not shown.",
+      "id": "trace-prototype-dr2-1-p11-096",
+      "statement": "Snag S38 (submit screen) photographs the complete review, the declaration and the submitted page of one cattle by air notification.",
       "kind": "behaviour",
-      "ref": "journeys.fit.spec.js › the notification hub (all four traces start with notificationType live-animals)",
-      "quote": "",
-      "confidence": "gap"
+      "ref": "snagging.fit.spec.js lines 519-556; trace snagging--notification-submitted-s38-submit-screen-import-notification-submitted.zip actions 119, 127, 136",
+      "quote": "await shoot(page, 'S38', 'review-complete')\n ... await shoot(page, 'S38', 'declaration')\n ... await shoot(page, 'S38', 'submitted')",
+      "confidence": "verbatim"
     }
   ]
 }

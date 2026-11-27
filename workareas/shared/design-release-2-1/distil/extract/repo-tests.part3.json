@@ -1,6 +1,6 @@
 {
   "source": "repo:tests",
-  "structure": "Part 3 of repos/trade-imports-ins-tests (HEAD c293b056, read on main): the end of the live-animals journey and the list around it. Read in full: the 7 specs the partition names (tests/animals/e2e/pages/declaration.spec.ts, confirmation.spec.ts, notification-view-states.spec.ts, notification-dashboard.spec.ts, notification-dashboard-pagination.spec.ts and tests/animals/e2e/features/notification-dashboard-sort.spec.ts, notification-dashboard-search.spec.ts), the 7 animals page objects (declaration, confirmation, notification-view, dashboard, overview, notification-cancel-amend, delete-notification), the 8 shared page objects (view-header, declaration-content, govuk-banners, delete-notification, sets, dashboard-copy, summary-list, base-page), 3 domain models (sort-by-values, notification-status, notification-fulfilments), 2 flows (notification-actions, seeded-journey), fixtures/ui.ts and utils/timestamped-reference.ts. Four extra files were opened only to resolve copy the specs import by constant: domain/animals/constants/consignment-addresses-page.ts, document-types.ts, reference-number-patterns.ts and certification-purposes.ts. Covered: the declaration page (route, heading, legend, checkbox, date line, Continue, refusal back to the review and the per-card refusal cases), the confirmation page (heading, outstanding items, view-or-amend sentence, help links, section headings once the ITAHC is uploaded, and the draft redirect), the notification view in draft, draft-ready, amend and submitted states plus a non-existent reference (status tags and colours, page titles, date created and date submitted, header actions and their styling, import reference numbers region, the six numbered sections, change links, end controls, Continue, Copy as new, Delete and Cancel amend), the live-animals notification list (route, heading, summary-card rows and terms, status tags, per-status actions, results labels, 25-a-page pagination, the four sort options and their submission, and what the search box is proven to match), and the gaps the page objects name but no test in this part drives. Test counts found differ from the partition's: declaration.spec.ts has 7 literal test() declarations (10 at run time) not 14, confirmation.spec.ts 6 (7 at run time) not 16, notification-view-states.spec.ts 30 (33 at run time) not 44, notification-dashboard.spec.ts 7 not 13, notification-dashboard-pagination.spec.ts 1 not 3, notification-dashboard-sort.spec.ts 3 (6 at run time) not 5, notification-dashboard-search.spec.ts 7 not 9; the specs last moved on 2026-11-20 (52c8531), after the partition was cut, and every test present today is claimed.",
+  "structure": "Part 3 of repo:tests (trade-imports-ins-tests on main at c433e6b): the animals end-to-end specs for the pages at the end of and around the live-animals journey. Read in full: tests/animals/e2e/pages/declaration.spec.ts (Declaration page: 4 draft tests, 1 unfinished-draft refusal, 3 looped blank-answer refusals, 2 looped draft/amendment heading tests), confirmation.spec.ts (Import notification submitted page: 4 tests on a submitted notification, 1 for a draft, 1 after an ITAHC upload, 1 after a non-ITAHC upload, 2 looped identifier-incomplete cases), notification-view-states.spec.ts (Notification view states: DRAFT 11 tests, DRAFT ready to submit 2, AMEND 3, SUBMITTED 8, 3 tests looped over submitted with and without the health certificate, and 1 not-found), notification-dashboard.spec.ts (8 tests: start and list a draft, dashboard basics, card actions by status, copy from a card), notification-dashboard-pagination.spec.ts (1 test), features/notification-dashboard-sort.spec.ts (2 tests and 4 looped per sort option) and features/notification-dashboard-search.spec.ts (7 tests). Also read in full as support: the animals declaration, confirmation, notification view, dashboard, overview, cancel amend and delete page objects; the shared view header, declaration content, GOV.UK banners, delete notification, sets, dashboard copy, summary list and base page objects; the sort-by values, notification status and fulfilments models; the notification actions and seeded journey flows; the ui fixture and the timestamped reference util. Covered: the declaration page (route, heading, legend, checkbox, Continue, date line, refusals), the confirmation page (heading, outstanding items, view-or-amend sentence, HMRC and call charges links, section headings), the notification view in draft, ready draft, amending, submitted and not-found states (heading, status tags, titles, dates, header buttons and their styles, import reference numbers, numbered sections, cards, change links, end controls, refusal), the animals notification list (heading, start button, summary cards and rows, status tags, card actions, result count wording, 25-a-page pagination, sort options and default, reference search and how it survives sort and paging), and the gaps the page objects show but no test drives. Since the 26 November extract the contact address section, card and error link have gone from these specs, and the overview Review and submit tests have left notification-view-states.spec.ts, so the claims that rested on them are replaced or dropped.",
   "claims": [
     {
       "id": "repo-tests-p3-001",
@@ -87,16 +87,8 @@
       "id": "repo-tests-p3-011",
       "statement": "A declaration posted for an unfinished draft is refused back to the review at /notification-view?refused=1 and the notification stays a draft.",
       "kind": "rule",
-      "ref": "tests/animals/e2e/pages/declaration.spec.ts:36-55 with flows/animals/seeded-journey.ts:91-97",
+      "ref": "tests/animals/e2e/pages/declaration.spec.ts:36-55 with flows/animals/seeded-journey.ts:89-95",
       "quote": "test('a declaration posted for an unfinished draft is refused back to the review, naming each unfinished card, and the notification stays a draft'  /  { redirectsTo: /\\/notification-view\\?refused=1$/ }  /  await expect(animalsPages.notificationView.viewHeader.statusTag).toHaveText('Draft');",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p3-012",
-      "statement": "The refused review of an unfinished draft lists exactly these six error links, in this order: \"Complete main import reason\", \"Complete additional details\", \"Complete arrival details\", \"Complete transport details\", \"Complete consignment addresses\", \"Complete contact address for this consignment\".",
-      "kind": "copy",
-      "ref": "tests/animals/e2e/pages/declaration.spec.ts:46-53 with domain/animals/constants/consignment-addresses-page.ts:5",
-      "quote": "await expect(animalsPages.notificationView.errorSummaryLinks).toHaveText([\n        'Complete main import reason',\n        'Complete additional details',\n        'Complete arrival details',\n        'Complete transport details',\n        CONSIGNMENT_ADDRESSES_INCOMPLETE,\n        'Complete contact address for this consignment',\n      ]);  /  export const CONSIGNMENT_ADDRESSES_INCOMPLETE = 'Complete consignment addresses';",
       "confidence": "verbatim"
     },
     {
@@ -135,7 +127,7 @@
       "id": "repo-tests-p3-017",
       "statement": "A declaration can only be posted with the concurrency token the review page rendered; a review page that renders no token leaves nothing to declare against.",
       "kind": "constraint",
-      "ref": "flows/animals/seeded-journey.ts:26-34 and :99-113",
+      "ref": "flows/animals/seeded-journey.ts:24-32 and :97-111",
       "quote": "throw new Error(`The ${slug} page rendered no concurrencyToken field, so there is nothing to declare against.`);  /  const concurrencyToken = await this.reviewConcurrencyToken(referenceNumber);",
       "confidence": "verbatim",
       "note": "mechanism: works on the hidden concurrencyToken field the review and declaration pages render, which the prototype cannot express."
@@ -144,7 +136,7 @@
       "id": "repo-tests-p3-018",
       "statement": "Submitting a notification is two posts to the declaration path, the review step then the declare step, and the second redirects to /confirmation.",
       "kind": "behaviour",
-      "ref": "flows/animals/seeded-journey.ts:104-113",
+      "ref": "flows/animals/seeded-journey.ts:102-111",
       "quote": "const declaration = await this.forms.postFormReturningHtml(declarationPath, { ...declarationStep.review, concurrencyToken });\n    await this.forms.postForm(\n      declarationPath,\n      { ...declarationStep.declare, concurrencyToken: concurrencyTokenIn(declaration, declarationStep.slug) },\n      { redirectsTo: /\\/confirmation$/ },\n    );",
       "confidence": "verbatim",
       "note": "mechanism: drives the declaration form posts directly rather than through the pages."
@@ -257,7 +249,7 @@
       "id": "repo-tests-p3-032",
       "statement": "The notification view is at /live-animals/notifications/<reference>/notification-view, and its refused form is the same address with ?refused=1.",
       "kind": "behaviour",
-      "ref": "page-objects/animals/notification-view-page.ts:23 and :114-117",
+      "ref": "page-objects/animals/notification-view-page.ts:22 and :109-113",
       "quote": "super(page, 'notification-view');  /  await this.navigateToService(`${this.expectedUrl(referenceNumber)}?refused=1`);",
       "confidence": "verbatim"
     },
@@ -265,7 +257,7 @@
       "id": "repo-tests-p3-033",
       "statement": "The notification view is headed by the notification's reference as its H1, in the shape GBN-AG-NN-XXXXXX, with the status tag immediately after the heading.",
       "kind": "copy",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:42-44 with page-objects/shared/view-header.ts:4 and :10-16",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:41-43 with page-objects/shared/view-header.ts:4 and :10-16",
       "quote": "test('is headed by its reference', async ({ animalsPages, journeyContext }) => {\n      await expect(animalsPages.notificationView.viewHeader.reference).toHaveText(journeyContext.referenceNumber);  /  export const NOTIFICATION_REFERENCE_PATTERN = 'GBN-[A-Z]+-\\\\d{2}-[0-9A-Z]{6}';  /  return this.page.locator('main h1 + .govuk-tag');",
       "confidence": "verbatim"
     },
@@ -273,7 +265,7 @@
       "id": "repo-tests-p3-034",
       "statement": "A draft's notification view shows a \"Draft\" status tag coloured blue.",
       "kind": "copy",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:46-50",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:45-49",
       "quote": "await expect(statusTag).toHaveText('Draft');\n      await expect(statusTag).toHaveClass(/govuk-tag--blue/);",
       "confidence": "verbatim"
     },
@@ -281,7 +273,7 @@
       "id": "repo-tests-p3-035",
       "statement": "The notification view shows no journey status strip, in draft or once submitted.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:52-54 and :168 with page-objects/shared/base-page.ts:142-144",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:51-53 and :166 with page-objects/shared/base-page.ts:142-144",
       "quote": "test('shows no status bar', async ({ animalsPages }) => {\n      await expect(animalsPages.notificationView.journeyStrip).toHaveCount(0);  /  return this.page.locator('.app-journey-strip');",
       "confidence": "verbatim"
     },
@@ -289,7 +281,7 @@
       "id": "repo-tests-p3-036",
       "statement": "While a draft still has incomplete sections its notification view is titled \"Error: <reference> - Import notification service - GOV.UK\".",
       "kind": "copy",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:56-58",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:55-57",
       "quote": "await expect(pages.page).toHaveTitle(`Error: ${journeyContext.referenceNumber} - Import notification service - GOV.UK`);",
       "confidence": "verbatim"
     },
@@ -297,7 +289,7 @@
       "id": "repo-tests-p3-037",
       "statement": "A submitted notification's view is titled \"<reference> - Import notification service - GOV.UK\", with no Error prefix.",
       "kind": "copy",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:160-170",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:158-168",
       "quote": "await expect(pages.page).toHaveTitle(`${journeyContext.referenceNumber} - Import notification service - GOV.UK`);",
       "confidence": "verbatim"
     },
@@ -305,7 +297,7 @@
       "id": "repo-tests-p3-038",
       "statement": "A draft's notification view shows \"Date created: <date>\", dated the service day the draft was created.",
       "kind": "copy",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:60-64 with page-objects/shared/view-header.ts:18-20",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:59-63 with page-objects/shared/view-header.ts:18-20",
       "quote": "await expect(animalsPages.notificationView.viewHeader.dateCreated).toHaveText(\n        new RegExp(`^Date created: ${todayOrYesterdayServiceDisplayDatePattern()}$`),\n      );  /  return this.page.getByText(/^Date created: /);",
       "confidence": "verbatim"
     },
@@ -313,7 +305,7 @@
       "id": "repo-tests-p3-039",
       "statement": "A submitted notification's view shows \"Date submitted: <date>\", dated the service day it was submitted, and the same date after the page is reloaded.",
       "kind": "data",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:242-253 with page-objects/shared/view-header.ts:22-24",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:240-251 with page-objects/shared/view-header.ts:22-24",
       "quote": "await expect(dateSubmitted).toHaveText(new RegExp(`^Date submitted: ${todayOrYesterdayServiceDisplayDatePattern()}$`));\n        const shown = await dateSubmitted.textContent();\n\n        await pages.page.reload();\n\n        await expect(dateSubmitted).toHaveText(shown ?? '');",
       "confidence": "verbatim",
       "note": "The reload half proves the submitted date is recorded rather than worked out at render time."
@@ -322,7 +314,7 @@
       "id": "repo-tests-p3-040",
       "statement": "A draft's notification view header offers exactly \"Copy as new\" then \"Delete\", with Copy as new styled as the primary button, Delete as a warning button, and no \"Amend this notification\".",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:66-72",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:65-71",
       "quote": "await expect(viewHeader.actions).toHaveText(['Copy as new', 'Delete']);\n      await expect(btnCopyAsNew).not.toHaveClass(/govuk-button--secondary/);\n      await expect(btnDelete).toHaveClass(/govuk-button--warning/);\n      await expect(viewHeader.btnAmend).toHaveCount(0);",
       "confidence": "verbatim"
     },
@@ -330,7 +322,7 @@
       "id": "repo-tests-p3-041",
       "statement": "A submitted notification's view offers exactly the buttons \"Amend this notification\", \"Copy as new\" and \"Delete\", in that order, with Amend primary, Copy as new secondary, Delete a warning and no Cancel amend.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:172-178 and :255-257",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:170-176 and :253-255",
       "quote": "await expect(pages.page.getByRole('main').getByRole('button')).toHaveText(['Amend this notification', 'Copy as new', 'Delete']);  /  await expect(viewHeader.btnAmend).not.toHaveClass(/govuk-button--secondary/);\n      await expect(btnCopyAsNew).toHaveClass(/govuk-button--secondary/);\n      await expect(btnDelete).toHaveClass(/govuk-button--warning/);\n      await expect(btnCancelAmend).toHaveCount(0);",
       "confidence": "verbatim"
     },
@@ -354,7 +346,7 @@
       "id": "repo-tests-p3-044",
       "statement": "The animals notification's customs document code is C640, shown on the notification view of a draft and of a submitted notification alike.",
       "kind": "data",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:74-82 and :190-195",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:73-81 and :188-193",
       "quote": "await expectImportReferencesAsText(animalsPages.notificationView.viewHeader, {\n        referenceNumber: journeyContext.referenceNumber,\n        customsDocumentCode: 'C640',\n      });",
       "confidence": "verbatim"
     },
@@ -362,23 +354,15 @@
       "id": "repo-tests-p3-045",
       "statement": "The import reference numbers are shown as text with no copy button, in draft and in submitted states.",
       "kind": "behaviour",
-      "ref": "page-objects/shared/view-header.ts:69, driven by tests/animals/e2e/pages/notification-view-states.spec.ts:74 and :190",
+      "ref": "page-objects/shared/view-header.ts:69, driven by tests/animals/e2e/pages/notification-view-states.spec.ts:73 and :188",
       "quote": "await expect(viewHeader.importReferences.getByRole('button')).toHaveCount(0);  /  test(\"shows a draft's import reference numbers as text with the warning and no Copy button\"",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p3-046",
-      "statement": "A draft's notification view renders the recorded answers in six numbered sections: \"1. About the consignment\", \"2. Description of the goods\", \"3. Transport and arrival\", \"4. Uploaded documents\", \"5. Addresses\" and \"6. Contact address\".",
-      "kind": "copy",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:26-34 with domain/animals/constants/consignment-addresses-page.ts:3-4",
-      "quote": "await expect(pages.page.getByRole('heading', { name: '1. About the consignment' })).toBeVisible();\n      await expect(pages.page.getByRole('heading', { name: '2. Description of the goods' })).toBeVisible();\n      await expect(pages.page.getByRole('heading', { name: '3. Transport and arrival' })).toBeVisible();\n      await expect(pages.page.getByRole('heading', { name: '4. Uploaded documents' })).toBeVisible();\n      await expect(pages.page.getByRole('heading', { name: ADDRESSES_SECTION })).toBeVisible();\n      await expect(pages.page.getByRole('heading', { name: '6. Contact address' })).toBeVisible();  /  export const ADDRESSES_SECTION = `5. ${ADDRESSES_CAPTION}`;",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p3-047",
       "statement": "The notification view's uploaded documents are shown as cards titled \"Document 1\", \"Document 2\" and so on by position.",
       "kind": "copy",
-      "ref": "page-objects/animals/notification-view-page.ts:110-112, driven by tests/animals/e2e/pages/notification-view-states.spec.ts:35-37",
+      "ref": "page-objects/animals/notification-view-page.ts:105-107, driven by tests/animals/e2e/pages/notification-view-states.spec.ts:34-36",
       "quote": "documentCard(position: number): Locator {\n    return this.summaryCard(`Document ${position}`);",
       "confidence": "verbatim"
     },
@@ -386,7 +370,7 @@
       "id": "repo-tests-p3-048",
       "statement": "A document with no reference given shows \"Not applicable\" as its \"Document reference\" value.",
       "kind": "copy",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:37",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:36",
       "quote": "await expect(animalsPages.notificationView.summaryValue(documentCard, 'Document reference')).toHaveText('Not applicable');",
       "confidence": "verbatim"
     },
@@ -394,7 +378,7 @@
       "id": "repo-tests-p3-049",
       "statement": "An uploaded ITAHC shows its type as \"ITAHC (Intra Trade Animal Health Certificate)\" on the Document 1 card of a submitted notification.",
       "kind": "copy",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:207-209 with domain/animals/constants/document-types.ts:10",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:205-207 with domain/animals/constants/document-types.ts:10",
       "quote": "await expect(animalsPages.notificationView.documentCard(1)).toContainText(ITAHC_DOCUMENT_TYPE_LABEL);  /  export const ITAHC_DOCUMENT_TYPE_LABEL = 'ITAHC (Intra Trade Animal Health Certificate)';",
       "confidence": "verbatim"
     },
@@ -402,7 +386,7 @@
       "id": "repo-tests-p3-050",
       "statement": "The notification view shows an \"Origin of import\" card carrying the country of origin, and a commodity card holding a species block that names the number of animals.",
       "kind": "data",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:38-39 with page-objects/animals/notification-view-page.ts:61-63 and :100-104",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:37-38 with page-objects/animals/notification-view-page.ts:60-62 and :95-99",
       "quote": "await expect(animalsPages.notificationView.originOfImportCard).toContainText('France');\n      await expect(animalsPages.notificationView.speciesBlock(commodityLines.cattle)).toContainText('Number of animals');",
       "confidence": "verbatim"
     },
@@ -410,7 +394,7 @@
       "id": "repo-tests-p3-051",
       "statement": "The recorded answers and their commodity species blocks are still rendered on the notification view after submission.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:211-214",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:209-212",
       "quote": "test('still renders the recorded answers after submission', async ({ animalsPages }) => {\n      await expect(animalsPages.notificationView.originOfImportCard).toContainText('France');\n      await expect(animalsPages.notificationView.speciesBlock(commodityLines.cattle)).toBeVisible();",
       "confidence": "verbatim"
     },
@@ -418,7 +402,7 @@
       "id": "repo-tests-p3-052",
       "statement": "A draft's notification view offers change links for its recorded answers, named \"Change origin of import\" and \"Change commodity <commodity card title>\".",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:84-87 with page-objects/animals/notification-view-page.ts:89-91",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:83-86 with page-objects/animals/notification-view-page.ts:84-86",
       "quote": "await expect(animalsPages.notificationView.changeLink('Change origin of import')).toBeVisible();\n      await expect(animalsPages.notificationView.changeCommodityLink(commodityLines.cattle)).toBeVisible();  /  return this.changeLink(`Change commodity ${commodityCardTitle(line)}`);",
       "confidence": "verbatim"
     },
@@ -426,7 +410,7 @@
       "id": "repo-tests-p3-053",
       "statement": "A draft's notification view ends with \"Continue\" alone and shows no Cancel amend.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:89-92 with page-objects/shared/base-page.ts:301-303",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:88-91 with page-objects/shared/base-page.ts:301-303",
       "quote": "await expect(animalsPages.notificationView.endControls).toHaveText(['Continue']);\n      await expect(animalsPages.notificationView.btnCancelAmend).toHaveCount(0);  /  return this.page.locator('form[novalidate] .govuk-button-group > *');",
       "confidence": "verbatim"
     },
@@ -434,7 +418,7 @@
       "id": "repo-tests-p3-054",
       "statement": "Continue on a draft whose sections are unfinished keeps the trader on /notification-view?refused=1, with the error summary shown, headed \"There is a problem\" and listing what is left.",
       "kind": "rule",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:98-112",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:97-110",
       "quote": "await expect(pages.page).toHaveURL(/\\/notification-view\\?refused=1$/);\n      await expect(animalsPages.notificationView.errorSummary).toBeVisible();\n      await expect(animalsPages.notificationView.errorSummary).toContainText('There is a problem');",
       "confidence": "verbatim"
     },
@@ -442,7 +426,7 @@
       "id": "repo-tests-p3-055",
       "statement": "Once every section of a draft is answered its notification view shows no error summary.",
       "kind": "rule",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:121-124",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:119-122",
       "quote": "test('shows no error summary once every section is answered', async ({ animalsPages }) => {\n      await animalsPages.notificationView.viewHeader.expectDraftReview();\n      await expect(animalsPages.notificationView.errorSummary).toHaveCount(0);",
       "confidence": "verbatim"
     },
@@ -450,7 +434,7 @@
       "id": "repo-tests-p3-056",
       "statement": "Continue on a complete draft's notification view moves on to the declaration page.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:126-130",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:124-128",
       "quote": "await animalsPages.notificationView.continueButton.click();\n      await expect(pages.page).toHaveURL(/\\/declaration$/);\n      await expect(animalsPages.declaration.heading).toBeVisible();",
       "confidence": "verbatim"
     },
@@ -458,7 +442,7 @@
       "id": "repo-tests-p3-057",
       "statement": "An amending notification's view ends with exactly \"Continue\", \"Cancel amend\" and \"Delete\", in that order.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:139-141",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:137-139",
       "quote": "await expect(animalsPages.notificationView.endControls).toHaveText(['Continue', 'Cancel amend', 'Delete']);",
       "confidence": "verbatim"
     },
@@ -466,7 +450,7 @@
       "id": "repo-tests-p3-058",
       "statement": "Cancel amend on an amending notification's view opens a page headed \"Cancel this amendment?\" at /live-animals/notifications/<reference>/cancel-amend, offering \"Yes, cancel amendment\" and a No option.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:143-147 with page-objects/animals/notification-cancel-amend-page.ts:6-19",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:141-145 with page-objects/animals/notification-cancel-amend-page.ts:6-19",
       "quote": "await animalsPages.notificationView.btnCancelAmend.click();\n\n      await expect(animalsPages.notificationCancelAmend.heading).toBeVisible();  /  super(page, 'cancel-amend');  /  name: 'Cancel this amendment?'  /  name: 'Yes, cancel amendment'  /  name: /No/",
       "confidence": "verbatim"
     },
@@ -474,7 +458,7 @@
       "id": "repo-tests-p3-059",
       "statement": "Delete opens a confirmation page headed \"Delete this notification?\" at /live-animals/notifications/<reference>/delete, offering a \"Yes, delete notification\" button, and it does so from a draft review, an amendment review and a submitted notification's view alike.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:14-17, :94-96, :149-151 and :186-188 with page-objects/shared/delete-notification.ts:3-7",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:14-17, :93-95, :147-149 and :184-186 with page-objects/shared/delete-notification.ts:3-7",
       "quote": "const expectDeleteOpensConfirmation = async (animalsPages: AnimalsPages): Promise<void> => {\n  await animalsPages.notificationView.btnDelete.click();\n  await expect(animalsPages.deleteNotification.heading).toBeVisible();\n};  /  page.getByRole('heading', { level: 1, name: 'Delete this notification?' })  /  page.getByRole('button', { name: 'Yes, delete notification', exact: true })",
       "confidence": "verbatim",
       "note": "The delete confirmation's heading and button are shared page-object helpers, so the same copy serves every set."
@@ -483,7 +467,7 @@
       "id": "repo-tests-p3-060",
       "statement": "\"Amend this notification\" on a submitted notification's view starts the amendment, after which the journey strip's status tag reads \"Amend\".",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:180-184 with page-objects/shared/base-page.ts:146-148",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:178-182 with page-objects/shared/base-page.ts:146-148",
       "quote": "await animalsPages.notificationView.viewHeader.btnAmend.click();\n\n      await expect(animalsPages.notificationView.statusTag).toHaveText('Amend');  /  return this.journeyStrip.locator('.govuk-tag');",
       "confidence": "verbatim"
     },
@@ -491,7 +475,7 @@
       "id": "repo-tests-p3-061",
       "statement": "\"Copy as new\" on a submitted notification's view copies it into a new draft, landing on the overview, with a new GBN-AG reference different from the original and shown in the journey strip.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:197-205",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:195-203",
       "quote": "await animalsPages.notificationView.btnCopyAsNew.click();\n\n      await animalsPages.overview.heading.waitFor();\n      const copiedReferenceNumber = (await animalsPages.notificationView.journeyStrip.textContent())?.match(REFERENCE_NUMBER_PATTERN)?.[0];\n      expect(copiedReferenceNumber).toMatch(EXACT_REFERENCE_NUMBER_PATTERN);\n      expect(copiedReferenceNumber).not.toEqual(originalReferenceNumber);",
       "confidence": "verbatim"
     },
@@ -499,7 +483,7 @@
       "id": "repo-tests-p3-062",
       "statement": "A submitted notification shows a \"Submitted\" status tag coloured green, whether or not its health certificate was uploaded.",
       "kind": "copy",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:217-240",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:215-238",
       "quote": "name: 'with its health certificate uploaded'  /  name: 'without its health certificate'  /  await expect(statusTag).toHaveText('Submitted');\n        await expect(statusTag).toHaveClass(/govuk-tag--green/);",
       "confidence": "verbatim",
       "note": "A notification submitted with its ITAHC still outstanding is Submitted like any other: no action-required status is shown."
@@ -508,24 +492,8 @@
       "id": "repo-tests-p3-063",
       "statement": "Opening the notification view of a reference that does not exist shows the service's standard page-not-found.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:261-267",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:259-264",
       "quote": "await animalsPages.notificationView.open('GBN-AG-00-AAAAAA', { waitForReview: false });\n\n    await expectPageNotFound(pages.page);",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p3-064",
-      "statement": "\"Review and submit\" on the overview takes a draft with an unanswered contact address to its notification view as a draft review, listing the six outstanding items.",
-      "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:270-292 with page-objects/animals/overview-page.ts:25-27",
-      "quote": "await animalsPages.overview.open(referenceNumber);\n    await animalsPages.overview.reviewAndSubmitButton.click();\n\n    await animalsPages.notificationView.viewHeader.expectDraftReview();  /  return this.page.getByRole('button', { name: 'Review and submit' });",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p3-065",
-      "statement": "Pressing Continue again on a refused review keeps the draft review open and moves focus to the error summary.",
-      "kind": "behaviour",
-      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:294-297",
-      "quote": "await animalsPages.notificationView.continueButton.click();\n    await animalsPages.notificationView.viewHeader.expectDraftReview();\n    await expect(animalsPages.notificationView.errorSummary).toBeFocused();",
       "confidence": "verbatim"
     },
     {
@@ -818,7 +786,7 @@
       "id": "repo-tests-p3-101",
       "statement": "The notification view's H1 may also read \"Review your notification\" or \"Review before re-submitting\", but no test in this part asserts either wording: every state driven here is headed by the reference instead.",
       "kind": "copy",
-      "ref": "page-objects/animals/notification-view-page.ts:18-31",
+      "ref": "page-objects/animals/notification-view-page.ts:17-30",
       "quote": "export const reviewHeadingText = 'Review your notification';\nexport const resubmitHeadingText = 'Review before re-submitting';  /  const reviewHeadings = [NOTIFICATION_REFERENCE_PATTERN, reviewHeadingText, resubmitHeadingText].join('|');",
       "confidence": "inferred",
       "note": "The page object accepts any of the three as the view's H1, so which wording a state uses is not settled by this part."
@@ -827,7 +795,7 @@
       "id": "repo-tests-p3-102",
       "statement": "No test in this part drives the notification view of a deleted or of a cancelled-amendment notification, though the suite models DELETED as a status and a cancelled amendment as /notification-view?cancelled=1.",
       "kind": "behaviour",
-      "ref": "domain/animals/models/api/notification-status.ts:1-6 with flows/animals/seeded-journey.ts:129-135",
+      "ref": "domain/animals/models/api/notification-status.ts:1-6 with flows/animals/seeded-journey.ts:127-129",
       "quote": "",
       "confidence": "gap"
     },
@@ -853,7 +821,7 @@
       "id": "repo-tests-p3-105",
       "statement": "An amendment is started by posting to /live-animals/notifications/<reference>/amend, which redirects to that notification's view.",
       "kind": "behaviour",
-      "ref": "flows/animals/seeded-journey.ts:121-127",
+      "ref": "flows/animals/seeded-journey.ts:119-125",
       "quote": "await this.forms.postForm(\n      `${CREATE_PATH}/${referenceNumber}/amend`,\n      {},\n      { redirectsTo: new RegExp(`^${CREATE_PATH}/${referenceNumber}/notification-view${OPTIONAL_RETURN_AND_TRAIL_PATTERN}$`) },\n    );",
       "confidence": "verbatim"
     },
@@ -861,7 +829,7 @@
       "id": "repo-tests-p3-106",
       "statement": "A new notification is created by posting to /live-animals/notifications, which redirects to the new notification's origin page and so fixes its reference number.",
       "kind": "behaviour",
-      "ref": "flows/animals/seeded-journey.ts:24-52",
+      "ref": "flows/animals/seeded-journey.ts:22-50",
       "quote": "export const CREATE_PATH = `${SET_BASES.liveAnimals}/notifications`;  /  throw new Error(`POST ${CREATE_PATH} redirected to \"${location}\", which is not a new notification's origin page.`);",
       "confidence": "verbatim"
     },
@@ -921,18 +889,10 @@
       "id": "repo-tests-p3-113",
       "statement": "The notification view names a party by the role in its row and offers an \"Edit details\" link on that row, and shows a \"Region of origin code\" value on the origin of import card, but no test in this part drives either.",
       "kind": "behaviour",
-      "ref": "page-objects/animals/notification-view-page.ts:127-151",
+      "ref": "page-objects/animals/notification-view-page.ts:123-147",
       "quote": "return this.partyRow(card, role).getByRole('link', { name: 'Edit details' });  /  return this.summaryValue(this.originOfImportCard, 'Region of origin code');",
       "confidence": "inferred",
       "note": "Named by the page object this part reads; the consignment-parties specs that drive them sit in another part."
-    },
-    {
-      "id": "repo-tests-p3-114",
-      "statement": "The notification view also holds cards titled \"What are you importing?\", \"Consignment addresses\", \"Main import reason\", \"Additional details\", \"Arrival details\" and \"Contact address\", of which this part's tests assert only the main import reason and additional details cards and the consignment addresses error link.",
-      "kind": "copy",
-      "ref": "page-objects/animals/notification-view-page.ts:53-79 with domain/animals/constants/consignment-addresses-page.ts:1-10",
-      "quote": "get whatAreYouImportingCard(): Locator {\n    return this.summaryCard('What are you importing?');  /  export const CONSIGNMENT_ADDRESSES = 'Consignment addresses';  /  export const ARRIVAL_DETAILS_CARD = 'Arrival details';",
-      "confidence": "inferred"
     },
     {
       "id": "repo-tests-p3-115",
@@ -956,7 +916,7 @@
       "id": "repo-tests-p3-117",
       "statement": "A seeded journey chooses its parties by looking each address up in the address book by name, so the notification stores the address book's own identifiers rather than copies of the addresses.",
       "kind": "integration",
-      "ref": "flows/animals/seeded-journey.ts:188-200",
+      "ref": "flows/animals/seeded-journey.ts:179-191",
       "quote": "const { id } = await this.addressBook.findByName(name);\n    this.partyIdByName.set(name, id);",
       "confidence": "verbatim"
     },
@@ -993,6 +953,136 @@
       "ref": "page-objects/animals/dashboard-page.ts and tests/animals/e2e/pages/notification-dashboard.spec.ts, notification-dashboard-pagination.spec.ts, tests/animals/e2e/features/notification-dashboard-search.spec.ts",
       "quote": "",
       "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p3-122",
+      "statement": "A declaration posted for an unfinished draft is refused back to a review whose error summary lists exactly these five links, in this order: \"Complete main import reason\", \"Complete additional details\", \"Complete arrival details\", \"Complete transport details\", \"Complete consignment addresses\".",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/declaration.spec.ts:43-54 with domain/animals/constants/consignment-addresses-page.ts:5",
+      "quote": "await expect(animalsPages.notificationView.errorSummaryLinks).toHaveText([\n        'Complete main import reason',\n        'Complete additional details',\n        'Complete arrival details',\n        'Complete transport details',\n        CONSIGNMENT_ADDRESSES_INCOMPLETE,\n      ]);  /  export const CONSIGNMENT_ADDRESSES_INCOMPLETE = 'Complete consignment addresses';",
+      "confidence": "verbatim",
+      "note": "The assertion is a whole-list match, so no contact address link is expected on the refused review."
+    },
+    {
+      "id": "repo-tests-p3-123",
+      "statement": "Continue on an unfinished draft's notification view lists exactly the same five error links, in the same order: main import reason, additional details, arrival details, transport details and consignment addresses.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:97-110",
+      "quote": "await expect(animalsPages.notificationView.errorSummaryLinks).toHaveText([\n        'Complete main import reason',\n        'Complete additional details',\n        'Complete arrival details',\n        'Complete transport details',\n        CONSIGNMENT_ADDRESSES_INCOMPLETE,\n      ]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-124",
+      "statement": "A draft's notification view renders the recorded answers under numbered section headings \"1. About the consignment\", \"2. Description of the goods\", \"3. Transport and arrival\", \"4. Uploaded documents\" and \"5. Addresses\".",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:26-33 with domain/animals/constants/consignment-addresses-page.ts:3-4",
+      "quote": "test('renders the recorded answers in the numbered design sections'  /  name: '1. About the consignment'  /  name: '2. Description of the goods'  /  name: '3. Transport and arrival'  /  name: '4. Uploaded documents'  /  export const ADDRESSES_SECTION = `5. ${ADDRESSES_CAPTION}`;",
+      "confidence": "verbatim",
+      "note": "Each heading is checked as visible, not as a whole list, so the test does not by itself rule out further sections; none beyond 5 is asserted."
+    },
+    {
+      "id": "repo-tests-p3-125",
+      "statement": "The draft notification view test also proves the header carries no \"Amend this notification\" button.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:27-28",
+      "quote": "await animalsPages.notificationView.viewHeader.expectDraftReview();\n      await expect(animalsPages.notificationView.viewHeader.btnAmend).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-126",
+      "statement": "The notification view also holds summary cards titled \"What are you importing?\" (with a \"Species\" row), \"Consignment addresses\" and \"Arrival details\", besides origin of import, main import reason, additional details, the commodity cards and the document cards; this part's tests assert none of those three.",
+      "kind": "copy",
+      "ref": "page-objects/animals/notification-view-page.ts:52-82 with domain/animals/constants/consignment-addresses-page.ts:1-9",
+      "quote": "return this.summaryCard('What are you importing?');  /  export const CONSIGNMENT_ADDRESSES = 'Consignment addresses';  /  export const ARRIVAL_DETAILS_CARD = 'Arrival details';  /  return this.summaryValue(this.whatAreYouImportingCard, 'Species');",
+      "confidence": "inferred",
+      "note": "Inferred from the page object's card names. The page object names no contact address card."
+    },
+    {
+      "id": "repo-tests-p3-127",
+      "statement": "The overview page carries a \"Review and submit\" button, but no test in this part presses it.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/overview-page.ts:25-27",
+      "quote": "return this.page.getByRole('button', { name: 'Review and submit' });",
+      "confidence": "inferred",
+      "note": "Inferred from the page object; the overview specs that press it sit in another part."
+    },
+    {
+      "id": "repo-tests-p3-128",
+      "statement": "The overview page holds a region named \"Your commodities\", numbered level-3 section headings such as \"1. ...\", and a task list whose items each show a task link and a status.",
+      "kind": "copy",
+      "ref": "page-objects/animals/overview-page.ts:13-54",
+      "quote": "return this.region('Your commodities');  /  return this.page.getByRole('heading', { level: 3, name: /^\\d+\\. / });  /  return this.page.locator('.govuk-task-list__link');  /  return this.page.locator('.govuk-task-list__status');",
+      "confidence": "inferred",
+      "note": "Inferred from the page object read as context in this part; no test in this part asserts them."
+    },
+    {
+      "id": "repo-tests-p3-129",
+      "statement": "Deleting a notification is a post to /live-animals/notifications/<reference>/delete, which redirects to an address ending ?deleted=1.",
+      "kind": "behaviour",
+      "ref": "flows/animals/seeded-journey.ts:131-133",
+      "quote": "await this.forms.postForm(`${CREATE_PATH}/${referenceNumber}/delete`, {}, { redirectsTo: /\\?deleted=1$/ });",
+      "confidence": "verbatim",
+      "note": "mechanism: drives the delete form post directly; no test in this part uses it."
+    },
+    {
+      "id": "repo-tests-p3-130",
+      "statement": "Confirming \"Yes, cancel amendment\" from an amending notification's view returns the trader to /notification-view?cancelled=1.",
+      "kind": "behaviour",
+      "ref": "flows/animals/notification-actions.ts:68-74",
+      "quote": "await this.animalsPages.notificationView.btnCancelAmend.click();\n    await this.animalsPages.notificationCancelAmend.heading.waitFor(pageLoadWait);\n    await this.animalsPages.notificationCancelAmend.confirm.click();\n    await this.pages.page.waitForURL(/\\/notification-view\\?cancelled=1$/, { timeout: timeouts.medium });",
+      "confidence": "verbatim",
+      "note": "A flow read in this part; the cancel amend specs that use it belong to another part."
+    },
+    {
+      "id": "repo-tests-p3-131",
+      "statement": "An amended notification is resubmitted from its notification view: Continue opens the declaration, the trader ticks the confirmation and presses Continue, and the confirmation page \"Import notification submitted\" opens.",
+      "kind": "behaviour",
+      "ref": "flows/animals/notification-actions.ts:48-57",
+      "quote": "await this.animalsPages.notificationView.continueButton.click();\n    await this.animalsPages.declaration.heading.waitFor(pageLoadWait);\n    await this.animalsPages.declaration.confirmation.check();\n    await this.animalsPages.declaration.continueButton.click();\n    await this.animalsPages.confirmation.heading.waitFor(pageLoadWait);",
+      "confidence": "verbatim",
+      "note": "A flow read in this part; no test in this part's specs calls it."
+    },
+    {
+      "id": "repo-tests-p3-132",
+      "statement": "Delete on a notification's list card opens the \"Delete this notification?\" page, whose \"Yes, delete notification\" button returns to the list.",
+      "kind": "behaviour",
+      "ref": "flows/animals/notification-actions.ts:76-83 with page-objects/animals/delete-notification-page.ts:5-16",
+      "quote": "await this.animalsPages.dashboard.delete(referenceNumber).click();\n    await this.animalsPages.deleteNotification.heading.waitFor(pageLoadWait);\n    await this.animalsPages.deleteNotification.confirmDelete.click();\n    await this.animalsPages.dashboard.deletedBanner.waitFor(pageLoadWait);",
+      "confidence": "inferred",
+      "note": "Inferred from the flow; the delete specs that drive it sit in another part."
+    },
+    {
+      "id": "repo-tests-p3-133",
+      "statement": "No test in this part asserts the Consignee or Consignor row of a notification card in the list, though the page object names both.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/dashboard-page.ts:85-86 against tests/animals/e2e/pages/notification-dashboard.spec.ts:48-61",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p3-134",
+      "statement": "No test in this part drives the list card of an amending notification, so the status tag and actions an amendment shows in the list are not proven here.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:64-112",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p3-135",
+      "statement": "No test in this part asserts an amending notification's view header: its status tag, title, date line or header buttons; only its end controls and where Cancel amend and Delete lead are proven.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:131-150",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p3-136",
+      "statement": "The suite makes reference-style test data unique by appending the current time in milliseconds to a prefix.",
+      "kind": "non-functional",
+      "ref": "utils/timestamped-reference.ts:1",
+      "quote": "export const timestampedReference = (referencePrefix: string): string => `${referencePrefix}${Date.now()}`;",
+      "confidence": "verbatim",
+      "note": "mechanism: works on test data references; no spec in this part calls it."
     }
   ]
 }

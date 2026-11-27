@@ -1,732 +1,1401 @@
 {
   "source": "repo:insfrontend",
-  "structure": "Part 1, Notifications dashboard, read in full at repos/trade-imports-ins-frontend 406e300 (main): features/dashboard/controller.js (129 lines: GET / handler, page/sort/referenceNumber query parsing, table row and View link building, error path), template.njk (89 lines: h1, search form, sort form, empty state, no-results state, results label, clear-search link, govukTable, govukPagination), view-model/list.js (119 lines: sort options, date format, query string, results label, pagination, notification links into the live-animals journey), copy/copy.en.js and copy/copy.cy.js (34 and 35 lines, identical key trees), dashboard.fit.spec.js (119 lines: AC1/AC2, axe, AC3 submitted, AC3 draft, AC4, AC5), services/ins-backend/client.js, index.js and stub.js (GET /notifications client, stub-mode switch, four-notification stub), common/constants/journey-set-bases.js (only /live-animals) and shared/paths.js (dashboardPath and inDashboardSection only claimed here). Also looked at common/helpers/set-base-url.js and common/services/mode.js to resolve the journey link base and stub-mode rule. Covered: the one page at /, its heading (no caption), search field and button, sort select and button, empty state with 'Start a new notification', 'No notifications found' with Clear search, results label, the six-column table with its raw status text (no tags), View links to notification-view or the journey hub, pagination, the 500 recoverable-error path, the ins-backend request and response shape, the stub dataset and rules, every fit test, and the Welsh copy. Found no filter beyond reference search, no plants link, no status tags and no organisation scoping in the frontend request; each is recorded as a claim or gap.",
+  "structure": "Part 1, shared layout, copy and page kit. Read in full: src/server/app/routes.js and features/index.js (route composition); shared/layout.njk (GOV.UK template with header, service navigation, phase banner, maturity banner include, back link, recoverable-error banner, journey strip, two-thirds or full content column, footer); shared/error.njk and error-summary.njk; shared/copy.js, copy.en.js, copy.cy.js and copy-leaves.js (locale resolution, the shared chrome copy and validator default messages in English and machine-draft Welsh); shared/kit.js (base view model, surfaces, error summary model, draft journey strip, organisation guard, page route builder); shared/paths.js (every INS page path and the two section tests that drive the active navigation item); shared/list-page.js (page parsing, clamping, results label and pagination links); shared/escape-html.js; page-maturity/banner.njk, levels.js, page-maturity.js and its en/cy copy (four maturity levels shown as a second phase banner); app/auth/page.js and the four sign-in templates (unauthorised and the three hidden IDM test pages); src/config/nunjucks/context/context.js (view context: nav urls, active item, user session, crumb, maturity); the fit specs features/page-title.fit.spec.js (9 tests) and fit/smoke.fit.spec.js (1 test) and the fit helpers fit/error-focus.js and fit/axe.js; and the repo's notes docs/README.md (served route list), architecture.md (chassis and application split, error and auth pages, templates, client assets, enforced boundaries, how INS differs from the journey frontends), features.md (feature shapes, paths, page kit, controller shape, copy and templates, validation, client JavaScript, the temporary address-lookup spike, tests) and services.md (barrel/client/stub shape, run mode, each service's contract, configuration, out of scope). Claims cover the chrome every page shares, every shared copy string with its Welsh twin, every path builder, the paging helper, the maturity levels, the sign-in templates, every test in the two specs and the conventions the docs record, as existing rulings. Feature-specific detail the docs repeat for the address book's own pages (fields, roles, tabs, return-to) is left to the parts that own those pages.",
   "claims": [
     {
       "id": "repo-insfrontend-p1-001",
-      "statement": "The notifications dashboard is served at the root path / of the Import Notification Service frontend, on GET.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/paths.js:1; src/server/app/features/dashboard/controller.js:129",
-      "quote": "export const dashboardPath = () => '/'",
+      "statement": "The service is named 'Import notification service' in the header's service navigation and in every page title.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:3; src/server/app/shared/layout.njk:18,53",
+      "quote": "serviceName: 'Import notification service',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-002",
-      "statement": "The dashboard's page title is 'Dashboard'.",
+      "statement": "The Welsh service name is 'Gwasanaeth hysbysu mewnforio'.",
       "kind": "copy",
-      "ref": "src/server/app/features/dashboard/copy/copy.en.js:2; controller.js:74",
-      "quote": "title: 'Dashboard',",
+      "ref": "src/server/app/shared/copy.cy.js:4",
+      "quote": "serviceName: 'Gwasanaeth hysbysu mewnforio',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-003",
-      "statement": "The dashboard's main heading is 'Dashboard', shown as an extra-large heading.",
-      "kind": "copy",
-      "ref": "src/server/app/features/dashboard/template.njk:9",
-      "quote": "<h1 class=\"govuk-heading-xl\">{{ copy.title }}</h1>",
+      "statement": "Every page's browser title is the page title, then the service name, then 'GOV.UK', joined by ' - '.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/layout.njk:18",
+      "quote": "{{ pageTitle }} - {{ sharedCopy.layout.serviceName }} - {{ sharedCopy.layout.govukSuffix }}",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-004",
-      "statement": "The dashboard heading has no caption above it: the template renders only the h1.",
-      "kind": "copy",
-      "ref": "src/server/app/features/dashboard/template.njk:8-9",
-      "quote": "{% block journeyContent %}\n  <h1 class=\"govuk-heading-xl\">{{ copy.title }}</h1>",
-      "confidence": "inferred"
+      "statement": "When a page shows an error summary, its browser title starts with 'Error: ' in front of the whole title.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/layout.njk:18; src/server/app/shared/copy.en.js:4",
+      "quote": "{% if errorSummary %}{{ sharedCopy.layout.errorTitlePrefix }}{% endif %}",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-005",
-      "statement": "The dashboard uses the wide 'display' content column rather than the standard form column.",
-      "kind": "constraint",
-      "ref": "src/server/app/features/dashboard/controller.js:75",
-      "quote": "contentColumnClass: kit.surfaceClass('display'),",
-      "confidence": "verbatim",
-      "note": "What 'display' resolves to is in shared/kit.js (part 4)."
+      "statement": "The Welsh error title prefix is 'Gwall: ' and the GOV.UK suffix stays 'GOV.UK' in Welsh.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:5-6",
+      "quote": "errorTitlePrefix: 'Gwall: ',\n    govukSuffix: 'GOV.UK',",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-006",
-      "statement": "The dashboard has a search form that submits with GET back to the dashboard path /.",
+      "statement": "Every page uses the GOV.UK header, whose crown logo links to https://www.gov.uk/.",
       "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/template.njk:11",
-      "quote": "<form method=\"get\" action=\"{{ listHref }}\" class=\"govuk-!-margin-bottom-6\">",
+      "ref": "src/server/app/shared/layout.njk:20-26",
+      "quote": "homepageUrl: \"https://www.gov.uk/\",",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-007",
-      "statement": "The search field is labelled 'Search by notification reference'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/dashboard/copy/copy.en.js:4; template.njk:13-16",
-      "quote": "label: 'Search by notification reference',",
+      "statement": "The service navigation shows the service name, linked to the INS dashboard at '/'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:52-57; src/config/nunjucks/context/context.js:57",
+      "quote": "serviceName: sharedCopy.layout.serviceName,\n    serviceUrl: dashboardUrl,",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-008",
-      "statement": "The search field is a search-type text input named referenceNumber, two-thirds width, and is refilled with the reference the user last searched for.",
-      "kind": "data",
-      "ref": "src/server/app/features/dashboard/template.njk:17-21",
-      "quote": "id: \"referenceNumber\",\n      name: \"referenceNumber\",\n      type: \"search\",\n      value: referenceNumber,\n      classes: \"govuk-!-width-two-thirds\"",
+      "statement": "The service navigation shows its links only to a signed-in user; a signed-out page shows the service name alone.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/layout.njk:29-51",
+      "quote": "{% if userSession and userSession.isAuthenticated %}",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-009",
-      "statement": "The search field has no hint text.",
+      "statement": "A signed-in user's service navigation has four links, in this order: 'Dashboard', 'Address book', 'Manage account', 'Log out'.",
       "kind": "copy",
-      "ref": "src/server/app/features/dashboard/template.njk:13-22",
-      "quote": "{{ govukInput({\n      label: {\n        text: copy.search.label\n      },",
-      "confidence": "inferred",
-      "note": "No hint key is passed to govukInput and none exists in copy.en.js."
+      "ref": "src/server/app/shared/layout.njk:31-50; src/server/app/shared/copy.en.js:12-18",
+      "quote": "dashboard: 'Dashboard',\n      addressBook: 'Address book',\n      manageAccount: 'Manage account',\n      logOut: 'Log out'",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-010",
-      "statement": "The search button reads 'Search'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/dashboard/copy/copy.en.js:5; template.njk:23-26",
-      "quote": "button: 'Search',",
+      "statement": "The 'Dashboard' navigation link goes to '/' and the 'Address book' link goes to '/address-book'.",
+      "kind": "behaviour",
+      "ref": "src/config/nunjucks/context/context.js:57-58; src/server/app/shared/layout.njk:34,39",
+      "quote": "dashboardUrl: dashboardPath(),\n    addressBookUrl: addressBookPath(),",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-011",
-      "statement": "Searching keeps the current sort order, because the search form carries the current sort as a hidden field.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/template.njk:12",
-      "quote": "<input type=\"hidden\" name=\"sort\" value=\"{{ sort }}\" />",
+      "statement": "The 'Dashboard' navigation link is marked active on the dashboard and on the notification type page.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/paths.js:36-37; src/config/nunjucks/context/context.js:24-27",
+      "quote": "export const inDashboardSection = (path) =>\n  path === dashboardPath() || path === notificationTypePath()",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-012",
-      "statement": "A search returns the user to the first page of results, because neither the search form nor the sort form sends a page number.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/template.njk:11-44; controller.js:24-27",
-      "quote": "return Number.isNaN(page) || page < 1 ? 1 : page",
-      "confidence": "inferred"
+      "statement": "The 'Address book' navigation link is marked active on '/address-book' and on every page under it, the transporter pages included.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/paths.js:38-39; src/config/nunjucks/context/context.js:28-30",
+      "quote": "path === addressBookPath() || path.startsWith(`${addressBookPath()}/`)",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-013",
-      "statement": "The searched reference has surrounding spaces trimmed, and a blank search is treated as no search.",
+      "statement": "On any other page, no navigation link is marked active.",
       "kind": "rule",
-      "ref": "src/server/app/features/dashboard/controller.js:89-90",
-      "quote": "const referenceNumber = request.query.referenceNumber?.trim() ?? ''\n  const hasSearch = Boolean(referenceNumber)",
+      "ref": "src/config/nunjucks/context/context.js:31",
+      "quote": "return null",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-014",
-      "statement": "The search has no validation and no error message: any text is passed to ins-backend as the reference to match.",
-      "kind": "rule",
-      "ref": "src/server/app/features/dashboard/controller.js:86-99",
-      "quote": "referenceNumber: hasSearch ? referenceNumber : undefined",
+      "statement": "The 'Manage account' navigation link has no destination yet: it points at '#', so the account page is not built.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:11,43-45",
+      "quote": "{% set manageAccountUrl = \"#\" %}",
       "confidence": "inferred",
-      "note": "No validator, error summary or error message exists in the controller, template or copy."
+      "note": "Inferred from the placeholder href: the link renders but leads nowhere."
     },
     {
       "id": "repo-insfrontend-p1-015",
-      "statement": "The frontend does not say whether a reference search matches a whole reference or part of one; the match rule belongs to ins-backend. Only the stub defines it, as an exact whole-reference match.",
-      "kind": "rule",
-      "ref": "src/server/app/services/ins-backend/client.js:24-26; stub.js:62-63",
-      "quote": "",
-      "confidence": "gap"
+      "statement": "The 'Log out' navigation link goes to '/auth/sign-out'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:10,47-48",
+      "quote": "{% set signOutUrl = \"/auth/sign-out\" %}",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-016",
-      "statement": "The only way to narrow the list is the reference search: there is no filter by status, date, country or commodity.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/controller.js:86-99; template.njk",
-      "quote": "const query = { sort, referenceNumber, hasSearch }",
-      "confidence": "inferred"
+      "statement": "On narrow screens the service navigation collapses behind a menu button labelled 'Menu'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk:55; src/server/app/shared/copy.en.js:13",
+      "quote": "menuButton: 'Menu',",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-017",
-      "statement": "A sort form is shown only when the current page has at least one notification row.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/template.njk:29-45",
-      "quote": "{% if tableRows.length %}",
+      "statement": "The Welsh service navigation reads 'Dewislen' (menu), 'Dangosfwrdd', 'Llyfr cyfeiriadau', 'Rheoli cyfrif' and 'Allgofnodi'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:13-19",
+      "quote": "menuButton: 'Dewislen',\n      dashboard: 'Dangosfwrdd',\n      addressBook: 'Llyfr cyfeiriadau',\n      manageAccount: 'Rheoli cyfrif',\n      logOut: 'Allgofnodi'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-018",
-      "statement": "The sort select is labelled 'Sort by'.",
+      "statement": "Every page shows a phase banner with a grey 'Alpha' tag above the content.",
       "kind": "copy",
-      "ref": "src/server/app/features/dashboard/copy/copy.en.js:10; template.njk:32-39",
-      "quote": "label: 'Sort by',",
+      "ref": "src/server/app/shared/layout.njk:62-65; src/server/app/shared/copy.en.js:8",
+      "quote": "tag: { text: sharedCopy.layout.phaseBanner.tag, classes: \"govuk-tag--grey\" },",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-019",
-      "statement": "The sort select offers four options, in order: 'Arrival date (newest first)', 'Arrival date (oldest first)', 'Last updated (newest first)', 'Last updated (oldest first)'.",
+      "statement": "The phase banner reads 'This is a new service. Help us improve it and give your feedback by email.', with 'give your feedback by email' a link.",
       "kind": "copy",
-      "ref": "src/server/app/features/dashboard/copy/copy.en.js:12-17; view-model/list.js:9-14",
-      "quote": "arrivalNewest: 'Arrival date (newest first)',\n      arrivalOldest: 'Arrival date (oldest first)',\n      updatedNewest: 'Last updated (newest first)',\n      updatedOldest: 'Last updated (oldest first)'",
+      "ref": "src/server/app/shared/layout.njk:61; src/server/app/shared/copy.en.js:9-10",
+      "quote": "bodyPrefix: 'This is a new service. Help us improve it and',\n      feedbackLinkText: 'give your feedback by email'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-020",
-      "statement": "The four sort options send the values arrivalDate,desc, arrivalDate,asc, lastUpdated,desc and lastUpdated,asc.",
-      "kind": "data",
-      "ref": "src/server/app/features/dashboard/view-model/list.js:9-14",
-      "quote": "{ value: 'arrivalDate,desc', copyKey: 'arrivalNewest' },\n  { value: 'arrivalDate,asc', copyKey: 'arrivalOldest' },\n  { value: 'lastUpdated,desc', copyKey: 'updatedNewest' },\n  { value: 'lastUpdated,asc', copyKey: 'updatedOldest' }",
+      "statement": "The phase banner's feedback link opens an email to APHAServiceDesk@apha.gov.uk.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:9",
+      "quote": "{% set feedbackUrl = \"mailto:APHAServiceDesk@apha.gov.uk\" %}",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-021",
-      "statement": "The default sort is arrival date, newest first.",
-      "kind": "rule",
-      "ref": "src/server/app/features/dashboard/controller.js:21; view-model/list.js:16",
-      "quote": "const DEFAULT_SORT = SORT_OPTIONS[0].value",
+      "statement": "The Welsh phase banner reads 'Alffa' and 'Gwasanaeth newydd yw hwn. Helpwch ni i'w wella — rhowch eich adborth drwy e-bost'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:8-12",
+      "quote": "tag: 'Alffa',\n      bodyPrefix: \"Gwasanaeth newydd yw hwn. Helpwch ni i'w wella —\",\n      feedbackLinkText: 'rhowch eich adborth drwy e-bost'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-022",
-      "statement": "A sort value in the address that is not one of the four options is ignored and the default sort is used.",
-      "kind": "rule",
-      "ref": "src/server/app/features/dashboard/controller.js:29-30",
-      "quote": "SORT_VALUES.has(querySort) ? querySort : DEFAULT_SORT",
+      "statement": "The page maturity banner sits directly under the phase banner, and the back link under that.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:60-70",
+      "quote": "{% include \"page-maturity/banner.njk\" %}\n  {% if backLink %}",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-023",
-      "statement": "The sort select shows the sort currently in use as selected.",
+      "statement": "A page that sets a back link shows a GOV.UK back link labelled 'Back' above its content; a page that sets none shows no back link.",
       "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/controller.js:41-46",
-      "quote": "selected: value === sort",
+      "ref": "src/server/app/shared/layout.njk:67-69; src/server/app/shared/copy.en.js:6",
+      "quote": "{{ govukBackLink({ text: sharedCopy.layout.back, href: backLink }) }}",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-024",
-      "statement": "The sort form's button reads 'Update sort' and is a secondary button; the sort applies only when the user presses it.",
+      "statement": "The Welsh back link reads 'Yn ôl'.",
       "kind": "copy",
-      "ref": "src/server/app/features/dashboard/copy/copy.en.js:11; template.njk:40-43",
-      "quote": "update: 'Update sort',",
+      "ref": "src/server/app/shared/copy.cy.js:7",
+      "quote": "back: 'Yn ôl',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-025",
-      "statement": "Changing the sort keeps the current reference search, because the sort form carries the search as a hidden field.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/template.njk:31",
-      "quote": "<input type=\"hidden\" name=\"referenceNumber\" value=\"{{ referenceNumber }}\" />",
+      "statement": "Page content sits in a two-thirds column by default, the form surface.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/layout.njk:74; src/server/app/shared/kit.js:25-28,76",
+      "quote": "form: 'govuk-grid-column-two-thirds',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-026",
-      "statement": "The page number is read from the page query parameter; a missing, non-numeric or less-than-1 value shows page 1.",
+      "statement": "A page that lays out a table uses the full-width display surface instead of the two-thirds column.",
       "kind": "rule",
-      "ref": "src/server/app/features/dashboard/controller.js:24-27",
-      "quote": "const page = Number.parseInt(queryPage, 10)\n  return Number.isNaN(page) || page < 1 ? 1 : page",
+      "ref": "src/server/app/shared/kit.js:27,30-37; src/server/app/docs/features.md:211-213",
+      "quote": "a page that lays out a table overrides\n  it with `kit.surfaceClass('display')`.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-027",
-      "statement": "When there are no notifications at all and no search is active, the dashboard shows the empty-state text 'There are no notifications yet.'",
+      "statement": "When a service call fails, the page shows a GOV.UK notification banner with role 'alert', titled 'There is a problem', reading 'Sorry, there is a problem with the service. Try again in a few minutes.', above the page content.",
       "kind": "copy",
-      "ref": "src/server/app/features/dashboard/template.njk:47-48; controller.js:110; copy.en.js:31",
-      "quote": "text: 'There are no notifications yet.',",
+      "ref": "src/server/app/shared/layout.njk:75-81; src/server/app/shared/copy.en.js:37-40",
+      "quote": "title: 'There is a problem',\n    body: 'Sorry, there is a problem with the service. Try again in a few minutes.'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-028",
-      "statement": "The empty state shows a 'Start a new notification' button link.",
+      "statement": "The Welsh recoverable error banner reads 'Mae problem' and 'Mae’n ddrwg gennym, mae problem gyda’r gwasanaeth. Rhowch gynnig arall arni ymhen ychydig funudau.'",
       "kind": "copy",
-      "ref": "src/server/app/features/dashboard/template.njk:49-52; copy.en.js:32",
-      "quote": "startButton: 'Start a new notification'",
+      "ref": "src/server/app/shared/copy.cy.js:38-41",
+      "quote": "title: 'Mae problem',\n    body: 'Mae’n ddrwg gennym, mae problem gyda’r gwasanaeth. Rhowch gynnig arall arni ymhen ychydig funudau.'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-029",
-      "statement": "'Start a new notification' goes to the live-animals journey on the animals frontend: the configured animals frontend base URL followed by /live-animals.",
-      "kind": "integration",
-      "ref": "src/server/app/features/dashboard/view-model/list.js:97-102; common/constants/journey-set-bases.js:2",
-      "quote": "buildSetBaseUrl('tradeImportsAnimalsFrontend.baseUrl', SET_BASES.LIVE_ANIMALS)",
+      "statement": "A page working on a notification in progress shows a journey strip above its content: a blue 'Draft' tag and the notification's id in bold.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:82-87; src/server/app/shared/kit.js:58-64; src/server/app/shared/copy.en.js:25-27",
+      "quote": "text: sharedCopy.journeyStrip.draft,\n    classes: 'govuk-tag--blue'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-030",
-      "statement": "The 'Start a new notification' button appears only in the empty state; a user who already has notifications has no start-a-new-notification link on the dashboard.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/template.njk:47-52",
-      "quote": "{% if isEmpty %}",
-      "confidence": "inferred",
-      "note": "The header or layout (part 4) may carry another way in; this template has none outside the empty state."
+      "statement": "A page shows no journey strip unless it passes one.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/kit.js:68,75; src/server/app/docs/features.md:210-211",
+      "quote": "`journeyStrip` is `null` unless a page passes one, and the layout shows the strip above the page content\n  only when it is set.",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-031",
-      "statement": "When a search finds nothing, the dashboard shows 'No notifications found'.",
+      "statement": "The Welsh journey strip tag reads 'Drafft'.",
       "kind": "copy",
-      "ref": "src/server/app/features/dashboard/template.njk:53-54; controller.js:111; copy.en.js:7",
-      "quote": "noResults: 'No notifications found'",
+      "ref": "src/server/app/shared/copy.cy.js:26-28",
+      "quote": "draft: 'Drafft'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-032",
-      "statement": "Below 'No notifications found' a 'Clear search' link returns the user to the unsearched dashboard at /.",
+      "statement": "The footer shows three links: 'Privacy' to https://www.gov.uk/help/privacy-notice, 'Cookies' to https://www.gov.uk/help/cookies and 'Accessibility statement' to https://www.gov.uk/help/accessibility-statement.",
       "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/template.njk:55-57; copy.en.js:6",
-      "quote": "<a class=\"govuk-link\" href=\"{{ listHref }}\">{{ copy.search.clear }}</a>",
-      "confidence": "verbatim"
+      "ref": "src/server/app/shared/layout.njk:93-112; src/server/app/shared/copy.en.js:19-23",
+      "quote": "href: \"https://www.gov.uk/help/privacy-notice\",\n          text: sharedCopy.layout.footer.privacy",
+      "confidence": "verbatim",
+      "note": "The footer links point at GOV.UK's generic help pages, not service-specific privacy, cookies or accessibility pages."
     },
     {
       "id": "repo-insfrontend-p1-033",
-      "statement": "When there are results, a results label above the table reads 'Showing {from}-{to} of {total}'.",
+      "statement": "The Welsh footer links read 'Preifatrwydd', 'Cwcis' and 'Datganiad hygyrchedd'.",
       "kind": "copy",
-      "ref": "src/server/app/features/dashboard/copy/copy.en.js:19; template.njk:59-63; view-model/list.js:57-63",
-      "quote": "results: (from, to, total) => `Showing ${from}-${to} of ${total}`,",
+      "ref": "src/server/app/shared/copy.cy.js:20-24",
+      "quote": "privacy: 'Preifatrwydd',\n      cookies: 'Cwcis',\n      accessibility: 'Datganiad hygyrchedd'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-034",
-      "statement": "The results label counts from (page - 1) x page size + 1 to the smaller of page x page size and the total, with the page clamped into the range of pages that exist.",
-      "kind": "rule",
-      "ref": "src/server/app/features/dashboard/view-model/list.js:45-55",
-      "quote": "from: (currentPage - 1) * size + 1,\n    to: Math.min(currentPage * size, totalElements),",
+      "statement": "Every page carries the CSRF token in a 'csrf-token' meta tag in its head.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/layout.njk:14; src/config/nunjucks/context/context.js:72",
+      "quote": "<meta name=\"csrf-token\" content=\"{{ crumb }}\">",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-035",
-      "statement": "When a search has results, a 'Clear search' link is shown above the table and returns the user to /.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/template.njk:65-69",
-      "quote": "{% if hasSearch %}\n      <p class=\"govuk-body govuk-!-margin-bottom-4\">\n        <a class=\"govuk-link\" href=\"{{ listHref }}\" data-testid=\"dashboard-clear-search\">{{ copy.search.clear }}</a>",
+      "statement": "Every page loads the service's one stylesheet in its head and its one JavaScript module at the end of the body.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/layout.njk:15,114-116",
+      "quote": "<script type=\"module\" src=\"{{ getAssetPath('application.js') }}\"></script>",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-036",
-      "statement": "The notifications table has the caption 'Notifications', hidden visually and read only by assistive technology.",
-      "kind": "copy",
-      "ref": "src/server/app/features/dashboard/template.njk:72-73; copy.en.js:21",
-      "quote": "caption: 'Notifications',",
-      "confidence": "verbatim"
+      "statement": "The skip link and the page's language attribute come from the GOV.UK Frontend page template unchanged, since the layout overrides neither.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:1",
+      "quote": "{% extends \"govuk/template.njk\" %}",
+      "confidence": "inferred",
+      "note": "The layout sets no skipLink block and no htmlLang, so the GOV.UK template's defaults apply: a 'Skip to main content' link and lang 'en'. Not asserted by any test in this part."
     },
     {
       "id": "repo-insfrontend-p1-037",
-      "statement": "The table's columns, in order, are 'Reference number', 'Status', 'Origin country', 'Commodity', 'Arrival date' and an action column.",
-      "kind": "copy",
-      "ref": "src/server/app/features/dashboard/template.njk:74-81; copy.en.js:22-27",
-      "quote": "reference: 'Reference number',\n    status: 'Status',\n    origin: 'Origin country',\n    commodity: 'Commodity',\n    arrival: 'Arrival date',\n    action: 'Action',",
+      "statement": "There is no language toggle: every page resolves English copy.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:331-333; src/server/app/shared/copy.js:1-4",
+      "quote": "no locale toggle exists, so every call site\nresolves `en`.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-038",
-      "statement": "The action column's heading 'Action' is visually hidden.",
-      "kind": "copy",
-      "ref": "src/server/app/features/dashboard/template.njk:80",
-      "quote": "{ html: '<span class=\"govuk-visually-hidden\">' + copy.table.action + '</span>' }",
-      "confidence": "verbatim"
+      "statement": "A locale with no copy falls back to English.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/copy.js:3-4",
+      "quote": "locales[locale] ?? locales[DEFAULT_LOCALE]",
+      "confidence": "verbatim",
+      "note": "mechanism: chooses the copy tree for a locale."
     },
     {
       "id": "repo-insfrontend-p1-039",
-      "statement": "The reference number column shows the notification's reference, such as GBN-AG-26-000001, as plain text.",
-      "kind": "data",
-      "ref": "src/server/app/features/dashboard/controller.js:53; stub.js:8",
-      "quote": "{ text: notification.referenceNumber },",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-040",
-      "statement": "The status column shows the raw status code from ins-backend, such as SUBMITTED, DRAFT or AMEND, as plain text: there is no status tag and no friendly status label.",
-      "kind": "data",
-      "ref": "src/server/app/features/dashboard/controller.js:54; view-model/list.js:107",
-      "quote": "{ text: notification.status },",
-      "confidence": "inferred",
-      "note": "No govukTag import and no status copy keys exist; the fit spec asserts cells named 'SUBMITTED', 'DRAFT' and 'AMEND'."
-    },
-    {
-      "id": "repo-insfrontend-p1-041",
-      "statement": "The statuses the dashboard is seen to handle are SUBMITTED, DRAFT and AMEND, with DELETED hidden from the list; no complete list of statuses is defined in the frontend.",
-      "kind": "data",
-      "ref": "src/server/app/services/ins-backend/stub.js:2,11,19,29,39; view-model/list.js:92",
-      "quote": "",
-      "confidence": "gap",
-      "note": "Only the stub names the statuses, and only SUBMITTED gets special treatment in link building."
-    },
-    {
-      "id": "repo-insfrontend-p1-042",
-      "statement": "The origin country column shows the country's name from the countries service, falling back to the country code ins-backend returned when no name is found, and blank when there is none.",
-      "kind": "data",
-      "ref": "src/server/app/features/dashboard/view-model/list.js:108-111; controller.js:38-39",
-      "quote": "countryNames[notification.originCountry] ??\n      notification.originCountry ??\n      ''",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-043",
-      "statement": "The commodity column shows the commodity ins-backend returns, or is blank when it has none.",
-      "kind": "data",
-      "ref": "src/server/app/features/dashboard/view-model/list.js:112",
-      "quote": "commodity: notification.commodity ?? '',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-044",
-      "statement": "The arrival date column shows the date in the form '10 Sep 2026' (day, short month, year), and is blank when the date is missing or invalid.",
-      "kind": "data",
-      "ref": "src/server/app/features/dashboard/view-model/list.js:7,18-24,113",
-      "quote": "const LIST_DATE_FORMAT = 'd MMM yyyy'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-045",
-      "statement": "The table has no column for the last updated date, although the list can be sorted by it.",
-      "kind": "data",
-      "ref": "src/server/app/features/dashboard/controller.js:51-59; view-model/list.js:12-13",
-      "quote": "{ value: 'lastUpdated,desc', copyKey: 'updatedNewest' },",
-      "confidence": "inferred"
-    },
-    {
-      "id": "repo-insfrontend-p1-046",
-      "statement": "The table does not show which kind of notification (live animals, plants or other) a row is: there is no journey-type column.",
-      "kind": "data",
-      "ref": "src/server/app/features/dashboard/controller.js:51-59",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "repo-insfrontend-p1-047",
-      "statement": "Each row's action column has a 'View' link whose accessible name adds the reference number in visually hidden text, such as 'View GBN-AG-26-000001'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/dashboard/controller.js:48-49; copy.en.js:28",
-      "quote": "`<a class=\"govuk-link\" href=\"${notification.href}\">${copy.table.view}<span class=\"govuk-visually-hidden\"> ${escapeHtml(notification.referenceNumber)}</span></a>`",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-048",
-      "statement": "A submitted notification's View link opens the read-only notification view on the animals frontend: {animals base URL}/live-animals/notifications/{reference}/notification-view.",
-      "kind": "integration",
-      "ref": "src/server/app/features/dashboard/view-model/list.js:89-95",
-      "quote": "return status === 'SUBMITTED'\n    ? `${setUrl}/notifications/${encodedReference}/notification-view`",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-049",
-      "statement": "Any notification not SUBMITTED (draft, amend or another status) has a View link back into its journey hub on the animals frontend: {animals base URL}/live-animals/notifications/{reference}.",
-      "kind": "integration",
-      "ref": "src/server/app/features/dashboard/view-model/list.js:94",
-      "quote": ": `${setUrl}/notifications/${encodedReference}`",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-050",
-      "statement": "The reference number is URL-encoded in the View link.",
-      "kind": "rule",
-      "ref": "src/server/app/features/dashboard/view-model/list.js:91",
-      "quote": "const encodedReference = encodeURIComponent(referenceNumber)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-051",
-      "statement": "Every dashboard row links into the live-animals journey: there is no link into the plants journey, and the only journey set base defined is /live-animals.",
-      "kind": "integration",
-      "ref": "src/server/common/constants/journey-set-bases.js:1-3; view-model/list.js:101-102",
-      "quote": "export const SET_BASES = Object.freeze({\n  LIVE_ANIMALS: '/live-animals'\n})",
-      "confidence": "gap",
-      "note": "A plants notification shown on the dashboard would be linked into the live-animals journey; nothing in the slice routes by journey type."
-    },
-    {
-      "id": "repo-insfrontend-p1-052",
-      "statement": "The INS frontend has no notification view page of its own: opening a notification always leaves for the animals frontend.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/view-model/list.js:89-102",
-      "quote": "const setUrl = buildLiveAnimalsSetUrl()",
-      "confidence": "inferred"
-    },
-    {
-      "id": "repo-insfrontend-p1-053",
-      "statement": "Pagination is shown only when there is more than one page of results.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/view-model/list.js:69-72; template.njk:85-87",
-      "quote": "if (totalPages <= 1) {\n    return null\n  }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-054",
-      "statement": "Pagination shows a numbered link for every page, marks the current page, and shows Previous and Next links except on the first and last page.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/view-model/list.js:77-86",
-      "quote": "previous: page > 1 ? { href: pageHref(page - 1) } : undefined,\n    next: page < totalPages ? { href: pageHref(page + 1) } : undefined,\n    items: Array.from({ length: totalPages }, (_, index) => ({",
-      "confidence": "verbatim",
-      "note": "Every page number is listed, with no ellipsis, however many pages there are."
-    },
-    {
-      "id": "repo-insfrontend-p1-055",
-      "statement": "Pagination links keep the current search and sort.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/view-model/list.js:74-75",
-      "quote": "`${dashboardPath()}${buildDashboardQueryString({ sort, referenceNumber, page: targetPage })}`",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-056",
-      "statement": "Dashboard links leave the default sort and page 1 out of the address, so the first page with the default sort is plain /.",
-      "kind": "rule",
-      "ref": "src/server/app/features/dashboard/view-model/list.js:26-43",
-      "quote": "if (sort && sort !== DEFAULT_SORT) {\n    params.set('sort', sort)\n  }\n  if (page && page > 1) {",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-057",
-      "statement": "The page size is not chosen by the frontend: it sends no size to ins-backend and uses the size ins-backend returns.",
-      "kind": "integration",
-      "ref": "src/server/app/services/ins-backend/client.js:19-26; controller.js:61-66",
-      "quote": "size: response.size,",
-      "confidence": "inferred"
-    },
-    {
-      "id": "repo-insfrontend-p1-058",
-      "statement": "If loading the notifications or the country list fails, the dashboard still renders with its heading and search but no table, flags a recoverable error, and responds with HTTP status 500.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/controller.js:113-126",
-      "quote": "recoverableError: true\n    }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
-      "confidence": "verbatim",
-      "note": "How the recoverable error is shown to the user is in the shared layout (part 4)."
-    },
-    {
-      "id": "repo-insfrontend-p1-059",
-      "statement": "A failure to load the dashboard is logged as an error with the message 'Failed to load dashboard'.",
-      "kind": "non-functional",
-      "ref": "src/server/app/features/dashboard/controller.js:117",
-      "quote": "logger.error({ err }, 'Failed to load dashboard')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-060",
-      "statement": "An HTTP error already shaped for the framework (a Boom error) is passed on rather than shown as the dashboard's recoverable error.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/controller.js:114-116",
-      "quote": "if (err.isBoom) {\n      throw err\n    }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-061",
-      "statement": "Every dashboard load reads the country list from the countries service, to turn origin country codes into names.",
-      "kind": "integration",
-      "ref": "src/server/app/features/dashboard/controller.js:94,103",
-      "quote": "const countries = await getCountries()",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-062",
-      "statement": "The dashboard reads notifications from ins-backend with GET {ins-backend base URL}/notifications.",
-      "kind": "integration",
-      "ref": "src/server/app/services/ins-backend/client.js:6,19,28-31",
-      "quote": "const url = new URL(`${insBackendUrl}/notifications`)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-063",
-      "statement": "The ins-backend request always sends the page number, and sends sort and referenceNumber query parameters only when set.",
-      "kind": "integration",
-      "ref": "src/server/app/services/ins-backend/client.js:20-26",
-      "quote": "url.searchParams.set('page', String(page))\n  if (sort) {\n    url.searchParams.set('sort', sort)\n  }\n  if (referenceNumber) {\n    url.searchParams.set('referenceNumber', referenceNumber)\n  }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-064",
-      "statement": "The ins-backend request carries the request's trace id in the configured tracing header.",
-      "kind": "non-functional",
-      "ref": "src/server/app/services/ins-backend/client.js:7-12",
-      "quote": "[tracingHeader]: getTraceId() ?? ''",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-065",
-      "statement": "A non-success response from ins-backend is treated as an error.",
-      "kind": "integration",
-      "ref": "src/server/app/services/ins-backend/client.js:33",
-      "quote": "await throwOnError(response)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-066",
-      "statement": "The dashboard expects ins-backend to return a page of notifications with content, page, size, totalElements and totalPages.",
-      "kind": "data",
-      "ref": "src/server/app/features/dashboard/controller.js:61-66,102; stub.js:71-78",
-      "quote": "page: response.page,\n  size: response.size,\n  totalElements: response.totalElements,\n  totalPages: response.totalPages",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-067",
-      "statement": "Each notification the dashboard reads from ins-backend supplies referenceNumber, status, originCountry, commodity and arrivalDate.",
-      "kind": "data",
-      "ref": "src/server/app/features/dashboard/view-model/list.js:104-118",
-      "quote": "referenceNumber: notification.referenceNumber,\n    status: notification.status,",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-068",
-      "statement": "The dashboard's request for notifications carries no organisation or user identity, so nothing in this frontend shows the list being limited to the signed-in user's organisation; any such scoping would have to happen elsewhere.",
+      "statement": "All the Welsh copy is machine draft, not reviewed by a translator, and must not ship to users without Welsh Language Standards sign-off.",
       "kind": "constraint",
-      "ref": "src/server/app/services/ins-backend/client.js:9-31",
-      "quote": "const headers = () => ({\n  'Content-Type': 'application/json',",
-      "confidence": "gap",
-      "note": "Security finding, stated in general terms only. Who may see which notifications is not stated anywhere in the slice."
-    },
-    {
-      "id": "repo-insfrontend-p1-069",
-      "statement": "The dashboard reads from a built-in stub instead of ins-backend when stub mode is on, and never in production.",
-      "kind": "constraint",
-      "ref": "src/server/app/services/ins-backend/index.js:5-8; common/services/mode.js",
-      "quote": "isStubMode()\n    ? stub.listNotifications(search)\n    : client.listNotifications(search)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-070",
-      "statement": "The stub holds four notifications: GBN-AG-26-000001 SUBMITTED (FR, Cattle, arriving 10 Sep 2026), GBN-AG-26-000002 DRAFT (IE, no commodity, 12 Sep 2026), GBN-AG-26-000003 AMEND (DE, no commodity, 8 Sep 2026) and GBN-AG-26-000004 DELETED (GB, no commodity, 9 Sep 2026).",
-      "kind": "data",
-      "ref": "src/server/app/services/ins-backend/stub.js:4-45",
-      "quote": "referenceNumber: 'GBN-AG-26-000001',\n    status: 'SUBMITTED',\n    originCountry: 'FR',\n    commodity: 'Cattle',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-071",
-      "statement": "Each stub notification also carries an aggregate id, an aggregate version and a last updated time, which the dashboard does not show.",
-      "kind": "data",
-      "ref": "src/server/app/services/ins-backend/stub.js:6-13",
-      "quote": "aggregateId: 'agg-stub-1',\n    aggregateVersion: 3,",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-072",
-      "statement": "The stub never returns a DELETED notification, so a deleted notification does not appear on the dashboard.",
-      "kind": "rule",
-      "ref": "src/server/app/services/ins-backend/stub.js:2,60",
-      "quote": "const visible = NOTIFICATIONS.filter((n) => n.status !== DELETED_STATUS)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-073",
-      "statement": "The stub's reference search matches the whole reference exactly and returns matches unsorted.",
-      "kind": "rule",
-      "ref": "src/server/app/services/ins-backend/stub.js:62-64",
-      "quote": "? visible.filter((n) => n.referenceNumber === referenceNumber)\n    : visible.slice().sort(sortComparator(sort))",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-074",
-      "statement": "The stub sorts by arrival date or last updated, ascending or descending, defaulting to arrival date newest first.",
-      "kind": "rule",
-      "ref": "src/server/app/services/ins-backend/stub.js:47-53",
-      "quote": "const [field, direction] = (sort ?? 'arrivalDate,desc').split(',')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-075",
-      "statement": "The stub pages results 25 at a time and always reports at least one page.",
-      "kind": "rule",
-      "ref": "src/server/app/services/ins-backend/stub.js:1,67",
-      "quote": "const PAGE_SIZE = 25",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-076",
-      "statement": "The dashboard navigation section counts as current only on the exact path /.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/paths.js:11",
-      "quote": "export const inDashboardSection = (path) => path === dashboardPath()",
-      "confidence": "verbatim",
-      "note": "Used by the shared header (part 4) to mark the current navigation item."
-    },
-    {
-      "id": "repo-insfrontend-p1-077",
-      "statement": "The empty state, no-results message, results label and in-results clear search link carry stable test ids: dashboard-empty, dashboard-no-results, dashboard-results-label and dashboard-clear-search.",
-      "kind": "constraint",
-      "ref": "src/server/app/features/dashboard/template.njk:48,54,60,67",
-      "quote": "data-testid=\"dashboard-empty\"",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-078",
-      "statement": "Fit test AC1/AC2 proves a signed-in user sees the 'Dashboard' heading and SUBMITTED, DRAFT and AMEND notifications together in one list, each with its reference, and never the deleted notification.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js:23-52 'shows notifications from every status with enough to identify the consignment (AC1, AC2)'",
-      "quote": "// Stub dataset spans SUBMITTED, DRAFT and AMEND — all three must appear\n    // in the same list (AC2), each with enough to identify the consignment.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-079",
-      "statement": "A fit test proves the dashboard has no serious or critical axe accessibility violations against WCAG 2.0, 2.1 and 2.2 A and AA tags.",
-      "kind": "non-functional",
-      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js:8-20,54-59 'has no serious or critical axe violations'",
-      "quote": ".withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-080",
-      "statement": "Fit test AC3 proves a submitted notification's View link points at the read-only notification-view page in the live-animals journey.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js:61-72 'opening a submitted notification links into the read-only notification-view page (AC3)'",
-      "quote": "'http://localhost:3000/live-animals/notifications/GBN-AG-26-000001/notification-view'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-081",
-      "statement": "Fit test AC3 proves a draft notification's View link points back at the journey hub, not the notification-view page.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js:74-85 'opening a draft notification links back to the journey hub, not notification-view (AC3)'",
-      "quote": "'http://localhost:3000/live-animals/notifications/GBN-AG-26-000002'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-082",
-      "statement": "Fit test AC4 proves searching by a complete reference shows only the matching notification.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js:87-104 'searching by complete reference returns only the matching notification (AC4)'",
-      "quote": "searching by complete reference returns only the matching notification (AC4)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-083",
-      "statement": "Fit test AC5 proves a search with no matching notification shows 'No notifications found'.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js:106-118 'no matching notification shows \"No notifications found\" (AC5)'",
-      "quote": "await expect(page.getByText('No notifications found')).toBeVisible()",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-084",
-      "statement": "Every dashboard fit test signs in before opening /, so the dashboard is used by a signed-in user.",
-      "kind": "constraint",
-      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js:26-27",
-      "quote": "await signIn(page)\n    await page.goto('/')",
-      "confidence": "inferred",
-      "note": "The authentication rule itself is in part 4."
-    },
-    {
-      "id": "repo-insfrontend-p1-085",
-      "statement": "No fit test covers sorting, pagination, the empty state or the error state of the dashboard.",
-      "kind": "non-functional",
-      "ref": "src/server/app/features/dashboard/dashboard.fit.spec.js",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "repo-insfrontend-p1-086",
-      "statement": "The dashboard has Welsh copy with exactly the same keys as the English copy, including the heading 'Dangosfwrdd' and the results label 'Yn dangos {from}-{to} o {total}'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/dashboard/copy/copy.cy.js:2-35",
-      "quote": "title: 'Dangosfwrdd',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-insfrontend-p1-087",
-      "statement": "The dashboard's Welsh copy is a machine draft not reviewed by a translator, and is marked not to ship to users without Welsh Language Standards sign-off.",
-      "kind": "constraint",
-      "ref": "src/server/app/features/dashboard/copy/copy.cy.js:1",
+      "ref": "src/server/app/shared/copy.cy.js:1; src/server/app/page-maturity/copy/copy.cy.js:1; src/server/app/docs/features.md:331-332",
       "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-insfrontend-p1-088",
-      "statement": "Asking for a page number past the last page of results shows no table, no empty-state message and no sort form: the empty state appears only when there are no notifications at all, and the table and sort form only when the page has rows.",
+      "id": "repo-insfrontend-p1-040",
+      "statement": "The error summary is titled 'There is a problem'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:34-36; src/server/app/shared/kit.js:52",
+      "quote": "title: 'There is a problem'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-041",
+      "statement": "The Welsh error summary is titled 'Mae problem'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:35-37",
+      "quote": "title: 'Mae problem'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-042",
+      "statement": "The error summary lists one link per field in error, in the order the errors are given, each linking to the field's id.",
       "kind": "behaviour",
-      "ref": "src/server/app/features/dashboard/controller.js:87,110-111; template.njk:29,47,53,58",
-      "quote": "isEmpty: response.totalElements === 0 && !hasSearch,",
-      "confidence": "inferred",
-      "note": "Follows from the controller passing ?page through unclamped to ins-backend, and the template branching on isEmpty, noSearchResults and tableRows.length; pagination is also not shown because it is inside the tableRows branch."
+      "ref": "src/server/app/shared/kit.js:41,43-56",
+      "quote": "errorList: entries.map(([field, text]) => ({ text, href: href(field) }))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-043",
+      "statement": "A page with no errors shows no error summary.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/kit.js:47-50; src/server/app/shared/error-summary.njk:3-5",
+      "quote": "{% if errorSummary %}\n  {{ govukErrorSummary(errorSummary) }}\n{% endif %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-044",
+      "statement": "A page can turn off the error summary's automatic focus, and can link an error to an element other than the field's own id.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:43-46",
+      "quote": "{ href = anchorHref, disableAutoFocus } = {}",
+      "confidence": "verbatim",
+      "note": "mechanism: options on the error summary model builder; which pages use them is in other parts."
+    },
+    {
+      "id": "repo-insfrontend-p1-045",
+      "statement": "The error page shows a large heading and one paragraph of message, inside the normal layout.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/error.njk:1-7",
+      "quote": "<h1 class=\"govuk-heading-l\">{{ heading }}</h1>\n\n  <p class=\"govuk-body\">{{ message }}</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-046",
+      "statement": "Every error is rendered as the shared error page with a message chosen by the response's status code.",
+      "kind": "behaviour",
+      "ref": "src/server/app/docs/architecture.md:93-95",
+      "quote": "`catchAll` renders `shared/error` through `kit.base()` with the\nstatus-keyed message from `sharedCopy.errorPage`.",
+      "confidence": "verbatim",
+      "note": "The handler itself (common/helpers/errors.js) is outside this part's read, so which status maps to which message, and whether heading and message differ, is not shown here."
+    },
+    {
+      "id": "repo-insfrontend-p1-047",
+      "statement": "The not-found error message is 'Page not found'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:42",
+      "quote": "notFound: 'Page not found',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-048",
+      "statement": "The forbidden error message is 'Forbidden'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:43",
+      "quote": "forbidden: 'Forbidden',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-049",
+      "statement": "The unauthorised error message is 'You need to sign in to view this page'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:44",
+      "quote": "unauthorized: 'You need to sign in to view this page',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-050",
+      "statement": "The bad-request error message is 'There is a problem with your request'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:45",
+      "quote": "badRequest: 'There is a problem with your request',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-051",
+      "statement": "The unexpected error message is 'Something went wrong'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:46",
+      "quote": "unexpected: 'Something went wrong'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-052",
+      "statement": "The Welsh error page messages are 'Heb ddod o hyd i’r dudalen', 'Gwaharddedig', 'Mae angen i chi fewngofnodi i weld y dudalen hon', 'Mae problem gyda’ch cais' and 'Aeth rhywbeth o’i le'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:42-48",
+      "quote": "notFound: 'Heb ddod o hyd i’r dudalen',\n    forbidden: 'Gwaharddedig',\n    unauthorized: 'Mae angen i chi fewngofnodi i weld y dudalen hon',\n    badRequest: 'Mae problem gyda’ch cais',\n    unexpected: 'Aeth rhywbeth o’i le'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-053",
+      "statement": "The error page never shows the page maturity banner.",
+      "kind": "rule",
+      "ref": "src/server/app/page-maturity/page-maturity.js:9-12,40-42",
+      "quote": "if (!config.get('pageMaturityBanner.enabled') || isErrorPage(request)) {\n    return {}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-054",
+      "statement": "When a field has no message of its own for an invalid choice, the error reads 'Select a valid option'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:51",
+      "quote": "oneOf: 'Select a valid option',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-055",
+      "statement": "The default postcode error reads 'Enter a valid postcode'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:52",
+      "quote": "postcode: 'Enter a valid postcode',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-056",
+      "statement": "The default vehicle registration error reads 'Enter a valid registration number'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:53",
+      "quote": "vehicleReg: 'Enter a valid registration number',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-057",
+      "statement": "The default UK telephone error reads 'Enter a valid UK telephone number'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:54",
+      "quote": "ukPhone: 'Enter a valid UK telephone number',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-058",
+      "statement": "The default date error reads 'Enter a valid date'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:55",
+      "quote": "date: 'Enter a valid date',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-059",
+      "statement": "The default time error reads 'Enter a real time, like 14:30'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:56",
+      "quote": "time: 'Enter a real time, like 14:30',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-060",
+      "statement": "The default whole-number error reads 'Enter a whole number'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:57",
+      "quote": "wholeNumber: 'Enter a whole number',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-061",
+      "statement": "The default too-long error reads 'Enter <max> characters or fewer'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:58",
+      "quote": "maxLength: (max) => `Enter ${max} characters or fewer`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-062",
+      "statement": "The default out-of-range number error reads 'Enter a number between <min> and <max>'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:59",
+      "quote": "numberBetween: (min, max) => `Enter a number between ${min} and ${max}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-063",
+      "statement": "Each default validation message has a Welsh twin: 'Dewiswch opsiwn dilys', 'Rhowch god post dilys', 'Rhowch rif cofrestru dilys', 'Rhowch rif ffôn dilys yn y DU', 'Rhowch ddyddiad dilys', 'Rhowch amser go iawn, fel 14:30', 'Rhowch rif cyfan', 'Rhowch <max> nod neu lai' and 'Rhowch rif rhwng <min> a <max>'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:51-61",
+      "quote": "oneOf: 'Dewiswch opsiwn dilys',\n  postcode: 'Rhowch god post dilys',\n  vehicleReg: 'Rhowch rif cofrestru dilys',\n  ukPhone: 'Rhowch rif ffôn dilys yn y DU',\n  date: 'Rhowch ddyddiad dilys',\n  time: 'Rhowch amser go iawn, fel 14:30',\n  wholeNumber: 'Rhowch rif cyfan',\n  maxLength: (max) => `Rhowch ${max} nod neu lai`,\n  numberBetween: (min, max) => `Rhowch rif rhwng ${min} a ${max}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-064",
+      "statement": "A field's own validation messages come from its feature's copy, as required, too-long and format messages, and the shared defaults are used only where the feature gives none.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:356-358",
+      "quote": "Messages come from the feature's copy\n(`errors.<field>.required`, `.maxLength`, `.format`) with\n`validatorDefaults` as a fallback.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-065",
+      "statement": "Validation reports only the first message for each field in error.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:351-353",
+      "quote": "`validate(schema, payload)` → `{ value, errors }` (`errors` is `null` on\nsuccess, else `{ field: firstMessage }`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-066",
+      "statement": "Ruling: the service saves only the validated values, never the raw form post.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:362-363",
+      "quote": "Persist `value`,\nnever the raw payload",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-067",
+      "statement": "Ruling: a rule that depends on a service's list, such as the allowed country codes, is built in the POST handler from the options the form offered.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:360-362",
+      "quote": "Build a service-backed rule (`requiredOneOf('countryCode', codes, …)`)\ninside the POST handler from the country codes the form offered",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-068",
+      "statement": "The page maturity banner has four levels, in order: Exploring, Detailing, Agreed and Ready for live.",
+      "kind": "data",
+      "ref": "src/server/app/page-maturity/levels.js:1-6; src/server/app/page-maturity/copy/copy.en.js:3-20",
+      "quote": "exploring: 'exploring',\n  detailing: 'detailing',\n  agreed: 'agreed',\n  readyForLive: 'readyForLive'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-069",
+      "statement": "An Exploring page shows an orange 'Exploring' tag and 'This page is an early idea. It may change a lot or be removed.'",
+      "kind": "copy",
+      "ref": "src/server/app/page-maturity/copy/copy.en.js:4-7; src/server/app/page-maturity/levels.js:9",
+      "quote": "tag: 'Exploring',\n      text: 'This page is an early idea. It may change a lot or be removed.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-070",
+      "statement": "A Detailing page shows a purple 'Detailing' tag and 'We’re keeping this page. We’re still working out the detail.'",
+      "kind": "copy",
+      "ref": "src/server/app/page-maturity/copy/copy.en.js:8-11; src/server/app/page-maturity/levels.js:10",
+      "quote": "tag: 'Detailing',\n      text: 'We’re keeping this page. We’re still working out the detail.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-071",
+      "statement": "An Agreed page shows a teal 'Agreed' tag and 'Users and the business have agreed this page. Changes need a reason.'",
+      "kind": "copy",
+      "ref": "src/server/app/page-maturity/copy/copy.en.js:12-15; src/server/app/page-maturity/levels.js:11",
+      "quote": "tag: 'Agreed',\n      text: 'Users and the business have agreed this page. Changes need a reason.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-072",
+      "statement": "A Ready for live page shows a green 'Ready for live' tag and 'This page is ready for live.'",
+      "kind": "copy",
+      "ref": "src/server/app/page-maturity/copy/copy.en.js:16-19; src/server/app/page-maturity/levels.js:12",
+      "quote": "tag: 'Ready for live',\n      text: 'This page is ready for live.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-073",
+      "statement": "The maturity tag is read out to screen reader users as 'This page’s status: <level>.', with the prefix and full stop visually hidden.",
+      "kind": "non-functional",
+      "ref": "src/server/app/page-maturity/banner.njk:3-5; src/server/app/page-maturity/copy/copy.en.js:2",
+      "quote": "<span class=\"govuk-visually-hidden\">{{ pageMaturity.hiddenPrefix }} </span>{{ pageMaturity.tag.text }}<span class=\"govuk-visually-hidden\">.</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-074",
+      "statement": "The maturity banner is a GOV.UK phase banner styled by its level.",
+      "kind": "behaviour",
+      "ref": "src/server/app/page-maturity/banner.njk:6-10; src/server/app/page-maturity/levels.js:15-20",
+      "quote": "{{ govukPhaseBanner({\n    classes: pageMaturity.classes,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-075",
+      "statement": "The Welsh maturity copy is 'Statws y dudalen hon:' with the levels 'Archwilio', 'Manylu', 'Cytunwyd' and 'Yn barod i fynd yn fyw', each with its translated sentence.",
+      "kind": "copy",
+      "ref": "src/server/app/page-maturity/copy/copy.cy.js:3-21",
+      "quote": "hiddenPrefix: 'Statws y dudalen hon:',",
+      "confidence": "verbatim",
+      "note": "Sentences: 'Syniad cynnar yw’r dudalen hon. Gall newid llawer neu gael ei dileu.', 'Rydym yn cadw’r dudalen hon. Rydym yn dal i weithio ar y manylion.', 'Mae defnyddwyr a’r busnes wedi cytuno ar y dudalen hon. Mae angen rheswm dros newid.', 'Mae’r dudalen hon yn barod i fynd yn fyw.'"
+    },
+    {
+      "id": "repo-insfrontend-p1-076",
+      "statement": "Each page declares its maturity level in its feature's page descriptor, and a page that declares none shows as Exploring.",
+      "kind": "rule",
+      "ref": "src/server/app/page-maturity/page-maturity.js:14-28; src/server/app/shared/kit.js:10-21",
+      "quote": "return page.maturity ?? LEVELS.exploring",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-077",
+      "statement": "The maturity banner shows only when the pageMaturityBanner switch is on in config.",
+      "kind": "constraint",
+      "ref": "src/server/app/page-maturity/page-maturity.js:40",
+      "quote": "config.get('pageMaturityBanner.enabled')",
+      "confidence": "verbatim",
+      "note": "Which environments have the switch on is set outside this part's read."
+    },
+    {
+      "id": "repo-insfrontend-p1-078",
+      "statement": "A route that carries no page descriptor shows no maturity banner.",
+      "kind": "rule",
+      "ref": "src/server/app/page-maturity/page-maturity.js:24-26,43-46",
+      "quote": "if (!level) {\n    return {}\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-079",
+      "statement": "The four sign-in pages (unable to sign in, IDM sign in, IDM signed in, IDM signed out) are all at maturity Exploring.",
+      "kind": "data",
+      "ref": "src/server/app/auth/page.js:1-7",
+      "quote": "export const unauthorisedPage = { id: 'unauthorised', maturity: 'exploring' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-080",
+      "statement": "The unable-to-sign-in page is titled 'Unable to sign in'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:29; src/server/app/docs/architecture.md:98-100",
+      "quote": "title: 'Unable to sign in',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-081",
+      "statement": "The unable-to-sign-in page's heading is 'Sorry, we are unable to sign you in.'",
+      "kind": "copy",
+      "ref": "src/server/app/auth/unauthorised.njk:6; src/server/app/shared/copy.en.js:30",
+      "quote": "heading: 'Sorry, we are unable to sign you in.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-082",
+      "statement": "The unable-to-sign-in page reads 'Please try again.', with 'try again' a link back to the sign-in it came from.",
+      "kind": "copy",
+      "ref": "src/server/app/auth/unauthorised.njk:7; src/server/app/shared/copy.en.js:31-32",
+      "quote": "bodyPrefix: 'Please',\n    signInLinkText: 'try again'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-083",
+      "statement": "The unable-to-sign-in page's try-again link goes to '/auth/sign-in' from the service sign-in and to '/auth/idm/sign-in' from the hidden IDM sign-in.",
+      "kind": "behaviour",
+      "ref": "src/server/app/docs/architecture.md:98-102",
+      "quote": "a try-again link to the\n`signInUrl` it is given: `/auth/sign-in` from the auth controller,\n`/auth/idm/sign-in` from the IDM sign-in.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-084",
+      "statement": "A sign-in callback that cannot be authenticated shows the unable-to-sign-in page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/docs/architecture.md:108-113",
+      "quote": "a callback Bell cannot\nauthenticate (a state or nonce mismatch, a failed token exchange, a cookie\nit cannot read) reaches the handler unauthenticated, with the reason in\n`request.auth.error`, and renders the unable-to-sign-in page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-085",
+      "statement": "The Welsh unable-to-sign-in page reads 'Methu mewngofnodi', 'Mae'n ddrwg gennym, ni allwn eich mewngofnodi.' and 'Rhowch gynnig arall arni.'",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:29-34",
+      "quote": "title: 'Methu mewngofnodi',\n    heading: \"Mae'n ddrwg gennym, ni allwn eich mewngofnodi.\",\n    bodyPrefix: 'Rhowch',\n    signInLinkText: 'gynnig arall arni'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-086",
+      "statement": "The unable-to-sign-in page uses the larger main wrapper spacing.",
+      "kind": "behaviour",
+      "ref": "src/server/app/auth/unauthorised.njk:3",
+      "quote": "{% set mainClasses = \"govuk-main-wrapper--l\" %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-087",
+      "statement": "The IDM sign-in page shows its title as the heading, the line 'Sign in through the real Defra ID in CP-Dev to see the tokens it returns.' and a start button 'Sign in with Defra ID' that sends the user to Defra ID.",
+      "kind": "copy",
+      "ref": "src/server/app/auth/idm-sign-in.njk:6-12",
+      "quote": "<p class=\"govuk-body\">Sign in through the real Defra ID in CP-Dev to see the tokens it returns.</p>\n  {{ govukButton({\n    text: \"Sign in with Defra ID\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-088",
+      "statement": "The IDM signed-in page lists the ID token's claims under 'ID token claims', the access token's claims under 'Access token claims', and the token response under 'Token response', each as a summary list.",
+      "kind": "copy",
+      "ref": "src/server/app/auth/idm-signed-in.njk:8-28",
+      "quote": "<h2 class=\"govuk-heading-m\">ID token claims</h2>",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p1-089",
-      "statement": "The arrival date is formatted with English month abbreviations whatever the page language, because the date format is applied without a locale.",
+      "statement": "When Defra ID returns no separate access token, the IDM signed-in page says 'The access token is the ID token.' instead of the access token claims.",
+      "kind": "behaviour",
+      "ref": "src/server/app/auth/idm-signed-in.njk:14-22",
+      "quote": "<p class=\"govuk-body\">The access token is the ID token.</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-090",
+      "statement": "The IDM signed-out page shows its title as the heading and 'You have signed out of Defra ID.'",
       "kind": "copy",
-      "ref": "src/server/app/features/dashboard/view-model/list.js:7,23",
-      "quote": "return isValid(date) ? format(date, LIST_DATE_FORMAT) : ''",
+      "ref": "src/server/app/auth/idm-signed-out.njk:4-5",
+      "quote": "<p class=\"govuk-body\">You have signed out of Defra ID.</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-091",
+      "statement": "The three IDM pages are internal test pages, English only, not linked from the service, with their text in the templates rather than the shared copy.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/architecture.md:102-106; src/server/app/docs/README.md:41-44",
+      "quote": "The IDM sign-in's own pages\n(`idm-sign-in.njk`, `idm-signed-in.njk`, `idm-signed-out.njk`) are internal\ntest pages, in English only",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-092",
+      "statement": "The IDM pages' titles and the token response's row labels are not visible in this part's files.",
+      "kind": "copy",
+      "ref": "src/server/app/docs/architecture.md:105-106",
+      "quote": "",
+      "confidence": "gap",
+      "note": "They live in src/server/auth/idm-sign-in.js, chassis code the partition leaves out of scope."
+    },
+    {
+      "id": "repo-insfrontend-p1-093",
+      "statement": "The hidden IDM sign-in routes exist only when the IDM discovery URL and client settings are configured and discovery succeeds at start-up; otherwise the service starts without them.",
+      "kind": "constraint",
+      "ref": "src/server/app/docs/architecture.md:20-27; src/server/app/docs/README.md:41-44",
+      "quote": "It serves its routes and\nits own Bell strategy ([`idm-strategy.js`](../../auth/idm-strategy.js))\nonly when `IDM_OIDC_CONFIGURATION_URL` is set, the IDM client ID, client\nsecret and service ID are set, and IDM discovery succeeds at start-up.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-094",
+      "statement": "The hidden IDM sign-in never changes the service's own signed-in identity.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/architecture.md:34-37",
+      "quote": "never writes the auth cache or\nthe session cookie, so the rest of the service keeps the stub or\nDefra ID identity.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-095",
+      "statement": "The signed-in user's display name is their display name, else their email, else 'User'.",
+      "kind": "data",
+      "ref": "src/config/nunjucks/context/context.js:59-67",
+      "quote": "displayName: authData.displayName || authData.email || 'User',",
+      "confidence": "verbatim",
+      "note": "mechanism: picks a display name from the session's auth data. The layout does not show it in this part's templates."
+    },
+    {
+      "id": "repo-insfrontend-p1-096",
+      "statement": "Every INS page route requires a signed-in session.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/kit.js:8; src/server/app/docs/README.md:31",
+      "quote": "export const routeOptions = { auth: 'session' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-097",
+      "statement": "A page that needs the user's organisation refuses with 'Forbidden' when the session carries none.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/kit.js:79-85",
+      "quote": "throw Boom.forbidden('Organisation could not be identified')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-098",
+      "statement": "Each page serves a GET at its path, and a POST at the same path when it has a form.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:87-98",
+      "quote": "{ method: 'GET', path, options, handler: get },\n    ...(post ? [{ method: 'POST', path, options, handler: post }] : [])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-099",
+      "statement": "The application's routes are the dashboard, notification type, address book list, add, address type, address view, edit and delete, transporter type, private and commercial transporter add, and transporter view, edit and delete.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/index.js:16-31; src/server/app/docs/README.md:10-26",
+      "quote": "export const allRoutes = [\n  ...dashboard.routes,\n  ...notificationType.routes,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-100",
+      "statement": "The address lookup spike page at '/address-lookup-spike' is served only in the dev and local environments.",
+      "kind": "constraint",
+      "ref": "src/server/app/routes.js:9-13; src/server/app/docs/README.md:28-29",
+      "quote": "isDevOrLocalEnvironment()\n          ? [...allRoutes, ...addressLookupSpike.routes]\n          : allRoutes",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-101",
+      "statement": "The INS dashboard is at '/'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:1",
+      "quote": "export const dashboardPath = () => '/'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-102",
+      "statement": "The notification type question is at '/notification-type', with a GET and a POST.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:2; src/server/app/docs/README.md:14",
+      "quote": "export const notificationTypePath = () => '/notification-type'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-103",
+      "statement": "The address book list is at '/address-book'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:3",
+      "quote": "export const addressBookPath = () => '/address-book'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-104",
+      "statement": "The add-an-address form is at '/address-book/add'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:4",
+      "quote": "export const addressAddPath = () => '/address-book/add'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-105",
+      "statement": "The address type step is at '/address-book/add/address-type', and a new add starts there with the query 'start=true'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:5-10",
+      "quote": "export const addressTypePath = () => `${addressAddPath()}/address-type`\nconst ADDRESS_TYPE_START_QUERY = { start: 'true' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-106",
+      "statement": "The transporter type question is at '/address-book/add/transporter', and a new transporter add starts there with the query 'start=true'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:11-16",
+      "quote": "export const transporterTypePath = () => `${addressAddPath()}/transporter`\nconst TRANSPORTER_TYPE_START_QUERY = { start: 'true' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-107",
+      "statement": "The private transporter form is at '/address-book/add/transporter/private' and the commercial one at '/address-book/add/transporter/commercial'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:17-19",
+      "quote": "export const privateTransporterPath = () => `${transporterTypePath()}/private`\nexport const commercialTransporterPath = () =>\n  `${transporterTypePath()}/commercial`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-108",
+      "statement": "A transporter's own page is '/address-book/transporter/<id>', with '/edit' and '/delete' pages under it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:20-28",
+      "quote": "`${addressBookPath()}/transporter/${encodeURIComponent(id)}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-109",
+      "statement": "An address's own page is '/address-book/<id>', with '/edit' and '/delete' pages under it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:29-34",
+      "quote": "export const addressPath = (id) => `/address-book/${encodeURIComponent(id)}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-110",
+      "statement": "Ids in page paths are URL-encoded.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/paths.js:21,29; src/server/app/docs/features.md:197",
+      "quote": "Ids are `encodeURIComponent`ed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-111",
+      "statement": "Every '{id}' in a route must be a 24-character hexadecimal record id, and a dead link on the view, edit or delete pages returns to an honoured return page, or else to the address book.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/README.md:31-36",
+      "quote": "every `{id}`\nis validated by [`record-id-params.js`](../features/address-book/record-id-params.js)\nas a 24-character hex Mongo ObjectId.",
+      "confidence": "verbatim",
+      "note": "The detail belongs to the address book parts; recorded here because the shared route notes state it for every route."
+    },
+    {
+      "id": "repo-insfrontend-p1-112",
+      "statement": "Ruling: shared/paths.js is the only module that writes the service's own page paths, except the temporary address lookup spike's literal.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:183-186",
+      "quote": "[`shared/paths.js`](../shared/paths.js) is the only module that writes this\nservice's own page paths, with one exception",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-113",
+      "statement": "Ruling: URLs on the animals and plants frontends have three owners: the notification type destinations (hand-over and return), the notification URL builder ('/notifications/<ref>'), and the address book's journey registry (the address-return path).",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:186-193",
+      "quote": "URLs on the animals and plants frontends have\nthree owners:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-114",
+      "statement": "Ruling: controllers put every link a template needs into the view model; templates build no hrefs.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:198-200",
+      "quote": "Controllers pass a `*RoutePath()` to `kit.pageRoutes` and put every href\nthe template needs into the view model",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-115",
+      "statement": "A list page reads its page number from the query, and treats a missing, non-numeric or below-1 value as page 1.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/list-page.js:1-6",
+      "quote": "return Number.isNaN(page) || page < FIRST_PAGE ? FIRST_PAGE : page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-116",
+      "statement": "A list page asked for a page beyond the last shows the last page.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/list-page.js:8-9",
+      "quote": "Math.min(Math.max(page, FIRST_PAGE), Math.max(totalPages, FIRST_PAGE))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-117",
+      "statement": "A list page's results line gives the range shown and the total, from the first item on the page to the last, and is left out when there are no items.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/list-page.js:11-22",
+      "quote": "const from = (currentPage - 1) * pageSize + 1\n  const to = Math.min(currentPage * pageSize, totalItems)\n  return rangeLabelOf(from, to, totalItems)",
+      "confidence": "verbatim",
+      "note": "The wording of the results line is each list's own copy, not in this part."
+    },
+    {
+      "id": "repo-insfrontend-p1-118",
+      "statement": "A list with one page or fewer shows no pagination.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/list-page.js:48-50",
+      "quote": "if (totalPages <= 1) {\n    return null\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-119",
+      "statement": "Pagination shows a Previous link except on the first page, and a Next link except on the last page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/list-page.js:52-58",
+      "quote": "...(currentPage > FIRST_PAGE && {\n      previous: { href: pageHrefOf(currentPage - 1) }\n    }),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-120",
+      "statement": "Pagination shows the first page, the page either side of the current one, the current page and the last page, with the current page marked, and an ellipsis wherever numbers are skipped.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/list-page.js:24-45",
+      "quote": "const shown = [\n    FIRST_PAGE,\n    currentPage - pagesEitherSideOfCurrent,\n    currentPage,\n    currentPage + pagesEitherSideOfCurrent,\n    totalPages\n  ]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-121",
+      "statement": "The list-page helper does not set a page size: each list passes its own.",
+      "kind": "data",
+      "ref": "src/server/app/shared/list-page.js:11-13",
+      "quote": "{ page, pageSize, totalItems, totalPages },",
       "confidence": "inferred",
-      "note": "date-fns format with no locale option uses en-US month names, so the Welsh page shows 'Sep' rather than a Welsh month."
+      "note": "Inferred because pageSize is an input. The page size each list uses is in its own feature's part."
+    },
+    {
+      "id": "repo-insfrontend-p1-122",
+      "statement": "Text the service puts into HTML is escaped for ampersand, angle brackets and both quote marks.",
+      "kind": "non-functional",
+      "ref": "src/server/app/shared/escape-html.js:1-7",
+      "quote": ".replaceAll('&', '&amp;')\n    .replaceAll('<', '&lt;')",
+      "confidence": "verbatim",
+      "note": "mechanism: escapes a value before it is put into raw HTML."
+    },
+    {
+      "id": "repo-insfrontend-p1-123",
+      "statement": "A test proves the dashboard's browser title is 'Dashboard - Import notification service - GOV.UK' and its h1 is the dashboard title.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/page-title.fit.spec.js:21 'titles the home Dashboard, then the service name and GOV.UK, joined by hyphens'",
+      "quote": "'Dashboard - Import notification service - GOV.UK'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-124",
+      "statement": "A test proves the address book list's browser title is its list title, then the service name and GOV.UK, and its heading shows the list title.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/page-title.fit.spec.js:38 'titles the address book page the same way'",
+      "quote": "`${addressBookCopy.list.title} - ${serviceName} - ${govukSuffix}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-125",
+      "statement": "A test proves an address's own page is titled with the address's name.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/page-title.fit.spec.js:53 \"titles an address's own page with its name\"",
+      "quote": "`${seedAddress.name} - ${serviceName} - ${govukSuffix}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-126",
+      "statement": "A test proves the delete page is titled 'Delete this address? - Import notification service - GOV.UK'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/page-title.fit.spec.js:65 'titles the delete page Delete this address?'",
+      "quote": "'Delete this address? - Import notification service - GOV.UK'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-127",
+      "statement": "A test proves the edit page is titled 'Edit address and contact details - Import notification service - GOV.UK'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/page-title.fit.spec.js:77 'titles the edit page Edit address and contact details'",
+      "quote": "'Edit address and contact details - Import notification service - GOV.UK'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-128",
+      "statement": "A test proves the address type page is titled with its own title (the test names it 'Choose an address type'), then the service name and GOV.UK.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/page-title.fit.spec.js:91 'titles the address type page Choose an address type'",
+      "quote": "`${addressBookCopy.addressType.title} - ${serviceName} - ${govukSuffix}`",
+      "confidence": "verbatim",
+      "note": "The test opens the page without its own sign-in step, unlike the others."
+    },
+    {
+      "id": "repo-insfrontend-p1-129",
+      "statement": "A test proves that pressing Continue on the address type page with no type chosen shows an error alert and puts 'Error: ' in front of the page title.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/page-title.fit.spec.js:101 'puts the error prefix in front of the address type page title when no type is chosen'",
+      "quote": "`${errorTitlePrefix}${addressBookCopy.addressType.title} - ${serviceName} - ${govukSuffix}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-130",
+      "statement": "A test proves that saving the empty add-address form shows an error alert and puts 'Error: ' in front of the whole title.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/page-title.fit.spec.js:116 'puts the error prefix in front of the whole title when the page shows errors'",
+      "quote": "`${errorTitlePrefix}${addressBookCopy.add.title} - ${serviceName} - ${govukSuffix}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-131",
+      "statement": "A test proves a missing page is titled 'Page not found - Import notification service - GOV.UK'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/page-title.fit.spec.js:129 'titles a missing page Page not found - Import notification service - GOV.UK'",
+      "quote": "`${sharedCopy.errorPage.notFound} - ${serviceName} - ${govukSuffix}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-132",
+      "statement": "The smoke test proves a trader can sign in, see the dashboard heading, and reach the address book list through the 'Address book' navigation link.",
+      "kind": "behaviour",
+      "ref": "fit/smoke.fit.spec.js:16 'a trader signs in, sees the dashboard, and adds, views and deletes an address'",
+      "quote": "name: sharedCopy.layout.serviceNavigation.addressBook,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-133",
+      "statement": "The smoke test proves a trader can add an address: the add button leads to the address type step, then to '/address-book/add', and saving a valid address with the place-of-origin role returns to the origin-or-consignor list with an added banner.",
+      "kind": "behaviour",
+      "ref": "fit/smoke.fit.spec.js:38-47",
+      "quote": "await tickRoles(page, ['PLACE_OF_ORIGIN'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-134",
+      "statement": "The smoke test proves a trader can open an address from its 'View <name>' link and see the name as the heading.",
+      "kind": "behaviour",
+      "ref": "fit/smoke.fit.spec.js:49-56",
+      "quote": "name: `${addressBookCopy.list.table.view} ${validAddress.name}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-135",
+      "statement": "The smoke test proves a trader can delete an address from its page: the delete button leads to '/address-book/<id>/delete', confirming returns to '/address-book' with a deleted banner, and the address is no longer listed.",
+      "kind": "behaviour",
+      "ref": "fit/smoke.fit.spec.js:58-71",
+      "quote": "await expect(\n    page.getByText(addressBookCopy.successBanner.deleted(validAddress.name))\n  ).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-136",
+      "statement": "The smoke test proves the address book has no serious or critical accessibility violations after the run.",
+      "kind": "non-functional",
+      "ref": "fit/smoke.fit.spec.js:73-76",
+      "quote": "await expectNoSeriousOrCriticalViolations(\n    page,\n    'address book after the smoke run'\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-137",
+      "statement": "The fit suite holds pages to WCAG 2.0, 2.1 and 2.2 A and AA rules, failing on any serious or critical axe violation.",
+      "kind": "non-functional",
+      "ref": "fit/axe.js:4-19",
+      "quote": "const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']\n\nconst BLOCKING_IMPACTS = ['serious', 'critical']",
+      "confidence": "verbatim",
+      "note": "Moderate and minor violations do not fail a test."
+    },
+    {
+      "id": "repo-insfrontend-p1-138",
+      "statement": "The fit suite holds error summaries to this: clicking an error's link in the alert moves focus to the labelled field, which keeps the value the user entered.",
+      "kind": "non-functional",
+      "ref": "fit/error-focus.js:6-17",
+      "quote": "await link.click()\n  const control = page.getByLabel(label)\n  await expect(control).toBeFocused()\n  await expect(control).toHaveValue(expectedValue)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-139",
+      "statement": "Ruling: every feature's browser spec includes accessibility checks on the first render and on the error state.",
+      "kind": "non-functional",
+      "ref": "src/server/app/docs/features.md:421-423",
+      "quote": "Every feature spec includes initial-render\nand error-state accessibility checks.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-140",
+      "statement": "Ruling: every page template extends the shared layout, fills its content block, puts the error summary above the h1, and carries a hidden CSRF input in every form.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:335-338",
+      "quote": "Templates: extend `shared/layout.njk`, import macros at the top, fill the\n`journeyContent` block, `{% include \"shared/error-summary.njk\" %}` above\nthe `<h1>`, a hidden `crumb` input in every form",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-141",
+      "statement": "Ruling: fields are rendered with GOV.UK macros and show their own error message beside the field.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:338",
+      "quote": "fields rendered with\ngovuk macros, `errorMessage: errors.field and { text: errors.field }`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-142",
+      "statement": "Ruling: a field's name, id and error key stay identical so the error summary link focuses the field.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:346-347",
+      "quote": "Input `name`, `id` and the error-map key stay identical so the summary\nlink focuses the control.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-143",
+      "statement": "Ruling: pages stay inside the GOV.UK Frontend toolbox.",
+      "kind": "constraint",
+      "ref": "src/server/app/docs/features.md:347",
+      "quote": "Stay inside the govuk-frontend toolbox.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-144",
+      "statement": "The service also loads the Ministry of Justice frontend, for its sub navigation component only.",
+      "kind": "constraint",
+      "ref": "src/server/app/docs/architecture.md:166-171,194-198",
+      "quote": "the\n`@ministryofjustice/frontend` package root (the sub navigation\nmacro)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-145",
+      "statement": "Ruling: each feature with a template owns English and Welsh copy files with the same keys, and every Welsh string must differ from its English one, with 'GOV.UK' the only allowed exception.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:314-322; src/server/app/shared/copy-leaves.js:1-10",
+      "quote": "`cy` must have the same paths, leaf\nkinds and function arities as `en`, and every string leaf must differ from\nits English counterpart unless listed in\n`copy-parity.test.js`'s `IDENTICAL_ALLOWLIST`, which holds one entry,\n`shared:layout.govukSuffix`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-146",
+      "statement": "Ruling: a copy entry is a non-empty string or a function that builds a string from values, such as an added banner naming the address.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:316-317; src/server/app/shared/copy-leaves.js:8-10",
+      "quote": "a leaf is a\nnon-empty string or a string-returning function (parameterised copy, for\nexample `successBanner.added(name)`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-147",
+      "statement": "Ruling: the shared chrome copy (layout, journey strip, unable to sign in, error summary, recoverable error, error page) and the default validation messages reach every page as shared copy.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:324-329; src/server/app/shared/kit.js:23,73",
+      "quote": "Shared\nchrome copy (`layout`, `journeyStrip`, `unauthorised`, `errorSummary`,\n`recoverableError`, `errorPage`) and `validatorDefaults` live in\n[`shared/copy.en.js`](../shared/copy.en.js) and `copy.cy.js`, and reach\nevery view as `sharedCopy`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-148",
+      "statement": "Ruling: a form's POST honours Cancel, validates, calls the service, sets a success banner and redirects.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:239-240",
+      "quote": "POST reads `request.payload`, honours `cancel`, validates, calls the\n  service, sets the success banner and redirects.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-149",
+      "statement": "Ruling: when a service call fails, the page logs the failure once and shows itself again with status 500 and the recoverable error banner.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:240-242",
+      "quote": "A service failure logs\n  once (`logger.error({ err, organisationId }, '…')`) and re-renders with\n  `recoverableError: true` and status 500 — the layout renders the banner.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-150",
+      "statement": "Ruling: when the address book refuses a save as invalid, the page shows the API's first message for each field against that field.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:243-244; src/server/app/docs/services.md:56-58",
+      "quote": "A 400 from the address book re-renders with\n  `mapApiErrorsToFormErrors(err.body)`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-151",
+      "statement": "Ruling: the service's own JavaScript only initialises the GOV.UK components; a page needing more adds its own named script bundle.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/features.md:371-376",
+      "quote": "initialises the govuk components. A\npage needing more adds a named `entry` to `webpack.config.js` and loads it\nwith `getAssetPath('<entry>.js')`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-152",
+      "statement": "Ruling: a feature never imports a sibling feature, only the route composition imports features, shared and library code import no feature or service, and circular imports are forbidden.",
+      "kind": "constraint",
+      "ref": "src/server/app/docs/architecture.md:200-215",
+      "quote": "- **`feature-isolation`** — a feature never imports a sibling feature.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-153",
+      "statement": "INS has no notification set, journey, obligation model, page engine or page dispatch: navigation is its fixed route list.",
+      "kind": "constraint",
+      "ref": "src/server/app/docs/architecture.md:217-226",
+      "quote": "ins has no set and no journey: there is one flat `features/` directory,\n  not a platform/set split.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-154",
+      "statement": "Ruling: each upstream service has a barrel, a real HTTP client and an in-memory stub, and a feature imports only the barrel.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/services.md:3-5,19-20",
+      "quote": "A feature imports only the barrel, and nothing\nimports any other file from outside its folder.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-155",
+      "statement": "One switch, STUB_MODE, makes the service serve stub data and sign users in with its own stub session; it is refused in production.",
+      "kind": "constraint",
+      "ref": "src/server/app/docs/services.md:36-46; src/server/app/docs/architecture.md:155-162",
+      "quote": "It is\none service-wide switch, `STUB_MODE`, which also decides how a trader signs\nin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-156",
+      "statement": "A reference-data outage does not stop the service starting, because nothing is loaded at boot.",
+      "kind": "non-functional",
+      "ref": "src/server/app/docs/services.md:44-46",
+      "quote": "There is no\npriming at boot, so a reference-data outage does not stop the server\nstarting",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-157",
+      "statement": "The service calls the address book with the signed-in user's organisation, which must always come from the session, because the address book relies on the caller for organisation scoping.",
+      "kind": "constraint",
+      "ref": "src/server/app/docs/services.md:60-64",
+      "quote": "it must\nalways come from the session",
+      "confidence": "verbatim",
+      "note": "Security-relevant: organisation scoping depends on this service. Stated in general terms only."
+    },
+    {
+      "id": "repo-insfrontend-p1-158",
+      "statement": "The address book client refuses a call with no organisation rather than sending an empty one, and the INS backend facade does the same.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/services.md:64-65,126-129",
+      "quote": "refuses a missing organisation rather than asking for\n`undefined`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-159",
+      "statement": "A save to the address book sends the address's roles and no address type; an address's type is worked out from its roles.",
+      "kind": "integration",
+      "ref": "src/server/app/docs/services.md:22-25,69; src/server/app/docs/features.md:367",
+      "quote": "A save sends the address's `roles` and no address type.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-160",
+      "statement": "The country list comes from reference-data's '/countries', is cached for the life of the process, and a failed load shows the shared error page with a 503 and retries on the next read.",
+      "kind": "integration",
+      "ref": "src/server/app/docs/services.md:108-119",
+      "quote": "a failed load\nleaves the cache unloaded so the next read retries, and rejects with\n`Boom.serverUnavailable`, which `catchAll` renders as the shared error\npage with a 503.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-161",
+      "statement": "The dashboard lists the organisation's aggregated notifications from the INS backend, by page, sort and reference number.",
+      "kind": "integration",
+      "ref": "src/server/app/docs/services.md:123-131",
+      "quote": "`listNotifications(organisationId, { page, sort, referenceNumber })` —\nthe aggregated notifications the dashboard lists.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-162",
+      "statement": "The dashboard's row links leave INS for the animals frontend, which owns the notification a row represents.",
+      "kind": "integration",
+      "ref": "src/server/app/docs/README.md:44-46",
+      "quote": "The dashboard's row links leave the service for the\nanimals frontend (`TRADE_IMPORTS_ANIMALS_FRONTEND_URL`), which owns the\nnotification a row represents.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-163",
+      "statement": "Choosing a type on the notification type question sends the user to the start of the animals or plants frontend, which creates the draft.",
+      "kind": "integration",
+      "ref": "src/server/app/docs/README.md:46-49",
+      "quote": "Choosing a type on `/notification-type` leaves\nthe service too: the POST redirects to the start entry of the animals or\nplants frontend",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-164",
+      "statement": "A live animals notification's origin page can open the notification type question with the notification's reference and type, and keeping that type returns to the notification's origin page instead of starting a new one.",
+      "kind": "integration",
+      "ref": "src/server/app/docs/README.md:49-53",
+      "quote": "The question then shows that type chosen, and keeping it redirects to\nthat notification's origin page instead of the start entry.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-165",
+      "statement": "The service's upstream URLs are set by environment: address book (TRADE_IMPORTS_ADDRESS_BOOK_URL), reference data (TRADE_IMPORTS_REFERENCE_DATA_URL), INS backend (TRADE_IMPORTS_INS_BACKEND_URL), animals frontend (TRADE_IMPORTS_ANIMALS_FRONTEND_URL) and plants frontend (TRADE_IMPORTS_PLANTS_FRONTEND_URL).",
+      "kind": "integration",
+      "ref": "src/server/app/docs/services.md:148-163",
+      "quote": "| `tradeImportsAnimalsFrontend.baseUrl`  | `TRADE_IMPORTS_ANIMALS_FRONTEND_URL` | `http://localhost:3000` |",
+      "confidence": "verbatim",
+      "note": "The animals and plants frontend URLs are browser-visible; the three API URLs are server-side."
+    },
+    {
+      "id": "repo-insfrontend-p1-166",
+      "statement": "The content security policy lets forms post to the journey frontends and to the browser-facing Defra ID origin, so a hand-over can pass through sign-in.",
+      "kind": "constraint",
+      "ref": "src/server/app/docs/services.md:158-168",
+      "quote": "The form-action also trusts the origin of the browser-facing Defra ID URL, so\na hand-over to a journey frontend can pass through sign-in.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-167",
+      "statement": "INS does no document upload and publishes no events; the notification itself belongs to the journey frontend.",
+      "kind": "constraint",
+      "ref": "src/server/app/docs/services.md:188-192",
+      "quote": "There is no document upload, no outbox and no event publishing here. The\nnotification itself is owned by the journey frontend the dashboard links\nto.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-168",
+      "statement": "After sign-in the user is always returned to a path on this service.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/architecture.md:119-121",
+      "quote": "so the redirect after sign-in is always a\npath on this service.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-169",
+      "statement": "Outbound connections wait up to one second per address before trying the next, as the animals and plants frontends do.",
+      "kind": "non-functional",
+      "ref": "src/server/app/docs/architecture.md:78-91",
+      "quote": "It raises Node's process-wide happy-eyeballs\nconnect attempt per address from 250ms to one second",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-170",
+      "statement": "Outside the page routes, the service serves '/health', its sign-in routes under '/auth/' and static files under '/public/'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/docs/README.md:38-44",
+      "quote": "The chassis adds routes of its own outside this list: `/health`, `/auth/*`\nand `/public/*`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p1-171",
+      "statement": "The address lookup spike is temporary and saves nothing: one search box sends anything shaped like a UK postcode as a postcode search and everything else as a free-text search, through the INS backend.",
+      "kind": "behaviour",
+      "ref": "src/server/app/docs/features.md:378-399; src/server/app/docs/services.md:133-146",
+      "quote": "The page has one search box. `detect-search-mode.js` sends anything\nshaped like a UK postcode as `postcode=` and everything else as `find=`.",
+      "confidence": "verbatim",
+      "note": "Recorded from the docs this part reads; the spike's own files belong to another part."
+    },
+    {
+      "id": "repo-insfrontend-p1-172",
+      "statement": "The address lookup spike shows three gaps between the lookup's results and the address form: line 1 has to be composed, the lookup has no county, and its country is free text where the form wants a reference-data code.",
+      "kind": "data",
+      "ref": "src/server/app/docs/features.md:400-408",
+      "quote": "2. The lookup has no county.",
+      "confidence": "verbatim"
     }
   ]
 }

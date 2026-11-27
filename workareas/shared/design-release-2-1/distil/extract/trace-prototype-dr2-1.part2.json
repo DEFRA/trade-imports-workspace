@@ -1,608 +1,537 @@
 {
   "source": "trace:prototype-dr2-1",
-  "structure": "Part 2, Notification type and origin of the import. Mined all 7 traces of about-the-consignment.fit.spec.js under the 'notification type' (3) and 'origin of the import' (4) describes, each opened in full with its action list, the expected values of its assertions (action detail), snapshots of the pages it rendered and, for the core and variant traces, the network log and form bodies. Traces (zip name under sources/traces-prototype, shortened here to the part after 'about-the-consignment--'): T1 notification-type-create-new-asks-what-is-being-imported-before-the-journey-starts (57 actions, validation + core); T2 notification-type-plants-for-planting-reaches-the-commodity-search-which-offers-nothing-to-pick (43, variant); T3 notification-type-starting-from-a-category-dashboard-skips-the-type-question (23, variant); T4 origin-of-the-import-country-is-optional-to-proceed-and-the-answers-are-kept (35, core); T5 origin-of-the-import-region-code-yes-reveals-the-code-box-with-the-country-prefix-and-an-empty-code-is-an-error (68, validation + variant); T6 origin-of-the-import-renders-the-origin-questions (44, core); T7 origin-of-the-import-the-country-search-offers-matching-countries-and-keeps-the-pick (37, variant). Page inventory in journey order: (1) /create-notification, a redirect only: with no category it 302s to /notification-type, with ?category=live-animals (the 'Create new' button on the live-animals dashboard) it 302s straight to /origin-of-the-import; (2) notification-type, 'What are you importing?' under the caption 'About the consignment', five radios and a Continue button, shown only when no category is given (T1 a16 and a30 error state, T2 a9); (3) origin-of-the-import, 'Origin of the import', always shown after the type: draft status and reference, country-of-origin search, region of origin code Yes/No with a conditional code box and country prefix, optional internal reference, Save and continue (T6 a28, T5 a32 error state, T7 a19 and a24, T4 a22 on return, T3 a10 from the dashboard); (4) what-are-you-importing, reached after origin, recorded here only as T2 renders it on the plants-for-planting branch (T2 a29): the rest of that page is part 3's. Conditional: the type question is skipped when the journey starts from a category dashboard; the region code box shows only when Yes is chosen; the code prefix fills only once a country is picked. The four types other than live animals and plants for planting are never chosen in any trace.",
+  "structure": "Part 2, What are you importing. Read the 'what are you importing' and 'germinal products: section 1' describes of about-the-consignment.fit.spec.js and the 'what are you importing' describe (S06 to S08) of snagging.fit.spec.js, then opened and mined all 9 trace zips the part names: (1) renders the commodity search for live animals, 59 actions; (2) nothing selected is an error, 48 actions; (3) search lists the species of a commodity, ticking one adds it, 60 actions; (4) several commodities selected together and cleared, 59 actions; (5) save and return to overview, 38 actions; (6) germinal commodity search: semen, ova and embryos, 102 actions; (7) S06 inset under the heading, 40 actions; (8) S07 search box hint, 51 actions, with a second no-JavaScript context; (9) S08 searching and ticking species, 100 actions, with two no-JavaScript contexts. Every trace reaches one page, /design-release-2.1/what-are-you-importing, after the notification type page and the origin page (part 1's). It has a live-animals variant (reached after choosing live animals on the notification type page) and a germinal-products variant (reached from /create-notification?category=germinal-products), which differ in the search hint and the catalogue they search. Page states mined: default; Help with commodity codes open; nothing-selected error (POST answered 200 with the page re-rendered); search results open for 'cattle', 'horse', 'pig', '0101', 'Bos' (live) and 'semen', 'embryo' (germinal); one and two species selected; Clear all; Save and return to overview (POST 302 to /notification-hub); Save and continue with a germinal selection (POST 302 to /reason-for-import); and the page without JavaScript, blank and with 'cattle' typed. The search, results list, selection panel and chips are custom app-commodity-search markup over govuk-checkboxes; the rest of the page is govuk-inset-text, govuk-details, govuk-button and govuk-error-summary. Claims about which commodities and species the catalogue holds are recorded as what the prototype rendered, which the goal says is demo data. Snapshot pointers: trace (1) actions 36 and 46, (2) 35, (3) 35 and 47, (4) 26, 32, 44 and 46, (6) 24, 36, 56, 70 and 86, (7) 27, (8) 35, (9) 42, 56, 64 and 82. Refs name each trace by its zip file name.",
   "claims": [
     {
       "id": "trace-prototype-dr2-1-p2-001",
-      "statement": "Starting a new notification at /create-notification with no category sends the user to the notification type question at /notification-type (a 302 redirect).",
+      "statement": "A live-animals notification reaches the What are you importing page after the origin of the import page: Save and continue on origin posts and redirects to /what-are-you-importing.",
       "kind": "behaviour",
-      "ref": "trace T1 (notification-type-create-new-asks-what-is-being-imported-before-the-journey-starts) action 10 and request 1",
-      "quote": "GET 302 create-notification; GET 200 notification-type",
+      "ref": "trace about-the-consignment--what-are-you-importing-renders-the-commodity-search-for-live-animals.zip action 20 to 22; requests 83 (POST origin-of-the-import 302) and 84 (GET what-are-you-importing 200)",
+      "quote": "/design-release-2.1/what-are-you-importing",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-002",
-      "statement": "The notification type page's browser title is 'What are you importing? - Import notification service - GOV.UK'.",
+      "statement": "The page title is 'What are you importing? - Import notification service - GOV.UK'.",
       "kind": "copy",
-      "ref": "trace T1 action 16 snapshot (main outerHTML)",
+      "ref": "trace about-the-consignment--what-are-you-importing-renders-the-commodity-search-for-live-animals.zip action 23 and snapshot 36",
       "quote": "What are you importing? - Import notification service - GOV.UK",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-003",
-      "statement": "The notification type page heading is 'What are you importing?', rendered as the h1 inside the radios' fieldset legend (a large legend), with the caption 'About the consignment' inside the heading.",
+      "statement": "The page heading (h1) is 'What are you importing?', with the caption 'About the consignment' above it.",
       "kind": "copy",
-      "ref": "trace T1 action 16 snapshot, legend.govuk-fieldset__legend--l h1.govuk-fieldset__heading",
-      "quote": "<span class=\"govuk-caption-l\">About the consignment</span> What are you importing?",
+      "ref": "trace about-the-consignment--what-are-you-importing-renders-the-commodity-search-for-live-animals.zip snapshot 36, .app-what-importing-page__header",
+      "quote": "<p class=\"app-what-importing-page__caption\">About the consignment</p> <h1 class=\"app-what-importing-page__heading\">What are you importing?</h1>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-004",
-      "statement": "The notification type question offers five radio options, in this order: Live animals; Germinal products (semen, ova, embryos); Plants for planting; Potatoes (seed and ware); Wood products.",
-      "kind": "data",
-      "ref": "trace T1 action 16 snapshot, input[name=notificationType] labels",
-      "quote": "Live animals | Germinal products (semen, ova, embryos) | Plants for planting | Potatoes (seed and ware) | Wood products",
-      "confidence": "verbatim"
+      "statement": "The heading and caption use custom classes, not govuk-heading or govuk-caption classes; they render at 36px bold for the heading and 24px grey (rgb(80, 90, 95)) for the caption, the sizes of govuk-heading-l and govuk-caption-l, which could replace them.",
+      "kind": "constraint",
+      "ref": "trace snagging--what-are-you-importing-s06-what-are-you-importing-inset-under-the-heading.zip snapshot 27 computed styles",
+      "quote": "h1=36px 700 | caption=24px rgb(80, 90, 95)",
+      "confidence": "inferred",
+      "note": "The equivalence to govuk-heading-l and govuk-caption-l is inferred from the computed sizes at a 1280px viewport."
     },
     {
       "id": "trace-prototype-dr2-1-p2-005",
-      "statement": "The notification type radios submit as field notificationType with the values live-animals, germinal-products, plants-for-planting, potatoes and wood-products; none is pre-selected.",
-      "kind": "data",
-      "ref": "trace T1 action 16 snapshot, input[name=notificationType] values",
-      "quote": "value=\"live-animals\" ... value=\"germinal-products\" ... value=\"plants-for-planting\" ... value=\"potatoes\" ... value=\"wood-products\"",
+      "statement": "Above the caption the page shows a status line: a 'Draft' tag and the notification label and reference, 'Live animals - GBN-AG-26-<code>' for a live-animals notification.",
+      "kind": "copy",
+      "ref": "trace about-the-consignment--what-are-you-importing-renders-the-commodity-search-for-live-animals.zip snapshot 36, .app-dr2-notification-status",
+      "quote": "<strong class=\"govuk-tag app-dr2-review-status__tag app-dr2-review-status__tag--draft\">Draft</strong> <span class=\"app-dr2-notification-status__reference\">Live animals - GBN-AG-26-0T9K4S</span>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-006",
-      "statement": "The notification type page has a single primary button labelled 'Continue', with no secondary save button and no cancel link.",
+      "statement": "On a germinal products notification the status line reads 'Germinal products - GBN-AG-26-<code>' after the 'Draft' tag.",
       "kind": "copy",
-      "ref": "trace T1 action 16 snapshot, .app-origin-form-actions",
-      "quote": "<button type=\"submit\" value=\"continue\" name=\"action\" class=\"govuk-button\"> Continue </button>",
+      "ref": "trace about-the-consignment--germinal-products-section-1-germinal-commodity-search-semen-ova-and-embryos-with-common-and-latin-names.zip snapshot 24",
+      "quote": "Draft\nGerminal products - GBN-AG-26-05KKL1",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-007",
-      "statement": "The notification type page's back link goes to the service dashboard at /design-release-2.1.",
-      "kind": "behaviour",
-      "ref": "trace T1 action 15 (expect .govuk-back-link href)",
-      "quote": "expectedText: [{\"string\":\"/design-release-2.1\"}]",
-      "confidence": "verbatim"
+      "statement": "Directly under the heading, before the form, the page shows an inset text (GOV.UK Inset text) telling the user to submit a separate notification for every health certificate and also for goods that need no health certificate.",
+      "kind": "copy",
+      "ref": "trace snagging--what-are-you-importing-s06-what-are-you-importing-inset-under-the-heading.zip snapshot 27; trace about-the-consignment--what-are-you-importing-renders-the-commodity-search-for-live-animals.zip action 25",
+      "quote": "You must submit a separate notification for every single health certificate. You must also submit a notification for goods that do not need an health certificate.",
+      "confidence": "verbatim",
+      "note": "The source's own words include 'an health certificate'. The inset's previous sibling is the heading block (prev=app-what-importing-page__header)."
     },
     {
       "id": "trace-prototype-dr2-1-p2-008",
-      "statement": "The notification type page shows no draft status or notification reference: no notification exists until a type is chosen.",
-      "kind": "behaviour",
-      "ref": "trace T1 action 16 snapshot (main has no .app-dr2-notification-status) against action 44 (origin page shows Draft)",
-      "quote": "<form method=\"post\" action=\"/design-release-2.1/notification-type\" novalidate=\"\">",
-      "confidence": "inferred",
-      "note": "Inferred from the status block being absent on the type page and present on the next page; the quote shows the type page's main opens straight into the form."
-    },
-    {
-      "id": "trace-prototype-dr2-1-p2-009",
-      "statement": "Continuing from the notification type page with no option chosen re-renders the page (POST returns 200) with an error.",
-      "kind": "rule",
-      "ref": "trace T1 actions 24-30 and request 41",
-      "quote": "POST 200 notification-type",
+      "statement": "The germinal products variant of the page shows the same inset text as the live-animals variant.",
+      "kind": "copy",
+      "ref": "trace about-the-consignment--germinal-products-section-1-germinal-commodity-search-semen-ova-and-embryos-with-common-and-latin-names.zip action 17 and snapshot 24",
+      "quote": "You must submit a separate notification for every single health certificate. You must also submit a notification for goods that do not need an health certificate.",
       "confidence": "verbatim"
     },
     {
+      "id": "trace-prototype-dr2-1-p2-009",
+      "statement": "The page asks for the commodity through one search box labelled 'Search for a commodity'; the label is styled as a medium heading (24px bold) through a custom class.",
+      "kind": "data",
+      "ref": "trace about-the-consignment--what-are-you-importing-renders-the-commodity-search-for-live-animals.zip action 26 and snapshot 36; trace snagging--what-are-you-importing-s08-what-are-you-importing-searching-and-ticking-species.zip snapshot 27",
+      "quote": "<label class=\"govuk-label app-eu-heading-m\" for=\"commodity-search\"> Search for a commodity </label>",
+      "confidence": "verbatim",
+      "note": "govuk-label--m would give the same look inside GOV.UK Frontend."
+    },
+    {
       "id": "trace-prototype-dr2-1-p2-010",
-      "statement": "With no notification type chosen, an error summary titled 'There is a problem' lists 'Select what you are importing', linking to #notificationType (the first radio).",
-      "kind": "rule",
-      "ref": "trace T1 action 30 snapshot, .govuk-error-summary",
-      "quote": "There is a problem ... <a href=\"#notificationType\">Select what you are importing</a>",
+      "statement": "For live animals the search box hint says the user can search by common name, commodity code or Latin name, with cattle, 0102 and Bos taurus as the examples.",
+      "kind": "copy",
+      "ref": "trace snagging--what-are-you-importing-s07-what-are-you-importing-search-box-hint.zip action 27; trace about-the-consignment--what-are-you-importing-renders-the-commodity-search-for-live-animals.zip action 27, #commodity-search-hint",
+      "quote": "You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-011",
-      "statement": "With no notification type chosen, the radios' form group takes the error state and shows the inline message 'Select what you are importing' (id notificationType-error).",
-      "kind": "rule",
-      "ref": "trace T1 action 30 snapshot, .govuk-form-group--error and .govuk-error-message",
-      "quote": "govuk-error-message :: notificationType-error :: Error: Select what you are importing",
-      "confidence": "verbatim"
+      "statement": "For germinal products the search box hint says the user can search for semen, ova or embryos, or by common name, Latin name or commodity code, with cattle, Bos taurus and 05119985 as the examples.",
+      "kind": "copy",
+      "ref": "trace about-the-consignment--germinal-products-section-1-germinal-commodity-search-semen-ova-and-embryos-with-common-and-latin-names.zip action 18 and snapshot 24",
+      "quote": "You can search for semen, ova or embryos, or by common name (for example, cattle), Latin name (Bos taurus) or commodity code (05119985).",
+      "confidence": "verbatim",
+      "note": "The two hints order the search kinds differently: live is common name, commodity code, Latin name; germinal is common name, Latin name, commodity code."
     },
     {
       "id": "trace-prototype-dr2-1-p2-012",
-      "statement": "The notification type page keeps the same browser title in its error state, with no 'Error: ' prefix.",
-      "kind": "constraint",
-      "ref": "trace T1 action 30 snapshot, document.title",
-      "quote": "What are you importing? - Import notification service - GOV.UK",
-      "confidence": "verbatim",
-      "note": "The GOV.UK error pattern prefixes the title with 'Error: '; the prototype does not."
+      "statement": "The search box is a type=search text input named commoditySearch with browser autocomplete off and no placeholder, described by the hint and a visually hidden live status region, with a button beside it whose accessible name is 'Search' and which shows a magnifying-glass icon.",
+      "kind": "data",
+      "ref": "trace about-the-consignment--what-are-you-importing-renders-the-commodity-search-for-live-animals.zip snapshot 36, #commodity-search; trace snagging--what-are-you-importing-s08-what-are-you-importing-searching-and-ticking-species.zip snapshot 27",
+      "quote": "<input class=\"app-commodity-search__input\" id=\"commodity-search\" name=\"commoditySearch\" type=\"search\" autocomplete=\"off\" aria-controls=\"commodity-search-results\" aria-describedby=\"commodity-search-hint commodity-search-status\" value=\"\"> <button class=\"app-commodity-search__button\" type=\"button\"> <span class=\"govuk-visually-hidden\">Search</span>",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-013",
-      "statement": "Choosing Live animals and continuing posts the type and redirects to the origin of the import page.",
-      "kind": "behaviour",
-      "ref": "trace T1 actions 38-41, requests 79-80",
-      "quote": "POST 302 notification-type; GET 200 origin-of-the-import",
+      "statement": "The commodity search is a custom component (app-commodity-search: search input, results list, selected panel and chips) outside GOV.UK Frontend; it is not the accessible autocomplete over a native select. Only the species tick boxes inside its results use GOV.UK Checkboxes markup.",
+      "kind": "constraint",
+      "ref": "trace about-the-consignment--what-are-you-importing-search-lists-the-species-of-a-commodity-ticking-one-adds-it-to-the-selection.zip snapshot 35, #commodity-search-results; snapshot 36 of the renders trace, data-module=\"app-commodity-search\"",
+      "quote": "<div class=\"app-commodity-search-wrapper\" data-module=\"app-commodity-search\" data-common-names-url=\"/public/data/common-names-live.json\">",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-014",
-      "statement": "Once a type is chosen, the origin page shows a 'Draft' status tag next to a newly created notification reference.",
+      "statement": "Typing into the search box opens a results list as the user types, with no form submission: results are grouped under commodity header rows that show the commodity name and code, and each species under a header is a tick box.",
       "kind": "behaviour",
-      "ref": "trace T1 action 44 snapshot, .app-dr2-notification-status",
-      "quote": "<strong class=\"govuk-tag app-dr2-review-status__tag app-dr2-review-status__tag--draft\">Draft</strong> <span class=\"app-dr2-notification-status__reference\">GBN-AG-26-0NVOP4</span>",
-      "confidence": "verbatim"
+      "ref": "trace about-the-consignment--what-are-you-importing-search-lists-the-species-of-a-commodity-ticking-one-adds-it-to-the-selection.zip actions 23 to 25 and snapshot 35",
+      "quote": "<li class=\"app-commodity-search__row app-commodity-search__row--commodity-header\"> <span class=\"app-commodity-search__row-label app-commodity-search__row-label--heading\"><strong class=\"app-commodity-search__match\">Cattle</strong> (0102)</span> </li>",
+      "confidence": "verbatim",
+      "note": "No request fires while typing: the requests log for the search traces holds only the page GET and the form POSTs."
     },
     {
       "id": "trace-prototype-dr2-1-p2-015",
-      "statement": "The draft notification reference takes the form GBN-AG-26- followed by six upper-case letters and digits, different for each new notification.",
-      "kind": "data",
-      "ref": "trace T1 a44, T2 a29, T6 a20, T3 a10, T4 a22 (.app-dr2-notification-status__reference)",
-      "quote": "GBN-AG-26-0NVOP4; GBN-AG-26-06GQI5; GBN-AG-26-0K2RHL; GBN-AG-26-071WLO; GBN-AG-26-0NZNXO",
-      "confidence": "inferred",
-      "note": "Pattern read across five references rendered in five traces; the rule that generates them is not visible. 26 is plausibly the year."
-    },
-    {
-      "id": "trace-prototype-dr2-1-p2-016",
-      "statement": "The live-animals category dashboard's 'Create new' is a button-styled link to /create-notification?category=live-animals.",
-      "kind": "behaviour",
-      "ref": "trace T3 (notification-type-starting-from-a-category-dashboard-skips-the-type-question) action 8 snapshot",
-      "quote": "<a href=\"/design-release-2.1/create-notification?category=live-animals\" role=\"button\" class=\"govuk-button\" data-module=\"govuk-button\"> Create new </a>",
+      "statement": "A commodity header row in the results cannot be ticked; only the species rows under it carry a tick box, so the user selects species rather than a whole commodity.",
+      "kind": "rule",
+      "ref": "trace about-the-consignment--germinal-products-section-1-germinal-commodity-search-semen-ova-and-embryos-with-common-and-latin-names.zip snapshot 56, rows of #commodity-search-results",
+      "quote": "app-commodity-search__row--commodity-header :: - :: Cat, Semen (05119985)\napp-commodity-search__row--species app-commodity-search__row--alt :: species:cat-semen-felis-catus :: Domestic cat (Felis catus)",
       "confidence": "verbatim"
     },
     {
+      "id": "trace-prototype-dr2-1-p2-016",
+      "statement": "Each species row reads '<common name> (<Latin name>)'.",
+      "kind": "copy",
+      "ref": "trace about-the-consignment--what-are-you-importing-search-lists-the-species-of-a-commodity-ticking-one-adds-it-to-the-selection.zip actions 27 and 28",
+      "quote": "Domestic cattle (Bos taurus)",
+      "confidence": "verbatim",
+      "note": "Also 'Bison bison (Bison bison)', where the species has no common name and its Latin name is shown twice."
+    },
+    {
       "id": "trace-prototype-dr2-1-p2-017",
-      "statement": "Starting a notification from a category dashboard skips the notification type question: /create-notification?category=live-animals redirects straight to the origin of the import page.",
-      "kind": "rule",
-      "ref": "trace T3 action 9 and requests 41-42",
-      "quote": "GET 302 create-notification?category=live-animals; GET 200 origin-of-the-import",
+      "statement": "The part of each result that matches the typed text is shown in bold.",
+      "kind": "behaviour",
+      "ref": "trace about-the-consignment--what-are-you-importing-search-lists-the-species-of-a-commodity-ticking-one-adds-it-to-the-selection.zip snapshot 35",
+      "quote": "<span class=\"app-commodity-search__row-text\">Domestic <strong class=\"app-commodity-search__match\">cattle</strong> (Bos taurus)</span>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-018",
-      "statement": "When the journey starts from the live-animals dashboard, the origin page's back link returns to that dashboard (/design-release-2.1/live-animals).",
-      "kind": "behaviour",
-      "ref": "trace T3 action 10 (expect .govuk-back-link href) and snapshot",
-      "quote": "expectedText: [{\"string\":\"/design-release-2.1/live-animals\"}]",
-      "confidence": "verbatim"
+      "statement": "Alternate rows in the results list are shaded (a striped list).",
+      "kind": "constraint",
+      "ref": "trace about-the-consignment--what-are-you-importing-search-lists-the-species-of-a-commodity-ticking-one-adds-it-to-the-selection.zip snapshot 35",
+      "quote": "app-commodity-search__row app-commodity-search__row--species app-commodity-search__row--alt",
+      "confidence": "inferred",
+      "note": "Inferred from the --alt modifier on every other row; the colour itself was not read."
     },
     {
       "id": "trace-prototype-dr2-1-p2-019",
-      "statement": "When the journey starts from the type question, the origin page's back link returns to the type question (/design-release-2.1/notification-type).",
+      "statement": "A visually hidden live region announces how many results the search found, as 'N results available', counting the species rows and not the commodity headers.",
       "kind": "behaviour",
-      "ref": "trace T6 (origin-of-the-import-renders-the-origin-questions) action 20 snapshot; T4 action 22 snapshot",
-      "quote": "link \"Back\" ... /url: /design-release-2.1/notification-type",
-      "confidence": "verbatim"
+      "ref": "trace about-the-consignment--what-are-you-importing-search-lists-the-species-of-a-commodity-ticking-one-adds-it-to-the-selection.zip action 26 and snapshot 35, #commodity-search-status",
+      "quote": "16 results available",
+      "confidence": "verbatim",
+      "note": "The 'cattle' search lists 16 species rows under 5 commodity headers. The germinal 'semen' search gives 12 results for 12 species rows, and 'embryo' 17 for 17."
     },
     {
       "id": "trace-prototype-dr2-1-p2-020",
-      "statement": "Starting from a category dashboard also creates the draft notification: the origin page shows Draft and a reference.",
+      "statement": "Once a species is ticked, the live region reads '1 option selected' and keeps reading that on later searches, instead of the result count.",
       "kind": "behaviour",
-      "ref": "trace T3 action 10 snapshot (main innerText)",
-      "quote": "Draft\nGBN-AG-26-071WLO\n\nAbout the consignment\n\nOrigin of the import",
-      "confidence": "verbatim"
+      "ref": "trace snagging--what-are-you-importing-s08-what-are-you-importing-searching-and-ticking-species.zip snapshots 42, 56 and 64",
+      "quote": "STATUS: 1 option selected",
+      "confidence": "verbatim",
+      "note": "In snapshot 56 the '0101' search shows 3 species but the status still reads '1 option selected'. Whether this is intended is not shown."
     },
     {
       "id": "trace-prototype-dr2-1-p2-021",
-      "statement": "Choosing Plants for planting leads to the same origin of the import page as Live animals, then on to the commodity search page.",
-      "kind": "behaviour",
-      "ref": "trace T2 (notification-type-plants-for-planting-reaches-the-commodity-search-which-offers-nothing-to-pick) actions 9-21 and action 18 snapshot",
-      "quote": "Origin of the import - Import notification service - GOV.UK | Draft GBN-AG-26-06GQI5 About the consignment Origin of the import Country of origin",
-      "confidence": "verbatim"
+      "statement": "Searching 'cattle' in the live-animals catalogue lists Cattle (0102) with 11 species (African buffalo, Banteng, Bison, Bison bison, Buffalo, Cattle (Bos spp), Domestic cattle, Gaur, Musk ox, Water buffalo, Yak), plus Insects other than bees (01064900), Other birds (01063980), Other live animals (01069000) and Travelling circus and menagerie animals (95081000), whose species match on search terms.",
+      "kind": "data",
+      "ref": "trace about-the-consignment--what-are-you-importing-search-lists-the-species-of-a-commodity-ticking-one-adds-it-to-the-selection.zip snapshot 35",
+      "quote": "Cattle (0102)\nAfrican buffalo (Syncerus spp.)\nBanteng (Novibos spp)\nBison (Bison spp)\nBison bison (Bison bison)\nBuffalo (Bubalus spp (including Anoa))\nCattle (Bos spp)\nDomestic cattle (Bos taurus)\nGaur (Bibos spp.)\nMusk ox (Ovibos spp)\nWater buffalo (Bubalus bubalis)\nYak (Poephagus spp.)\nInsects other than bees (01064900)\nOther insects (Other Insecta)\nOther birds (01063980)\nPelicans, herons and ibises (Pelecaniformes)\nPerching birds (Passeriformes)\nOther live animals (01069000)\nSpiders, scorpions and other arachnids (Arachnida)\nTravelling circus and menagerie animals (95081000)\nCattle, antelopes, sheep and goats (Bovidae)",
+      "confidence": "verbatim",
+      "note": "Catalogue content the prototype renders; the goal says it is demo data, and the catalogue waits on MDM."
     },
     {
       "id": "trace-prototype-dr2-1-p2-022",
-      "statement": "On the plants-for-planting branch, the commodity page still renders the live-animals content: the heading 'What are you importing?', the ITAHC inset text, and a hint using cattle as its example.",
-      "kind": "copy",
-      "ref": "trace T2 action 29 snapshot (main innerText)",
-      "quote": "What are you importing?\nYou must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC.\nSearch for a commodity\nYou can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).",
-      "confidence": "verbatim",
-      "note": "The page belongs to part 3; recorded here only as the plants branch renders it."
+      "statement": "The search matches commodity codes: typing '0101' lists Horse (0101) with Donkey, Horse and Mule.",
+      "kind": "behaviour",
+      "ref": "trace snagging--what-are-you-importing-s08-what-are-you-importing-searching-and-ticking-species.zip action 51 and snapshot 56",
+      "quote": "Horse (0101)\nDonkey (Equus asinus)\nHorse (Equus cabalus)\nMule (Eq cabalus*asinus)",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-023",
-      "statement": "On the plants-for-planting branch, searching the commodity box for 'cattle' offers nothing to pick: no results list opens and no selectable commodity appears.",
+      "statement": "The search matches Latin names as a prefix of any word: typing 'Bos' lists Cattle (Bos spp), Domestic cattle (Bos taurus), Gaur, Yak, Northern hemisphere crayfish (Astacoidae), Other insects, Nilgai (Boselaphus spp.) and Reptile (Testudines).",
       "kind": "behaviour",
-      "ref": "trace T2 action 24 (expect input[name=commodity-selection] count 0) and action 29 snapshot",
-      "quote": "value=cattle | results-hidden=true | results= | status= | selected-hidden=true",
-      "confidence": "verbatim"
+      "ref": "trace snagging--what-are-you-importing-s08-what-are-you-importing-searching-and-ticking-species.zip action 59 and snapshot 64",
+      "quote": "Cattle (0102)\nCattle (Bos spp)\nDomestic cattle (Bos taurus)\nGaur (Bibos spp.)\nYak (Poephagus spp.)\nFreshwater crayfish (03063910)\nNorthern hemisphere crayfish (Astacoidae)\nInsects other than bees (01064900)\nOther insects (Other Insecta)\nOther crustaceans (03063990)\nNorthern hemisphere crayfish (Astacoidae)\nOther live mammals (01061900)\nNilgai (Boselaphus spp.)\nReptile (010620)\nReptile (Testudines)",
+      "confidence": "verbatim",
+      "note": "Gaur, Yak, crayfish, insects and reptile rows show no 'Bos' in their rendered text, so they match on hidden search terms. The matching rule itself is inferred."
     },
     {
       "id": "trace-prototype-dr2-1-p2-024",
-      "statement": "An empty commodity search on the plants branch shows no 'no results' message, and the screen-reader status stays empty.",
+      "statement": "Searching 'horse' lists 17 results across Crabs, Horse (0101), Insects other than bees, Other crustaceans, Other live animals, Other live mammals, Reptile, Travelling circus and menagerie animals and Whales, dolphins and seals, showing that the search also matches hidden search terms and not only the visible text.",
       "kind": "behaviour",
-      "ref": "trace T2 action 29 snapshot (#commodity-search-status)",
-      "quote": "status=",
-      "confidence": "verbatim"
+      "ref": "trace about-the-consignment--what-are-you-importing-several-commodities-can-be-selected-together-and-cleared.zip action 25 and snapshot 26",
+      "quote": "Crabs (030633)\nTrue crabs (Brachyura spp.) (Brachyura spp)\nTrue crabs (Brachyura)\nHorse (0101)\nDonkey (Equus asinus)\nHorse (Equus cabalus)\nMule (Eq cabalus*asinus)",
+      "confidence": "inferred",
+      "note": "The status read '17 results available'. Why crabs or reptiles match 'horse' is not visible; the results are quoted in part."
     },
     {
       "id": "trace-prototype-dr2-1-p2-025",
-      "statement": "No plant commodity search is shown working: the corpus never searches with a plant term on the plants-for-planting branch, so whether any plant commodities can be found is unknown.",
+      "statement": "Ticking a species keeps the results list open and the tick box checked, and shows the selected panel under the search box at once.",
       "kind": "behaviour",
-      "ref": "trace T2 action 23 (only 'cattle' typed)",
-      "quote": "",
-      "confidence": "gap"
+      "ref": "trace snagging--what-are-you-importing-s08-what-are-you-importing-searching-and-ticking-species.zip action 37 and snapshot 42",
+      "quote": "CHECKED=true RESULTSHIDDEN=false EXPANDED=true SELECTEDHIDDEN=false SEL=1 selected Clear all Cattle (0102): Domestic cattle (Bos taurus) Remove Domestic cattle (Bos taurus)",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-026",
-      "statement": "Where choosing Germinal products, Potatoes (seed and ware) or Wood products leads is never shown: no trace chooses them.",
+      "statement": "Pressing Escape in the search box closes the results list and empties the search box, and the selection stays.",
       "kind": "behaviour",
-      "ref": "traces T1-T3 (only live-animals and plants-for-planting are checked)",
-      "quote": "",
-      "confidence": "gap"
+      "ref": "trace about-the-consignment--what-are-you-importing-search-lists-the-species-of-a-commodity-ticking-one-adds-it-to-the-selection.zip action 37 and snapshot 47",
+      "quote": "RESULTS HIDDEN: true || commodityId=cattle ; commodityCode=0102 ; selectedSpecies=[\"cattle-bos-taurus\"]",
+      "confidence": "verbatim",
+      "note": "Snapshot 47 shows INPUT empty after Escape."
     },
     {
       "id": "trace-prototype-dr2-1-p2-027",
-      "statement": "Only the live-animals category dashboard start is shown; starting from any other category's dashboard is never traced.",
-      "kind": "behaviour",
-      "ref": "trace T3 (navigates to /design-release-2.1/live-animals only)",
-      "quote": "",
-      "confidence": "gap"
+      "statement": "The selected panel starts with a count, '1 selected', and a 'Clear all' button.",
+      "kind": "copy",
+      "ref": "trace about-the-consignment--what-are-you-importing-search-lists-the-species-of-a-commodity-ticking-one-adds-it-to-the-selection.zip actions 38 to 41 and snapshot 47",
+      "quote": "<p class=\"app-commodity-search__selected-heading\" id=\"commodity-search-selected-heading\">1 selected</p> <button class=\"app-commodity-search__selected-clear\" type=\"button\"> Clear all </button>",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-028",
-      "statement": "The origin page's browser title is 'Origin of the import - Import notification service - GOV.UK'.",
-      "kind": "copy",
-      "ref": "trace T6 action 14 and action 20 snapshot",
-      "quote": "Origin of the import - Import notification service - GOV.UK",
+      "statement": "The selected panel groups the ticked species under their commodity, shown in bold as '<commodity> (<code>):', with each species as a chip that has a remove button.",
+      "kind": "behaviour",
+      "ref": "trace about-the-consignment--what-are-you-importing-search-lists-the-species-of-a-commodity-ticking-one-adds-it-to-the-selection.zip snapshot 47",
+      "quote": "<strong class=\"app-commodity-search__selected-entry-name\">Cattle (0102)</strong>: </p> <div class=\"app-commodity-search__selected-chips\"> <div class=\"app-commodity-search__selected-item\"> <span class=\"app-commodity-search__selected-label\">Domestic cattle (Bos taurus)</span> <button class=\"app-commodity-search__selected-remove\" type=\"button\" data-selection-value=\"species:cattle-bos-taurus\" aria-label=\"Remove Domestic cattle (Bos taurus)\">",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-029",
-      "statement": "The origin page heading is 'Origin of the import' (h1), with the caption 'About the consignment' shown above it as a separate paragraph, not a govuk caption.",
+      "statement": "Each chip's remove button has the accessible name 'Remove <chip label>' and shows no visible text.",
       "kind": "copy",
-      "ref": "trace T1 action 44 snapshot, .app-origin-page__header",
-      "quote": "<p class=\"app-origin-page__caption\">About the consignment</p> <h1 class=\"app-origin-page__heading\">Origin of the import</h1>",
-      "confidence": "verbatim"
+      "ref": "trace about-the-consignment--what-are-you-importing-several-commodities-can-be-selected-together-and-cleared.zip action 38 and snapshot 44",
+      "quote": "Remove Equus cabalus ; Remove Sus scrofa domesticus",
+      "confidence": "verbatim",
+      "note": "The visible text of the button is a visually hidden span; the chips are custom, with MOJ multi-select or a plain checkbox list as possible replacements."
     },
     {
       "id": "trace-prototype-dr2-1-p2-030",
-      "statement": "The origin page asks for the country of origin under a level-2 heading 'Country of origin'.",
-      "kind": "copy",
-      "ref": "trace T6 action 17 and action 20 snapshot",
-      "quote": "heading \"Country of origin\" [level=2]",
-      "confidence": "verbatim"
+      "statement": "A chip shows the species' common name and Latin name where the species has a common name, but only the Latin name where it has none, so a chip can read differently from the result row it came from.",
+      "kind": "rule",
+      "ref": "trace about-the-consignment--what-are-you-importing-several-commodities-can-be-selected-together-and-cleared.zip snapshots 26 and 44",
+      "quote": "Horse (0101):\n\nEquus cabalus\nRemove Equus cabalus\n\nPig (0103):\n\nSus scrofa domesticus\nRemove Sus scrofa domesticus",
+      "confidence": "inferred",
+      "note": "mechanism: the result row 'Horse (Equus cabalus)' becomes the chip 'Equus cabalus', and 'Pig (Sus scrofa domesticus)' becomes 'Sus scrofa domesticus', while 'Domestic cattle (Bos taurus)' keeps both names on its chip. The reason is inferred from the embedded catalogue, where cattle species carry commonName and horse and pig do not."
     },
     {
       "id": "trace-prototype-dr2-1-p2-031",
-      "statement": "The country of origin is a type-ahead search box (id country-of-origin, type search) with the placeholder 'Search for a country' and a search icon button labelled 'Search' for screen readers.",
-      "kind": "data",
-      "ref": "trace T6 action 18 and T1 action 44 snapshot, .app-origin-country",
-      "quote": "<input class=\"app-commodity-search__input\" id=\"country-of-origin\" type=\"search\" autocomplete=\"off\" placeholder=\"Search for a country\" ...> <button class=\"app-commodity-search__button\" type=\"button\"> <span class=\"govuk-visually-hidden\">Search</span>",
-      "confidence": "verbatim"
+      "statement": "The prototype spells the horse's Latin name 'Equus cabalus' (one l) in the results and chips, while its species id is horse-equus-caballus.",
+      "kind": "copy",
+      "ref": "trace about-the-consignment--what-are-you-importing-several-commodities-can-be-selected-together-and-cleared.zip action 26 and snapshot 44",
+      "quote": "Horse (Equus cabalus)",
+      "confidence": "verbatim",
+      "note": "Probable typo in the prototype's demo data; the mule row reads 'Mule (Eq cabalus*asinus)'."
     },
     {
       "id": "trace-prototype-dr2-1-p2-032",
-      "statement": "The country search box has no visible label or hint; the h2 'Country of origin' is not associated with the input as its label.",
-      "kind": "constraint",
-      "ref": "trace T1 action 44 snapshot, .app-origin-country",
-      "quote": "<h2 class=\"app-eu-heading-m app-origin-country__label\">Country of origin</h2>",
-      "confidence": "inferred",
-      "note": "Read from the markup: the h2 is not a <label for>, and the accessibility tree names the box only by its placeholder ('searchbox \"Search for a country\"')."
+      "statement": "The user can select species from more than one commodity on the same page: ticking a horse and then a pig shows '2 selected' with Horse (0101) and Pig (0103) as separate groups.",
+      "kind": "rule",
+      "ref": "trace about-the-consignment--what-are-you-importing-several-commodities-can-be-selected-together-and-cleared.zip actions 23 to 37 and snapshot 44",
+      "quote": "2 selected\n\nClear all\n\nHorse (0101):\n\nEquus cabalus\nRemove Equus cabalus\n\nPig (0103):\n\nSus scrofa domesticus\nRemove Sus scrofa domesticus",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-033",
-      "statement": "The chosen country is submitted in a hidden field countryOfOrigin, holding the country name, not the visible search box (which has no name).",
-      "kind": "data",
-      "ref": "trace T5 request 120 body; T2 action 18 snapshot, input.app-country-search__value",
-      "quote": "countryOfOrigin=France&regionOfOriginRequired=Yes&regionOfOriginCodeSuffix=75&internalReference=&action=continue",
+      "statement": "A ticked species stays ticked when it appears in a later search's results.",
+      "kind": "behaviour",
+      "ref": "trace snagging--what-are-you-importing-s08-what-are-you-importing-searching-and-ticking-species.zip action 59 and snapshot 64",
+      "quote": "CHECKED: commodity-species-cattle-bos-taurus",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-034",
-      "statement": "Typing part of a country name opens a results list of matching countries, each a button, with the typed letters shown in bold.",
+      "statement": "Clear all removes every selected species, hides the selected panel and empties the hidden selection fields.",
       "kind": "behaviour",
-      "ref": "trace T7 (origin-of-the-import-the-country-search-offers-matching-countries-and-keeps-the-pick) action 19 snapshot, #country-search-results",
-      "quote": "<button type=\"button\" class=\"app-country-search__option\" data-country=\"Netherlands\"> <strong class=\"app-commodity-search__match\">Neth</strong>erlands </button>",
+      "ref": "trace about-the-consignment--what-are-you-importing-several-commodities-can-be-selected-together-and-cleared.zip actions 45 and 46, snapshot 46",
+      "quote": "SELHIDDEN=true CLASS=app-commodity-search__selected TEXT= Clear all || commodityId= ; commodityCode= ; selectedSpecies=[] ; commoditySelections=[]",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-035",
-      "statement": "Typing 'Neth' offers exactly one country, Netherlands.",
+      "statement": "The form submits the selection in hidden fields: commodityId and commodityCode hold the first selected commodity, selectedSpecies a JSON list of species ids, and commoditySelections a JSON list of {type, commodityId, commodityCode, speciesId} for every selected species.",
       "kind": "data",
-      "ref": "trace T7 actions 15-16 and action 19 snapshot",
-      "quote": "status=1 result available",
-      "confidence": "verbatim"
+      "ref": "trace about-the-consignment--what-are-you-importing-several-commodities-can-be-selected-together-and-cleared.zip snapshot 44; trace about-the-consignment--what-are-you-importing-nothing-selected-is-an-error.zip request 124 body",
+      "quote": "[{\"type\":\"species\",\"commodityId\":\"horse\",\"commodityCode\":\"0101\",\"speciesId\":\"horse-equus-caballus\"},{\"type\":\"species\",\"commodityId\":\"pig\",\"commodityCode\":\"0103\",\"speciesId\":\"pig-sus-scrofa\"}] || commodityId=horse",
+      "confidence": "verbatim",
+      "note": "The empty POST body is 'commoditySearch=&commodityId=&commodityCode=&selectedSpecies=%5B%5D&commoditySelections=%5B%5D&action=continue'. Field names are the prototype's; the goal keeps the real service's data shapes."
     },
     {
       "id": "trace-prototype-dr2-1-p2-036",
-      "statement": "The country results list is labelled 'Country search results' and a screen-reader live region announces how many results are available.",
+      "statement": "Below the search the page has a 'Help with commodity codes' expander (GOV.UK Details) that explains commodity codes and links to the Trade Tariff tool.",
       "kind": "copy",
-      "ref": "trace T7 action 19 snapshot, #country-search-results and .app-country-search__status",
-      "quote": "aria-label=\"Country search results\" ... status=1 result available",
+      "ref": "trace about-the-consignment--what-are-you-importing-renders-the-commodity-search-for-live-animals.zip actions 38 to 40 and snapshot 36, details.govuk-details",
+      "quote": "Help with commodity codes\nCommodity codes are internationally recognised reference numbers.\nA commodity code describes a specific product when importing or exporting goods.\nYou can look up commodity codes using the Trade Tariff tool (opens in a new tab).",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-037",
-      "statement": "Picking a country from the results closes the list, puts the country name in the search box and in countryOfOrigin, and announces 'Selected <country>' to screen readers.",
-      "kind": "behaviour",
-      "ref": "trace T7 actions 23-24 and action 24 snapshot",
-      "quote": "hidden=true | value=Netherlands | search=Netherlands | status=Selected Netherlands",
-      "confidence": "verbatim"
+      "statement": "The Trade Tariff tool link goes to https://www.gov.uk/trade-tariff and opens in a new tab; the '(opens in a new tab)' words sit outside the link text, after a line break.",
+      "kind": "copy",
+      "ref": "trace about-the-consignment--what-are-you-importing-renders-the-commodity-search-for-live-animals.zip action 40 and snapshot 36",
+      "quote": "<a class=\"govuk-link\" href=\"https://www.gov.uk/trade-tariff\" rel=\"noreferrer noopener\" target=\"_blank\">Trade Tariff tool</a><br>\n          (opens in a new tab).",
+      "confidence": "verbatim",
+      "note": "GOV.UK guidance puts '(opens in new tab)' inside the link text."
     },
     {
       "id": "trace-prototype-dr2-1-p2-038",
-      "statement": "The country search runs in the browser: typing into it fires no network request, so the country list is held client-side.",
-      "kind": "integration",
-      "ref": "trace T7 requests (only page loads, static assets and browser-sync; country-search.js 8.0K loaded)",
-      "quote": "GET 200 country-search.js 8.0K",
-      "confidence": "inferred",
-      "note": "No data call appears between the origin page load and the end of the trace; the full country list, its size and source are not visible."
+      "statement": "The germinal products variant shows the same 'Help with commodity codes' expander.",
+      "kind": "copy",
+      "ref": "trace about-the-consignment--germinal-products-section-1-germinal-commodity-search-semen-ova-and-embryos-with-common-and-latin-names.zip snapshot 24",
+      "quote": "DETAILS=Help with commodity codes",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-039",
-      "statement": "What the country search shows when nothing matches is never traced.",
-      "kind": "behaviour",
-      "ref": "traces T2, T5, T7 (only 'Fran' and 'Neth' typed)",
-      "quote": "",
-      "confidence": "gap"
+      "statement": "The page has two buttons, 'Save and continue' (primary) and 'Save and return to overview' (secondary), and a 'Cancel and return to overview' link to /notification-hub under them.",
+      "kind": "copy",
+      "ref": "trace about-the-consignment--what-are-you-importing-renders-the-commodity-search-for-live-animals.zip actions 28 and 29, snapshot 36",
+      "quote": "<button type=\"submit\" value=\"continue\" name=\"action\" class=\"govuk-button\" data-module=\"govuk-button\"> Save and continue </button> ... <button type=\"submit\" value=\"hub\" name=\"action\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\"> Save and return to overview </button> ... <a class=\"govuk-link\" href=\"/design-release-2.1/notification-hub\">Cancel and return to overview</a>",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-040",
-      "statement": "Typing 'Fran' offers France, and picking it sets countryOfOrigin to France.",
-      "kind": "data",
-      "ref": "trace T2 actions 15-17 and action 18 snapshot",
-      "quote": "country=France | search=France",
+      "statement": "The back link goes to the origin of the import page, for live animals and for germinal products.",
+      "kind": "behaviour",
+      "ref": "trace about-the-consignment--what-are-you-importing-renders-the-commodity-search-for-live-animals.zip action 30; trace about-the-consignment--germinal-products-section-1-germinal-commodity-search-semen-ova-and-embryos-with-common-and-latin-names.zip snapshot 24",
+      "quote": "govuk-back-link /design-release-2.1/origin-of-the-import Back",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-041",
-      "statement": "The origin page asks 'Does the consignment have a region of origin code?' as a medium fieldset legend over Yes and No radios.",
-      "kind": "copy",
-      "ref": "trace T1 action 44 snapshot, .app-origin-radios-block legend",
-      "quote": "Does the consignment have a region of origin code?",
+      "statement": "Save and continue with nothing selected shows an error: the page re-renders (POST answered 200) with a 'There is a problem' error summary whose one item, 'Select a commodity', links to the search box.",
+      "kind": "rule",
+      "ref": "trace about-the-consignment--what-are-you-importing-nothing-selected-is-an-error.zip actions 23 to 28, request 124, snapshot 35",
+      "quote": "<h2 class=\"govuk-error-summary__title\"> There is a problem </h2> <div class=\"govuk-error-summary__body\"> <ul class=\"govuk-list govuk-error-summary__list\"> <li> <a href=\"#commodity-search\">Select a commodity</a> </li> </ul>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-042",
-      "statement": "The region of origin code question has the hint 'Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.'",
-      "kind": "copy",
-      "ref": "trace T1 action 44 snapshot, #region-of-origin-hint",
-      "quote": "Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.",
-      "confidence": "verbatim"
+      "statement": "With nothing selected, the search box's form group shows the inline error 'Select a commodity' between the label and the hint, and the search box is then described by the error too.",
+      "kind": "rule",
+      "ref": "trace about-the-consignment--what-are-you-importing-nothing-selected-is-an-error.zip action 29 and snapshot 35",
+      "quote": "<div class=\"govuk-form-group govuk-form-group--error\"> <label class=\"govuk-label app-eu-heading-m\" for=\"commodity-search\"> Search for a commodity </label> <p id=\"commodity-search-error\" class=\"govuk-error-message\"> <span class=\"govuk-visually-hidden\">Error:</span> Select a commodity </p>",
+      "confidence": "verbatim",
+      "note": "aria-describedby becomes 'commodity-search-hint commodity-search-status commodity-search-error'."
     },
     {
       "id": "trace-prototype-dr2-1-p2-043",
-      "statement": "The region of origin code answer submits as regionOfOriginRequired with the values Yes and No; neither is pre-selected on a new notification.",
-      "kind": "data",
-      "ref": "trace T1 action 44 snapshot, input[name=regionOfOriginRequired]",
-      "quote": "name=\"regionOfOriginRequired\" type=\"radio\" value=\"Yes\" ... name=\"regionOfOriginRequired\" type=\"radio\" value=\"No\"",
-      "confidence": "verbatim"
+      "statement": "In the error state the page title stays 'What are you importing? - Import notification service - GOV.UK', with no 'Error: ' prefix.",
+      "kind": "copy",
+      "ref": "trace about-the-consignment--what-are-you-importing-nothing-selected-is-an-error.zip snapshot 35",
+      "quote": "What are you importing? - Import notification service - GOV.UK || <div class=\"govuk-error-summary\"",
+      "confidence": "verbatim",
+      "note": "GOV.UK guidance prefixes the title with 'Error: ' when a page shows errors."
     },
     {
       "id": "trace-prototype-dr2-1-p2-044",
-      "statement": "The region of origin code box is hidden until Yes is chosen; choosing Yes reveals it as a radios conditional reveal under the Yes option.",
+      "statement": "The germinal products variant shows the same 'Select a commodity' error, in the summary (linking to #commodity-search) and inline, when Save and continue is pressed with nothing selected.",
       "kind": "rule",
-      "ref": "trace T5 (origin-of-the-import-region-code-yes-reveals-...) actions 15-17",
-      "quote": "Expect \"toBeHidden\" locator('#region-of-origin-code-suffix'); Check locator('input[name=\"regionOfOriginRequired\"][value=\"Yes\"]'); Expect \"toBeVisible\" getByLabel('Enter the region of origin code')",
+      "ref": "trace about-the-consignment--germinal-products-section-1-germinal-commodity-search-semen-ova-and-embryos-with-common-and-latin-names.zip actions 26 to 30, request 83 (POST 200), snapshot 36",
+      "quote": "There is a problem\nSelect a commodity || INLINE: Error:\nSelect a commodity || HREF: #commodity-search",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-045",
-      "statement": "The revealed region code box is labelled 'Enter the region of origin code'.",
-      "kind": "copy",
-      "ref": "trace T1 action 44 snapshot, label[for=region-of-origin-code-suffix]",
-      "quote": "Enter the region of origin code",
+      "statement": "Save and return to overview with nothing selected does not validate: it redirects to /notification-hub without showing an error.",
+      "kind": "behaviour",
+      "ref": "trace about-the-consignment--what-are-you-importing-save-and-return-to-overview-keeps-the-selection-without-validating.zip actions 23 to 25, requests 124 (POST 302) and 125 (GET notification-hub 200)",
+      "quote": "124. 0:00.515  POST     302      what-are-you-importing",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-046",
-      "statement": "The region code box has the hint 'Enter up to 5 characters.'",
-      "kind": "copy",
-      "ref": "trace T5 action 18 (expect main to contain) and T1 action 44 snapshot, #region-of-origin-code-hint",
-      "quote": "Enter up to 5 characters.",
-      "confidence": "verbatim"
+      "statement": "The traces never show that Save and return to overview keeps a selection: the test that names it makes no selection and does not come back to the page.",
+      "kind": "behaviour",
+      "ref": "trace about-the-consignment--what-are-you-importing-save-and-return-to-overview-keeps-the-selection-without-validating.zip actions 1 to 25",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "trace-prototype-dr2-1-p2-047",
-      "statement": "The region code box (field regionOfOriginCodeSuffix) accepts at most 5 characters, enforced by the input's maxlength.",
-      "kind": "rule",
-      "ref": "trace T1 action 44 snapshot, #region-of-origin-code-suffix",
-      "quote": "name=\"regionOfOriginCodeSuffix\" type=\"text\" value=\"\" maxlength=\"5\" autocomplete=\"off\" spellcheck=\"false\" inputmode=\"text\"",
-      "confidence": "verbatim"
+      "statement": "No trace returns to the What are you importing page with a saved selection, so how a saved selection is shown again (ticked chips, the selected panel) is not shown.",
+      "kind": "behaviour",
+      "ref": "all 9 traces of part 2",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "trace-prototype-dr2-1-p2-048",
-      "statement": "The region code box has a prefix showing the chosen country's two-letter code, which is empty until a country is picked.",
+      "statement": "A germinal products notification started from /create-notification?category=germinal-products reaches the What are you importing page after the origin page, and Save and continue with a species selected goes on to /reason-for-import.",
       "kind": "behaviour",
-      "ref": "trace T1 action 44 snapshot (empty prefix); T5 action 53 snapshot (FR)",
-      "quote": "<div class=\"govuk-input__prefix app-region-origin-code__prefix\" id=\"region-of-origin-code-prefix\" aria-hidden=\"true\"></div>",
+      "ref": "trace about-the-consignment--germinal-products-section-1-germinal-commodity-search-semen-ova-and-embryos-with-common-and-latin-names.zip actions 7 to 16 and 87 to 89; requests 43, 123 (POST 302) and 124 (GET reason-for-import 200)",
+      "quote": "123. 0:03.900  POST     302      what-are-you-importing\n  124. 0:03.907  GET      200      reason-for-import",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-049",
-      "statement": "Picking France fills the region code prefix with FR.",
-      "kind": "behaviour",
-      "ref": "trace T5 actions 40-45 and action 53 snapshot; T2 action 18 snapshot",
-      "quote": "prefix=FR | suffix=75 | country=France",
-      "confidence": "verbatim"
+      "statement": "The germinal search uses its own catalogue of germinal commodities, named '<animal>, Semen' or '<animal>, Embryos/Ova' with a code, rather than the live-animals catalogue.",
+      "kind": "rule",
+      "ref": "trace about-the-consignment--germinal-products-section-1-germinal-commodity-search-semen-ova-and-embryos-with-common-and-latin-names.zip snapshots 24 and 56; request 43 (27.1K page against 130.3K for live)",
+      "quote": "Cat, Semen (05119985)\nDomestic cat (Felis catus)\nCattle, Semen (05111000)",
+      "confidence": "inferred",
+      "note": "Inferred from the results and from the germinal wrapper having no data-common-names-url (DATAURL=null), where the live one points at /public/data/common-names-live.json."
     },
     {
       "id": "trace-prototype-dr2-1-p2-050",
-      "statement": "Picking Netherlands fills the region code prefix with NL.",
-      "kind": "behaviour",
-      "ref": "trace T7 action 24 snapshot",
-      "quote": "prefix=NL",
-      "confidence": "verbatim"
+      "statement": "Searching 'semen' lists 8 semen commodities: Cat, Cattle (05111000), Dog, Goat, Horse, Pig, Rabbit/Rodent and Sheep, all but cattle under 05119985, with 12 species in all.",
+      "kind": "data",
+      "ref": "trace about-the-consignment--germinal-products-section-1-germinal-commodity-search-semen-ova-and-embryos-with-common-and-latin-names.zip actions 38 to 50 and snapshot 56",
+      "quote": "Cat, Semen (05119985)\nDomestic cat (Felis catus)\nCattle, Semen (05111000)\nBison bison (Bison bison)\nCattle, Semen (Bovidae)\nDomestic cattle (Bos taurus)\nWater buffalo (Bubalus bubalis)\nDog, Semen (05119985)\nDomestic dog (Canis familiaris)\nGoat, Semen (05119985)\nGoat (Capra hircus)\nHorse, Semen (05119985)\nDonkey (Equus asinus)\nHorse (Equus cabalus)\nPig, Semen (05119985)\nPig (Sus scrofa domesticus)\nRabbit/Rodent, Semen (05119985)\nRabbit/Rodent, Semen (Rabbit/Rodent)\nSheep, Semen (05119985)\nSheep (Ovis aries) || STATUS: 12 results available",
+      "confidence": "verbatim",
+      "note": "Prototype demo catalogue; the goal sends catalogue content to MDM and V4."
     },
     {
       "id": "trace-prototype-dr2-1-p2-051",
-      "statement": "The country prefix is hidden from screen readers and is not submitted: the form posts only the code typed after it.",
-      "kind": "data",
-      "ref": "trace T5 request 120 body; T1 action 44 snapshot (aria-hidden prefix)",
-      "quote": "regionOfOriginCodeSuffix=75",
-      "confidence": "verbatim",
-      "note": "How the prefix and suffix are combined into one region code is not visible in the trace."
-    },
-    {
-      "id": "trace-prototype-dr2-1-p2-052",
-      "statement": "Choosing Yes for a region of origin code and leaving the code empty is an error: the page re-renders (POST returns 200).",
-      "kind": "rule",
-      "ref": "trace T5 actions 25-32 and request 81 (body countryOfOrigin=&regionOfOriginRequired=Yes&regionOfOriginCodeSuffix=)",
-      "quote": "POST 200 origin-of-the-import",
+      "statement": "Some germinal species rows repeat the commodity name instead of a species: 'Cattle, Semen (Bovidae)' and 'Rabbit/Rodent, Semen (Rabbit/Rodent)' are tickable species rows.",
+      "kind": "copy",
+      "ref": "trace about-the-consignment--germinal-products-section-1-germinal-commodity-search-semen-ova-and-embryos-with-common-and-latin-names.zip snapshot 56, rows species:cattle-semen-bovidae and species:rabbit-rodent-semen",
+      "quote": "app-commodity-search__row--species :: species:cattle-semen-bovidae :: Cattle, Semen (Bovidae)",
       "confidence": "verbatim"
     },
     {
+      "id": "trace-prototype-dr2-1-p2-052",
+      "statement": "Searching 'embryo' lists 10 Embryos/Ova commodities, all under 05119985: Amphibian, Arachnid, Cat, Cattle, Dog, Goat, Horse, Pig, Reptile and Sheep, with 17 species in all.",
+      "kind": "data",
+      "ref": "trace about-the-consignment--germinal-products-section-1-germinal-commodity-search-semen-ova-and-embryos-with-common-and-latin-names.zip actions 58 to 64 and snapshot 70",
+      "quote": "Amphibian, Embryos/Ova (05119985)\nAmphibians (Amphibia)\nArachnid, Embryos/Ova (05119985)\nArachnids (Arachnida)\nCat, Embryos/Ova (05119985)\nDomestic cat (Felis catus)\nCattle, Embryos/Ova (05119985)\nBison bison (Bison bison)\nDomestic cattle (Bos taurus)\nWater buffalo (Bubalus bubalis)\nDog, Embryos/Ova (05119985)\nDomestic dog (Canis familiaris)\nGoat, Embryos/Ova (05119985)\nGoat (Capra hircus)\nHorse, Embryos/Ova (05119985)\nDonkey (Equus asinus)\nHorse (Equus cabalus)\nPig, Embryos/Ova (05119985)\nPig (Sus scrofa domesticus)\nReptile, Embryos/Ova (05119985)\nBeak-headed reptiles (Rhyncocephalia)\nCrocodilians (Crocodylia)\nLizards (Sauria)\nSnakes (Serpentes)\nTurtles (Testudinata)\nSheep, Embryos/Ova (05119985)\nSheep (Ovis aries) || STATUS: 17 results available",
+      "confidence": "verbatim",
+      "note": "Prototype demo catalogue. The test asserts only Cat, Cattle, Horse, Pig and Sheep."
+    },
+    {
       "id": "trace-prototype-dr2-1-p2-053",
-      "statement": "With Yes chosen and no code, the error summary 'There is a problem' lists 'Enter the region of origin code', linking to #region-of-origin-code-suffix.",
+      "statement": "In the germinal catalogue embryos and ova are one commodity per animal, 'Embryos/Ova', not separate commodities.",
       "kind": "rule",
-      "ref": "trace T5 action 32 snapshot, .govuk-error-summary",
-      "quote": "There is a problem\nEnter the region of origin code\n#region-of-origin-code-suffix",
+      "ref": "trace about-the-consignment--germinal-products-section-1-germinal-commodity-search-semen-ova-and-embryos-with-common-and-latin-names.zip snapshot 70",
+      "quote": "Cattle, Embryos/Ova (05119985)",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-054",
-      "statement": "With Yes chosen and no code, the code box's form group takes the error state with the inline message 'Enter the region of origin code' (id region-of-origin-code-error), and Yes stays chosen with the box still revealed.",
-      "kind": "rule",
-      "ref": "trace T5 action 32 snapshot, .app-region-origin-code",
-      "quote": "<p id=\"region-of-origin-code-error\" class=\"govuk-error-message\"> <span class=\"govuk-visually-hidden\">Error:</span> Enter the region of origin code </p>",
+      "statement": "A selected germinal species is listed under its germinal commodity in the selected panel, for example 'Cattle, Semen (05111000):' with the chip 'Domestic cattle (Bos taurus)'.",
+      "kind": "behaviour",
+      "ref": "trace about-the-consignment--germinal-products-section-1-germinal-commodity-search-semen-ova-and-embryos-with-common-and-latin-names.zip actions 72 to 80 and snapshot 86",
+      "quote": "1 selected\n\nClear all\n\nCattle, Semen (05111000):\n\nDomestic cattle (Bos taurus)\nRemove Domestic cattle (Bos taurus) || commodityId=cattle-semen ; commodityCode=05111000",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-055",
-      "statement": "In the region code error state the input itself does not take the govuk-input--error style.",
-      "kind": "constraint",
-      "ref": "trace T5 action 32 and action 53 snapshots, #region-of-origin-code-suffix class",
-      "quote": "inputclass=govuk-input app-region-origin-code__input",
-      "confidence": "verbatim",
-      "note": "The standard GOV.UK text input pattern adds govuk-input--error to the input in an error state."
+      "statement": "The live-animals catalogue the search reads is embedded in the page as JSON (about 52 commodities, each with an id, name, code, extra codes, search terms and species), and its common names point at /public/data/common-names-live.json; no request is made while searching.",
+      "kind": "integration",
+      "ref": "trace about-the-consignment--what-are-you-importing-nothing-selected-is-an-error.zip request 124 response body, script.app-commodity-search__data; snapshot 36 of the renders trace, data-common-names-url",
+      "quote": "<script type=\"application/json\" class=\"app-commodity-search__data\">[{\"id\":\"abalone\",\"name\":\"Abalone\",\"code\":\"03078100\",\"searchTerms\":[\"abalones\",\"ormer\",\"ormers\",\"paua\",\"shellfish\",\"mollusc\",\"molluscs\"],\"codes\":[\"03078100\",\"0307810010\",\"0307810090\"],\"species\":[{\"id\":\"abalone-haliotis-spp\",\"label\":\"Haliotis spp\",\"commonName\":\"Abalones\"}",
+      "confidence": "inferred",
+      "note": "The count of 52 is a grep of commodity-level code entries and is approximate. The common-names JSON was never fetched in any trace. The goal says the catalogue waits until commodities come from MDM."
     },
     {
       "id": "trace-prototype-dr2-1-p2-056",
-      "statement": "The origin page keeps the same browser title in its error state, with no 'Error: ' prefix.",
-      "kind": "constraint",
-      "ref": "trace T5 action 32 snapshot, document.title",
-      "quote": "Origin of the import - Import notification service - GOV.UK",
-      "confidence": "verbatim"
+      "statement": "No trace shows the commodity search calling a reference-data or MDM service; the source of the commodity catalogue a real service would use is not shown.",
+      "kind": "integration",
+      "ref": "requests logs of all 9 traces of part 2",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "trace-prototype-dr2-1-p2-057",
-      "statement": "An empty country of origin is not an error: with Yes and no code, the only error raised is the region code one, though no country was chosen.",
-      "kind": "rule",
-      "ref": "trace T5 request 81 body and action 32 snapshot (error summary has one item)",
-      "quote": "countryOfOrigin=&regionOfOriginRequired=Yes&regionOfOriginCodeSuffix=&internalReference=&action=continue",
-      "confidence": "inferred",
-      "note": "Inferred from the one-item error summary for a submission with no country."
+      "statement": "Without JavaScript the page renders the heading, inset, label, hint, an empty search box, the Search button, the Help with commodity codes expander and both submit buttons, but no results list and no tick boxes.",
+      "kind": "behaviour",
+      "ref": "trace snagging--what-are-you-importing-s07-what-are-you-importing-search-box-hint.zip action 30 to 35, snapshot 35 (no-JavaScript context)",
+      "quote": "<ul id=\"commodity-search-results\" class=\"app-commodity-search__results\" role=\"list\" aria-label=\"Commodity search results\" hidden=\"\"></ul>",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p2-058",
-      "statement": "A country, Yes and a region code save and continue to the commodity page at /what-are-you-importing.",
-      "kind": "behaviour",
-      "ref": "trace T5 actions 53-55, request 120",
-      "quote": "location: /design-release-2.1/what-are-you-importing",
-      "confidence": "verbatim"
+      "statement": "Without JavaScript, typing 'cattle' into the search box shows no results, and the Search button is type=button, so it submits nothing: a user without JavaScript cannot choose a commodity on this page.",
+      "kind": "constraint",
+      "ref": "trace snagging--what-are-you-importing-s08-what-are-you-importing-searching-and-ticking-species.zip actions 76 to 82, snapshot 82 (no-JavaScript context)",
+      "quote": "VALUE=cattle RESULTSHIDDEN=true RESULTS=0 SELHIDDEN=true",
+      "confidence": "inferred",
+      "note": "That nothing can be chosen is inferred from the empty results, the type=button Search button and the absence of any noscript fallback (NOSCRIPT=0). The goal requires every page to work without JavaScript."
     },
     {
       "id": "trace-prototype-dr2-1-p2-059",
-      "statement": "The country of origin is optional to proceed: saving with No for region code, an internal reference and no country continues to /what-are-you-importing.",
-      "kind": "rule",
-      "ref": "trace T4 (origin-of-the-import-country-is-optional-to-proceed-and-the-answers-are-kept) actions 14-18",
-      "quote": "expectedText: [{\"regexSource\":\"\\\\/design-release-2\\\\.1\\\\/what-are-you-importing(\\\\?.*)?$\"}]",
-      "confidence": "verbatim"
+      "statement": "Without JavaScript the 'Clear all' button in the hidden selected panel is not given the hidden attribute it carries when the page is enhanced, though the whole panel is hidden.",
+      "kind": "constraint",
+      "ref": "trace snagging--what-are-you-importing-s07-what-are-you-importing-search-box-hint.zip snapshot 35 against trace about-the-consignment--what-are-you-importing-renders-the-commodity-search-for-live-animals.zip snapshot 36",
+      "quote": "<button class=\"app-commodity-search__selected-clear\" type=\"button\">\n                Clear all\n              </button>",
+      "confidence": "verbatim",
+      "note": "With JavaScript the same button renders as '<button class=\"app-commodity-search__selected-clear\" type=\"button\" hidden=\"\">'. Not visible either way while the panel is hidden."
     },
     {
       "id": "trace-prototype-dr2-1-p2-060",
-      "statement": "Returning to the origin page keeps the saved answers: No stays chosen, the internal reference shows what was entered, and the country stays empty.",
+      "statement": "No trace removes a single species with its chip's remove button, so what removing one chip does (to the tick box, the count, an emptied commodity group) is not shown.",
       "kind": "behaviour",
-      "ref": "trace T4 actions 19-22 and action 22 snapshot",
-      "quote": "ref=REF-2026/01 | checked=regionOfOriginRequired=No | country=",
-      "confidence": "verbatim"
+      "ref": "all 9 traces of part 2",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "trace-prototype-dr2-1-p2-061",
-      "statement": "The internal reference accepts free text including letters, digits, a hyphen and a slash (REF-2026/01 was saved and shown back).",
-      "kind": "data",
-      "ref": "trace T4 action 15 (Fill \"REF-2026/01\") and action 22 snapshot",
-      "quote": "Fill \"REF-2026/01\" locator('#internal-reference')",
-      "confidence": "verbatim"
+      "statement": "No trace searches for text that matches nothing, so the page's no-results state and its wording are not shown.",
+      "kind": "copy",
+      "ref": "all 9 traces of part 2",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "trace-prototype-dr2-1-p2-062",
-      "statement": "The origin page asks for an optional internal reference, labelled 'Your internal reference for this consignment (optional)' as a medium label.",
-      "kind": "copy",
-      "ref": "trace T6 action 21 and T1 action 44 snapshot, label[for=internal-reference]",
-      "quote": "Your internal reference for this consignment (optional)",
-      "confidence": "verbatim"
+      "statement": "No trace shows whether a limit applies to how many species or commodities can be selected, or whether selecting species from several commodities passes Save and continue.",
+      "kind": "rule",
+      "ref": "trace about-the-consignment--what-are-you-importing-several-commodities-can-be-selected-together-and-cleared.zip (ends without submitting)",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "trace-prototype-dr2-1-p2-063",
-      "statement": "The internal reference has the hint 'Enter any internal reference you want to use to identify this consignment, or leave blank.'",
-      "kind": "copy",
-      "ref": "trace T1 action 44 snapshot, #internal-reference-hint",
-      "quote": "Enter any internal reference you want to use to identify this consignment, or leave blank.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p2-064",
-      "statement": "The internal reference is a single text input submitted as internalReference, with no visible length limit.",
-      "kind": "data",
-      "ref": "trace T1 action 44 snapshot, #internal-reference",
-      "quote": "<input class=\"govuk-input app-origin-reference__input\" id=\"internal-reference\" name=\"internalReference\" type=\"text\" value=\"\" aria-describedby=\"internal-reference-hint\">",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p2-065",
-      "statement": "Any length or character rules for the internal reference are never shown: no trace enters an invalid one.",
-      "kind": "rule",
-      "ref": "traces T4, T6",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p2-066",
-      "statement": "The origin page's only button is 'Save and continue': it has no 'Save and return to overview' button and no 'Cancel and return to overview' link.",
-      "kind": "copy",
-      "ref": "trace T6 actions 24-25",
-      "quote": "button[name=\"action\"] expectedText: [{\"string\":\"Save and continue\"}]; role=link[name=\"Cancel and return to overview\"] expectedNumber: 0",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p2-067",
-      "statement": "What happens when the origin page is saved without answering the region of origin code question is never shown.",
-      "kind": "rule",
-      "ref": "traces T4-T7 (every submit chooses Yes or No)",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p2-068",
-      "statement": "Validation of the region code's content (characters allowed, or a code that does not fit the country) is never shown beyond the empty-code error.",
-      "kind": "rule",
-      "ref": "trace T5 (only an empty code and '75' are submitted)",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p2-069",
-      "statement": "Whether a region code already saved, or a chosen country, is shown back on return to the origin page is never traced; only No, an empty country and the internal reference are checked on return.",
-      "kind": "behaviour",
-      "ref": "trace T4 actions 20-22",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p2-070",
-      "statement": "The origin page builds its country search and region code box outside the govuk-frontend toolbox: a custom search component (app-commodity-search, reused from the commodity search) with its own results list, custom heading and caption classes (app-origin-page__caption, app-eu-heading-m) and a govuk-input__prefix wrapped in app-region-origin-code classes. A GOV.UK accessible autocomplete or a select, and a standard govuk-caption-l, would be the standard replacements.",
+      "statement": "The page uses GOV.UK Frontend for the inset text, details, buttons, error summary, error message, tag, back link and the species checkboxes, and custom classes for the page header, status line, commodity search, results, selected panel, chips and the button group (app-origin-form-actions).",
       "kind": "constraint",
-      "ref": "trace T6 action 28 snapshot (class list in main)",
-      "quote": "app-commodity-search app-commodity-search-panel app-commodity-search-wrapper ... app-country-search__status app-country-search__value ... app-eu-heading-m ... app-origin-page__caption ... app-region-origin-code__prefix govuk-button govuk-fieldset ... govuk-input__prefix govuk-input__wrapper ... govuk-radios__conditional",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p2-071",
-      "statement": "The origin page otherwise uses standard GOV.UK components: Radios with a conditional reveal, Fieldset, Hint, Text input with a prefix, Tag and Button.",
-      "kind": "constraint",
-      "ref": "trace T6 action 28 snapshot (class list in main)",
-      "quote": "govuk-fieldset govuk-fieldset__legend govuk-fieldset__legend--m govuk-form-group ... govuk-hint govuk-input govuk-input__prefix govuk-input__wrapper govuk-label govuk-label--m govuk-radios govuk-radios__conditional ... govuk-tag",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p2-072",
-      "statement": "The notification type page uses only the standard GOV.UK Radios, Fieldset with a heading legend and caption, and Button, inside a custom app-origin-form-actions wrapper.",
-      "kind": "constraint",
-      "ref": "trace T1 action 16 snapshot (main outerHTML)",
-      "quote": "<div class=\"govuk-radios\" data-module=\"govuk-radios\"> ... <div class=\"app-origin-form-actions\"> <div class=\"app-origin-actions\">",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p2-073",
-      "statement": "The origin page and the type page are plain server-posted forms (no JavaScript-only submit): the type form posts to /design-release-2.1/notification-type and the origin form to /design-release-2.1/origin-of-the-import, each with action=continue.",
-      "kind": "integration",
-      "ref": "trace T1 action 16 and action 44 snapshots (form action), T5 request 120",
-      "quote": "<form method=\"post\" action=\"/design-release-2.1/origin-of-the-import\" novalidate=\"\" class=\"app-origin-form\">",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p2-074",
-      "statement": "No call to any external system fires on the type or origin pages: the network log holds only page loads, form posts, static assets and the prototype's live-reload socket.",
-      "kind": "integration",
-      "ref": "trace T1 requests 1-118; T3 requests 1-80; T7 requests 1-80",
-      "quote": "POST 302 notification-type; GET 200 origin-of-the-import; GET 200 country-search.js",
+      "ref": "trace about-the-consignment--what-are-you-importing-renders-the-commodity-search-for-live-animals.zip snapshot 36 and trace about-the-consignment--what-are-you-importing-nothing-selected-is-an-error.zip snapshot 35",
+      "quote": "<div class=\"app-origin-form-actions\">\n  <div class=\"app-origin-actions\">",
       "confidence": "inferred",
-      "note": "This is a GOV.UK Prototype Kit build, so state is held in the session; the real service's persistence and reference-data calls are not visible here."
+      "note": "Summary drawn from the classes read in the main element's HTML; govuk-button-group could replace the custom button wrapper."
     }
   ]
 }

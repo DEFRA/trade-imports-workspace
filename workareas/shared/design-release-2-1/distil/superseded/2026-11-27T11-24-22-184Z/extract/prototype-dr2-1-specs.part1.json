@@ -1,0 +1,870 @@
+{
+  "source": "prototype:dr2-1-specs",
+  "structure": "Part 1 read e2e/about-the-consignment.fit.spec.js (351 lines) and e2e/support/journey.js (270 lines) in full. The spec has four describe blocks plus one germinal block, 20 tests in all, following DR2.1 task-list section 1 (About the consignment) under /design-release-2.1: 'notification type' (3 tests: /create-notification redirects to /notification-type with five type options, its required error, draft reference GBN-AG-26-..., a /live-animals dashboard 'Create new' that skips the type question, and plants for planting reaching an empty commodity search); 'origin of the import' (4 tests: title, heading, caption, country search placeholder, region of origin code Yes/No with hint, revealed code input with country prefix and 'Enter up to 5 characters.', empty-code error, internal reference field and hint, no hub button or cancel link, country optional, answers kept, country search pick); 'what are you importing' (5 tests: ITAHC copy, search label and hint, two action buttons, cancel link to /notification-hub, commodity code help and Trade Tariff link, 'Select a commodity' error, species search with result count and Latin-name checkboxes, selection panel with count, groups, per-species remove and Clear all, hub save without validating); 'main import reason' (7 tests: five reasons with hints, reason optional, internal market with 11 purposes and its required error, transhipment destination country, transit port of exit and destination country, temporary admission horses exit date and port of exit with real-date error, the /prototype/reason-for-import seed route); 'germinal products: section 1' (1 test: ?category=germinal-products start, back link to /germinal-products, germinal search hint and 'semen' results, reasons reduced to Internal market and Transit, purposes reduced to four). journey.js supplies the shared assertions these tests make (error summary title and linked messages, inline errors, back links, draft reference, action button values, the type-and-pick autocomplete, commodity selection hidden value, MOJ date picker input, species fixtures, the /design-release-2.1 mount); its later helpers (arrival, documents, addresses, transporter, consignment details) belong to other parts and are not claimed here. Claims keep the ids of the earlier part 1 extract: the spec and helper are unchanged since it, and every claim was re-checked against them. Gaps recorded: Potatoes and Wood products types, plants after the commodity page, hub save keeping a selection, Re-entry's reveal, and where a complete temporary admission answer leads.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-specs-p1-001",
+      "statement": "Opening /create-notification with no category redirects to the notification type question at /notification-type.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:36-38, test 'notification type > create new asks what is being imported before the journey starts'",
+      "quote": "await page.goto(url('/create-notification'))\n      await expect(page).toHaveURL(urlFor('/notification-type'))",
+      "confidence": "verbatim",
+      "note": "The notification type question is described in the spec as new in DR2.1: \"Section 1 of the DR2.1 task list: notification type (new in DR2.1), origin,\"."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-002",
+      "statement": "The notification type page's title is 'What are you importing? - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:39, test 'notification type > create new asks what is being imported before the journey starts'",
+      "quote": "await expect(page).toHaveTitle('What are you importing? - Import notification service - GOV.UK')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-003",
+      "statement": "The notification type question is a fieldset whose legend is the page heading 'What are you importing?' with the caption 'About the consignment'.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:40, test 'notification type > create new asks what is being imported before the journey starts'",
+      "quote": "await expect(page.locator('legend h1')).toHaveText(/About the consignment\\s+What are you importing\\?/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-004",
+      "statement": "The notification type question offers five radio options, in this order: Live animals; Germinal products (semen, ova, embryos); Plants for planting; Potatoes (seed and ware); Wood products.",
+      "kind": "data",
+      "ref": "e2e/about-the-consignment.fit.spec.js:41-47, test 'notification type > create new asks what is being imported before the journey starts'",
+      "quote": "await expect(page.locator('input[name=\"notificationType\"] + label')).toHaveText([\n        'Live animals',\n        'Germinal products (semen, ova, embryos)',\n        'Plants for planting',\n        'Potatoes (seed and ware)',\n        'Wood products'\n      ])",
+      "confidence": "verbatim",
+      "note": "The field is named notificationType; option values seen are live-animals and plants-for-planting (and the germinal-products category)."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-005",
+      "statement": "The notification type page's back link goes to the design release root (/design-release-2.1), the prototype's dashboard start.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:48, test 'notification type > create new asks what is being imported before the journey starts'; url() in e2e/support/journey.js:5",
+      "quote": "await expectBackLink(page, url())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-006",
+      "statement": "The notification type page has one action button, 'Continue', and no 'Save and return to overview' button.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:49, test 'notification type > create new asks what is being imported before the journey starts'",
+      "quote": "await expect(page.locator('button[name=\"action\"]')).toHaveText(['Continue'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-007",
+      "statement": "Continuing from the notification type page with nothing chosen shows an error summary with the message 'Select what you are importing'.",
+      "kind": "rule",
+      "ref": "e2e/about-the-consignment.fit.spec.js:53-55, test 'notification type > create new asks what is being imported before the journey starts'",
+      "quote": "await expectErrorSummary(page, ['Select what you are importing'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-008",
+      "statement": "The notification type error is also shown inline on the question, and the error summary link points to #notificationType.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:56-57, test 'notification type > create new asks what is being imported before the journey starts'",
+      "quote": "await expectInlineError(page, 'Select what you are importing')\n      await expect(page.locator('.govuk-error-summary__list a')).toHaveAttribute('href', '#notificationType')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-009",
+      "statement": "Choosing Live animals and continuing opens the origin of the import page (/origin-of-the-import).",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:61-64, test 'notification type > create new asks what is being imported before the journey starts'",
+      "quote": "await page.locator('input[name=\"notificationType\"][value=\"live-animals\"]').check()\n      await saveAndContinue(page)\n      await expect(page).toHaveURL(urlFor('/origin-of-the-import'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-010",
+      "statement": "Choosing Live animals creates a draft notification whose reference has the form GBN-AG-26- followed by capital letters and digits, shown on the origin page.",
+      "kind": "data",
+      "ref": "e2e/about-the-consignment.fit.spec.js:65, test 'notification type > create new asks what is being imported before the journey starts'; readReference in e2e/support/journey.js:60-65",
+      "quote": "expect(await readReference(page)).toMatch(/^GBN-AG-26-[A-Z0-9]+$/)",
+      "confidence": "verbatim",
+      "note": "readReference matches the general shape GBN-[A-Z]{2}-\\d{2}-[A-Z0-9]+ in the page text; the journey.js comment calls it 'The draft strip (status tag + notification reference) on journey pages'. 26 is presumably the year; the spec does not say."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-011",
+      "statement": "Journey pages show a draft strip with a 'Draft' status tag beside the notification reference, from the first page after the type question.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:66, test 'notification type > create new asks what is being imported before the journey starts'; e2e/support/journey.js:60",
+      "quote": "await expect(page.locator('main')).toContainText('Draft')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-012",
+      "statement": "The live animals category dashboard (/live-animals) has a 'Create new' button that starts a notification straight at the origin page, skipping the notification type question.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:70-73, test 'notification type > starting from a category dashboard skips the type question'",
+      "quote": "await page.goto(url('/live-animals'))\n    await page.locator('main').getByRole('button', { name: 'Create new' }).click()\n    await expect(page).toHaveURL(urlFor('/origin-of-the-import'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-013",
+      "statement": "When a notification is started from the live animals category dashboard, the origin page's back link returns to /live-animals rather than to the type question.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:74, test 'notification type > starting from a category dashboard skips the type question'",
+      "quote": "await expectBackLink(page, url('/live-animals'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-014",
+      "statement": "Choosing Plants for planting runs the same first pages as live animals: the origin page, then the commodity search at /what-are-you-importing.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:77-80, test 'notification type > plants for planting reaches the commodity search, which offers nothing to pick'",
+      "quote": "await startNotification(page, 'plants-for-planting')\n    await answerOrigin(page)\n    await expect(page).toHaveURL(urlFor('/what-are-you-importing'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-015",
+      "statement": "For a plants for planting notification, the commodity search offers nothing to pick: typing 'cattle' shows no species checkboxes.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:81-84, test 'notification type > plants for planting reaches the commodity search, which offers nothing to pick'",
+      "quote": "await input.pressSequentially('cattle', { delay: 30 })\n    await expect(page.locator('input[name=\"commodity-selection\"]')).toHaveCount(0)",
+      "confidence": "verbatim",
+      "note": "The test searches only 'cattle', an animal term; it does not show whether any plant term returns results. The test name says the search 'offers nothing to pick'."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-016",
+      "statement": "The suite does not show what happens after choosing Potatoes (seed and ware) or Wood products on the notification type question, nor what a plants for planting journey does after the commodity search.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js, describe 'notification type' (lines 34-87): only live-animals, plants-for-planting and the germinal-products category are exercised",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-017",
+      "statement": "The origin page's title is 'Origin of the import - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:95, test 'origin of the import > renders the origin questions'",
+      "quote": "await expect(page).toHaveTitle('Origin of the import - Import notification service - GOV.UK')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-018",
+      "statement": "The origin page's heading is 'Origin of the import', with the caption 'About the consignment'.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:96-98, test 'origin of the import > renders the origin questions'",
+      "quote": "await expectHeading(page, 'Origin of the import')\n    const main = page.locator('main')\n    await expect(main).toContainText('About the consignment')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-019",
+      "statement": "The origin page has a 'Country of origin' sub-heading over a country search input whose placeholder is 'Search for a country'.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:99-100, test 'origin of the import > renders the origin questions'",
+      "quote": "await expect(main.getByRole('heading', { name: 'Country of origin' })).toBeVisible()\n    await expect(page.locator('#country-of-origin')).toHaveAttribute('placeholder', 'Search for a country')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-020",
+      "statement": "The origin page asks 'Does the consignment have a region of origin code?' as a Yes or No question.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:101 and 115, 140, tests 'origin of the import > renders the origin questions' and 'region code: Yes reveals...'",
+      "quote": "await expect(main).toContainText('Does the consignment have a region of origin code?')",
+      "confidence": "verbatim",
+      "note": "The radio is named regionOfOriginRequired with values Yes and No."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-021",
+      "statement": "The region of origin code question has the hint 'Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.'",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:102, test 'origin of the import > renders the origin questions'",
+      "quote": "await expect(main).toContainText('Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-022",
+      "statement": "The origin page has an optional text field labelled 'Your internal reference for this consignment (optional)'.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:103, test 'origin of the import > renders the origin questions'",
+      "quote": "await expect(page.getByLabel('Your internal reference for this consignment (optional)')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-023",
+      "statement": "The internal reference field has the hint 'Enter any internal reference you want to use to identify this consignment, or leave blank.'",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:104, test 'origin of the import > renders the origin questions'",
+      "quote": "await expect(main).toContainText('Enter any internal reference you want to use to identify this consignment, or leave blank.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-024",
+      "statement": "When reached from the notification type question, the origin page's back link goes to /notification-type.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:105, test 'origin of the import > renders the origin questions'",
+      "quote": "await expectBackLink(page, url('/notification-type'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-025",
+      "statement": "The origin page offers only the forward button 'Save and continue': it has no 'Save and return to overview' button.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:106-107, test 'origin of the import > renders the origin questions'",
+      "quote": "// DR2.1 origin offers only the forward button: no hub save, no cancel link.\n    await expect(page.locator('button[name=\"action\"]')).toHaveText(['Save and continue'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-026",
+      "statement": "The origin page has no 'Cancel and return to overview' link.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:108, test 'origin of the import > renders the origin questions'",
+      "quote": "await expect(main.getByRole('link', { name: 'Cancel and return to overview' })).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-027",
+      "statement": "The region of origin code input is hidden until the user answers Yes to the region of origin code question.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:113-116, test 'origin of the import > region code: Yes reveals the code box with the country prefix, and an empty code is an error'",
+      "quote": "await expect(page.locator('#region-of-origin-code-suffix')).toBeHidden()\n      await page.locator('input[name=\"regionOfOriginRequired\"][value=\"Yes\"]').check()\n      await expect(page.getByLabel('Enter the region of origin code')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-028",
+      "statement": "The revealed region of origin code input is labelled 'Enter the region of origin code'.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:116, test 'origin of the import > region code: Yes reveals the code box with the country prefix, and an empty code is an error'",
+      "quote": "await expect(page.getByLabel('Enter the region of origin code')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-029",
+      "statement": "The region of origin code input has the hint 'Enter up to 5 characters.'",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:117, test 'origin of the import > region code: Yes reveals the code box with the country prefix, and an empty code is an error'",
+      "quote": "await expect(page.locator('main')).toContainText('Enter up to 5 characters.')",
+      "confidence": "verbatim",
+      "note": "The suite does not assert a length error for more than 5 characters."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-030",
+      "statement": "Answering Yes to the region of origin code question and leaving the code empty shows the error 'Enter the region of origin code' in the error summary, linked to #region-of-origin-code-suffix.",
+      "kind": "rule",
+      "ref": "e2e/about-the-consignment.fit.spec.js:121-124, test 'origin of the import > region code: Yes reveals the code box with the country prefix, and an empty code is an error'",
+      "quote": "await expectErrorSummary(page, ['Enter the region of origin code'])\n      await expect(page.locator('.govuk-error-summary__list a')).toHaveAttribute('href', '#region-of-origin-code-suffix')",
+      "confidence": "verbatim",
+      "note": "No country had been chosen at this point, and the summary lists only the region code error: no country error is raised."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-031",
+      "statement": "The empty region of origin code error is also shown inline under the code input.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:125, test 'origin of the import > region code: Yes reveals the code box with the country prefix, and an empty code is an error'",
+      "quote": "await expectInlineError(page, 'Enter the region of origin code')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-032",
+      "statement": "The region of origin code input shows the chosen country's two-letter code as a fixed prefix before the box the user types into: choosing France shows 'FR'.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:129-131, test 'origin of the import > region code: Yes reveals the code box with the country prefix, and an empty code is an error'",
+      "quote": "await pickFromAutocomplete(page, 'country-of-origin', 'Fran', 'France')\n      await expect(page.locator('#region-of-origin-code-prefix')).toHaveText('FR')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-033",
+      "statement": "With a country chosen, Yes answered and a code entered (75 after the FR prefix), Save and continue goes to /what-are-you-importing.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:132-135, test 'origin of the import > region code: Yes reveals the code box with the country prefix, and an empty code is an error'",
+      "quote": "await page.locator('#region-of-origin-code-suffix').fill('75')\n      await capture(page, testInfo, 'region-code-prefix')\n      await saveAndContinue(page)\n      await expect(page).toHaveURL(urlFor('/what-are-you-importing'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-034",
+      "statement": "Country of origin is optional to proceed: answering No to the region code question with no country chosen still continues to /what-are-you-importing.",
+      "kind": "rule",
+      "ref": "e2e/about-the-consignment.fit.spec.js:139-143, test 'origin of the import > country is optional to proceed and the answers are kept'",
+      "quote": "await page.locator('input[name=\"regionOfOriginRequired\"][value=\"No\"]').check()\n    await page.locator('#internal-reference').fill('REF-2026/01')\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/what-are-you-importing'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-035",
+      "statement": "Origin answers are saved: returning to the origin page shows the region code answer No still selected and the internal reference still filled in.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:144-146, test 'origin of the import > country is optional to proceed and the answers are kept'",
+      "quote": "await page.goto(url('/origin-of-the-import'))\n    await expect(page.locator('input[name=\"regionOfOriginRequired\"][value=\"No\"]')).toBeChecked()\n    await expect(page.locator('#internal-reference')).toHaveValue('REF-2026/01')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-036",
+      "statement": "The internal reference accepts free text including a hyphen and a slash, such as 'REF-2026/01'.",
+      "kind": "data",
+      "ref": "e2e/about-the-consignment.fit.spec.js:141 and 146, test 'origin of the import > country is optional to proceed and the answers are kept'",
+      "quote": "await page.locator('#internal-reference').fill('REF-2026/01')",
+      "confidence": "inferred",
+      "note": "Inferred because the test saves and re-reads this value without an error; the suite asserts no format or length rule for the internal reference."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-037",
+      "statement": "When no country of origin was chosen, the saved country of origin stays empty on return to the origin page.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:147, test 'origin of the import > country is optional to proceed and the answers are kept'",
+      "quote": "await expect(page.locator('input[name=\"countryOfOrigin\"]')).toHaveValue('')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-038",
+      "statement": "The country of origin search lists matching countries as the user types: typing 'Neth' offers Netherlands.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:151-154, test 'origin of the import > the country search offers matching countries and keeps the pick'",
+      "quote": "await input.pressSequentially('Neth', { delay: 30 })\n    await expect(page.locator('button.app-country-search__option', { hasText: 'Netherlands' })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-039",
+      "statement": "Picking a country from the search stores the country name (for example 'Netherlands') as the country of origin value the server reads.",
+      "kind": "data",
+      "ref": "e2e/about-the-consignment.fit.spec.js:156-157, test 'origin of the import > the country search offers matching countries and keeps the pick'; pickFromAutocomplete comment in e2e/support/journey.js:67-71",
+      "quote": "await page.locator('button.app-country-search__option', { hasText: 'Netherlands' }).click()\n    await expect(page.locator('input[name=\"countryOfOrigin\"]')).toHaveValue('Netherlands')",
+      "confidence": "verbatim",
+      "note": "The value is the display name, not an ISO code, yet the region code prefix shows the two-letter code (claim p1-032)."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-040",
+      "statement": "The country of origin, port of entry and transit country fields share one bespoke type-and-pick autocomplete that renders its options on each keystroke and writes a hidden value when an option is clicked.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:67-86 (pickFromAutocomplete)",
+      "quote": "Bespoke type-and-pick autocompletes (country of origin, port of entry, transit\n * country). They render on each input event, so type per key, then click the\n * rendered option, which writes the hidden value the server reads.",
+      "confidence": "verbatim",
+      "note": "Port of entry and transit country are later parts' pages; claimed here only as the shared component the origin tests use."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-041",
+      "statement": "The commodity page's title is 'What are you importing? - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:169, test 'what are you importing > renders the commodity search for live animals'",
+      "quote": "await expect(page).toHaveTitle('What are you importing? - Import notification service - GOV.UK')",
+      "confidence": "verbatim",
+      "note": "The same title and heading wording as the notification type question (claim p1-002)."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-042",
+      "statement": "The commodity page's heading is 'What are you importing?'.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:170, test 'what are you importing > renders the commodity search for live animals'",
+      "quote": "await expectHeading(page, 'What are you importing?')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-043",
+      "statement": "The live animals commodity page says 'You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC.'",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:172, test 'what are you importing > renders the commodity search for live animals'",
+      "quote": "await expect(main).toContainText('You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-044",
+      "statement": "The commodity page has a search input labelled 'Search for a commodity'.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:173, test 'what are you importing > renders the commodity search for live animals'",
+      "quote": "await expect(page.getByLabel('Search for a commodity')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-045",
+      "statement": "For live animals, the commodity search hint is 'You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).'",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:174, test 'what are you importing > renders the commodity search for live animals'",
+      "quote": "await expect(main).toContainText('You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-046",
+      "statement": "The commodity page has two action buttons, in order: 'Save and continue' and 'Save and return to overview'.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:175, test 'what are you importing > renders the commodity search for live animals'",
+      "quote": "await expect(page.locator('button[name=\"action\"]')).toHaveText(['Save and continue', 'Save and return to overview'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-047",
+      "statement": "The commodity page has a 'Cancel and return to overview' link to the notification overview (/notification-hub).",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:176, test 'what are you importing > renders the commodity search for live animals'",
+      "quote": "await expect(main.getByRole('link', { name: 'Cancel and return to overview' })).toHaveAttribute('href', url('/notification-hub'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-048",
+      "statement": "The commodity page's back link goes to /origin-of-the-import.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:177, test 'what are you importing > renders the commodity search for live animals'",
+      "quote": "await expectBackLink(page, url('/origin-of-the-import'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-049",
+      "statement": "The commodity page has a 'Help with commodity codes' expandable section which, opened, says 'Commodity codes are internationally recognised reference numbers.'",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:180-182, test 'what are you importing > renders the commodity search for live animals'",
+      "quote": "await main.getByText('Help with commodity codes').click()\n      await expect(main).toContainText('Commodity codes are internationally recognised reference numbers.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-050",
+      "statement": "The commodity code help links to the 'Trade Tariff tool' at https://www.gov.uk/trade-tariff.",
+      "kind": "integration",
+      "ref": "e2e/about-the-consignment.fit.spec.js:183, test 'what are you importing > renders the commodity search for live animals'",
+      "quote": "await expect(main.getByRole('link', { name: 'Trade Tariff tool' })).toHaveAttribute('href', 'https://www.gov.uk/trade-tariff')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-051",
+      "statement": "Save and continue on the commodity page with no commodity selected shows the error 'Select a commodity' in the error summary, linked to #commodity-search.",
+      "kind": "rule",
+      "ref": "e2e/about-the-consignment.fit.spec.js:189-191, test 'what are you importing > nothing selected is an error'",
+      "quote": "await expectErrorSummary(page, ['Select a commodity'])\n    await expect(page.locator('.govuk-error-summary__list a')).toHaveAttribute('href', '#commodity-search')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-052",
+      "statement": "The 'Select a commodity' error is also shown inline on the commodity search.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:192, test 'what are you importing > nothing selected is an error'",
+      "quote": "await expectInlineError(page, 'Select a commodity')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-053",
+      "statement": "Searching the commodity list for 'cattle' shows the commodity group 'Cattle (0102)', listing its species.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:197-200, test 'what are you importing > search lists the species of a commodity; ticking one adds it to the selection'",
+      "quote": "await input.pressSequentially('cattle', { delay: 30 })\n    await expect(page.locator('main')).toContainText('Cattle (0102)')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-054",
+      "statement": "The commodity search announces how many results it found, such as '11 results available' for 'cattle'.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:201, test 'what are you importing > search lists the species of a commodity; ticking one adds it to the selection'",
+      "quote": "await expect(page.locator('main')).toContainText('11 results available')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-055",
+      "statement": "Each species in the commodity search results is a checkbox labelled with its Latin name, such as 'Bos taurus' under Cattle.",
+      "kind": "data",
+      "ref": "e2e/about-the-consignment.fit.spec.js:202 and 205, test 'what are you importing > search lists the species of a commodity; ticking one adds it to the selection'",
+      "quote": "await expect(page.locator('label[for=\"commodity-species-cattle-bos-taurus\"]')).toContainText('Bos taurus')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-056",
+      "statement": "Ticking a species adds it to a selection panel that shows the count ('1 selected'), the commodity group with its code ('Cattle (0102):') and the species ('Bos taurus').",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:205-210, test 'what are you importing > search lists the species of a commodity; ticking one adds it to the selection'",
+      "quote": "const selected = page.locator('#commodity-search-selected')\n    await expect(selected).toContainText('1 selected')\n    await expect(selected).toContainText('Cattle (0102):')\n    await expect(selected).toContainText('Bos taurus')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-057",
+      "statement": "Pressing Escape in the commodity search closes the results list.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:206; chooseSpecies comment in e2e/support/journey.js:88-101",
+      "quote": "then close the results so they do not\n * cover the buttons.",
+      "confidence": "inferred",
+      "note": "Inferred from the helper's comment and its press('Escape'); no test asserts the list is closed."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-058",
+      "statement": "The commodity selection panel has a 'Clear all' button.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:211, test 'what are you importing > search lists the species of a commodity; ticking one adds it to the selection'",
+      "quote": "await expect(selected.getByRole('button', { name: 'Clear all' })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-059",
+      "statement": "Several commodities can be selected on one notification: choosing a horse and a pig shows '2 selected' with both 'Horse (0101):' and 'Pig (0103):' groups.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:216-221, test 'what are you importing > several commodities can be selected together, and cleared'",
+      "quote": "await chooseSpecies(page, SPECIES.horse.search, SPECIES.horse.id)\n    await chooseSpecies(page, 'pig', 'pig-sus-scrofa')\n    const selected = page.locator('#commodity-search-selected')\n    await expect(selected).toContainText('2 selected')\n    await expect(selected).toContainText('Horse (0101):')\n    await expect(selected).toContainText('Pig (0103):')",
+      "confidence": "verbatim",
+      "note": "The suite does not say how this sits with the page's 'separate notification for every single ITAHC' copy (claim p1-043)."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-060",
+      "statement": "Each selected species has its own remove button named 'Remove' followed by its Latin name, such as 'Remove Sus scrofa domesticus'.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:222, test 'what are you importing > several commodities can be selected together, and cleared'",
+      "quote": "await expect(selected.getByRole('button', { name: 'Remove Sus scrofa domesticus' })).toBeVisible()",
+      "confidence": "verbatim",
+      "note": "The pig species id is pig-sus-scrofa while its displayed Latin name is Sus scrofa domesticus."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-061",
+      "statement": "'Clear all' empties the commodity selection: the hidden selected-species value becomes an empty list.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:224-225, test 'what are you importing > several commodities can be selected together, and cleared'",
+      "quote": "await selected.getByRole('button', { name: 'Clear all' }).click()\n    await expect(page.locator('input.app-commodity-search__species-value')).toHaveValue('[]')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-062",
+      "statement": "The commodity selection is submitted as a hidden field holding a JSON list of the selected species ids (such as cattle-bos-taurus).",
+      "kind": "data",
+      "ref": "e2e/support/journey.js:88-101 (chooseSpecies); e2e/about-the-consignment.fit.spec.js:225",
+      "quote": "The commodity search: type, tick the species checkbox, wait for the hidden\n * selectedSpecies value to carry it",
+      "confidence": "inferred",
+      "note": "Inferred from the helper waiting for the hidden value to contain the species id and from the cleared value being '[]'."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-063",
+      "statement": "Species the walks pick, with their commodity codes and Latin names: Cattle 0102 Bos taurus; Horse 0101 'Equus cabalus'; Pig 0103 Sus scrofa domesticus; Cattle, Semen 05111000 Bos taurus.",
+      "kind": "data",
+      "ref": "e2e/support/journey.js:111-117 (SPECIES); e2e/about-the-consignment.fit.spec.js:200, 220-222, 335",
+      "quote": "cattle: { search: 'cattle', id: 'cattle-bos-taurus', latin: 'Bos taurus', code: '0102', name: 'Cattle' },\n  horse: { search: 'horse', id: 'horse-equus-caballus', latin: 'Equus cabalus', code: '0101', name: 'Horse' },\n  cattleSemen: { search: 'semen', id: 'cattle-semen-bos-taurus', latin: 'Bos taurus', code: '05111000', name: 'Cattle, Semen' }",
+      "confidence": "verbatim",
+      "note": "The horse's Latin name in the fixture is spelt 'Equus cabalus' while its id is horse-equus-caballus; this part's tests do not assert the horse's Latin name, so which spelling the prototype shows is not proven here."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-064",
+      "statement": "'Save and return to overview' on the commodity page goes to the notification overview (/notification-hub) without validating, even with no commodity selected.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:228-231, test 'what are you importing > save and return to overview keeps the selection without validating'",
+      "quote": "await saveAndReturnToOverview(page)\n    await expect(page).toHaveURL(urlFor('/notification-hub'))",
+      "confidence": "verbatim",
+      "note": "The test name says it 'keeps the selection', but the test makes no selection and does not check one is kept."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-065",
+      "statement": "The suite does not prove that 'Save and return to overview' keeps a commodity selection, though its test name says so.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:228-231, test 'what are you importing > save and return to overview keeps the selection without validating'",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-066",
+      "statement": "Selecting a commodity and pressing Save and continue on the commodity page goes to the main import reason page (/reason-for-import).",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:235-239, beforeEach of 'main import reason'",
+      "quote": "await answerCommodity(page, SPECIES.cattle)\n    await expect(page).toHaveURL(urlFor('/reason-for-import'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-067",
+      "statement": "The main import reason page's title is 'Main import reason - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:243, test 'main import reason > lists every reason with its hint'",
+      "quote": "await expect(page).toHaveTitle('Main import reason - Import notification service - GOV.UK')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-068",
+      "statement": "The main import reason page's heading is 'Main import reason', with the caption 'About the consignment'.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:244-245, test 'main import reason > lists every reason with its hint'",
+      "quote": "await expectHeading(page, 'Main import reason')\n    await expect(page.locator('main')).toContainText('About the consignment')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-069",
+      "statement": "For live animals, the main import reason offers five radio options, in this order: Internal market; Transhipment or onward travel; Transit; Re-entry; Temporary admission horses.",
+      "kind": "data",
+      "ref": "e2e/about-the-consignment.fit.spec.js:12-18 (REASON_HINTS) and 246, test 'main import reason > lists every reason with its hint'",
+      "quote": "await expect(page.locator('input[name=\"importReason\"] + label')).toHaveText(Object.keys(REASON_HINTS))",
+      "confidence": "verbatim",
+      "note": "The radio is named importReason and its values are the labels themselves (for example value=\"Internal market\")."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-070",
+      "statement": "The Internal market reason has the hint 'For imports of animals intended for sale or use in Great Britain (England, Scotland or Wales).'",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:13 and 247-249, test 'main import reason > lists every reason with its hint'",
+      "quote": "'Internal market': 'For imports of animals intended for sale or use in Great Britain (England, Scotland or Wales).'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-071",
+      "statement": "The Transhipment or onward travel reason has the hint 'For animals intended for direct travel to a third country, that will stay only within the same port or airport in Great Britain while moving to another means of transport.'",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:14 and 247-249, test 'main import reason > lists every reason with its hint'",
+      "quote": "'Transhipment or onward travel': 'For animals intended for direct travel to a third country, that will stay only within the same port or airport in Great Britain while moving to another means of transport.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-072",
+      "statement": "The Transit reason has the hint 'For animals moving through Great Britain for direct travel to a third country, that will enter Great Britain at one port or airport and leave from a different one within England, Scotland or Wales.'",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:15 and 247-249, test 'main import reason > lists every reason with its hint'",
+      "quote": "Transit: 'For animals moving through Great Britain for direct travel to a third country, that will enter Great Britain at one port or airport and leave from a different one within England, Scotland or Wales.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-073",
+      "statement": "The Re-entry reason has the hint 'For animals authorised for re-entry, or rejected exports re-entering Great Britain.'",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:16 and 247-249, test 'main import reason > lists every reason with its hint'",
+      "quote": "'Re-entry': 'For animals authorised for re-entry, or rejected exports re-entering Great Britain.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-074",
+      "statement": "The Temporary admission horses reason has the hint 'For horses authorised for temporary entry.'",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:17 and 247-249, test 'main import reason > lists every reason with its hint'",
+      "quote": "'Temporary admission horses': 'For horses authorised for temporary entry.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-075",
+      "statement": "The main import reason page's back link goes to /what-are-you-importing.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:250, test 'main import reason > lists every reason with its hint'",
+      "quote": "await expectBackLink(page, url('/what-are-you-importing'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-076",
+      "statement": "A main import reason is optional to proceed: Save and continue with no reason chosen shows no error and goes to /consignment-details.",
+      "kind": "rule",
+      "ref": "e2e/about-the-consignment.fit.spec.js:254-258, test 'main import reason > a reason is optional to proceed'",
+      "quote": "await saveAndContinue(page)\n    await expectNoErrorSummary(page)\n    await expect(page).toHaveURL(urlFor('/consignment-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-077",
+      "statement": "Choosing Internal market reveals a 'Purpose in the internal market' question.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:261-263, test 'main import reason > internal market reveals the purposes and needs one'",
+      "quote": "await page.locator('input[name=\"importReason\"][value=\"Internal market\"]').check()\n    await expect(page.locator('input[name=\"internalMarketPurpose\"] + label')).toHaveText(INTERNAL_MARKET_PURPOSES)\n    await expect(page.locator('main')).toContainText('Purpose in the internal market')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-078",
+      "statement": "For live animals, the internal market purpose offers 11 radio options, in this order: Transfer of ownership - Sale/gift; Transfer of ownership - Rescue; Breeding; Research; Racing, competition, show or training; Approved premises or body; Companion animal not for resale or rehoming; Production; Slaughter; Fattening; Restocking.",
+      "kind": "data",
+      "ref": "e2e/about-the-consignment.fit.spec.js:20-32 (INTERNAL_MARKET_PURPOSES) and 262, test 'main import reason > internal market reveals the purposes and needs one'",
+      "quote": "const INTERNAL_MARKET_PURPOSES = [\n  'Transfer of ownership - Sale/gift',\n  'Transfer of ownership - Rescue',\n  'Breeding',\n  'Research',\n  'Racing, competition, show or training',\n  'Approved premises or body',\n  'Companion animal not for resale or rehoming',\n  'Production',\n  'Slaughter',\n  'Fattening',\n  'Restocking'\n]",
+      "confidence": "verbatim",
+      "note": "The radio is named internalMarketPurpose and its values are the labels (for example value=\"Breeding\")."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-079",
+      "statement": "Once Internal market is chosen, a purpose is required: continuing without one shows the error 'Select a purpose in the internal market', linked to #internal-market-purpose.",
+      "kind": "rule",
+      "ref": "e2e/about-the-consignment.fit.spec.js:265-267, test 'main import reason > internal market reveals the purposes and needs one'",
+      "quote": "await expectErrorSummary(page, ['Select a purpose in the internal market'])\n    await expect(page.locator('.govuk-error-summary__list a')).toHaveAttribute('href', '#internal-market-purpose')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-080",
+      "statement": "Internal market with a purpose (Breeding) continues to /consignment-details.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:269-271, test 'main import reason > internal market reveals the purposes and needs one'",
+      "quote": "await page.locator('input[name=\"internalMarketPurpose\"][value=\"Breeding\"]').check()\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/consignment-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-081",
+      "statement": "Choosing Transhipment or onward travel reveals a 'Destination country' dropdown (a select list, not the type-ahead search).",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:275-277 and 282, test 'main import reason > transhipment needs a destination country'",
+      "quote": "await expect(page.locator('label[for=\"transhipment-destination-country\"]')).toHaveText('Destination country')\n    await expect(page.locator('#transhipment-destination-country')).toBeVisible()",
+      "confidence": "verbatim",
+      "note": "That it is a select follows from the test choosing with selectOption."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-082",
+      "statement": "Transhipment or onward travel needs a destination country: continuing without one shows the error 'Select a destination country'.",
+      "kind": "rule",
+      "ref": "e2e/about-the-consignment.fit.spec.js:279-280, test 'main import reason > transhipment needs a destination country'",
+      "quote": "await expectErrorSummary(page, ['Select a destination country'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-083",
+      "statement": "The transhipment destination country list includes 'Republic of Ireland', and choosing it continues to /consignment-details.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:282-284, test 'main import reason > transhipment needs a destination country'",
+      "quote": "await page.locator('#transhipment-destination-country').selectOption('Republic of Ireland')\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/consignment-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-084",
+      "statement": "Choosing Transit reveals a port of exit dropdown whose first option after the placeholder is 'Edinburgh Airport (animals) - GBEDI4', with options shown as port name then code.",
+      "kind": "data",
+      "ref": "e2e/about-the-consignment.fit.spec.js:288-289, test 'main import reason > transit needs a port of exit and a destination country'",
+      "quote": "await expect(page.locator('#transit-exit-border-control-post option').nth(1)).toHaveText('Edinburgh Airport (animals) - GBEDI4')",
+      "confidence": "verbatim",
+      "note": "The field id is transit-exit-border-control-post, so the port of exit list is a list of border control posts. The test does not assert the field's label."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-085",
+      "statement": "Transit needs a port of exit and a destination country: continuing with neither shows two errors, in order, 'Select a port of exit' and 'Select a destination country'.",
+      "kind": "rule",
+      "ref": "e2e/about-the-consignment.fit.spec.js:291-292, test 'main import reason > transit needs a port of exit and a destination country'",
+      "quote": "await expectErrorSummary(page, ['Select a port of exit', 'Select a destination country'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-086",
+      "statement": "Transit's port of exit list includes 'Holyhead POE - GBHLY' and its destination country dropdown includes 'Republic of Ireland'; with both chosen, Save and continue goes to /consignment-details.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:294-297, test 'main import reason > transit needs a port of exit and a destination country'",
+      "quote": "await page.locator('#transit-exit-border-control-post').selectOption('Holyhead POE - GBHLY')\n    await page.locator('#transit-destination-country').selectOption('Republic of Ireland')\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/consignment-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-087",
+      "statement": "Choosing Temporary admission horses reveals an 'Exit date' field with the hint 'For example, 27/3/2026'.",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:301-303, test 'main import reason > temporary admission horses needs a real exit date and a port of exit'",
+      "quote": "await expect(page.getByLabel('Exit date')).toBeVisible()\n    await expect(page.locator('main')).toContainText('For example, 27/3/2026')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-088",
+      "statement": "Temporary admission horses also reveals a port of exit dropdown (#temporary-admission-port-of-exit).",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:155-158 (answerReason); e2e/about-the-consignment.fit.spec.js:307",
+      "quote": "if (exitPort) await page.locator('#temporary-admission-port-of-exit').selectOption(exitPort)",
+      "confidence": "inferred",
+      "note": "Inferred from the helper choosing it with selectOption and from the 'Select a port of exit' error; this part's test never shows its label or options."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-089",
+      "statement": "Temporary admission horses needs an exit date and a port of exit: continuing with neither shows two errors, in order, 'Enter an exit date' and 'Select a port of exit'.",
+      "kind": "rule",
+      "ref": "e2e/about-the-consignment.fit.spec.js:306-307, test 'main import reason > temporary admission horses needs a real exit date and a port of exit'",
+      "quote": "await expectErrorSummary(page, ['Enter an exit date', 'Select a port of exit'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-090",
+      "statement": "An exit date that is not a real date (such as 31/2/2026) shows the error 'Enter a real date'.",
+      "kind": "rule",
+      "ref": "e2e/about-the-consignment.fit.spec.js:310-312, test 'main import reason > temporary admission horses needs a real exit date and a port of exit'",
+      "quote": "await fillDate(page, '#temporary-admission-exit-date', '31/2/2026')\n    await saveAndContinue(page)\n    await expectErrorSummary(page, ['Enter a real date', 'Select a port of exit'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-091",
+      "statement": "The suite does not show where a complete Temporary admission horses answer leads, nor any rule on the exit date being in the past or future.",
+      "kind": "rule",
+      "ref": "e2e/about-the-consignment.fit.spec.js:300-314, test 'main import reason > temporary admission horses needs a real exit date and a port of exit'",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-092",
+      "statement": "The suite does not show what choosing Re-entry reveals or requires, or where it leads.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js, describe 'main import reason' (lines 234-321): Re-entry appears only in the list of reasons",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-093",
+      "statement": "DR2.1 date fields are MOJ date pickers that take a typed date in d/m/yyyy form; Escape dismisses the calendar.",
+      "kind": "constraint",
+      "ref": "e2e/support/journey.js:10 and 103-108 (dateFromToday, fillDate)",
+      "quote": "/** d/m/yyyy, the format every DR2.1 date picker takes, `days` from today. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-094",
+      "statement": "The prototype has a seed route, /prototype/reason-for-import, that jumps straight to the main import reason page; it is prototype tooling, not a user journey step.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:316-320, test 'main import reason > the prototype seed route jumps straight to the reason page'",
+      "quote": "await page.goto(url('/prototype/reason-for-import'))\n    await expect(page).toHaveURL(urlFor('/reason-for-import'))\n    await expectHeading(page, 'Main import reason')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-095",
+      "statement": "Opening /create-notification?category=germinal-products starts a germinal products notification straight at the origin page, skipping the type question.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:325-326, test 'germinal products: section 1 > category start, germinal search hint and the reduced list of reasons'",
+      "quote": "await page.goto(url('/create-notification?category=germinal-products'))\n    await expect(page).toHaveURL(urlFor('/origin-of-the-import'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-096",
+      "statement": "When a germinal products notification is started from its category, the origin page's back link returns to the germinal products dashboard (/germinal-products).",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:327, test 'germinal products: section 1 > category start, germinal search hint and the reduced list of reasons'",
+      "quote": "await expectBackLink(page, url('/germinal-products'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-097",
+      "statement": "For germinal products, the commodity search hint is 'You can search for semen, ova or embryos, or by common name (for example, cattle), Latin name (Bos taurus) or commodity code (05119985).'",
+      "kind": "copy",
+      "ref": "e2e/about-the-consignment.fit.spec.js:331, test 'germinal products: section 1 > category start, germinal search hint and the reduced list of reasons'",
+      "quote": "await expect(page.locator('main')).toContainText('You can search for semen, ova or embryos, or by common name (for example, cattle), Latin name (Bos taurus) or commodity code (05119985).')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-098",
+      "statement": "For germinal products, searching 'semen' lists germinal commodities such as 'Cattle, Semen (05111000)'.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:332-335, test 'germinal products: section 1 > category start, germinal search hint and the reduced list of reasons'",
+      "quote": "await input.pressSequentially('semen', { delay: 30 })\n    await expect(page.locator('main')).toContainText('Cattle, Semen (05111000)')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-099",
+      "statement": "A germinal products notification moves from the commodity page to the main import reason page, as live animals does.",
+      "kind": "behaviour",
+      "ref": "e2e/about-the-consignment.fit.spec.js:338-342, test 'germinal products: section 1 > category start, germinal search hint and the reduced list of reasons'",
+      "quote": "await answerCommodity(page, SPECIES.cattleSemen)\n    })\n\n    await test.step('only internal market and transit are offered', async () => {\n      await expect(page).toHaveURL(urlFor('/reason-for-import'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-100",
+      "statement": "For germinal products, the main import reason offers only two options, in order: Internal market and Transit.",
+      "kind": "data",
+      "ref": "e2e/about-the-consignment.fit.spec.js:343, test 'germinal products: section 1 > category start, germinal search hint and the reduced list of reasons'",
+      "quote": "await expect(page.locator('input[name=\"importReason\"] + label')).toHaveText(['Internal market', 'Transit'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-101",
+      "statement": "For germinal products, the internal market purpose offers only four options, in order: Transfer of ownership - Sale/gift; Breeding; Research; Production.",
+      "kind": "data",
+      "ref": "e2e/about-the-consignment.fit.spec.js:344-347, test 'germinal products: section 1 > category start, germinal search hint and the reduced list of reasons'",
+      "quote": "await expect(page.locator('input[name=\"internalMarketPurpose\"] + label')).toHaveText([\n        'Transfer of ownership - Sale/gift', 'Breeding', 'Research', 'Production'\n      ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-102",
+      "statement": "Every error summary in these pages has the title 'There is a problem' and lists its messages as links, in field order.",
+      "kind": "copy",
+      "ref": "e2e/support/journey.js:38-44 (expectErrorSummary), called by every error test in e2e/about-the-consignment.fit.spec.js",
+      "quote": "/** Error summary title plus the exact list of linked messages, in order. */\nasync function expectErrorSummary (page, messages) {\n  const summary = page.locator('.govuk-error-summary')\n  await expect(summary).toBeVisible()\n  await expect(summary.locator('.govuk-error-summary__title')).toHaveText('There is a problem')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-103",
+      "statement": "Inline field errors use the GOV.UK error message style, with its 'Error:' prefix.",
+      "kind": "copy",
+      "ref": "e2e/support/journey.js:50-53 (expectInlineError)",
+      "quote": "/** Inline error message under a field (GOV.UK \"Error:\" prefix). */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-104",
+      "statement": "Journey page buttons submit a named action: 'Save and continue' sends action=continue and 'Save and return to overview' sends action=hub.",
+      "kind": "data",
+      "ref": "e2e/support/journey.js:17-23 (clickAction, saveAndContinue, saveAndReturnToOverview)",
+      "quote": "await page.locator(`button[name=\"action\"][value=\"${value}\"]`).first().click()",
+      "confidence": "verbatim",
+      "note": "The type question's 'Continue' button is pressed with the same continue action."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p1-105",
+      "statement": "Design Release 2.1 is served under /design-release-2.1 as a mirror of the prototype's root route table.",
+      "kind": "constraint",
+      "ref": "e2e/support/journey.js:3-5",
+      "quote": "// Design Release 2.1 is a mirror mount of the root route table.\nconst BASE = '/design-release-2.1'",
+      "confidence": "verbatim",
+      "note": "Every path in this part's claims is relative to that base."
+    }
+  ]
+}

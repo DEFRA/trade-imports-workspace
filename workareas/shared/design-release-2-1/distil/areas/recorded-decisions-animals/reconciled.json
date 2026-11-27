@@ -2,7 +2,7 @@
   "area": "recorded-decisions-animals",
   "requirements": [
     {
-      "id": "req-recorded-decisions-animals-001",
+      "id": "req-2388",
       "statement": "A journey page's identity is a page descriptor holding an id, a slug and the obligations the page collects, declared in a module that imports nothing, and dispatch uses that one identity for page ownership, gates and route targets: it refuses a duplicate or missing owner at boot, and a page claims a collection root while ownership of a nested leaf is derived from the binding paths and the manifest's parent chain.",
       "why": "One identity read by dispatch, gates and navigation keeps a page's ownership checkable at boot instead of at runtime, and an import-free identity leaf keeps a controller and the journey flow from forming a cycle.",
       "claims": [
@@ -20,7 +20,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-002",
+      "id": "req-2389",
       "statement": "The application has four layers: composition and registration at the application root, the set-agnostic platform beneath it, one set's obligation data, and one journey's pages and topology. Shared, platform, engine and flow code is a library that discovers no feature and imports no set; the route barrel only re-exports, each set has a gateway of its own that supplies that set's policy through the configuration seams keyed by its set id, and the router mounts each gateway under its own address prefix and sends the service root to the default set.",
       "why": "A platform that cannot see a set can serve a second set without change, and a single gateway per set keeps every piece of set knowledge in one readable place.",
       "claims": [
@@ -41,7 +41,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-003",
+      "id": "req-2390",
       "statement": "The obligation model decides what is in scope for a consignment and whether it is mandatory or optional, and holds no display text: an obligation carries domain identity, scope, mandate and invariants, while the journey owns labels, hints, options, validation messages and templates, and the controller owns input validation. Boot-time purity checks refuse a display-shaped key in the model.",
       "why": "A model free of copy and routes can be reused by another journey style over the same obligations, and the purity checks stop copy drifting back into it.",
       "claims": [
@@ -56,17 +56,20 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-004",
+      "id": "req-2391",
       "statement": "The bridge is the one seam between the obligation model and a page: a journey registers its scalar and grouped binding bundles with the generic bridge, which projects canonical fulfilment without importing journey code, and registration refuses a missing or duplicated leaf owner, a wrong group depth and an inconsistent group descriptor.",
       "why": "Binding every page field to an imported obligation object, and checking it at registration, makes a field with no owner or two owners a boot failure rather than a silent gap in a notification.",
-      "claims": ["repo-frontend-p19-007", "repo-frontend-p19-074"],
+      "claims": [
+        "repo-frontend-p19-007",
+        "repo-frontend-p19-074"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-007 and repo-frontend-p19-074: the platform's decisions and the set's features record state the seam and the registration checks.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-005",
+      "id": "req-2392",
       "statement": "A page gate and a section gate are derived from dispatch ownership, scope and the required earlier answers, passing when at least one collected obligation is in scope and its prerequisites pass, and a journey authors a gate only for policy that derived rule cannot express. A scalar gate reads a scalar fulfilment value, and a condition over a collection uses the group-aware helpers and the cardinality rules instead.",
       "why": "Deriving the normal gate keeps a page's reachability in step with what it collects, so a new page needs no hand-written rule unless its policy really is different.",
       "claims": [
@@ -80,7 +83,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-006",
+      "id": "req-2393",
       "statement": "An obligation carries a stable identifier, a path-safe name free of path metacharacters, and either a direct status or an applicability rule returning scope and mandate, with a parent reference for a collection member and cardinality or cross-field invariants on its requirements. Each gate helper returns an applicability rule carrying metadata describing the gate, an obligation may declare the obligations its gate reads, and a build assertion fails for a gated obligation whose declared or derived dependencies are incomplete. The narrowest helper that expresses a rule is used: one verdict for a whole obligation, an index-naming decision for a rule that names which collection entries are in scope, a listed pair where two values must appear together, an any-value decision across a group, a combinator that stands a helper down unless more than one entry is admitted, and a branched gate, paired with predicate metadata, only for a predicate that cannot be derived. The reachability prover builds a witness for a complement gate from a sentinel outside the gate's union and reports the gate opaque rather than green when the sentinel and its fallback are both inside it.",
       "why": "A shared helper vocabulary keeps every applicability rule inspectable by the prover and the coverage checks, so a gate no input can open is caught as an authoring defect instead of passing as proven.",
       "claims": [
@@ -102,44 +105,51 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-007",
+      "id": "req-2394",
       "statement": "Evaluating the obligation model is pure: answers and fulfilments go in, and derived views and cleaned fulfilment come out, with applicability evaluated, scope converged and fulfilment that is unknown or out of scope purged. Read-only queries over evaluated state are served by one module of their own rather than by the evaluator.",
       "why": "A pure evaluation can be run as often as a request needs it, and keeping the read-only queries apart stops a caller reaching into the evaluator for a view.",
-      "claims": ["repo-frontend-p19-059", "repo-frontend-p19-059-m1"],
+      "claims": [
+        "repo-frontend-p19-059",
+        "repo-frontend-p19-059-m1"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-059, with the separate query module recorded at repo-frontend-p19-059-m1.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-008",
+      "id": "req-2395",
       "statement": "An obligation's applicability rules are executable code with inspectable dependency metadata rather than portable configuration, and persistence is injected and not transactional across adapters, so an adapter that updates more than one backend projection reports a partial failure as a recoverable backend error.",
       "why": "Naming both limits keeps a reader from expecting the model to be serialisable configuration or a write to be atomic across projections.",
-      "claims": ["repo-frontend-p19-041", "repo-frontend-p19-045"],
+      "claims": [
+        "repo-frontend-p19-041",
+        "repo-frontend-p19-045",
+        "repo-frontend-p19-050-m1"
+      ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-041 and repo-frontend-p19-045: the platform records both as limits.",
+      "deltaNote": "Met by repo-frontend-p19-041 and repo-frontend-p19-045, with the scope helpers that attach the dependency metadata at repo-frontend-p19-050-m1.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-009",
-      "statement": "A journey owns one page order, the order the overview lists its tasks in, and its task rows, and it owns that topology in its own flow folder, which the platform only consumes. One injection seam takes the journey's sections, task rows, row status, the Import Notification Service's type question address, the flow-only keys, the entry-guard target, the layout and the section captions; the composition root calls it once while registering routes; its accessors fail when callable policy has not been configured; and adding an entry to an existing sections or task-rows array needs no further registration while a new feature still registers its controller and bindings in the journey barrels.",
+      "id": "req-2396",
+      "statement": "A journey owns one page order, the order the overview lists its tasks in, and its task rows, and the platform only consumes that topology. One injection seam takes the journey's sections, task rows, row status, the Import Notification Service's type question address, the flow-only keys, the entry-guard target, the layout and the section captions; the set's gateway passes them, the route barrel only re-exporting it; the composition root calls the seam once while registering routes; its accessors fail when callable policy has not been configured; and adding an entry to an existing sections or task-rows array needs no further registration while a new feature still registers its controller and bindings in the journey barrels.",
       "why": "One seam taking the whole policy keeps the platform free of journey knowledge, and failing accessors turn a missed registration into an immediate error rather than a silent empty journey.",
       "claims": [
         "repo-frontend-p19-012",
         "repo-frontend-p19-013",
         "repo-frontend-p19-076",
-        "repo-frontend-p19-103-m1",
         "repo-frontend-p19-147",
+        "repo-frontend-p19-147-m1",
         "repo-frontend-p19-148"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-013 and repo-frontend-p19-147: the platform's and the journey's own records state the seam and what the gateway passes it.",
+      "deltaNote": "Met by repo-frontend-p19-013 and repo-frontend-p19-147: the platform's and the journey's own records state the seam and what the gateway passes it, and repo-frontend-p19-147-m1 names the gateway the barrel re-exports.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-010",
+      "id": "req-2397",
       "statement": "A valid Save and continue lands on the next step in the journey's one page order that applies and whose gate passes, and from the last page that applies on check your answers, however the page was reached, including a new notification, a copy, the overview, a reopened draft, a new browser session, a check your answers change link and an amendment. Where a required earlier answer is missing it lands instead on the earliest page in page order that asks for the first of them, with the live-animals journey's required earlier answers being where the consignment is coming from and what is being imported; the review section carries the one authored section gate, requiring readiness for check your answers. One predicate decides both which pages the overview offers and where Save and continue lands, so the page it opens is always one the overview offers, and nothing about how the notification was started or how far the trader has got is held in the session.",
       "why": "A single page order and a single gate predicate mean a trader is never sent to a page the hub would refuse, and keeping progress out of the session makes the landing the same after a refresh or in a new browser.",
       "claims": [
@@ -150,6 +160,7 @@
         "repo-frontend-p19-020",
         "repo-frontend-p19-021",
         "repo-frontend-p19-104",
+        "repo-frontend-p19-104-m1",
         "repo-frontend-p19-105",
         "repo-frontend-p19-136"
       ],
@@ -159,17 +170,20 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-011",
+      "id": "req-2398",
       "statement": "A page stays out of the Save and continue order in one of three ways: it is marked a sub-page and reached only from the page that opens it, it belongs to no section as a detour off a list page, or it belongs to no task row as the review, declaration and confirmation do. A page that redirects without being shown is not added to the trail.",
       "why": "Naming the three ways keeps a new page's place in the order a deliberate choice, and leaving an unshown page off the trail keeps Back pointing at a page the trader actually saw.",
-      "claims": ["repo-frontend-p19-022", "repo-frontend-p19-023"],
+      "claims": [
+        "repo-frontend-p19-022",
+        "repo-frontend-p19-023"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-022 and repo-frontend-p19-023.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-012",
+      "id": "req-2399",
       "statement": "A task row groups pages on the overview and is a unit of submit readiness, deciding nothing about where Save and continue goes, and submit readiness is the conjunction of the configured row statuses with fulfilled, not applicable and optional rows counting as ready. A row's status comes from the union of its pages' collected obligations, narrowed to a facet of a collection where it names one, so the live-animals commodity line carries three statuses, the selection on the commodities row, the quantities on the consignment details row and the identifiers on the identification row; the commodities row claims its facet by exception so a new member of the collection falls to it rather than out of all three; a row may be marked conditional so the hub can leave it off; and every row contributes to readiness for check your answers.",
       "why": "Splitting one collection across three rows gives each page over it a status a trader can read, and claiming by exception keeps a newly added line from losing its row.",
       "claims": [
@@ -184,7 +198,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-013",
+      "id": "req-2400",
       "statement": "A task row whose facets cannot express its applicability carries its own applicability test, and the row reads Not applicable when that test answers no whatever the facets would have rolled up to, which the animal identification row needs because its facet is a structural group in scope from the moment the notification exists while the transit countries row needs none because its answer leaves scope on its own. A row owing an answer no facet key can reach carries a second test over the answers and the evaluation, which holds the row short of Completed while it answers no, as the addresses row does for a permanent address nested inside an animal identifier inside a commodity line.",
       "why": "Two named escape hatches keep an unreachable or always-in-scope answer from showing a row as finished, without loosening the general roll-up for every other row.",
       "claims": [
@@ -199,7 +213,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-014",
+      "id": "req-2401",
       "statement": "The hub derives its groups from the journey's flow sections, each section that holds a task row's first page becoming a group headed by that section's caption and listing its rows in the order of their first page. A row is a way into the notification rather than a step of a sequence, so it opens at the first of its pages whose gate passes and otherwise at its first page, and the page it opens decides for itself what to show someone who has answered nothing else, the consignment details page sending a trader to the commodity question when the notification holds no commodity line. The hub leaves a conditional row off while it does not apply or while none of its pages passes its gate, so it never links to a page the flow would turn away, and the transit countries row appears once rail or road is saved and a country of origin and a commodity are answered, the transit countries page's own redirects matching.",
       "why": "Deriving the groups from the flow keeps the hub and the page order from drifting apart, and leaving an inapplicable row off keeps every link on the hub one a trader can follow.",
       "claims": [
@@ -216,7 +230,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-015",
+      "id": "req-2402",
       "statement": "A trader may start any task on a notification in any order: no row on the hub is ever shut, every row is a link carrying a real status from the moment the notification exists, nothing on the page says a task cannot be started yet, and a row that does not apply leaves the list instead. The cost of that sits on the pages rather than the hub, so a page behind a row renders and saves sensibly when nothing else has been answered and says so itself where there is genuinely nothing to ask yet, the consignment details page sending a trader to the commodity question when the notification holds no line and the transit countries page sending a load or a save to the overview, saving nothing, when the means of transport leaves transit countries out of scope.",
       "why": "A hub with no shut rows lets a trader work in the order their paperwork arrives, and putting the cost on the pages keeps that promise without an empty page or a dead end.",
       "claims": [
@@ -230,22 +244,26 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-016",
-      "statement": "Back on a journey page goes to the place the trader came from, and where they came from travels on the page's links and form posts rather than in the session, so it survives a refresh, a refused save, a round trip through a sub-page and a new browser session. It is one query parameter holding an ordered list of places, newest last, a place being a start place or the slug of a page in the journey's sections, and every journey form posts to its own address so a post sees the same list as the request that showed the page. Three operations serve it: one carries the list unchanged on a link that returns the trader to the same place, one carries it with one more place on a link that moves them on, and one answers the newest place carrying the places beneath it; the page the trader has just left is pushed on as Save and continue moves them forward. A list past forty places loses its oldest; with no list, or one naming a place the journey does not have, Back answers the fallback, the overview by default, and an unrecognised list is logged once per request. A return marker names the page a sub-page returns to, carried by the party edit links, the permanent address link and the commodity question detour, and such a link carries the list unchanged without pushing the page that opens it; the marker and the list are each checked against their allowed values and a refused one is dropped and logged independently of the other. The Back address is always built from a recognised slug or start place and never echoed from the request, and the type question's address is set knowledge passed through the flow seam. A sub-page returning to the page that opened it keeps that page as its Back and its save target; a page that redirects onward without showing itself carries the list so Back on the page it lands on skips it; Back is the same on a draft and while amending; after several saves from one page Back steps back through those pages in reverse; and a change or error-summary link from check your answers carries where that page's own Back went, so Back from the page it opens returns there with its Back link unchanged. A journey page names no fixed Back target and no list of earlier pages its Back may open.",
+      "id": "req-2403",
+      "statement": "Back on a journey page goes to the place the trader came from, and where they came from travels on the page's links and form posts rather than in the session, so it survives a refresh, a refused save, a round trip through a sub-page and a new browser session. It is one query parameter holding an ordered list of places, newest last, a place being a start place or the slug of a page in the journey's sections, and every journey form posts to its own address so a post sees the same list as the request that showed the page. Three operations serve it: one carries the list unchanged on a link that returns the trader to the same place, one carries it with one more place on a link that moves them on, and one answers the newest place carrying the places beneath it; the page just saved is pushed on as Save and continue moves the trader forward. A list past forty places loses its oldest; with no list, or one naming a place the journey does not have, Back answers the fallback, the overview by default, and an unrecognised list is ignored and logged once per request. A return marker names the page a sub-page returns to, carried by the party edit links, the permanent address link and the commodity question detour, and such a link carries the list unchanged without pushing the page that opens it; the marker and the list are each checked against their allowed values and a refused one is dropped and logged independently of the other. The Back address is always built from a recognised slug or start place and never echoed from the request, and the type question's address is set knowledge passed through the flow seam. A sub-page returning to the page that opened it keeps that page as its Back and its save target; a page that redirects onward without showing itself carries the list rather than pushing onto it, so Back on the page it lands on skips it; Back is the same on a draft and while amending; after several saves from one page Back steps back through those pages in reverse; and a change or error-summary link from check your answers carries where that page's own Back went, so Back from the page it opens returns there with its Back link unchanged. A journey page names no fixed Back target and no list of earlier pages its Back may open, the county parish holding number sub-page being the one exception, whose fixed Back target is the consignment addresses page.",
       "why": "Holding where a trader came from in the address rather than the session is what makes Back right after a refresh, a refused save or a round trip through a picker, and checking every place against its allowed values keeps the Back address from becoming an open redirect.",
       "claims": [
         "repo-frontend-p19-030",
         "repo-frontend-p19-031",
         "repo-frontend-p19-032",
-        "repo-frontend-p19-032-m1",
         "repo-frontend-p19-033",
+        "repo-frontend-p19-033-m1",
         "repo-frontend-p19-034",
         "repo-frontend-p19-035",
         "repo-frontend-p19-036",
         "repo-frontend-p19-037",
         "repo-frontend-p19-038",
         "repo-frontend-p19-039",
-        "repo-frontend-p19-040"
+        "repo-frontend-p19-040",
+        "repo-frontend-p19-129-m1",
+        "repo-frontend-p19-129-m2",
+        "repo-frontend-p19-131-m1",
+        "repo-frontend-p19-134-m1"
       ],
       "status": "adopted",
       "delta": "exists",
@@ -253,9 +271,9 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-017",
-      "statement": "The live-animals journey records where Back opens for each way a trader arrived: a save on another page opens that page carrying the places beneath it; an overview task row or the review button opens the overview; a change or error link on check your answers opens check your answers; a dashboard card opens the dashboard; starting a new notification opens the dashboard from the first page; arriving from the Import Notification Service opens its type question for that notification from the first page; and a way in the journey knows nothing about opens the overview. Following Back ends nothing: a later save goes on to the next page that applies and adds the page saved, so Back steps through the visited pages in reverse, while the save-and-return control still goes to the overview. A round trip to a sub-page keeps where the trader came from, the permanent address page, the add-transporter pages and a picker's view link each carrying the places out and back; the identification page's no-commodity-line redirect carries them on to the commodity question so Back there opens the page the trader came from, and the commodity question opened by commodity details or identification details saves back to the page that opened it. A return value naming a page not allowed to open a sub-page is refused, logged and ignored. The county parish holding number page is the one exception to the general rule: its Back always answers the consignment addresses page however it was reached, and its save answers the same page unless a required earlier answer is still missing. The fallback is the overview except on the first page, where it is the dashboard until an answer is entered, and on the review, where it is the overview on a draft or an amendment and the dashboard on a submitted notification, including one shown after an amendment is cancelled. Returning from the address book lands on a fixed address carrying no places, and the consignment addresses page and the contact address page are the only pages whose Back then goes to the overview whatever was carried, their saves still going on from them. Check your answers goes Back where the trader came from on a draft, an amendment and a submitted notification alike, and reached any other way goes Back to the overview while amending and to the notification list otherwise; coming back from a page its change or error link opened, Back goes where it went before, and after an amendment is cancelled Back goes to the dashboard. The origin page follows the shared rule and sets none of its own.",
-      "why": "A table of arrivals and their Back targets is what lets a reviewer check the journey's navigation against one place, and it names the two pages and the one sub-page that are deliberate exceptions.",
+      "id": "req-2404",
+      "statement": "The live-animals journey records where Back opens for each way a trader arrived: a save on another page opens that page carrying the places beneath it; an overview task row or the review button opens the overview; a change or error link on check your answers opens check your answers; a dashboard card opens the dashboard; starting a new notification opens the dashboard from the first page; arriving from the Import Notification Service opens its type question for that notification from the first page; and a way in the journey knows nothing about opens the overview. Following Back ends nothing: a later save goes on to the next page that applies and adds the page saved, so Back steps through the visited pages in reverse, while the save-and-return control still goes to the overview. A round trip to a sub-page keeps where the trader came from, the permanent address page, the add-transporter pages and a picker's view link each carrying the places out and back; the identification page's no-commodity-line redirect carries them on to the commodity question so Back there opens the page the trader came from, and the commodity question opened by commodity details or identification details saves back to the page that opened it. A return value naming a page not allowed to open a sub-page is refused, logged and ignored. The county parish holding number page is the one exception to the general rule: its Back always answers the consignment addresses page however it was reached, and its save answers the same page unless a required earlier answer is still missing. The fallback is the overview except on the first page, where it is the dashboard until an answer is entered, and on the review, where it is the overview on a draft or an amendment and the dashboard on a submitted notification, including one shown after an amendment is cancelled. Returning from the address book lands on a fixed address carrying no places, and the consignment addresses page is the only page whose Back then goes to the overview whatever was carried, its save still going on from it. Check your answers goes Back where the trader came from on a draft, an amendment and a submitted notification alike, and reached any other way goes Back to the overview while amending and to the notification list otherwise; coming back from a page its change or error link opened, Back goes where it went before, and after an amendment is cancelled Back goes to the dashboard. The origin page follows the shared rule and sets none of its own.",
+      "why": "A table of arrivals and their Back targets is what lets a reviewer check the journey's navigation against one place, and it names the one page and the one sub-page that are deliberate exceptions.",
       "claims": [
         "repo-frontend-p19-127",
         "repo-frontend-p19-128",
@@ -265,7 +283,7 @@
         "repo-frontend-p19-132",
         "repo-frontend-p19-133",
         "repo-frontend-p19-134",
-        "repo-frontend-p19-135",
+        "repo-frontend-p19-443",
         "repo-frontend-p19-143",
         "repo-frontend-p19-144",
         "repo-frontend-p19-145",
@@ -273,11 +291,11 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-128, the journey's recorded Back-link table, with its exceptions at repo-frontend-p19-133 and repo-frontend-p19-135 and its fallbacks at repo-frontend-p19-134.",
+      "deltaNote": "Met by repo-frontend-p19-128, the journey's recorded Back-link table, with its exceptions at repo-frontend-p19-133 and repo-frontend-p19-443 and its fallbacks at repo-frontend-p19-134.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-018",
+      "id": "req-2405",
       "statement": "The journey's entry guard owns the redirect policy before any handler runs. It admits a request only when the journey carries an answer the trader entered, with system-populated obligations and flow-only keys never counting as a trader's answer, and sends a journey with none to its origin page, as it does a request for the overview, the review, the declaration or the confirmation, logging each redirect once with the journey and the requested path. A journey it sends to the origin page carries no places, so that page's Back is the dashboard until an answer is entered, and the request goes on to the first question like any other start. A notification is created by the dashboard's create post or by the set's start address, which the Import Notification Service's type question opens, through one helper that redirects to the origin page with the dashboard or that service as the first place; the start address sits outside the notification paths so the guard never sees it, and the origin page is the journey entry. The origin page and its children and the amend, cancel-amend, copy and delete actions are exempt from the guard so there is no redirect loop, and an exempt path answers a notification that cannot be found the same way the guard does: the service's standard page not found, on every page including the review, before any page runs, and never a redirect to the origin page or the notification list.",
       "why": "A guard that admits only a journey a trader has begun keeps an empty notification out of the middle of the journey, and answering a missing notification with the standard page not found keeps the service from telling a stranger which notifications exist.",
       "claims": [
@@ -294,23 +312,24 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-019",
-      "statement": "The live-animals journey has eight ordered flow sections, each an overview group, which together are the journey's one page order. Its consignment-parties section holds the county parish holding number page, then the permanent address page, then consignment addresses, so each sub-page goes on to consignment addresses and consignment addresses goes on to the contact address; that section keeps a stable identifier the journey specification and the design share while its caption and group heading read Addresses. Four keys are kept in the session's flow-only store rather than as canonical fulfilment and are never sent to the backend: the declaration, the commodity search rows, the values an add-transporter form keeps after a refused save held per transporter type, and the name of a transporter a save has just added, read once by the transporter list for its banner. The transport section lists one transporter step, the transporter list, and the pages that add a transporter are detours off that list belonging to no section.",
+      "id": "req-2406",
+      "statement": "The live-animals journey has seven ordered flow sections, each an overview group, which together are the journey's one page order. Its consignment-parties section holds the county parish holding number page, then the permanent address page, then consignment addresses: the permanent address page is a sub-page that goes on from the page that opens it to consignment addresses, the county parish holding number page goes on to consignment addresses however it was reached, and consignment addresses goes on to the review page. That section keeps a stable identifier the journey specification and the design share while its caption and group heading read Addresses. Four keys are kept in the session's flow-only store rather than as canonical fulfilment and are never sent to the backend: the declaration, the commodity search rows, the values an add-transporter form keeps after a refused save held per transporter type, and the name of a transporter a save has just added, read once by the transporter list for its banner. The transport section lists one transporter step, the transporter list, and the pages that add a transporter are detours off that list belonging to no section.",
       "why": "Naming which values are flow-only keeps working state out of the notification the backend stores, and recording the sections' order is what makes the page order reviewable.",
       "claims": [
-        "repo-frontend-p19-103",
-        "repo-frontend-p19-106",
+        "repo-frontend-p19-441",
+        "repo-frontend-p19-442",
+        "repo-frontend-p19-136-m1",
         "repo-frontend-p19-107",
         "repo-frontend-p19-108",
         "repo-frontend-p19-109"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-103 and repo-frontend-p19-108: the journey records the eight sections and the four flow-only keys.",
+      "deltaNote": "Met by repo-frontend-p19-441 and repo-frontend-p19-108: the journey records the seven sections and the four flow-only keys, with the consignment-parties order at repo-frontend-p19-442 and repo-frontend-p19-136-m1.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-020",
+      "id": "req-2407",
       "statement": "The review is not a task row: it is reached from a primary Review and submit button under the task list, beside a secondary Return to dashboard, and is offered whatever the notification still owes, rendering an unfinished notification and naming what is outstanding. The review section's authored gate on readiness for check your answers stands between the review and submitting, and the declaration refuses on the same verdict. The declaration is reachable only from the review: the review's continue posts to the declaration naming the step it came from, the review registers no post of its own, and opening the declaration directly returns the trader to the review, so they have seen the review in its latest state before submitting. The declaration renders the concurrency token the review rendered rather than the current one and the submit works only while the current token still matches, so a notification changed after the review rendered sends the trader back to the review with the banner saying it has been updated; the review's load records that token in the session and both declaration steps require the posted token to match it, so a token copied off another page cannot reach the declaration without the review. A refused continue or submit comes back marked as refused, which moves focus to the review's error summary, and the review names every refusal itself, a document still being scanned included. The confirmation page has a link to the dashboard and a button that posts to the create path to start a new notification.",
       "why": "Making the review the only way to the declaration, with a token taken when the review rendered, is what stops a trader submitting content they have not seen.",
       "claims": [
@@ -328,26 +347,27 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-021",
-      "statement": "A journey page renders the name of the section of the notification it belongs to immediately above its heading, taken from a map that files every page under its section and names those sections in the journey's own copy bundles, with one entry per section listing its pages rather than a string per page, so one name serves every page in a section and names where a page sits rather than repeating the page's own words. The caption is passed the size matching its heading with nothing between the two, because its bottom margin collapses from the tablet breakpoint and it reads as a caption only directly above the heading. A page left out of the map renders no caption, and a unit test lists those pages so a new page cannot be added without a decision either way: the overview, check your answers, contact address, declaration and confirmation open straight into their heading, delete notification and cancel amend are interruptions rather than steps in a section, and the address pickers take their caption from the addresses feature. The caption sections a reader sees are finer than the hub's groups and are not derived from them, keeping animal identification with the other consignment questions and separating arrival, transit and adding a transporter; commodity details, holding the selected commodities table and the quantities, sits under its own section for the description of the goods, while the section captioned for commodity details holds the additional details page. A journey that names no sections renders no caption on its pages.",
+      "id": "req-2408",
+      "statement": "A journey page renders the name of the section of the notification it belongs to immediately above its heading, taken from a map that files every page under its section and names those sections in the journey's own copy bundles, with one entry per section listing its pages rather than a string per page, so one name serves every page in a section and names where a page sits rather than repeating the page's own words. The shared page context resolves the section name for the page the controller passes and hands it to the view as the caption, and each page template calls the shared caption macro immediately above its heading. The caption is passed the size matching its heading with nothing between the two, because its bottom margin collapses from the tablet breakpoint and it reads as a caption only directly above the heading. A page left out of the map renders no caption, and a unit test lists those pages so a new page cannot be added without a decision either way: the overview, check your answers, declaration and confirmation open straight into their heading, delete notification and cancel amend are interruptions rather than steps in a section, and the address pickers take their caption from the addresses feature. The caption sections a reader sees are finer than the hub's groups and are not derived from them, keeping animal identification with the other consignment questions and separating arrival, transit and adding a transporter; commodity details, holding the selected commodities table and the quantities, sits under its own section for the description of the goods, while the section captioned for commodity details holds the additional details page. A journey that names no sections renders no caption on its pages.",
       "why": "A caption that names the part of the notification a page belongs to orients a trader who arrived from the hub, and listing the deliberately uncaptioned pages in a test stops a new page getting one by accident.",
       "claims": [
         "repo-frontend-p19-014",
         "repo-frontend-p19-149",
+        "repo-frontend-p19-149-m1",
         "repo-frontend-p19-150",
         "repo-frontend-p19-151",
         "repo-frontend-p19-152",
         "repo-frontend-p19-153",
         "repo-frontend-p19-154",
-        "repo-frontend-p19-155"
+        "repo-frontend-p19-444"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-149 and repo-frontend-p19-153, with the uncaptioned pages at repo-frontend-p19-155.",
+      "deltaNote": "Met by repo-frontend-p19-149 and repo-frontend-p19-153, with how the caption reaches the template at repo-frontend-p19-149-m1 and the uncaptioned pages at repo-frontend-p19-444.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-022",
+      "id": "req-2409",
       "statement": "Each feature of the journey is a vertical slice holding its page identity, controllers, copy, templates, bindings and tests. A collecting controller owns its page metadata and the obligations it collects, one render helper shared by the first load and a refused save, prefill from stored state, parsing and validation on save, canonical writes through the engine, and its navigation through the shared navigation helper, registering a load route from the shared helper and a save route where the page has one; check your answers is load-only, its continue posting to the declaration rather than to a save route of its own. A controller uses the platform engine, the validation helpers and the shared kit and never calls the evaluator or a persistence adapter directly. A collection is a hand-written controller over the engine's collection facts and mutation primitives, with the feature owning rows, links, copy and validation: the documents feature keeps its entry form and its read-back list on one page, the commodity search reconciles the selected lines before the details page edits them and renders results alone on its results route for the multi-select search to swap in, and animal identification manages a nested collection within one commodity line. Controller and copy tests sit beside the feature, browser specs run in the features project, and a feature's tests include accessibility checks of its first load and its error state.",
       "why": "A feature that holds everything it owns can be read, tested and changed in one folder, and routing every write through the engine keeps canonical state the single place a notification is held.",
       "claims": [
@@ -365,17 +385,20 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-023",
+      "id": "req-2410",
       "statement": "A feature's trader-facing text lives in English and Welsh copy modules beside the feature, its template extends the shared layout, and its view name starts with the journey's prefix. A templated feature has a complete copy folder and the same copy shape in both languages, each checked by its own convention test.",
       "why": "Copy beside the feature keeps a wording change in one place, and a convention test over both languages stops an English string shipping with no Welsh counterpart.",
-      "claims": ["repo-frontend-p19-072", "repo-frontend-p19-073"],
+      "claims": [
+        "repo-frontend-p19-072",
+        "repo-frontend-p19-073"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-072 and repo-frontend-p19-073.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-024",
+      "id": "req-2411",
       "statement": "A journey page declares one of four maturity levels, exploring, detailing, agreed or ready for live, as a plain string so its identity module stays import-free, and a page that declares none is exploring. The phase banner reads the level from the page the matched route carries, a hand-written route rendering a page passes the page through the shared route options, a feature with no identity module of its own such as the hub adds one to hold its level, and a route carrying no page shows no level. A page's level changes only through a reviewed pull request, and a page at agreed or ready for live is signed off. The set's copy-status record carries which Welsh copy is unreviewed and names no maturity level, the levels being recorded with the features instead.",
       "why": "A declared level tells a trader and a reviewer how settled a page is, and moving it only through a reviewed pull request is what makes signed off mean something.",
       "claims": [
@@ -391,7 +414,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-025",
+      "id": "req-2412",
       "statement": "The live-animals set has a script that runs only its own tests, while the whole-application script covers composition, the bridge, the conventions and full-suite coverage, and its browser specs run under two named scripts, the features project needing its own port and the journeys project not. A coverage test checks the manifest's identity, dependency and group invariants. The allow-list test checks each commodity allow-list against the set's own reference service, each list's block iterating its own entries and checking that a control value on no list leaves the obligation out of scope, while the package-count check iterates every code the captured catalogue serves and asserts the exact served codes the list leaves out, so a code new to the capture fails there; one anti-drift block pins every list's exact contents against an expected map, and changing a list on purpose means editing the rules and its expected list in the same change.",
       "why": "Pinning each allow-list's contents against the served catalogue is what turns a silent change of commodity scope into a failing test.",
       "claims": [
@@ -407,15 +430,14 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-026",
-      "statement": "The live-animals set supplies the obligation manifest, the commodity reference data and the linear trader journey, the shared platform being documented apart from it. Its manifest imports the declarations in its sections folder, exports each obligation, builds the ordered obligations array and derives the groups from the parent references, and its nine sections are divided by domain: arrival, commodities including aggregates, identifiers and line fields, documents, import reason, other consignment details, origin, parties, system values and transport. The declarations carry stable identity, scope, mandate and cardinality rules and no display copy or journey knowledge, and are written with the platform model's helper functions rather than hand-rolled rules.",
+      "id": "req-2413",
+      "statement": "The live-animals set supplies the obligation manifest, the commodity reference data and the linear trader journey, the shared platform being documented apart from it. Its manifest imports the declarations in its sections folder, exports each obligation, builds the ordered obligations array and derives the groups from the parent references, and its nine sections are divided by domain: arrival, commodities including aggregates, identifiers and line fields, documents, import reason, other consignment details, origin, parties, system values and transport. The declarations carry stable identity, scope, mandate and cardinality rules and no display copy or journey knowledge.",
       "why": "A manifest built from domain sections keeps a rule where its domain is, and deriving the groups from the declarations stops the group structure being stated twice.",
       "claims": [
         "repo-frontend-p19-061",
         "repo-frontend-p19-080",
         "repo-frontend-p19-081",
-        "repo-frontend-p19-082",
-        "repo-frontend-p19-082-m1"
+        "repo-frontend-p19-082"
       ],
       "status": "adopted",
       "delta": "exists",
@@ -423,7 +445,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-027",
+      "id": "req-2414",
       "statement": "The county parish holding number is asked when any commodity line's code is one the holding number is required for, and a line with no code yet is ignored rather than counted as a match. The animal identifiers floor asks for a record per commodity line only on a consignment carrying more than one identified line. How the list of codes the holding number is required for is held in code is the animals frontend's own choice.",
       "why": "Ignoring a line with no code yet keeps the question off the hub until the trader has chosen something, and recording the floor keeps a single-line consignment from being asked for a per-line record.",
       "claims": [
@@ -437,7 +459,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-028",
+      "id": "req-2415",
       "statement": "Accompanying documents are capped at fifteen entries, the set's manifest declaring the cardinality and the documents feature enforcing it on its write path. Species reach the service from master data through the reference data service, and the set's commodity rules, the identifier, package-count, permanent-address, unweaned, holding-number and type rules, are set data whose spelling matches what master data serves exactly. Canonical fulfilment can hold values one backend projection cannot represent, the richer mapper layering its extra fields over the plainer one, so a new obligation always needs a feature binding and takes a mapper field only where the target schema has a real home for it.",
       "why": "Matching master data's spelling exactly is what keeps a commodity rule firing for the codes the service is actually served, and naming the projection limit stops a new obligation being expected on a backend that has no field for it.",
       "claims": [
@@ -452,31 +474,32 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-029",
-      "statement": "Commodity details refuses a number of animals, and a number of packages, above 2,147,483,647 on each species line, because the backend holds those counts in thirty-two-bit integer fields. The cap guards each line's own number and not the totals the backend derives from it, which are sums of each commodity group's lines, so several lines under one commodity code can still sum past the field's range and nothing in the frontend refuses that.",
+      "id": "req-2416",
+      "statement": "Commodity details refuses a number of animals, and a number of packages, above 2,147,483,647 on each species line, because the backend holds those counts in thirty-two-bit integer fields. The cap guards each line's own number and not the totals the backend derives from it, so several lines under one commodity code can still sum past the field's range and nothing in the frontend refuses that.",
       "why": "A real persistence limit the design cannot express, recorded with what it does and does not guard, so a reviewer knows the gap is accepted rather than missed.",
       "claims": [
         "repo-frontend-p19-091",
-        "repo-frontend-p19-092",
-        "repo-frontend-p19-092-m1"
+        "repo-frontend-p19-092"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-091, with the unguarded totals at repo-frontend-p19-092 and repo-frontend-p19-092-m1.",
+      "deltaNote": "Met by repo-frontend-p19-091, with the unguarded totals at repo-frontend-p19-092.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-030",
+      "id": "req-2417",
       "statement": "A grouped fulfilment token such as a line or unit position is a position in one canonical snapshot rather than a durable record identifier, so removing an earlier entry can renumber later entries.",
       "why": "A reader who takes a position for an identifier would write code that follows the wrong entry after a removal.",
-      "claims": ["repo-frontend-p19-093"],
+      "claims": [
+        "repo-frontend-p19-093"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-093, which the set records as a limit.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-031",
+      "id": "req-2418",
       "statement": "Every Welsh string the live-animals journey shows has been reviewed by a translator against the Welsh Language Standards before it reaches a trader, the dashboard copy, the commodities counts and pluralisation, the transporter list's shown-count message and its added-transporter banner, the address pickers' results count, the declaration's two responsibility bullets with their soft-mutated forms, the thirteen document-type labels and the permanent address copy shared with the consignment addresses page's section leaves included.",
       "why": "The goal is the look and feel of the notification journey, and no source in this programme asks for Welsh translation: the set's own record holds these strings as machine drafts awaiting Welsh Language Standards sign-off, which is a reviewer's work outside the programme, so the gap is reported rather than built.",
       "claims": [
@@ -495,21 +518,26 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-032",
+      "id": "req-2419",
       "statement": "The live-animals set keeps a design record giving the reason each of its pages looks and behaves as it does, with the behaviour specification saying what each page does and the record holding the reasons that would otherwise sit in code comments.",
       "why": "The reasons behind a page have to live somewhere a reviewer can read them, and the repository's own rules keep them out of code comments, so a page whose look changes needs its recorded reason rewritten with it.",
-      "claims": ["repo-frontend-p19-156", "ruling-sam-2026-10-09-p1-065"],
+      "claims": [
+        "repo-frontend-p19-156",
+        "ruling-sam-2026-10-09-p1-065"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-156, which states the record's purpose and its division of labour with the behaviour specification.",
-      "conflicts": ["c-recorded-decisions-animals-001"]
+      "conflicts": [
+        "c-445"
+      ]
     },
     {
-      "id": "req-recorded-decisions-animals-033",
-      "statement": "The overview's task list is headed Notification task list and split into six numbered sections whose numbers are part of the heading copy, so reordering a section is also a copy change. A task reads Complete or To do and nothing else, a part-answered or optional task reading To do, as does a task whose stored answer no longer passes its own page's rules, worked out per request, and a task still owing an answer its page asks for that no facet key can carry, a permanent address sitting inside a collection with no scope key naming it, which the set's row status holds short of Completed until the answer is given. A section a page shows but asks nothing of yet, such as the permanent address section on a line with no animal identified, does not hold its row back, and the row status is worked out without reading anything outside the request.",
+      "id": "req-2420",
+      "statement": "The overview's task list is headed Notification task list and split into five numbered sections whose numbers are part of the heading copy, so reordering a section is also a copy change. A task reads Complete or To do and nothing else, a part-answered or optional task reading To do, as does a task whose stored answer no longer passes its own page's rules, worked out per request, and a task still owing an answer its page asks for that no facet key can carry, a permanent address sitting inside a collection with no scope key naming it, which the set's row status holds short of Completed until the answer is given. A section a page shows but asks nothing of yet, such as the permanent address section on a line with no animal identified, does not hold its row back, and the row status is worked out without reading anything outside the request.",
       "why": "Two statuses and nothing between them keep the hub readable, and re-checking a stored answer against its page's rules each request keeps a task from reading Complete over an answer the page would now refuse.",
       "claims": [
-        "repo-frontend-p19-157",
+        "repo-frontend-p19-445",
         "repo-frontend-p19-158",
         "repo-frontend-p19-159",
         "repo-frontend-p19-160",
@@ -520,11 +548,11 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-157 to repo-frontend-p19-162; ruling-sam-2026-11-19-p1-003 sets the heading's wording and ruling-sam-2026-11-17-p1-015 keeps the section numbers, both of which the record already states.",
+      "deltaNote": "Met by repo-frontend-p19-445 and repo-frontend-p19-158 to repo-frontend-p19-162; ruling-sam-2026-11-19-p1-003 sets the heading's wording and ruling-sam-2026-11-17-p1-015 keeps the section numbers, both of which the record already states.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-034",
+      "id": "req-2421",
       "statement": "Every task on the overview is a link from the moment the notification exists, so a trader can work in any order, and a task that does not apply to the consignment is left off the list rather than shown shut: the identification task appears for any consignment holding a chosen commodity line and reads Not applicable only when the notification holds none, carrying its own applicability test, the same one its page uses, because its facet is always in scope. Commodity details comes first in the second section, then identification, then additional details, matching the page order Save and continue follows, and with no commodity chosen commodity details is still a link, its page asking the commodity question rather than drawing an empty table; a task opened from the overview goes on to the next page that applies when saved. Only the consignment addresses row carries a hint, and a row with no hint has no hint slot at all, because the task list component draws an empty hint element for undefined hint text. The commodity totals show from the first visit, reading zero, the commodities block, the task list and each numbered section are regions named by their heading and each total box is a region of its own named by its own copy so a screen reader can list and jump between them, and each total box shows its label as a heading apart from the region's name. Each hub group renders a task list of its own, whose component stamps the group's identifier on the status of every item in it.",
       "why": "Leaving an inapplicable task off, rather than showing it shut, keeps the hub to the work the consignment actually needs, and naming the blocks as regions lets a screen-reader user move between them.",
       "claims": [
@@ -549,32 +577,35 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-035",
+      "id": "req-2422",
       "statement": "The overview has no back link, being the top of the notification, the ways out being Return to dashboard and the service navigation, and Review and submit is a button under the task list offered whatever the notification still owes, so a trader can read back what they have entered at any time.",
       "why": "A page that is the top of a notification has nowhere above it to go back to, and offering the review at any time lets a trader check their own work before it is finished.",
-      "claims": ["repo-frontend-p19-176", "repo-frontend-p19-177"],
+      "claims": [
+        "repo-frontend-p19-176",
+        "repo-frontend-p19-177"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-176 and repo-frontend-p19-177.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-036",
-      "statement": "A page the overview links to directly ends with all three controls, the primary and its save-and-return control side by side and its cancel link on its own line below them, so a trader can stop and leave from where the overview sent them. Every such page reads Save and return to overview and Cancel and return to overview except the contact address page, whose controls name the hub, the two controls naming the page they lead to. Origin of the import is the one page the overview links to without the return controls, Save and continue being its only way to save and move on, on a draft and while amending alike.",
+      "id": "req-2423",
+      "statement": "A page the overview links to directly ends with all three controls, the primary and its save-and-return control side by side and its cancel link on its own line below them, so a trader can stop and leave from where the overview sent them. Every such page reads Save and return to overview and Cancel and return to overview, with no page using other wording, the two controls naming the page they lead to, which is headed Overview; the internal name for that page reaches no screen. Origin of the import is the one page the overview links to without the return controls, Save and continue being its only way to save and move on, on a draft and while amending alike.",
       "why": "A trader sent straight from the hub needs a way back to it from the page, and naming the page the control leads to is what tells them where they will land.",
       "claims": [
         "repo-frontend-p19-178",
-        "repo-frontend-p19-179",
+        "repo-frontend-p19-446",
         "repo-frontend-p19-180",
-        "repo-frontend-p19-181"
+        "repo-frontend-p19-447"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-178 and repo-frontend-p19-179, with the one page without the controls at repo-frontend-p19-180.",
+      "deltaNote": "Met by repo-frontend-p19-178 and repo-frontend-p19-446, with the control wording naming the overview at repo-frontend-p19-447 and the one page without the controls at repo-frontend-p19-180.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-037",
+      "id": "req-2424",
       "statement": "A page reached from another page ends with the primary control alone, leaving the way the trader came in, as the permanent address page, the party pickers and the transporter type question do, and the county parish holding number page always leaves to the consignment addresses page however it was reached. The two transporter details forms are the one exception, each ending with the primary and a secondary control that returns the trader to the dashboard, because a trader who opened one did not come from the hub and the add route has its own way out of the journey; saving either form returns the trader to the transporter list with the new transporter chosen, and Back goes where the trader came from.",
       "why": "A page opened from another page already has its way back, so a second return control would offer a destination the trader did not come from.",
       "claims": [
@@ -590,7 +621,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-038",
+      "id": "req-2425",
       "statement": "While a notification is being amended, every page except check your answers ends exactly as it does on a draft, with Save and continue, then its own save-and-return control, then its own cancel link, wherever the draft page shows them: Save and continue goes on through the journey to check your answers, the save-and-return control goes to the overview, and the cancel link goes to the overview without saving the page. Upload documents posts its own form from both buttons, the status strip shows the amend status and its cancel link, the two transporter details forms keep their own primary and cancel, and check your answers ends with its own controls instead, continue, cancel the amendment, then delete.",
       "why": "Keeping each page's controls the same while amending means a trader who knows the draft journey does not have to learn a second one.",
       "claims": [
@@ -607,28 +638,28 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-039",
+      "id": "req-2426",
       "statement": "Check your answers goes Back to where the trader came from, the last journey page, the overview or the dashboard, on a draft, an amendment and a submitted notification alike, and reached any other way goes Back to the overview while amending and to the notification list on a draft or a submitted notification.",
       "why": "The page is reached from several places, so a fixed Back target would send a trader somewhere they have not been.",
-      "claims": ["repo-frontend-p19-192"],
+      "claims": [
+        "repo-frontend-p19-192"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-192, which the design record states for the review.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-040",
-      "statement": "Check your answers has six numbered sections, each card standing directly under its section heading and titled one heading level below it, and each card carries one change link in its heading. A row carries no change link except the first row of each species block, which opens consignment details, each species block's identification details table, which opens animal identification, and the transit countries row; the consignment addresses card carries no row link because a party row has none, while the contact address card's row carries an edit control when an address is chosen and the notification is a draft or an amendment, opening the contact edit page and returning to the review. An address copied onto the notification that breaks the address book's rules is reached from its error summary entry, which links to its edit page. The transit countries read back in their own subsection of the arrival details card with a row-level change link when they apply, the contact address row is keyed as the contact address rather than as the address because the page lists several, and each party and the contact address read back as the name, then each non-empty address line, town or city, county and postcode, then the country, each on its own line and with no telephone or email. The consignment addresses card carries a permanent address subsection after the county parish holding row, with one entry per animal that has a saved permanent address, keyed by the animal's species common name and number and holding that animal's name, address lines and country and no telephone or email; an animal still owing one has no entry, the card that shows the answer not being the card that owes it, and with no animal holding a saved address there is no subsection. The county parish holding number reads with slashes wherever it is shown and is stored as nine digits, and each species block's identifiers sit under an identification details heading, marked up as a heading in a sensible hierarchy under the species heading, in a table that heads only the identifiers that species was asked for and carries no permanent address column.",
+      "id": "req-2427",
+      "statement": "Check your answers has five numbered sections, each card standing directly under its section heading and titled one heading level below it, and each card carries one change link in its heading. A row carries no change link except the first row of each species block, which opens consignment details, each species block's identification details table, which opens animal identification, and the transit countries row; the consignment addresses card carries no row link because a party row has none. An address copied onto the notification that breaks the address book's rules is reached from its error summary entry, which links to its edit page. The transit countries read back in their own subsection of the arrival details card with a row-level change link when they apply, and each party reads back as the name, then each non-empty address line, town or city, county and postcode, then the country, each on its own line and with no telephone or email. The consignment addresses card carries a permanent address subsection after the county parish holding row, with one entry per animal that has a saved permanent address, keyed by the animal's species common name and number and holding that animal's name, address lines and country and no telephone or email; an animal still owing one has no entry, the card that shows the answer not being the card that owes it, and with no animal holding a saved address there is no subsection. The county parish holding number reads with slashes wherever it is shown and is stored as nine digits, and each species block's identifiers sit under an identification details heading, marked up as a heading in a sensible hierarchy under the species heading, in a table that heads only the identifiers that species was asked for and carries no permanent address column.",
       "why": "One change link per card keeps the page scannable, and reading an address back line by line with no telephone or email shows the trader exactly what will be sent.",
       "claims": [
-        "repo-frontend-p19-193",
+        "repo-frontend-p19-448",
         "repo-frontend-p19-194",
         "repo-frontend-p19-195",
-        "repo-frontend-p19-196",
         "repo-frontend-p19-197",
         "repo-frontend-p19-198",
-        "repo-frontend-p19-199",
-        "repo-frontend-p19-200",
+        "repo-frontend-p19-449",
         "repo-frontend-p19-201",
         "repo-frontend-p19-202",
         "repo-frontend-p19-203",
@@ -638,11 +669,11 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-193 to repo-frontend-p19-204; ruling-sam-2026-11-19-p1-027 marks the identification details heading up as a real heading and ruling-sam-2026-11-19-p1-009 has tests find a card by structure and role rather than by the words of its numbered heading.",
+      "deltaNote": "Met by repo-frontend-p19-448, repo-frontend-p19-449 and repo-frontend-p19-194 to repo-frontend-p19-204; ruling-sam-2026-11-19-p1-027 marks the identification details heading up as a real heading and ruling-sam-2026-11-19-p1-009 has tests find a card by structure and role rather than by the words of its numbered heading.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-041",
+      "id": "req-2428",
       "statement": "On a finished review card a blank answer reads Not applicable and its cell carries an empty flag rather than only those words, because a trader can type them into a free-text answer. On a card still owing answers every blank cell, required or not, has no visible text and no flag, the word missing being announced only to a screen reader, and the card's red left border and its line naming what to complete are the only visible marking; that line reads the same in the error summary and in the card. Every task row belongs to exactly one card, so no unfinished card and readiness for check your answers give the same verdict, and a summary entry for a card that is out of scope is absent, so every entry links to an anchor the page carries. Commodity cards carry no card identifier, so the summary names commodity details without marking a card and names each short species, linking to its own block, which shows no message. The documents section always shows because documents are part of the notification even when none are uploaded, each uploaded document having its own numbered card with rows for its reference, type, date of issue and attachment, which reads the uploaded file's name, and with none uploaded one card whose reference reads Not applicable; every document card carries the documents card identifier but only the first carries the anchor the summary links to, because a page holds one identifier per anchor, and every document card carries the documents error line and border and hides its blank cells, the documents answers being one unit of unfinished the review cannot split by document. Each card's change link ends, for screen readers, with the card's title in lower-case words.",
       "why": "An empty flag rather than a word keeps a blank cell unambiguous when a trader has typed those very words, and hiding blank cells on an unfinished card keeps the page from reading as a list of refusals before the trader has finished.",
       "claims": [
@@ -663,7 +694,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-042",
+      "id": "req-2429",
       "statement": "A draft is headed by its reference, a draft tag and the date it was created in place of the review heading and status bar, its header offering Copy as new then a red Delete and a section of import reference numbers as a submitted notification has, while it keeps its change links, its error summary and its continue; an amendment keeps the review heading and status bar. A notification recorded as submitted is viewed with its reference, a submitted tag and the date it was submitted in place of the review heading and status bar, its header offering Amend this notification, Copy as new and Delete, and a section of import reference numbers showing the notification reference and the customs document code as selectable text, the view carrying no continue form, no change links and no document scan errors. The view of a notification that cannot be found shows the service's standard page not found.",
       "why": "A submitted notification is a record to read rather than a form to finish, so its header carries the actions that apply to a record and none of the controls that change it.",
       "claims": [
@@ -676,11 +707,11 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-212 and repo-frontend-p19-213; ruling-sam-2026-11-16-p1-012 sets the tag's wording, ruling-design-2026-11-13-p1-023 keeps the reference as selectable text with no copy control, and ruling-sam-2026-11-19-p1-006 gives each header action its own form, all of which the record states as built.",
+      "deltaNote": "Met by repo-frontend-p19-212 and repo-frontend-p19-213; ruling-sam-2026-11-16-p1-012 sets the tag's wording, ruling-design-2026-11-13-p1-023 keeps the reference as selectable text with no copy control, and ruling-sam-2026-11-19-p1-006 keeps each header action off any other action's form, all of which the record states as built. Whether Amend this notification is a link or a button is the manage-notifications area's to say.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-043",
+      "id": "req-2430",
       "statement": "The review's means of transport row reads the arrival page's own label for the stored code, so the two cannot differ. An answer the reference data has since retired is named on the review with the message its own page gives, and an unfinished card says what to complete instead of the stale answer's message. A party never answered raises no address error on the review and its card is simply unfinished, and the main import reason card carries the exit answers with its one change link reaching the page that collects them.",
       "why": "Reading one label from the page that collects the answer keeps the review and the question page from disagreeing, and treating an unanswered party as unfinished rather than as an error keeps the page's refusals about real mistakes.",
       "claims": [
@@ -695,17 +726,19 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-044",
+      "id": "req-2431",
       "statement": "The review's form ends with one button group and no heading or sentence above it, the group being continue alone on a draft with its delete in the header, and continue, a secondary control to cancel the amendment, then a red delete while amending.",
       "why": "One group at the end of the form, with nothing introducing it, keeps the trader's next step unmistakable.",
-      "claims": ["repo-frontend-p19-221"],
+      "claims": [
+        "repo-frontend-p19-221"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-221.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-045",
+      "id": "req-2432",
       "statement": "The page shown after submitting goes from the reference panel straight to what the trader still owes, with the declaration date shown only on the declaration page. Documents are not required to submit, so that page lists the health certificate as still owed unless one is among the notification's documents, whatever its scan state, and after that item lists completing the animal identifier information when a line whose species asks for identifiers holds fewer identified animals than it declares, one filled identifier identifying an animal.",
       "why": "A trader who has submitted needs to know at once what is left to send, and listing the certificate whenever none is attached keeps the page honest about what the authorities still need.",
       "claims": [
@@ -720,7 +753,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-046",
+      "id": "req-2433",
       "statement": "The help links on the page shown after submitting open in a new tab, their visible text unchanged and a visually hidden note telling a screen-reader user, and the customs link goes to the customs, international trade and excise enquiries page rather than to the contact index that lists every tax and helpline. Create a new notification is a form button styled as a link, because starting a notification creates a record, and it is offered there so a trader with a second consignment need not return to the dashboard to find the start button.",
       "why": "Leaving the service for guidance should not lose the page a trader has just submitted, and a trader sending two consignments should not have to navigate back to start the second.",
       "claims": [
@@ -734,7 +767,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-047",
+      "id": "req-2434",
       "statement": "The declaration's confirmation is one small checkbox in a fieldset whose legend is for screen readers only, so a lone checkbox still has a group label, and the page carries no status strip at a first submission or an amendment. The date of declaration is shown in bold. A hidden step field tells a submit from a continue, because an unticked box posts nothing, and the checkbox is never pre-ticked, because a tick left by a submit refused as stale was given to older content.",
       "why": "A trader must tick the declaration against the content they are submitting, so a tick cannot be carried over a refusal, and a lone checkbox still needs a group label for a screen reader.",
       "claims": [
@@ -750,7 +783,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-048",
+      "id": "req-2435",
       "statement": "The country of origin is required to save and continue, an empty answer being refused with a message to select a country of origin, a typed value not in the list with a message to select one from the list, and a saved country the reference data no longer offers being refused on submit with its own message. The list names a territory with its country, as the Canary Islands are named with Spain, and is sorted by the name shown. Stored answers are re-checked against the page's rules when it opens, so a country the reference data no longer offers is named on the page, and the overview's origin task reads Complete only when a country is chosen and the question about a region of origin is answered, either yes with a code or no.",
       "why": "Naming a retired country when the page opens lets a trader fix it before they reach the declaration, and sorting by the name shown is what makes a territory findable where a trader expects it.",
       "claims": [
@@ -765,7 +798,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-049",
+      "id": "req-2436",
       "statement": "With JavaScript the region code box shows the chosen country's code as a fixed prefix, empty until a country is picked and filled as soon as one is so the trader types only the rest; without JavaScript there is no prefix, and the stored answer is the whole joined code either way. The server always draws the prefix so a revisit or a refusal shows the saved code at once, styling hiding it until the design system's script can run and a small client module updating it when the country changes, and the rule turning a country into a prefix has one owner on the server, the page handing the browser a map built with it and the client module only looking the chosen country up. A code typed with the country's code and a hyphen is recognised and not doubled, while a code typed with the country's letters and no hyphen is kept as typed and joined to the prefix, because a real region code can begin with those letters. The code is required under yes and stored only with a country's prefix, and under no, or with no country, the stored code is empty; the rules measure the typed part with any typed prefix removed whatever the answer, while the page shows back what was typed; the box stops typing at the same length the rule allows, the stop applying to the raw text, so a trader without JavaScript who types the country's code before a rest of more than two characters has it cut short; and clearing the country clears the code too, because the prefix depends on the country.",
       "why": "One owner for the country-to-prefix rule keeps the server and the browser from disagreeing, and drawing the prefix on the server is what makes the saved code show at once on a revisit or after a refusal.",
       "claims": [
@@ -786,17 +819,20 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-050",
+      "id": "req-2437",
       "statement": "The internal reference is checked for length only, being the trader's own and keeping their punctuation, and the origin page's status strip shows from the first request.",
       "why": "A reference a trader chooses for their own records should not be reformatted by the service.",
-      "claims": ["repo-frontend-p19-244", "repo-frontend-p19-245"],
+      "claims": [
+        "repo-frontend-p19-244",
+        "repo-frontend-p19-245"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-244 and repo-frontend-p19-245.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-051",
+      "id": "req-2438",
       "statement": "A question two import reasons both ask has a form field per reason, because two inputs cannot share a name, both mapping back to the one answer. The reason a reveal belongs to carries the explanation, so its follow-up questions ask with a label alone and the exit date keeps only its worked example, and the message for an unreadable date does not repeat the field name the label already gives. Origin and port of entry share the medium label while this page asks its searches as follow-up questions, so it sets the small label itself and the same select-one wording in both the empty box and the list's first option, and the exit date has a regular-weight label and an overridden bottom margin on its form group, because the design system zeroes the bottom margin of the last form group nested in another, which would leave the date box touching the port question.",
       "why": "Putting the explanation on the reason rather than on each follow-up keeps a reveal from repeating itself, and the margin override is what keeps the nested date box from touching the question above it.",
       "claims": [
@@ -812,7 +848,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-052",
+      "id": "req-2439",
       "statement": "The destination country and the port of exit are type-ahead searches built from the shared search control, with the look the origin and port of entry searches share, a bold label and full width, and their suggestions match ignoring accents as well as case, so plain letters find an accented name.",
       "why": "Matching without accents lets a trader type from a keyboard they have, and one shared control keeps every long list on the journey behaving the same way.",
       "claims": [
@@ -826,17 +862,19 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-053",
+      "id": "req-2440",
       "statement": "The additional details page's certification hint names the health certificate by its abbreviation, the same one the documents and review pages use, because a trader holds several certificates and the general words do not say which one the certification purposes are copied from.",
       "why": "A trader with several certificates needs to know which one the answer is taken from.",
-      "claims": ["repo-frontend-p19-255"],
+      "claims": [
+        "repo-frontend-p19-255"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-255.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-054",
+      "id": "req-2441",
       "statement": "The identification page uses the full-width surface so its tables and cards fit, while its error summary, caption, heading and inset text keep a two-thirds reading width, and identification is grouped by commodity, one section per commodity headed by its name and code holding one card per species. The identification card is built from the design system's summary card styling and its table component, so its tables keep their meaning and reflow on a small screen, and the saved-animals and selected-commodities tables set a deliberate class on their cells so a long unbroken identifier or commodity name wraps inside a table cell on a small screen.",
       "why": "Building the card from the design system's own components is what keeps the table readable by a screen reader and usable at a small width, which a grid of plain containers would not be.",
       "claims": [
@@ -849,10 +887,12 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-258, which the record states as a decision taken against the design's own custom styling; ruling-sam-2026-10-09-pm-p1-031 puts the design system's components first and is what keeps that decision standing.",
-      "conflicts": ["c-recorded-decisions-animals-001"]
+      "conflicts": [
+        "c-445"
+      ]
     },
     {
-      "id": "req-recorded-decisions-animals-055",
+      "id": "req-2442",
       "statement": "A species with no number of animals has no identification card, and a consignment whose species all lack a count shows the summary and no cards. A card is titled with the species name, with a link beside it to change the number of animals naming that species, which pushes the identification page onto the trail so Back on the count page returns there and continue on commodity details goes on to the next page that applies. While animals remain the card shows the entry form, then the in-card button, then the saved-animals table; a finished species shows its saved animals alone with no form, no button and no completion message; and a count lowered below its saved records still shows the over-count message. The in-card button says what pressing it does next, reading save and add another while more than one animal is outstanding and save and finish on the last, is a primary button, saves only its own species' current animal and reloads with that form empty, and a line of one animal has no in-card button. Save and continue and the save-and-return control save only the forms of species with one animal, values typed into the form of a species with more animals being neither checked nor saved by them, while pressing Enter in any field presses the page's hidden default button, which saves every card holding typed values including species with more animals and keeps the trader on the page when one of those was saved, that button coming first in the form so Enter never presses a remove button or the visible save. An identifier has one name used both on its entry field and as the saved-animals column heading, no identifier field has a hint, and the labels are regular weight; the saved-animals table has one column per identifier that species' panel asks for rather than per identifier the trader filled, the commodity's own identifiers or the two free-text fallback answers where a commodity declares none, so the header row says which identifiers the line expects and an empty cell shows which are still missing.",
       "why": "A trader entering many animals should never lose what they typed, so Enter saves the card they are working in, and heading the table by the identifiers the line expects is what shows them which are still missing.",
       "claims": [
@@ -872,17 +912,20 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-056",
+      "id": "req-2443",
       "statement": "Removing an identifier record is a post on the card's form with no load route, so a link cannot trigger it, and the identification page is skipped only when the notification holds no commodity line.",
       "why": "A removal that a link could trigger could be fired by a prefetch or a shared address, so it stays a post.",
-      "claims": ["repo-frontend-p19-268", "repo-frontend-p19-269"],
+      "claims": [
+        "repo-frontend-p19-268",
+        "repo-frontend-p19-269"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-268 and repo-frontend-p19-269.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-057",
+      "id": "req-2444",
       "statement": "On the commodity pages a choice made under an earlier search has no tick box on screen, so it travels back with the form as a hidden value. With JavaScript the search results refresh in place as the trader types, ticks, removes or clears, through the shared multi-select search, and the results are the ones the page renders without it, so the ordering, labelling and selection rules hold on both paths; without JavaScript a tick cannot refresh the tally, so a secondary add-selection button sits under the results and runs the search again keeping the term and the ticks so the tally catches up, and with JavaScript that button is hidden. If the results cannot be fetched the page is posted as it is without JavaScript, so the trader still gets their results.",
       "why": "Rendering the same results on both paths is what lets the page work without JavaScript and be enhanced by it, rather than having two behaviours to keep in step.",
       "claims": [
@@ -898,7 +941,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-058",
+      "id": "req-2445",
       "statement": "A polite status message gives the number of species a typed commodity search lists, or says no results were found, and a tick, a removal or clearing everything is not announced because the box and the tally already show it; one matching species is announced in the singular. After a removal or clearing everything the button pressed has gone, so focus moves to the search box, while after a tick focus stays on the tick box, and each commodity in the results stays a fieldset whose legend is its heading so a screen reader hears the species grouped by commodity.",
       "why": "Announcing the count and nothing else keeps a screen-reader user informed without narrating every tick, and moving focus only where the pressed control has gone keeps their place on the page.",
       "claims": [
@@ -914,7 +957,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-059",
+      "id": "req-2446",
       "statement": "The commodity search results are a list joined to the bottom of the search box: one heading row per commodity with its species beneath, striped rows ruled the full width of the list with the first species under each heading shaded, no ring round a hovered tick box, and a scroll once the list is taller than about six rows. A commodity's heading in the results and in the tally reads as its name with its code in round brackets where the service knows a name for the code and as the code alone where it does not, while commodity details still names a commodity by its code, and a result shows the species label with the part the query matched in bold so a trader can see why it was offered. Results are listed in order, the commodity groups by their code and each group's species by the label they are offered under, over the page of results the search returned. With JavaScript, Escape in the search box or a click outside the search hides the list while keeping the term and every choice, and focusing or clicking the box shows it again, the list hiding once the click has landed so a click on a button below it is not moved out from under the pointer. The tally shows a chip per chosen species under its commodity's heading, the species' Latin name and a cross named to remove that name, with a control to clear everything beside the count, styled as a link and posting the page's form. The add-selection button and its wording are settled for now and come back to design with their no-JavaScript question.",
       "why": "A results list drawn as the design draws it, ordered by code and label, lets a trader scan a long catalogue, and hiding it only after a click has landed keeps a button below it clickable.",
       "claims": [
@@ -932,7 +975,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-060",
+      "id": "req-2447",
       "statement": "A species reads as its Latin name with its common name in round brackets wherever it is listed or named, in the search results, on commodity details, in the selected commodities tables and in the identification details, and as its Latin name alone where the reference data holds no common name for it; the tally's chips carry the Latin name alone, as the design draws them. The permanent address rule and the identifier-column rule read the line's stored Latin name rather than the displayed label, so a species whose common name changes what it reads as still gates the same way. One commodity code can cover several commodities and hundreds of species, so each chosen species gets its own selected-commodities row named by the species on both commodity details and identification. The commodity heading on commodity details is set at the larger size because the commodity blocks are the substance of the page, the type stepping down from commodity to species to quantity labels, and the labels carrying a size so they do not read at the weight of their hints; the number of animals question has no hint because the page repeats it per species, so an example would repeat with it; and the commodity inset's second sentence stops a reader concluding that goods with no certificate need no notification.",
       "why": "Gating on the stored Latin name keeps a rule firing when a display label changes, and one row per species is what lets a trader give numbers and identifiers for each.",
       "claims": [
@@ -949,8 +992,8 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-061",
-      "statement": "The commodity tally offers a removal per chosen species, posting the page's form with the species' key in the button's value, so the entry pressed is the entry removed however the panel is ordered, and each removal on commodity details carries the entry it removes, the commodity's code on a code row and the line's key on a species row, so a repeated or stale removal is refused rather than taking another row, which is one rule shared by the tally, commodity details and the transit countries page. Because a tick box on screen carries no hidden value, a removal naming a choice the post no longer carries, the trader having unticked that box first, is honoured and nothing is logged, while a removal naming a key the stored search rows never held is refused as a bad request with one logged refusal, reachable by a tampered post and by a page left open across a save and a later removal of that commodity line, because a save empties the stored rows. A removal leaves the trader on commodity details while a line is left, with every number they had typed still in its field, because the page answers the removal itself rather than redirecting to it, and a removal that empties the selection goes to the commodity question, because that is where the next answer comes from; commodity details is one form opening with a hidden submit before the selected-commodities table so Enter hits it rather than the first removal, and ending with the save actions, and a removal is a post on that form with no load route so a link cannot trigger it.",
+      "id": "req-2448",
+      "statement": "The commodity tally offers a removal per chosen species, posting the page's form with the species' key in the button's value, so the entry pressed is the entry removed however the panel is ordered, and each removal on commodity details carries the entry it removes, the commodity's code on a code row and the line's key on a species row, so a repeated or stale removal is refused rather than taking another row. Because a tick box on screen carries no hidden value, a removal naming a choice the post no longer carries, the trader having unticked that box first, is honoured and nothing is logged, while a removal naming a key the stored search rows never held is refused as a bad request with one logged refusal, reachable by a tampered post and by a page left open across a save and a later removal of that commodity line, because a save empties the stored rows. A removal leaves the trader on commodity details while a line is left, with every number they had typed still in its field, because the page answers the removal itself rather than redirecting to it, and a removal that empties the selection goes to the commodity question, because that is where the next answer comes from; commodity details is one form opening with a hidden submit before the selected-commodities table so Enter hits it rather than the first removal, and ending with the save actions, and a removal is a post on that form with no load route so a link cannot trigger it.",
       "why": "Carrying the entry in the button's value is what makes the row pressed the row removed after the list has been reordered, and answering the removal on the page keeps the numbers a trader has already typed.",
       "claims": [
         "repo-frontend-p19-286",
@@ -959,20 +1002,19 @@
         "repo-frontend-p19-294",
         "repo-frontend-p19-295",
         "repo-frontend-p19-296",
-        "repo-frontend-p19-296-m1",
         "repo-frontend-p19-297"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-286 to repo-frontend-p19-288 and repo-frontend-p19-294 to repo-frontend-p19-297, with the one shared removal rule recorded at repo-frontend-p19-296-m1.",
+      "deltaNote": "Met by repo-frontend-p19-286 to repo-frontend-p19-288 and repo-frontend-p19-294 to repo-frontend-p19-297.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-062",
-      "statement": "The consignment addresses page gives each party its own section, a medium heading, its hint, then either a named link to add that party's address or the chosen address in an inset with controls below it to change it and to edit its details, so the trader sees which full address they chose, its name and every address line; the county parish holding number follows the same section shape, its number read with slashes on one line and with no edit control. The inset shows the name in bold, then each street line on its own line, with the locality, county, postcode and country joining into the last line, the country being the name held on the notification's own copy of the party so the page never asks the address book. A section with no address may also offer a control that fills it from another party's address, place of origin filling the consignor and consignee filling both the importer and the place of destination, no other pair offering one and a section already holding an address never offering one; the page is one form so such a control posts it, and pressing one shows the page again with the target section filled and no success banner. Each section is a region named by its heading so a screen reader lists the parties, the add link names the party so it needs no hidden suffix, and the change, edit and fill-from controls keep a hidden suffix naming the party because two sections would otherwise offer the same control name. The section heading reads Addresses, the page's own heading, its task row and its review card title read Consignment addresses, and an incomplete card asks the trader to complete the consignment addresses.",
+      "id": "req-2449",
+      "statement": "The consignment addresses page gives each party its own section, a medium heading, its hint, then either a named link to add that party's address or the chosen address in an inset with controls below it to change it and to edit its details, so the trader sees which full address they chose, its name and every address line; the county parish holding number follows the same section shape, its number read with slashes on one line and with no edit control. The inset shows the name in bold, then each street line on its own line, with the locality, county, postcode and country joining into the last line, the country being the name held on the notification's own copy of the party so the page never asks the address book. A section with no address may also offer a control that fills it from another party's address, place of origin filling the consignor and consignee filling both the importer and the place of destination, no other pair offering one and a section already holding an address never offering one; the page is one form so such a control posts it, and pressing one shows the page again with the target section filled and no success banner. Each section is a region named by its heading so a screen reader lists the parties, the add link names the party so it needs no hidden suffix, and the change, edit and fill-from controls keep a hidden suffix naming the party because two sections would otherwise offer the same control name. The section heading reads Addresses, the page's own heading, its task row and its review card title read Consignment addresses, and an incomplete card asks the trader to complete the consignment addresses. The backend names the place of destination destination where the journey names it place of destination, every other address role having the same name in both.",
       "why": "Reading the chosen address back in full on the page where it was chosen is what lets a trader see they picked the right one, and taking the country from the notification's own copy keeps the page working when the address book is unavailable.",
       "claims": [
-        "repo-frontend-p19-298",
+        "repo-frontend-p19-450",
         "repo-frontend-p19-299",
         "repo-frontend-p19-300",
         "repo-frontend-p19-301",
@@ -986,21 +1028,24 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-299 to repo-frontend-p19-304 for the sections and the inset; the wording in the last sentence is ruling-sam-2026-11-17-p1-010 to ruling-sam-2026-11-17-p1-013, and whether the pages already read that way is the consignment-parties area's to say from the code.",
+      "deltaNote": "Met by repo-frontend-p19-299 to repo-frontend-p19-304 for the sections and the inset, with the role names at repo-frontend-p19-450; the wording in the second-last sentence is ruling-sam-2026-11-17-p1-010 to ruling-sam-2026-11-17-p1-013, and whether the pages already read that way is the consignment-parties area's to say from the code.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-063",
-      "statement": "Every party link on the consignment addresses page carries where the trader came from, so a trader sent there from check your answers goes out to the picker or the edit page and comes back, with Save and continue there going on to the contact address, and the county parish holding link carries it alone, its page's Back and its save always answering the consignment addresses page with no marker needed.",
+      "id": "req-2450",
+      "statement": "Every party link on the consignment addresses page carries where the trader came from, so a trader sent there from check your answers goes out to the picker or the edit page and comes back, with Save and continue there going on to the review page, and the county parish holding link carries it alone, its page's Back and its save always answering the consignment addresses page with no marker needed.",
       "why": "A trader sent from check your answers to fix one address must be able to get back to it after a round trip through a picker.",
-      "claims": ["repo-frontend-p19-305", "repo-frontend-p19-306"],
+      "claims": [
+        "repo-frontend-p19-451",
+        "repo-frontend-p19-306"
+      ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-305 and repo-frontend-p19-306.",
+      "deltaNote": "Met by repo-frontend-p19-451 and repo-frontend-p19-306.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-064",
+      "id": "req-2451",
       "statement": "Each party picker searches the address book from a submitted search box with a medium search label, a hint naming what can be searched, and a square blue icon button joined to the box, the button named for screen readers and being the form's first submit so Enter in the box runs the search, the box and button taking half the content column's width. The picker is one form in which the search and the save are told apart by the value of the control pressed, a ticked row travels across a further search in a hidden field with no client script, and a page link is a load carrying the address the server already holds for the party rather than a row ticked on this visit and not yet saved. A control to add a new address sits as a secondary button beside the picker's heading, shown only outside stub mode, and because it leaves the journey for the address book it sits with the page rather than inside the search form.",
       "why": "A search that runs on a submit works without JavaScript, and carrying the ticked row in a hidden field is what keeps a choice through a second search with no script at all.",
       "claims": [
@@ -1016,7 +1061,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-065",
+      "id": "req-2452",
       "statement": "A party picker's results sit under a heading asking the trader to select an address, with the count straight under it, eight a page counted against every address the picker found, whether the role's whole list or the matches when a search narrows it, and the design system's pagination follows the table where more than eight were found, its links carrying the search term and the address held as chosen. An inset above the results names whichever address the picker currently holds as chosen, between the search box and the results, on every page and after a search, the address coming from the address in the request, the posted field or the party's saved answer so the name shows on a page that does not hold its row. The results table is one fieldset whose visually hidden legend repeats the heading so a screen reader names the group of addresses, and with no matches the message takes the place of the count.",
       "why": "An organisation's address book grows past one screen, so the picker pages, and naming the chosen address above the results is what tells a trader on the second page what they have already chosen.",
       "claims": [
@@ -1033,7 +1078,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-066",
+      "id": "req-2453",
       "statement": "The edit control on a section follows that section's address whether the picker copied it onto the notification or a fill-from control took it from the paired party, and with no address held the edit page sends the trader to the picker; reopening a party's picker pre-ticks the record that party's address was picked from while the role's list still holds it. A picker is reached from the consignment addresses page rather than the hub, so it ends with the primary control alone. A save with nothing chosen leaves without refusing and commits nothing, so the role stays empty or keeps the address it held; an address not in the book, or no longer in it, is refused with the role's own error; and a missing or deleted selection travels as no selection while the context a change link carried is kept on every way out of the picker.",
       "why": "A trader who opens a picker to look and leaves without choosing should not lose the address the notification already holds, and pre-ticking the record they picked from shows them where the address came from.",
       "claims": [
@@ -1048,7 +1093,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-067",
+      "id": "req-2454",
       "statement": "The permanent address section is a third section shape on the consignment addresses page, alongside the party sections and the county parish holding section, for a consignment carrying a cat, dog or ferret line, its hint being a lead-in sentence followed by two bullets rather than the party sections' single line. Once every animal needing one has a permanent address the section shows one address, every addressable animal being saved against the place of destination or only one animal needing one, and otherwise one line saying how many animals have an address added, counting the animals that need one. Either shape carries a control to change it and no edit control, because the address was hand-entered or copied from the place of destination on the permanent address page and never picked from the address book, so there is no record there to edit.",
       "why": "A hand-entered address has no address-book record behind it, so offering to edit that record would lead nowhere, and one line for many animals keeps the page readable.",
       "claims": [
@@ -1062,7 +1107,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-068",
+      "id": "req-2455",
       "statement": "The county parish holding number page keeps its three part labels on screen, because three unlabelled boxes under one legend would be harder to use than the single field they replace, and the number being two digits of county, three of parish and four of holding, its example hint shows that grouping with no comma and no full stop; its help names the animal and plant health documents, then links to the guidance for checking a holding's details. The boxes set no character limit, so nothing typed or pasted is cut short: when the county box holds nine digits with or without spaces or slashes and the other two are empty the number is split into its three parts on save, and anything else goes through the per-part checks unchanged with every box keeping what was typed. Each box turns the browser's saved values off and asks for a digit keypad, nothing moves focus between the boxes, and one error message belongs to the group rather than to each box, the date-input row classes only sitting the boxes side by side. The page can be saved with every box empty: no number is saved, any number saved before is cleared, and the gap is held at submission rather than refused on the page. The number is stored as nine bare digits.",
       "why": "A trader copying a number off a document should be able to paste it whole, and holding the gap at submission lets them come back to the page without being blocked on it.",
       "claims": [
@@ -1083,22 +1128,25 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-069",
-      "statement": "The permanent address page is reached only from the permanent address section of the consignment addresses page, for a consignment carrying a cat, dog or ferret line, and its cards come from the animal identifier records already entered, one per animal, never from the line's animal count, because the address is stored on the identifier record so a card can only exist once that record does. A line needing an address with no animal identified yet shows no cards, a message asking the trader to add the number of animals on consignment details taking their place and the save control still rendering but writing nothing. Each card asks once, as its own radio group legend, whether the animal lives at the place of destination or at a new address, and the page carries no second question above the cards.",
+      "id": "req-2456",
+      "statement": "The permanent address page is reached only from the permanent address section of the consignment addresses page, for a consignment carrying a cat, dog or ferret line, and its cards come from the animal identifier records already entered, one per animal, never from the line's animal count, because the address is stored on the identifier record so a card can only exist once that record does. When at least one line needs a permanent address and no line that needs one has an animal identified yet, the page shows no cards and a message takes their place: \"Identify an animal on identification details before you can continue.\", linking to the identification details page, when any such line carries a number of animals, and \"Add the number of animals on consignment details before you can continue.\", linking to the consignment details page, when none does. While the message shows, the save control still renders but writes nothing. Each card asks once, as its own radio group legend, whether the animal lives at the place of destination or at a new address, and the page carries no second question above the cards.",
       "why": "Driving the cards off the identifier records keeps the page from offering a card it cannot store an answer against, and asking once per card keeps the answer with the animal it belongs to.",
       "claims": [
         "repo-frontend-p19-330",
         "repo-frontend-p19-331",
-        "repo-frontend-p19-332",
+        "repo-frontend-p19-452",
+        "repo-frontend-p19-453",
+        "repo-frontend-p19-454",
+        "repo-frontend-p19-455",
         "repo-frontend-p19-333"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-330 to repo-frontend-p19-333.",
+      "deltaNote": "Met by repo-frontend-p19-330, repo-frontend-p19-331, repo-frontend-p19-333 and repo-frontend-p19-452 to repo-frontend-p19-455; the permanent address feature's English copy holds both messages.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-070",
+      "id": "req-2457",
       "statement": "Choosing to enter a new address on a permanent address card requires the name or organisation name, the first address line, the town or city, the postcode, an email address and a phone number, while the second address line and the county may be left blank, and every field's character limit and over-long message are the ones the owning address rules already build for the party edit page, the page stating only its own required messages and no format check on the email, the phone or the postcode. Choosing the place of destination before the notification has one is refused on that card's radio group, naming no animal on the field or in the summary, while an address field's refusal names the card's animal in the error summary and stays plain on the field itself. The new-address fields ask no country, a hand-entered address always recording the United Kingdom, and the phone field is the one field with a hint, because a trader giving an address outside the United Kingdom cannot otherwise know the number is dialled from here. An animal left with neither option chosen saves with no permanent address, the save still succeeding for the others.",
       "why": "Naming the animal in the summary is what lets a trader find the card that needs fixing on a page of many, and saving the cards that are answered keeps their work while they find the rest.",
       "claims": [
@@ -1116,7 +1164,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-071",
+      "id": "req-2458",
       "statement": "The documents file field is labelled as the attachment, the noun the review also uses, and the reference field has no hint. The status column reports the check's progress, scanning for a virus and the check being completed, and on a refusal names the reason the upload service gave where the page has wording for it, a virus found, the upload failing or the download failing, a reason it has no wording for staying as rejected rather than being named wrongly. A document is started by any of its reference, its type whether offered or not, its date of issue text or a chosen file, and any save control then keeps every answer typed, says what is missing and adds nothing, or adds the document when it is complete, rather than dropping the part-filled form; every field is mandatory per record and there is no edit page, so presence is checked when a document is added, and the error summary lists the fields in the order they appear on the page. The type list opens on its select text, which carries no value, so a form left on it submits an empty type, and one message covers both mistakes a list can make, being left on the select text or carrying a value the page never offered; the offered types are served by the service and primed at boot so the check is built for each add rather than frozen at module load, and the list's items, the add form's check and the vocabulary this service sends to the backend are one ordered list, so the order the page offers is the order that list states.",
       "why": "Keeping a part-filled document on the page rather than dropping it is what stops a trader re-typing a reference after a missed field, and one ordered list of types keeps the page, the check and the backend from disagreeing.",
       "claims": [
@@ -1135,7 +1183,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-072",
+      "id": "req-2459",
       "statement": "The documents file size limit is whatever the documents upload configuration holds and nothing else states a figure, the page states that same figure and checks it in the browser for any submit that sends the file, so a trader learns a file is too large before spending time uploading it, and the upload service decides for itself whether to take a file and may refuse one as too large on receipt, which the page renders in its own wording. While the add form is open every save control posts the form and its file to the upload service's own scanning session rather than to this service, that session being opened with the size limit to enforce so the ingress body cap does not bound it; when the form is closed, or a taken-on document or a removal is waiting to be retried, the save controls post to this service and send no file, so the retry runs before anything else on the page. A file carrying no bytes is the right type and under the size limit, so it reaches the page rather than being stopped before it, and the page is where it is refused and nothing is added. A document saved by adding another or by the save-and-return control is followed by a redirect so a reload cannot replay the save, while one saved by Save and continue is answered on the returned request by the save choice, a reload of that response saving nothing twice because a document already listed is not added again, and nothing holds the trader for a scan still running. A render reuses the upload session the page is already showing while that session is still waiting for its file, carried in the refresh link and a hidden field, so a scan being polled does not leave a run of registrations behind; a render carrying no handle, and one whose session has already taken its file, opens a session of its own, which keeps two concurrent adds off one handle, and the carried handle is looked up on the notification rather than trusted alone, so a handle another notification opened reaches nothing. A form carrying a session that has already taken its file is answered by the upload service and never by this one, because the save controls post the file straight there, the page being served with no store and the feature's client bundle opening it again by its own address when the browser hands back a copy it kept. The query key the trader returns under is the trader-facing word for what they return from and its value is the correlation handle, because no upload identifier exists when the session opens, and the return path is relative because the upload service refuses an absolute redirect outside development. A well-formed upload identifier from another journey is answered as not found rather than as forbidden, so the journey never confirms that upload exists.",
       "why": "Posting the file straight to the upload service is what lets a large attachment past the ingress body cap, and looking a carried handle up on the notification is what keeps one trader's upload session out of another's notification.",
       "claims": [
@@ -1159,7 +1207,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-073",
+      "id": "req-2460",
       "statement": "The documents page uses the full-width surface so the added-documents table fits, its guidance and its fields keeping a two-thirds reading width, and with no documents the upload card shows no table and no sentence. The reference cell breaks a long unbroken reference onto further lines so the table stays inside the card, and each row's actions sit at its right-hand end. The reason the add control is shut sits before the control it refuses, and the control keeps its place in the tab order so the error summary can reach it; the limit error links to the documents already added rather than to the attachment field, because at the cap the add control is shut and pointing a trader at the file input would send them to a control they cannot use, while the table shows the documents they already hold. The drop zone's wording matches the design system's own defaults. A document's file is opened with a link rather than a submit so it needs no token, and a file is offered only once its scan has settled clean. The status tag carries a visually hidden name for the document it belongs to, so a screen reader hears what was checked. With JavaScript on, the upload control the page shows is not the original file input, so the oversize summary error points at the control a trader can focus rather than at the hidden input behind it.",
       "why": "Pointing an error at a control the trader can actually focus is what makes the error summary usable, and offering a file only once its scan is clean keeps an unchecked file from being opened.",
       "claims": [
@@ -1178,37 +1226,44 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-074",
+      "id": "req-2461",
       "statement": "A document the scan rejected holds the continue back, as does a document the upload service has taken on that the notification does not list, because otherwise the trader would carry on with a claimed document missing from the notification, while the exit to the overview waits for neither.",
       "why": "A trader must not reach the declaration believing a document is attached when the notification does not hold it, and a trader who only wants to stop should not be held by a scan.",
-      "claims": ["repo-frontend-p19-362"],
+      "claims": [
+        "repo-frontend-p19-362"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-362.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-075",
+      "id": "req-2462",
       "statement": "A trader's own uploaded document is served under a cache policy a decision has settled, saying what a shared or browser cache may keep of it.",
       "why": "The goal is the look and feel of the notification journey, and no source in this programme settles what a cache may keep of a trader's document: the design record carries it as still to be settled, with the page served with no store because a kept copy of it can post to a spent upload session, so the open decision is reported rather than built.",
-      "claims": ["repo-frontend-p19-371"],
+      "claims": [
+        "repo-frontend-p19-371"
+      ],
       "status": "out-of-scope",
       "delta": "change",
       "deltaNote": "The design record states that a document's file is served with no cache directive of its own and records what a cache may keep of a trader's own document as still to be settled (repo-frontend-p19-371).",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-076",
+      "id": "req-2463",
       "statement": "The arrival date's hint gives a fixed date showing the format rather than a date tied to the arrival window, the date widget's bounds and the out-of-range message policing the window, and the arrival details page reads the window once per request and hands it to both the widget and the checks, so the two cannot disagree across midnight, a reading with no widget taking the window as it stands.",
       "why": "A hint that moved with the window would read as part of the rule, and reading the window once is what keeps the widget and the refusal from disagreeing at midnight.",
-      "claims": ["repo-frontend-p19-373", "repo-frontend-p19-374"],
+      "claims": [
+        "repo-frontend-p19-373",
+        "repo-frontend-p19-374"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-373 and repo-frontend-p19-374.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-077",
+      "id": "req-2464",
       "statement": "The port search shows a placeholder asking the trader to select a port in its empty box, in the same words as the select text that is the first entry of the list shown without JavaScript. The means of transport options read air, rail, road and sea, and each stores its own reference code. The transport identification hint is a lead-in and one bullet per alternative, so the number of choices shows at a glance.",
       "why": "Using one wording in the box and in the list keeps the question the same on both paths, and one bullet per alternative shows a trader at a glance what they may give.",
       "claims": [
@@ -1222,7 +1277,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-078",
+      "id": "req-2465",
       "statement": "A transit country is added to the table when the trader presses the add control, and removing one submits the page's form so the token travels with it and no load can trigger it, the country's code riding in the button's value so the row pressed is the row removed however the list has been reordered since the page rendered. The status message region ships empty and the page's script writes the message into it just after load, because a live region already holding its text when the document is parsed is read as ordinary page content, both adding and removing being full form submits so the message arrives with a fresh document every time. The added-countries list names each country rather than its code, because the list is the whole record of the answer the trader reads back, and the cap is not stated up front: the search goes when the last country is added and the status message says why. The page's browser title is the short task name rather than its question heading, the search's select text asks for a choice while its empty-box text asks for a search, because the two do different things, and a country already added stays in the list and a repeat is refused by name, which tells the trader more than a country quietly missing from the list. The page offers the same countries and territories as the country of origin page, each territory named with its country, rather than every code the label lookup resolves. An empty list is a valid answer because the question is optional, while a list holding a country not offered is refused, on submit as not from the list and on a stored answer as no longer available, and a stored list is checked against the page's rules when it opens, a banner naming any country no longer offered before the continue saves the filtered list. The page names the choice once, a heading above the search box and the table with the fieldset round the table carrying the same words visually hidden, so a screen-reader user hears the group named and a sighted user reads the words once.",
       "why": "The table is itself the confirmation that a country was added or removed, and refusing a repeat by name tells a trader why their choice did not appear instead of leaving them guessing.",
       "claims": [
@@ -1246,7 +1301,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-079",
+      "id": "req-2466",
       "statement": "The transporter list shows its facts in headed columns with a status tag, green for an approved transporter and magenta for a newly added one, and a transporter with no approval number reads as not applicable in that column. Searching the list filters it in place: nothing is checked or committed, and a picked row stays picked when the search leaves it on the list. With JavaScript the list narrows in the page as the trader types, because the page already holds the whole list and needs no endpoint, the matching letters in each shown cell being bold and a polite live region saying how many rows are shown, and pressing the search control or Enter runs the same filter and posts nothing, so the page keeps the whole list to filter again; without JavaScript the search is a submit on the page's own form and the server returns the narrowed list, the pick travelling through a search in a hidden field and the search and the save being told apart by the value of the control pressed. A transporter picked and then filtered out of view stays picked, the filter hiding rows and never clearing a choice. The search matches the name, the address, the approval number, the type and the status, ignoring case and accents, so a trader typing plain letters finds an accented name, and a transporter with no approval number is matched by the words its column shows; a term running across two cells, such as an address into an approval number, still finds its row, and because no single cell holds the whole term nothing is bold. The control to add a transporter sits on the search row, right-aligned above the table, dropping below the search on a phone, and the tab order is the search box, the search control, the add control, then the rows.",
       "why": "Filtering a list the page already holds keeps a trader's choice while they look for another, and matching across cells is what finds a row when a trader pastes something spanning two columns.",
       "claims": [
@@ -1265,7 +1320,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-080",
+      "id": "req-2467",
       "statement": "The transporter type question warns the trader to check the transporter list before adding a new transporter, so they do not add a duplicate, offers private first with no hint and commercial with an explanation of the Northern Ireland condition, and its one control is a continue rather than a save. Each add form opens only for the type it belongs to, opening or posting it for any other stored type, or none, returning the trader to the type question. A commercial transporter added by hand can only be from Northern Ireland, so its country is shown rather than asked and a posted value naming anywhere else has been tampered with and is refused, and the commercial form opens with the authorisation rules the transporter list states, read from the list's own copy. Both forms close the address at the country, then head the contact details with the email before the phone, and both hint the international dialling code. A transporter typed in by hand joins the organisation's list as new rather than approved, and a private transporter's country is held as both the display name and its code, so neither storing it nor reading it back needs a lookup.",
       "why": "Warning the trader before they add is cheaper than de-duplicating a list afterwards, and showing a country that can only be one value saves a question that has one answer.",
       "claims": [
@@ -1284,7 +1339,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-081",
+      "id": "req-2468",
       "statement": "The link that adds a transporter carries where the trader came from, and the add form's own save carries it on to the transporter list, so a trader sent from check your answers goes on from the list like any other start. Saving a complete record on either add form returns the trader to the list with the saved transporter as the first row, already chosen, under a one-time success banner titled for success and reading the transporter's name with only its first letter capitalised followed by the words that a transporter was added, the banner showing on that one view only and a reload or a later return showing the list with no banner. Values entered on a form whose save was refused are shown again in its fields the next time the trader opens that form, until the form is saved or cancelled, while the secondary control on each form discards them, commits nothing to the notification and takes the trader to the dashboard, wherever the notification list lives. The transporter type question and the private add form carry no status strip, while the list and the commercial add form do. Where the stored type was not changed on the way into an add form, the transporter chosen before the add began is still chosen after cancelling, and a trader who changed the type at the type question on the way in is left with the type they chose and no transporter, the type question's own purge having removed the other type's stored transporter before the add form opened.",
       "why": "Showing the saved transporter first and already chosen is what saves the trader finding it again, and keeping refused values until the form is saved or cancelled is what stops them re-typing an address.",
       "claims": [
@@ -1302,7 +1357,7 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-082",
+      "id": "req-2469",
       "statement": "The animals frontend's own code-quality rules bind every change to it: a comment describes only the lines below it and only where a name or an extraction cannot, making no claim about callers, other modules, the backend, a library or a test and carrying no counts; no ticket key, backlog or ruling identifier, release name or session word appears in code, comments or test titles; no history is kept in code, so there is no before-and-after narration, no removed constants and no note of a rename; a name predicts what the code returns and changes, with no positional boolean flags, no metaphors and one name per concept, a rename covering the whole vocabulary; and set-up used by two tests lives in the shared helper, promoting a helper deleting the local copies. The lint script enforces the identifier, silent-catch, error-log and platform-layer rules through the repository's own lint rule module, and the identifier rule in template comments through a second one, and the canonical text of the rules lives in the workspace rather than in the repository.",
       "why": "Lint refusing a ticket key or a ruling identifier in code is what keeps a programme's own vocabulary out of the service, and one canonical text keeps every repository answering to the same rules.",
       "claims": [
@@ -1320,133 +1375,153 @@
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-083",
+      "id": "req-2470",
       "statement": "Every branch that changes an outcome logs once through the request's logger with the identifiers support searches by, logging the error object rather than only a message, and no request or response body is logged at information level. A test's title states what its assertions prove, and the test fails without the change it covers.",
       "why": "One log line per outcome with the identifiers support searches by is what makes a trader's report traceable, and a test that passes without its change proves nothing.",
-      "claims": ["repo-frontend-p19-417", "repo-frontend-p19-418"],
+      "claims": [
+        "repo-frontend-p19-417",
+        "repo-frontend-p19-418"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-417 and repo-frontend-p19-418.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-084",
-      "statement": "The animals frontend requires at least Node 24 and npm 11.6.2, the floor set in its engines field. It keeps its session in a Redis-backed cache when deployed and in memory for local development, which the cache engine setting overrides, the in-memory cache being unsuitable for production because it is neither shared between instances nor kept across a restart, while every deployed instance reaches the same Redis store and a frontend is given access only to the namespace prefixed with its own service name. A forward proxy is set up by default and calls made with the platform fetch use the proxy dispatcher, a client that uses another HTTP library providing the dispatcher itself.",
-      "why": "A session that is not shared between instances loses a trader's work on a deploy, and a call that misses the proxy dispatcher fails only once it is deployed.",
+      "id": "req-2471",
+      "statement": "The animals frontend requires at least Node 26.13.1 and npm 11.6.2, the floor set in its engines field. It keeps its session in a Redis-backed cache when deployed and in memory for local development, which the cache engine setting overrides, the in-memory cache being unsuitable for production because it is neither shared between instances nor kept across a restart, while every deployed instance of a service shares one Redis store and a frontend may use only the keys prefixed with its own service name. Its Redis client pins the RESP2 wire protocol, because the client library defaults to RESP3 and the session store talks RESP2 to the managed Redis service. A forward proxy is set up by default and calls made with the platform fetch use the proxy dispatcher, a client that uses another HTTP library providing the dispatcher itself.",
+      "why": "A session that is not shared between instances loses a trader's work on a deploy, a client speaking a protocol the store does not answer breaks every session, and a call that misses the proxy dispatcher fails only once it is deployed.",
       "claims": [
-        "repo-frontend-p19-420",
+        "repo-frontend-p19-456",
         "repo-frontend-p19-421",
-        "repo-frontend-p19-421-m1",
+        "repo-frontend-p19-457",
+        "repo-frontend-p19-457-m1",
         "repo-frontend-p19-428"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-420, repo-frontend-p19-421, repo-frontend-p19-421-m1 and repo-frontend-p19-428.",
+      "deltaNote": "Met by repo-frontend-p19-456, repo-frontend-p19-421, repo-frontend-p19-457, repo-frontend-p19-457-m1 and repo-frontend-p19-428.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-085",
-      "statement": "For every page request it handles, the animals frontend counts the calls that request made to its journey backend, the times it read the signed-in session record from the session store, and the calls it made to systems outside the Import Notification Service boundary. A page request is every request except the health check, the site icon, the static asset route and the counts endpoint itself, so a form post, a redirect, a rendered page, the not-found page and the document scan poll all count; a backend call is one fetch to the journey backend through the shared fetch helper, and a session resolution is one read of the session record by the authentication plugin or by the view context, the session state the session library loads not being counted. Running totals are kept per route and served from a counts endpoint, which a delete clears, and the performance suite reads them and reports the ratios. The endpoint is on by default for local development and off when deployed, and needs no sign-in, while the metrics are off locally and on when deployed, writing one metric document per page request carrying the backend calls and session resolutions marked as a page request.",
+      "id": "req-2472",
+      "statement": "For every page request it handles, the animals frontend counts the calls that request made to its journey backend, the times it read the signed-in session record from the session store, and every call it made to an HTTP dependency, by dependency and operation, the journey backend included, commands sent to the session store not counting as dependency calls. A page request is every request except the health check, the site icon, the static asset route and the counts endpoint itself, so a form post, a redirect, a rendered page, the not-found page and the document scan poll all count; a backend call is one call to the journey backend through the shared fetch helper, counted once even when a refused or slow connection is retried, and a session resolution is one read of the session record by the authentication plugin or by the view context, the session state the session library loads not being counted. A request's counts live in a per-request async store, the counts plugin running each request's lifecycle methods inside it because the server framework offers no public hook that runs a whole request in one async context, and because a view renders outside that context a session resolution is counted against the request it is read for rather than through the store. Running totals are kept per route and served from a counts endpoint, which a delete clears, answering with the service name, the time counting began, the totals and a list per route by method and path, each holding page requests, backend calls, session resolutions and external calls, the last keyed by dependency and then by operation; the performance suite reads them and reports the ratios. The endpoint is on by default for local development and off when deployed, and needs no sign-in, while the metrics are off locally and on when deployed, writing one metric document per page request carrying the backend calls and session resolutions marked as a page request.",
       "why": "Counting a request's backend and session reads is what shows a page that has quietly started making one call per row, and the performance suite's ratios are read from those counts.",
       "claims": [
-        "repo-frontend-p19-422",
+        "repo-frontend-p19-458",
+        "repo-frontend-p19-459",
         "repo-frontend-p19-423",
-        "repo-frontend-p19-424",
+        "repo-frontend-p19-460",
+        "repo-frontend-p19-461",
+        "repo-frontend-p19-462",
+        "repo-frontend-p19-463",
         "repo-frontend-p19-425",
-        "repo-frontend-p19-426",
+        "repo-frontend-p19-464",
+        "repo-frontend-p19-465",
         "repo-frontend-p19-427"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-422 to repo-frontend-p19-427.",
+      "deltaNote": "Met by repo-frontend-p19-458 to repo-frontend-p19-465, with the page-request definition at repo-frontend-p19-423, the endpoint at repo-frontend-p19-425 and the performance suite's use at repo-frontend-p19-427.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-086",
-      "statement": "The animals frontend's pre-commit hook is cheap, running the staged-file formatter and lint auto-fix on the staged files only, with no build and no tests, so a fix lands in the commit that caused it, while the pre-push hook is the full gate, running the format check, lint and the unit suite, which builds the frontend first. The slow half of the gate sits on the push rather than the commit because the suite is thousands of tests with coverage on top of a production build, mostly fixed startup cost that does not shrink for a small change, and charging that to every commit is what teaches people to skip the hooks, which skips the cheap format and lint checks as well, while a push is the first point the work affects anyone else. Installing dependencies installs both hooks. The whole gate, or just its fast half, can be run by hand at any time, and when the workspace's quality gate has already run the format check, lint and the suite for the exact commit and left a marker naming the verified revision, the pre-push hook skips rather than repeating it, while without that workspace the full gate always runs locally; the workspace gate runs its cheap checks before the build, so a formatting slip fails in seconds instead of after a full suite.",
+      "id": "req-2473",
+      "statement": "The animals frontend's pre-commit hook is cheap, running the staged-file formatter and lint auto-fix on the staged files only, with no build and no tests, so a fix lands in the commit that caused it, while the pre-push hook is the full gate, running the format check, lint and the unit suite, which builds the frontend first. The slow half of the gate sits on the push rather than the commit because the suite is thousands of tests with coverage on top of a production build, mostly fixed startup cost that does not shrink for a small change, and charging that to every commit is what teaches people to skip the hooks, which skips the cheap format and lint checks as well, while a push is the first point the work affects anyone else. Installing dependencies installs both hooks. The whole gate, or just its fast half, can be run by hand at any time, and when the workspace's quality gate has already run the format check, lint and the suite for the exact commit and left a marker naming the verified revision, the pre-push hook skips rather than repeating it, while without that workspace the full gate always runs locally; the workspace gate runs its cheap checks before the build, so a formatting slip fails in seconds instead of after a full suite. The SonarCloud analysis the gate uploads is set up in the repo's own Sonar project properties file.",
       "why": "A cheap commit and a thorough push is what keeps people using the hooks instead of skipping them, and the shared marker stops the same suite running twice for one revision.",
       "claims": [
         "repo-frontend-p19-429",
-        "repo-frontend-p19-429-m1",
         "repo-frontend-p19-430",
         "repo-frontend-p19-431",
         "repo-frontend-p19-432",
         "repo-frontend-p19-432-m1",
-        "repo-frontend-p19-432-m2"
+        "repo-frontend-p19-432-m2",
+        "repo-frontend-p19-432-m3",
+        "repo-frontend-p19-437-m1"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-429 to repo-frontend-p19-432 and the three notes beside them.",
+      "deltaNote": "Met by repo-frontend-p19-429 to repo-frontend-p19-432 and the three notes beside them, with the SonarCloud set-up at repo-frontend-p19-437-m1.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-087",
-      "statement": "The animals frontend runs locally in development mode from its development script, and its start script mimics running in production mode locally; it builds a development image and a production image, each run on port 3000, with a note that an Apple Silicon machine may need a platform flag. The recommended path for local cross-service development is the workspace Docker stack, which stands the identity stub up alongside the frontend with the right environment wiring and needs no host-file edits, while a standalone run against that stub needs its own environment file naming the sign-in configuration address, client identifier, client secret, service identifier and policy; the full local environment, the database, the file store, Redis, the stubs and every animals service including this one, is that stack, which can also be started built from local source or with this service left out to run natively. The session cookie's same-site setting is fixed at strict in the authentication plugin while the identity state cookie is lax by default and set by its own variable, because the identity callback is a cross-site top-level navigation on which a strict state cookie is not sent, so sign-in fails.",
+      "id": "req-2474",
+      "statement": "The animals frontend builds a development image and a production image from its Dockerfile, each run with the container's port 3000 published on the host's port 3000. The recommended path for local cross-service development is the workspace Docker stack, held in the trade imports workspace repository, which stands the identity stub up alongside the frontend with the right environment wiring and needs no host-file edits, while a standalone run against that stub needs its own environment file naming the sign-in configuration address, client identifier, client secret, service identifier and policy; the full local environment, the database, the file store, Redis, the stubs and every animals service including this one, is that stack, which can also be started built from local source or with this service left out to run natively. The session cookie's same-site setting is fixed at strict in the authentication plugin while the identity state cookie is lax by default and set by its own variable, because the identity callback is a cross-site top-level navigation on which a strict state cookie is not sent, so sign-in fails.",
       "why": "A strict state cookie silently breaks sign-in, so the reason it is lax has to be recorded beside the setting, and naming the stack as the local path saves each developer wiring the stubs by hand.",
       "claims": [
         "repo-frontend-p19-433",
-        "repo-frontend-p19-433-m1",
         "repo-frontend-p19-434",
-        "repo-frontend-p19-434-m1",
-        "repo-frontend-p19-435"
+        "repo-frontend-p19-435",
+        "repo-frontend-p19-435-m1",
+        "repo-frontend-p19-466"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-433 to repo-frontend-p19-435 and the two notes beside them.",
+      "deltaNote": "Met by repo-frontend-p19-433 to repo-frontend-p19-435, with the two images at repo-frontend-p19-435-m1 and the workspace that holds the stack at repo-frontend-p19-466.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-088",
+      "id": "req-2475",
       "statement": "The animals frontend's accessibility and performance floors are checked by running Lighthouse locally against the workspace stack on the service's port, the address list, the score floors and the steps for contributing to them living in the set's own guide.",
       "why": "A recorded floor and a recorded address list are what make the check repeatable by anyone, rather than a number one person remembers.",
-      "claims": ["repo-frontend-p19-436"],
+      "claims": [
+        "repo-frontend-p19-436"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-436.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-089",
+      "id": "req-2476",
       "statement": "The animals frontend's information is licensed under the Open Government Licence version 3, and its attribution statement is cited in a product or application that uses it.",
       "why": "A public service's licence and attribution have to travel with its information.",
-      "claims": ["repo-frontend-p19-437"],
+      "claims": [
+        "repo-frontend-p19-437"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Met by repo-frontend-p19-437.",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-090",
+      "id": "req-2477",
       "statement": "The animals frontend's readme names the workspace that holds the Docker stack, the identity stub wiring and the pre-push marker, and names the same workspace everywhere it refers to it.",
-      "why": "The goal is the look and feel of the notification journey, so a stale pointer in a readme is not a difference this programme changes: the readme names a workspace repository that no longer exists in two places while naming the right one in its hooks section, which is reported rather than built.",
-      "claims": ["repo-frontend-p19-438"],
+      "why": "The goal is the look and feel of the notification journey, so a pointer in a readme is not a difference this programme changes. The readme now names the trade imports workspace for the Docker stack and the full local environment, so the stale pointer once reported here has gone and nothing is left to report.",
+      "claims": [
+        "repo-frontend-p19-466"
+      ],
       "status": "out-of-scope",
-      "delta": "change",
-      "deltaNote": "The readme points twice at a workspace repository that no longer exists for the Docker stack and the identity stub wiring, while naming the workspace that holds them correctly in its hooks section (repo-frontend-p19-438).",
+      "delta": "exists",
+      "deltaNote": "The readme names the trade imports workspace repository for the Docker stack it recommends and for the full local environment (repo-frontend-p19-466).",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-091",
+      "id": "req-2478",
       "statement": "Where the animals frontend's design record names an exception to a house rule, the rule it names can be read from where the record says it lives.",
       "why": "The goal is the look and feel of the notification journey, so a citation that leads nowhere in the repository's own record is not a difference this programme changes: the one recorded exception to the rule against custom styling cites a rule file the repository does not hold, that rule living in the workspace instead, which is reported rather than built.",
-      "claims": ["repo-frontend-p19-439"],
+      "claims": [
+        "repo-frontend-p19-439"
+      ],
       "status": "out-of-scope",
       "delta": "change",
       "deltaNote": "The design record's recorded exception to the no-custom-styling rule cites a rule file the repository does not hold: its agent directory holds only its settings and the secrets hooks, and that rule lives in the workspace (repo-frontend-p19-439).",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-092",
+      "id": "req-2479",
       "statement": "A decision already taken on the animals frontend can be looked up by its identifier in the repository that holds it.",
       "why": "The goal is the look and feel of the notification journey and no source in this programme asks for a machine-readable ledger: the repository keeps its decisions only in its two prose records, the platform's architecture decisions and the set's per-page design record, so nothing in it can be queried for a decision by identifier, which is reported rather than built.",
-      "claims": ["repo-frontend-p19-440"],
+      "claims": [
+        "repo-frontend-p19-440"
+      ],
       "status": "out-of-scope",
       "delta": "new",
       "deltaNote": "The repository keeps no machine-readable decisions ledger: its recorded decisions live only in the platform's architecture decisions and the set's per-page design record (repo-frontend-p19-440).",
       "conflicts": []
     },
     {
-      "id": "req-recorded-decisions-animals-093",
+      "id": "req-2480",
       "statement": "Each departure from a house rule or a shared journey rule in the animals frontend is named in the set's own record with the reason for it: the documents reference cell's break-anywhere styling class, because the design system's own word-break class leaves a table cell's minimum width at the unbroken reference so a reference of the maximum length pushes the table past its card; the county parish holding sub-page's fixed Back target, against the general rule that a page takes its Back from where the trader came from; origin of the import being the one page the overview links to without the return controls; and the two transporter details forms ending with their own primary and a control that returns the trader to the dashboard.",
       "why": "An exception that carries its reason can be reviewed on that reason, while one that does not reads as an oversight and gets swept away with real atypicality.",
       "claims": [
@@ -1459,13 +1534,15 @@
       ],
       "status": "question",
       "delta": "exists",
-      "deltaNote": "Met by repo-frontend-p19-355, repo-frontend-p19-133, repo-frontend-p19-180 and repo-frontend-p19-184: the set's records name each exception with its reason. Whether the sweep of every other atypical item reaches these named exceptions rests on c-recorded-decisions-animals-002.",
-      "conflicts": ["c-recorded-decisions-animals-002"]
+      "deltaNote": "Met by repo-frontend-p19-355, repo-frontend-p19-133, repo-frontend-p19-180 and repo-frontend-p19-184: the set's records name each exception with its reason. Whether the sweep of every other atypical item reaches these named exceptions rests on c-446.",
+      "conflicts": [
+        "c-446"
+      ]
     }
   ],
   "conflicts": [
     {
-      "id": "c-recorded-decisions-animals-001",
+      "id": "c-445",
       "about": "Whether a decision recorded in the animals frontend's own design record overrides the design release where the two differ.",
       "positions": [
         {
@@ -1488,7 +1565,7 @@
       "outcome": "The two rulings rank above the animals frontend, so a decision recorded in the frontend's own design record is not one of the named overrides. It stands only where it is itself a real constraint the prototype cannot express, or where the data dictionary, an earlier parity judgement or an owner ruling backs it, and otherwise the page changes and the record is rewritten to the reason for the page as built. Nothing is listed as overruled: each recorded choice against the design's own drawing in this area carries a reason another source still backs, the afternoon ruling's rule that the design system's components come first covering both the identification card's summary-card styling and the documents reference cell's break-anywhere class, so none of them stops being built on this conflict alone, and weighing a page's own copy and layout belongs to that page's area."
     },
     {
-      "id": "c-recorded-decisions-animals-002",
+      "id": "c-446",
       "about": "Whether the sweep of every other atypical item reaches the exceptions the animals frontend's own record names with a reason.",
       "positions": [
         {
@@ -1509,7 +1586,7 @@
       ],
       "resolution": "question",
       "outcome": "Nothing ranks the two readings: the ruling's sweep is defined by a list it does not carry, held in an engineering review that is not one of this programme's sources, while the frontend's own record names several departures from house rules as deliberate exceptions. The narrow reading is adopted until the owner says otherwise, so each recorded exception keeps its reason and stays as it is.",
-      "question": "Does fixing every other atypical item cover only the items the 19 November engineering review listed, or also the exceptions the animals frontend's own record names with a reason, such as the documents reference cell's styling class, the county parish holding page's fixed Back target and the two pages whose ending controls differ?",
+      "question": "Does fixing every other atypical item cover only the items the 19 November engineering review listed, or also the exceptions the animals frontend's own record names with a reason, such as the documents reference cell's styling class, the county parish holding page's fixed Back target, origin of the import having no return controls and the two transporter details forms' own ending controls?",
       "default": "Only the items that engineering review listed. Each exception the set's record names keeps its recorded reason and stays as it is, and the record goes on naming it, because each one rests on a real constraint or an accessibility need rather than on a preference."
     }
   ]

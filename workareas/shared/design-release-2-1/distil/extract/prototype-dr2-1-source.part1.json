@@ -1,6 +1,6 @@
 {
   "source": "prototype:dr2-1-source",
-  "structure": "Part 1 (Version mount, layout and journey control), read at commit 04a073b (the checkout's HEAD). Read in full: app/lib/version-mount.js (363 lines: shared session keys, the 34 journey path prefixes, shared external paths, path prefixing for redirects and render data, the separate session nest, view-override fallback, router copying), app/lib/design-release-2.1-version.js (42 lines: base path /design-release-2.1, session key _designRelease21, flag _isDesignRelease21Version, locals including the four service-navigation hrefs), app/filters.js (10 lines, no filters) and app/data/session-data-defaults.js (5 lines, no defaults); layouts/main.html (header and the four service-navigation variants), layouts/journey.html (two-thirds column and the cancel-amend modal include), index.html (the prototype index with four release cards); partials/design-release-2.1/journey-form-actions.html (three action modes: template review, amend, default), partials/notification-status.html and partials/design-release-2.1/notification-status.html (status tag and reference, Cancel amend link), partials/design-release-2/cancel-amend-modal.html. app/routes.js ranges: 1-67 (requires and constants, including the design-release reference GBN-AG-26-7K8M2P), 273-401 (notification reference helpers, resetNotificationJourneySession, seedPrototypeSessionForReasonForImport), 436-499 (from-hub, from-review, from-template-review, template-review return and save, getJourneyBackLink), 1495-1603 (getJourneySteps, getNextJourneyPath, amend detection, form action parsing, getJourneySaveRedirect, getSectionContinueRedirect), 7052-7106 (design release base path, address book href, dashboard back link), 11720-11723 (GET /index), 13103-13114 (POST /intro/sign-in and the version mounting order). To state step conditions accurately, the bodies of the helpers getJourneySteps calls (hasAnimalIdentifiersRequired, requiresAdditionalAnimalDetailsPage, requiresTransitCountries, isDesignRelease21TemplateCreate) and generateDesignReleaseNotificationReference were looked up in other parts' ranges and cited, not claimed in their own right. Claims cover the mount and session model, link prefixing, view fallback, service navigation and header, the index page, the journey layout, form actions, notification status, cancel-amend modal, notification references, session reset, prototype seeding, back links and return rules, the step order with every conditional step, next-page logic, save redirects, the sign-in redirect, GET /index and the mount order.",
+  "structure": "Part 1, version mount, layout and journey control, read at commit c2078fb (the checkout's HEAD). Read in full: app/lib/version-mount.js (365 lines: shared session keys, the 35 journey path prefixes, shared paths, path prefixing for redirects and render data, the version session nest, the view-override rule, router copying), app/lib/design-release-2.1-version.js (42 lines: base path, session key, version flag, reserved other base /testing, the render locals), app/config.json, app/filters.js and app/data/session-data-defaults.js (both empty), app/utils/notification-reference.js (the testing-format GB.<year>.<sequence> - <type> helpers), layouts/main.html (header and the four service-navigation branches), layouts/journey.html (two-thirds column and the cancel-amend dialog include), index.html (the service index: two design cards and three testing cards), partials/design-release-2.1/journey-form-actions.html (template-review, amend, template-create and default modes), both notification-status partials and the notification-reference macro, and app/routes.js lines 1-40 (requires only), 57-96 (constants, the notification references, isDesignRelease21SessionData), 308-509 (version flags, references, dashboard reference mapping, session reset, the reason-for-import seed), 548-607 (from-hub, from-review, template-review return, back links), 1711-1825 (step order, next path, amend test, form actions, save and section redirects), 8202-8263 (design release 2 test, version base path, address book href, dashboard back link), 13494-13497 (GET /index), 15140-15142 (sign-in redirect) and 15332-15341 (mount order). Helper bodies outside these ranges (gross weight, identifiers, additional details, transit, template create, hub complete, reference generator, the /prototype/reason-for-import and /create-notification handlers) were looked up only to state the step conditions; their pages are other parts'. The cancel-amend dialog's own content is part 12's (it reads partials/design-release-2.1/cancel-amend-modal.html), so this part claims only when the layout includes it. Covered: the /design-release-2.1 mount, session nest, prefixing and view fallback; the version flags and which apply to DR2.1; the service navigation, header and service index; the journey form actions and status bar; the step order and next-page rules; the reference format and dashboard mapping; session reset; back-link and return rules; sign-in redirect and GET /index.",
   "claims": [
     {
       "id": "prototype-dr2-1-source-p1-001",
@@ -14,23 +14,32 @@
       "id": "prototype-dr2-1-source-p1-002",
       "statement": "Every route of the root router is copied under /design-release-2.1 (each method of each route, with the same handlers), so DR2.1 has the same pages and handlers as the root journey rather than its own route table.",
       "kind": "behaviour",
-      "ref": "app/lib/version-mount.js:321-356",
+      "ref": "app/lib/version-mount.js:323-358",
       "quote": "versionRouter.use(middleware)\n    copyRouterStack(sourceRouter, versionRouter)",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-003",
-      "statement": "The versions are mounted in the order testing, design release 2.1, design release 2; 2.1 is mounted before 2 so that /design-release-2.1 is not taken as a /design-release-2 path.",
+      "id": "prototype-dr2-1-source-p1-087",
+      "statement": "Only route layers are copied into the version router: router-level middleware and the catch-all _all method are not copied.",
+      "kind": "behaviour",
+      "ref": "app/lib/version-mount.js:341-358",
+      "quote": "if (!layer.route) {\n      return\n    }",
+      "confidence": "verbatim",
+      "note": "mechanism: copies the root router's route table into the version router."
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-088",
+      "statement": "The versions are mounted in the order Testing 4, Testing 3, Testing and then Design release 2.1; the longer /testing paths go before /testing so they are not taken as /testing paths. No separate design release 2 version is mounted.",
       "kind": "constraint",
-      "ref": "app/routes.js:13111-13114",
-      "quote": "// Mount 2.1 before 2 so Express does not treat /design-release-2.1 as /design-release-2\nmountDesignRelease21Version(govukPrototypeKit, router)\nmountDesignRelease2Version(govukPrototypeKit, router)",
+      "ref": "app/routes.js:15332-15341",
+      "quote": "// Mount the longer /testing* paths before /testing so Express does not treat them as that route\nmountTesting4Version(govukPrototypeKit, router)\nmountTesting3Version(govukPrototypeKit, router)\nmountTestingVersion(govukPrototypeKit, router)\nmountDesignRelease21Version(govukPrototypeKit, router)",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p1-004",
       "statement": "Under /design-release-2.1 the session data a page sees is a separate nest stored under the session key _designRelease21, so DR2.1 notifications, drafts and answers are kept apart from the root journey and the other versions.",
       "kind": "data",
-      "ref": "app/lib/design-release-2.1-version.js:14; app/lib/version-mount.js:221-231",
+      "ref": "app/lib/design-release-2.1-version.js:14; app/lib/version-mount.js:222-232",
       "quote": "sessionKey: '_designRelease21',",
       "confidence": "verbatim"
     },
@@ -38,7 +47,7 @@
       "id": "prototype-dr2-1-source-p1-005",
       "statement": "Inside the DR2.1 session nest the flag _isDesignRelease21Version is set to true on every request, which handlers use to tell they are running as DR2.1.",
       "kind": "data",
-      "ref": "app/lib/design-release-2.1-version.js:15; app/lib/version-mount.js:229; app/routes.js:68-70",
+      "ref": "app/lib/design-release-2.1-version.js:15; app/lib/version-mount.js:230; app/routes.js:93-95",
       "quote": "nest[versionFlag] = true",
       "confidence": "verbatim"
     },
@@ -46,7 +55,7 @@
       "id": "prototype-dr2-1-source-p1-006",
       "statement": "Two session keys are shared across all versions rather than kept in the DR2.1 nest: the addresses added to the address book (addressBookAddedAddresses) and the submitted notifications (submittedNotifications). Reading or writing them in DR2.1 reads or writes the shared value.",
       "kind": "data",
-      "ref": "app/lib/version-mount.js:6-9, 183-196",
+      "ref": "app/lib/version-mount.js:6-9, 184-197",
       "quote": "const SHARED_SESSION_KEYS = [\n  'addressBookAddedAddresses',\n  'submittedNotifications'\n]",
       "confidence": "verbatim"
     },
@@ -54,48 +63,66 @@
       "id": "prototype-dr2-1-source-p1-007",
       "statement": "When a DR2.1 request carries a form or query field (not starting with an underscore, not the session key and not a shared key) whose name also exists in the shared session outside the DR2.1 nest, the nest takes the outer session's value for that key before the handler runs.",
       "kind": "behaviour",
-      "ref": "app/lib/version-mount.js:233-247",
+      "ref": "app/lib/version-mount.js:235-249",
       "quote": "if (Object.prototype.hasOwnProperty.call(root, key)) {\n          nest[key] = root[key]\n        }",
       "confidence": "verbatim",
-      "note": "This copies the outer session's value into the nest; the posted value itself is applied later by the prototype kit. Recorded as observed, not interpreted further."
+      "note": "mechanism: copies outer session values into the version nest. The posted value itself is applied later by the prototype kit. Recorded as observed, not interpreted further."
     },
     {
       "id": "prototype-dr2-1-source-p1-008",
       "statement": "Before a DR2.1 response redirects or ends, the session is restored so the DR2.1 nest is saved back under _designRelease21 in the full session.",
       "kind": "behaviour",
-      "ref": "app/lib/version-mount.js:206-219, 255-256, 313-316",
+      "ref": "app/lib/version-mount.js:207-220, 257-258, 313-318",
       "quote": "root[sessionKey] = nest\n    req.session.data = root",
+      "confidence": "verbatim",
+      "note": "mechanism: saves the version session nest."
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-089",
+      "statement": "Every DR2.1 page is given the requested URL, query string included, as currentPath.",
+      "kind": "data",
+      "ref": "app/lib/version-mount.js:233",
+      "quote": "res.locals.currentPath = req.originalUrl",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p1-009",
       "statement": "In DR2.1, a redirect to a journey path is prefixed with /design-release-2.1 (for example a redirect to /notification-hub goes to /design-release-2.1/notification-hub), and a redirect to / goes to /design-release-2.1.",
       "kind": "behaviour",
-      "ref": "app/lib/version-mount.js:102-116, 255-275",
+      "ref": "app/lib/version-mount.js:103-117, 257-277",
       "quote": "if (urlPath === '/') {\n      return basePath\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-090",
+      "statement": "A link or redirect to / with a query string (/?...) becomes /design-release-2.1?... in DR2.1, and a journey path keeps its query string and fragment after the prefix; whether a path is a journey path is decided on the path without its query string or fragment.",
+      "kind": "rule",
+      "ref": "app/lib/version-mount.js:82, 112-116",
+      "quote": "if (urlPath.startsWith('/?')) {\n      return basePath + urlPath.slice(1)\n    }",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p1-010",
       "statement": "In DR2.1, every string in the data passed to a page render that is a journey path is prefixed with /design-release-2.1, so links, form actions and back links built by handlers stay inside the version.",
       "kind": "behaviour",
-      "ref": "app/lib/version-mount.js:118-144, 289-293",
+      "ref": "app/lib/version-mount.js:119-145, 291-295",
       "quote": "renderOptions = renderOptions ? prefixPathsDeep(renderOptions) : {}",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "mechanism: rewrites every string in a page's render data, nested objects and arrays and the data object included."
     },
     {
-      "id": "prototype-dr2-1-source-p1-011",
-      "statement": "The journey path prefixes that are kept inside the version are: /create-notification, /notification-type, /origin-of-the-import, /what-are-you-importing, /reason-for-import, /consignment-details, /animal-identification-details, /additional-animal-details, /arrival-details, /transit-countries, /transporter, /upload-documents, /roles-and-addresses, /place-of-origin, /consignor-or-exporter, /consignee, /importer, /place-of-destination, /cph-number, /permanent-address, /contact-address-for-consignment, /review-notification, /declaration, /notification-submitted, /notification-hub, /notifications, /dashboard, /live-animals, /germinal-products, /templates, /actions, /changes, /inspection and /prototype/reason-for-import (each path itself or anything below it).",
+      "id": "prototype-dr2-1-source-p1-091",
+      "statement": "The journey path prefixes that are kept inside the version are: /create-notification, /notification-type, /origin-of-the-import, /what-are-you-importing, /reason-for-import, /consignment-details, /consignment-gross-weight, /animal-identification-details, /additional-animal-details, /arrival-details, /transit-countries, /transporter, /upload-documents, /roles-and-addresses, /place-of-origin, /consignor-or-exporter, /consignee, /importer, /place-of-destination, /cph-number, /permanent-address, /contact-address-for-consignment, /review-notification, /declaration, /notification-submitted, /notification-hub, /notifications, /dashboard, /live-animals, /germinal-products, /templates, /actions, /changes, /inspection and /prototype/reason-for-import (each path itself or anything below it).",
       "kind": "constraint",
-      "ref": "app/lib/version-mount.js:11-46, 97-99",
-      "quote": "const JOURNEY_PATH_PREFIXES = [\n  '/create-notification',",
+      "ref": "app/lib/version-mount.js:11-47, 98-100",
+      "quote": "  '/consignment-details',\n  '/consignment-gross-weight',",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p1-012",
       "statement": "Paths that are not journey paths are left unprefixed: external or protocol-relative links, links not starting with /, fragment links starting with #, and any path not in the journey prefix list.",
       "kind": "rule",
-      "ref": "app/lib/version-mount.js:68-100",
+      "ref": "app/lib/version-mount.js:69-101",
       "quote": "if (!urlPath.startsWith('/') || urlPath.startsWith('//')) {\n      return false\n    }",
       "confidence": "verbatim"
     },
@@ -103,23 +130,24 @@
       "id": "prototype-dr2-1-source-p1-013",
       "statement": "The address book (/address-book and anything below it), static assets (/public/, /plugin-assets/), the prototype kit management pages (/manage-prototype) and the service index (/index) are shared paths that are never prefixed with the version base path.",
       "kind": "rule",
-      "ref": "app/lib/version-mount.js:48-55, 89-91",
+      "ref": "app/lib/version-mount.js:49-56, 90-92",
       "quote": "return urlPath === '/address-book' ||\n    urlPath.startsWith('/address-book/') ||\n    urlPath.startsWith('/public/') ||\n    urlPath.startsWith('/plugin-assets/') ||\n    urlPath.startsWith('/manage-prototype') ||\n    urlPath === '/index'",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-014",
-      "statement": "A path that already starts with a version base (/design-release-2.1, /design-release-2 or /testing) is never prefixed again, so DR2.1 links to another version are left as they are.",
+      "id": "prototype-dr2-1-source-p1-092",
+      "statement": "A path that already starts with /design-release-2.1 or /testing is never prefixed again, so DR2.1 links into the Round 1 testing version are left as they are.",
       "kind": "rule",
-      "ref": "app/lib/design-release-2.1-version.js:17; app/lib/version-mount.js:66, 83-87",
-      "quote": "otherVersionBases: ['/design-release-2', '/testing'],",
-      "confidence": "verbatim"
+      "ref": "app/lib/design-release-2.1-version.js:17; app/lib/version-mount.js:67, 84-88",
+      "quote": "otherVersionBases: ['/testing'],",
+      "confidence": "verbatim",
+      "note": "/testing3 and /testing4 are not reserved bases, but they are not journey prefixes either, so they are left unprefixed by the general rule."
     },
     {
       "id": "prototype-dr2-1-source-p1-015",
       "statement": "When DR2.1 renders a page, it uses the page's override in app/views/design-release-2.1/ when one exists (as .html, .njk or a folder index.html), and otherwise falls back to the root view of the same name. Layouts, partials and govuk or moj templates are never swapped this way.",
       "kind": "rule",
-      "ref": "app/lib/version-mount.js:146-161, 295-306",
+      "ref": "app/lib/version-mount.js:147-162, 297-308",
       "quote": "if (versionViewExists(viewName)) {\n          viewName = `${viewFolder}/${viewName}`\n        }",
       "confidence": "verbatim"
     },
@@ -127,7 +155,7 @@
       "id": "prototype-dr2-1-source-p1-016",
       "statement": "DR2.1 pages are also treated as design release 2 pages: every DR2.1 render has isDesignRelease2Version and isDesignRelease21Version set, and the session check for design release 2 is true for DR2.1 sessions, so design release 2 behaviour applies under /design-release-2.1 unless a DR2.1 branch overrides it.",
       "kind": "rule",
-      "ref": "app/lib/design-release-2.1-version.js:20-22; app/routes.js:7052-7057",
+      "ref": "app/lib/design-release-2.1-version.js:20-22; app/routes.js:8202-8206",
       "quote": "isDesignRelease2Version: true,\n      isDesignRelease21Version: true,",
       "confidence": "verbatim"
     },
@@ -140,12 +168,71 @@
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-018",
-      "statement": "In DR2.1 the service navigation links are: Dashboard to /design-release-2.1, the service name and header home link to /design-release-2.1/index, Templates to /design-release-2.1/templates and Address book to /design-release-2.1/address-book.",
+      "id": "prototype-dr2-1-source-p1-093",
+      "statement": "The handler test for design release 2.1 is the _isDesignRelease21Version flag; the routes.js comment says Design release 2.1, Testing 3 and Testing 4 all set it.",
+      "kind": "rule",
+      "ref": "app/routes.js:93-95, 316-322",
+      "quote": "// Those are the three versions that set the Design release 2.1 flag.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-094",
+      "statement": "The November 2026 journey updates (identification fields by commodity, removable addresses and transporter, blank-friendly templates, dashboard dates and Amend examples, address book uses) apply under /design-release-2.1, because hasJourneyUpdates is true whenever the Design release 2.1 flag is set.",
+      "kind": "rule",
+      "ref": "app/routes.js:316-322",
+      "quote": "// The November 2026 updates (identification fields by commodity, removable\n// addresses and transporter, blank-friendly templates, dashboard dates and\n// Amend examples, address book uses) apply to Design release 2.1, Testing 3 and Testing 4.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-095",
+      "statement": "Branches guarded by isRound2TestingSessionData (Testing 3 or Testing 4) do not apply under /design-release-2.1, because DR2.1 sets neither testing flag.",
+      "kind": "rule",
+      "ref": "app/routes.js:312-330; app/lib/design-release-2.1-version.js:12-29",
+      "quote": "return isTesting3SessionData(sessionData) || isTesting4SessionData(sessionData)",
+      "confidence": "inferred",
+      "note": "Inferred: the DR2.1 mount sets only _isDesignRelease21Version, never _isTesting3Version or _isTesting4Version."
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-096",
+      "statement": "Branches guarded by isDesignRelease21OnlySessionData apply under /design-release-2.1: it is true when the Design release 2.1 flag is set and neither the Testing 2 flag nor a Round 2 testing flag is.",
+      "kind": "rule",
+      "ref": "app/routes.js:341-345",
+      "quote": "return isDesignRelease21SessionData(sessionData) &&\n    !sessionData._isTesting2Version &&\n    !isRound2TestingSessionData(sessionData)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-097",
+      "statement": "Under /design-release-2.1 the contact address for consignment question is left out: omitsContactAddressQuestion is true for DR2.1 (as it is for Testing 3 and 4).",
+      "kind": "rule",
+      "ref": "app/routes.js:347-349",
+      "quote": "return isRound2TestingSessionData(sessionData) || isDesignRelease21OnlySessionData(sessionData)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-098",
+      "statement": "Under /design-release-2.1 documents are not worded as \"Health certificate\": that wording is used only by the Round 2 prototypes (Testing 3 and 4).",
+      "kind": "copy",
+      "ref": "app/routes.js:336-339",
+      "quote": "// Round 2 prototypes use \"Health certificate\" document wording.",
+      "confidence": "inferred",
+      "note": "Inferred from usesHealthCertificateWording returning isRound2TestingSessionData, which is false for DR2.1. The documents pages' own wording is another part's."
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-099",
+      "statement": "In DR2.1 the service navigation hrefs are: Dashboard to /design-release-2.1, Templates to /design-release-2.1/templates and Address book to /design-release-2.1/address-book.",
       "kind": "data",
       "ref": "app/lib/design-release-2.1-version.js:23-26",
       "quote": "serviceNavDashboardHref: DESIGN_RELEASE_21_BASE,\n      serviceNavServiceHref: `${DESIGN_RELEASE_21_BASE}/index`,\n      serviceNavTemplatesHref: `${DESIGN_RELEASE_21_BASE}/templates`,\n      serviceNavAddressBookHref: `${DESIGN_RELEASE_21_BASE}/address-book`",
       "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-100",
+      "statement": "DR2.1 sets a service index href (/design-release-2.1/index), but the layout no longer uses it: no link on the page goes there from the layout.",
+      "kind": "behaviour",
+      "ref": "app/lib/design-release-2.1-version.js:24; app/views/layouts/main.html:14, 62-67",
+      "quote": "{% set navServiceHref = serviceNavServiceHref if serviceNavServiceHref else \"/index\" %}",
+      "confidence": "inferred",
+      "note": "Inferred: navServiceHref is set at main.html:14 and not referenced anywhere else in the layout."
     },
     {
       "id": "prototype-dr2-1-source-p1-019",
@@ -156,29 +243,37 @@
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-020",
-      "statement": "Every page shows the GOV.UK header whose GOV.UK logo links to the service index (in DR2.1, /design-release-2.1/index); with service navigation on, the service name is shown in the service navigation bar, not in the header.",
+      "id": "prototype-dr2-1-source-p1-101",
+      "statement": "The prototype uses the rebranded GOV.UK Frontend styles and the Ministry of Justice frontend components, and its configured service URL is /index.",
+      "kind": "non-functional",
+      "ref": "app/config.json:3-10",
+      "quote": "\"govuk-frontend\": {\n      \"rebrand\": true\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-102",
+      "statement": "Every DR2.1 page shows the GOV.UK header whose GOV.UK logo links to the service index at /index (not a version path); with service navigation on, the service name is shown in the service navigation bar, not in the header.",
       "kind": "behaviour",
       "ref": "app/views/layouts/main.html:62-67",
-      "quote": "homepageUrl: navServiceHref,\n      serviceName: serviceName if not useServiceNavigation,",
+      "quote": "homepageUrl: \"/index\",\n      serviceName: serviceName if not useServiceNavigation,",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-021",
-      "statement": "In DR2.1 the service navigation bar shows the service name, linking to the service index, followed by four items in this order: Dashboard, Templates, Address book, Manage account.",
+      "id": "prototype-dr2-1-source-p1-103",
+      "statement": "In DR2.1 the service navigation bar shows the service name, linking to the dashboard (/design-release-2.1), followed by four items in this order: Dashboard, Templates, Address book, Manage account.",
       "kind": "copy",
       "ref": "app/views/layouts/main.html:71-98",
-      "quote": "text: \"Dashboard\",\n                  active: serviceNavActive == \"dashboard\"\n                },\n                {\n                  href: navTemplatesHref,\n                  text: \"Templates\",",
+      "quote": "serviceName: serviceName,\n              serviceUrl: navDashboardHref,",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-022",
-      "statement": "In DR2.1 the service navigation has no Log out item, unlike design release 2 which shows Log out after Manage account.",
+      "id": "prototype-dr2-1-source-p1-104",
+      "statement": "In DR2.1 the service navigation has no Log out item; the layout's other design release 2 branch (design release 2 without 2.1) adds Log out after Manage account.",
       "kind": "behaviour",
       "ref": "app/views/layouts/main.html:71-131",
       "quote": "{% if isDesignRelease21Version %}",
       "confidence": "inferred",
-      "note": "Inferred by comparing the DR2.1 branch (lines 72-98, four items) with the design release 2 branch (lines 100-130, which adds \"Log out\")."
+      "note": "Inferred by comparing the DR2.1 branch (lines 72-98, four items) with the else branch (lines 100-130, which adds \"Log out\"). No design release 2 version is mounted at this commit."
     },
     {
       "id": "prototype-dr2-1-source-p1-023",
@@ -206,113 +301,116 @@
     },
     {
       "id": "prototype-dr2-1-source-p1-026",
-      "statement": "When the notification being edited has the status Amend, every journey page includes the cancel amendment confirmation dialog.",
+      "statement": "When the notification being edited has the status Amend, every DR2.1 journey page includes the cancel amendment confirmation dialog (not in Testing 3 or 4).",
       "kind": "behaviour",
       "ref": "app/views/layouts/journey.html:14-16",
-      "quote": "{% if isDesignRelease2Version and data.notificationStatus == 'Amend' %}\n  {% include \"partials/design-release-2/cancel-amend-modal.html\" %}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p1-027",
-      "statement": "The cancel amendment dialog asks \"Are you sure you want to cancel this amendment?\".",
-      "kind": "copy",
-      "ref": "app/views/partials/design-release-2/cancel-amend-modal.html:21-23",
-      "quote": "Are you sure you want to cancel this amendment?",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p1-028",
-      "statement": "The cancel amendment dialog's primary button \"Yes, cancel amendment\" goes to /design-release-2.1/notifications/cancel-amend in DR2.1 (or to cancelAmendHref when a page sets one).",
-      "kind": "behaviour",
-      "ref": "app/views/partials/design-release-2/cancel-amend-modal.html:25",
-      "quote": "<a class=\"govuk-button\" href=\"{{ cancelAmendHref or ((journeyBasePath + '/notifications/cancel-amend') if journeyBasePath else '/notifications/cancel-amend') }}\">Yes, cancel amendment</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p1-029",
-      "statement": "The cancel amendment dialog has a \"Go back\" link-styled button and a Close button (labelled \"Close\" for screen readers); both, and clicking the overlay, dismiss the dialog without cancelling.",
-      "kind": "behaviour",
-      "ref": "app/views/partials/design-release-2/cancel-amend-modal.html:2, 11-16, 26-28",
-      "quote": "<button class=\"govuk-link app-dr2-amend-modal__back-link\" type=\"button\" data-modal-dismiss>\n          Go back\n        </button>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p1-030",
-      "statement": "The cancel amendment dialog is a modal dialog, hidden until opened, with aria-modal set and its heading as its accessible label.",
-      "kind": "non-functional",
-      "ref": "app/views/partials/design-release-2/cancel-amend-modal.html:1-9",
-      "quote": "role=\"dialog\"\n    aria-modal=\"true\"\n    aria-labelledby=\"cancel-amend-modal-title\"",
-      "confidence": "verbatim"
+      "quote": "{% if isDesignRelease2Version and not isTesting3Version and not isTesting4Version and data.notificationStatus == 'Amend' %}\n  {% include \"partials/design-release-2.1/cancel-amend-modal.html\" %}",
+      "confidence": "verbatim",
+      "note": "The dialog's own content is claimed by part 12, which reads partials/design-release-2.1/cancel-amend-modal.html."
     },
     {
       "id": "prototype-dr2-1-source-p1-031",
       "statement": "The service index page (/index) has the page title \"Import notification service\", caption \"Prototypes\" and heading \"Import notification service\".",
       "kind": "copy",
-      "ref": "app/views/index.html:9-20",
+      "ref": "app/views/index.html:10-21",
       "quote": "<span class=\"govuk-caption-xl\">Prototypes</span>\n    <h1 class=\"govuk-heading-xl\">\n      Import notification service\n    </h1>",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-032",
-      "statement": "The service index introduction reads \"Choose a prototype version to work on. Each version has its own journey and dashboard, with a shared address book.\"",
+      "id": "prototype-dr2-1-source-p1-105",
+      "statement": "The service index introduction reads \"Choose a version of the prototype. Each one has its own journey, dashboard and saved data. They all share one address book.\"",
       "kind": "copy",
-      "ref": "app/views/index.html:21-23",
-      "quote": "Choose a prototype version to work on. Each version has its own journey and dashboard, with a shared address book.",
+      "ref": "app/views/index.html:22-24",
+      "quote": "Choose a version of the prototype. Each one has its own journey, dashboard and saved data. They all share one address book.",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-033",
-      "statement": "The service index shows four release cards in this order: Design release 1, Design release 2, Design release 2.1 and Testing version; the three design releases are tagged \"In design\" (purple) and the testing version is tagged \"Testing\" (yellow). Every card has the subheading \"Create a notification\".",
+      "id": "prototype-dr2-1-source-p1-106",
+      "statement": "The service index turns service navigation off, so it shows no service navigation bar; its header shows the service name instead, linking to /index.",
+      "kind": "behaviour",
+      "ref": "app/views/index.html:8; app/views/layouts/main.html:62-67; app/config.json:3",
+      "quote": "{% set useServiceNavigation = false %}",
+      "confidence": "inferred",
+      "note": "Inferred: with useServiceNavigation false the layout passes serviceName and the configured serviceUrl (/index) to the header and skips the navigation block."
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-107",
+      "statement": "The service index has two groups of cards: \"Latest designs\" (Design release 1, Design release 2) and \"Testing prototypes\" (Round 1 (Live animals), Round 1 (Germinals), Round 2 (Live animals)), in that order. Every card has a tag, a heading, a subheading, a description, a \"What this version includes\" details and a start button.",
       "kind": "copy",
-      "ref": "app/views/index.html:29-157",
-      "quote": "text: \"In design\",\n        classes: \"govuk-tag--purple\"",
+      "ref": "app/views/index.html:28-221",
+      "quote": "<h2 class=\"govuk-heading-l\">\n      Latest designs\n    </h2>",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-034",
-      "statement": "The Design release 1 card reads \"The current design release journey at the root URLs. Use this for stable reference work.\", has a \"What the journey contains\" details listing \"Origin, commodity and reason for import\", \"Consignment, animal and arrival details\", \"Documents, roles and addresses\" and \"Review, declaration and submission\", and a \"Start design release 1\" button to /create-notification.",
+      "id": "prototype-dr2-1-source-p1-108",
+      "statement": "The Design release 1 card is tagged \"In design\" (purple), has the subheading \"The first notification journey\", reads \"The original journey for telling us about an import of live animals, from starting a notification to submitting it. The later versions are built on this one.\", lists \"Origin, commodity and reason for import\", \"Consignment, animal and arrival details\", \"Documents and consignment addresses\" and \"Review, declaration and submission\", and its \"Start design release 1\" button goes to /create-notification.",
       "kind": "copy",
-      "ref": "app/views/index.html:35-62",
-      "quote": "The current design release journey at the root URLs. Use this for stable reference work.",
+      "ref": "app/views/index.html:34-68",
+      "quote": "The original journey for telling us about an import of live animals, from starting a notification to submitting it. The later versions are built on this one.",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-035",
-      "statement": "The Design release 2 card reads \"A duplicate of Design release 1 for making changes without affecting the original version.\", its details list \"Same journey as Design release 1\", \"Separate dashboard and session data\" and \"Shared address book\", and its \"Start design release 2\" button goes to /design-release-2.",
+      "id": "prototype-dr2-1-source-p1-109",
+      "statement": "The Design release 2 card is tagged \"In design\" (purple), has the subheading \"The current design\" and reads \"The latest design for importing live animals and germinal products. It adds a dashboard, templates and an address book to the first journey, and has the newest changes.\"",
       "kind": "copy",
-      "ref": "app/views/index.html:71-97",
-      "quote": "A duplicate of Design release 1 for making changes without affecting the original version.",
+      "ref": "app/views/index.html:70-86",
+      "quote": "The latest design for importing live animals and germinal products. It adds a dashboard, templates and an address book to the first journey, and has the newest changes.",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-036",
-      "statement": "The Design release 2.1 card reads \"A duplicate of Design release 2 for making changes without affecting the original version.\", its \"What the journey contains\" details list \"Same journey as Design release 2\", \"Separate dashboard and session data\" and \"Shared address book\", and its \"Start design release 2.1\" button goes to /design-release-2.1.",
+      "id": "prototype-dr2-1-source-p1-110",
+      "statement": "The Design release 2 card lists what the version includes: \"Journeys for live animals and for germinal products\", \"Dashboard with Submitted, Draft and Amend, and Past tabs\", \"Identification details that change with the commodity\", \"Templates you can create, edit and reuse\", \"Address book showing what each address can be used for\" and \"Amending a notification after it has been submitted\".",
       "kind": "copy",
-      "ref": "app/views/index.html:106-132",
-      "quote": "{{ govukButton({\n        text: \"Start design release 2.1\",\n        href: \"/design-release-2.1\"\n      }) }}",
+      "ref": "app/views/index.html:88-100",
+      "quote": "<li>Dashboard with Submitted, Draft and Amend, and Past tabs</li>",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-037",
-      "statement": "The Testing version card reads \"A separate testing journey with CHEDA references and IPAFFS-style dashboard patterns.\" and has a \"Start testing version\" button to /testing, with no details section.",
+      "id": "prototype-dr2-1-source-p1-111",
+      "statement": "The \"Start design release 2\" button goes to /design-release-2.1, so the version the index calls Design release 2 is the /design-release-2.1 mount; the index has no separate Design release 2.1 card.",
+      "kind": "behaviour",
+      "ref": "app/views/index.html:102-105",
+      "quote": "{{ govukButton({\n        text: \"Start design release 2\",\n        href: \"/design-release-2.1\"\n      }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-112",
+      "statement": "The Round 1 (Live animals) card is tagged \"Tested\" (green), has the subheading \"First round of research on live animals\", reads \"The version tested with users in the first round of research on importing live animals. It uses CHEDA reference numbers and a dashboard that looks like IPAFFS.\", lists \"Live animals journey from starting a notification to submitting it\", \"CHEDA reference numbers\", \"Dashboard in the style of IPAFFS\" and \"Its own dashboard and saved data\", and its \"Start round 1 (live animals)\" button goes to /testing.",
       "kind": "copy",
-      "ref": "app/views/index.html:141-156",
-      "quote": "A separate testing journey with CHEDA references and IPAFFS-style dashboard patterns.",
+      "ref": "app/views/index.html:112-146",
+      "quote": "The version tested with users in the first round of research on importing live animals. It uses CHEDA reference numbers and a dashboard that looks like IPAFFS.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-113",
+      "statement": "The Round 1 (Germinals) card is tagged \"Testing\" (yellow), has the subheading \"Research on germinal products\", reads \"For research on importing germinal products: semen, embryos and ova. It works the same way as Round 2 (Live animals), but its dashboard and example templates are for germinal products.\", lists \"Dashboard of germinal product notifications\", \"Example templates for germinal products\", \"The same journey and features as Round 2 (Live animals)\" and \"Its own dashboard and saved data\", and its \"Start round 1 (germinals)\" button goes to /testing4.",
+      "kind": "copy",
+      "ref": "app/views/index.html:148-182",
+      "quote": "For research on importing germinal products: semen, embryos and ova. It works the same way as Round 2 (Live animals), but its dashboard and example templates are for germinal products.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-114",
+      "statement": "The Round 2 (Live animals) card is tagged \"Testing\" (yellow), has the subheading \"Second round of research on live animals\", reads \"For the second round of research on importing live animals. It is a copy of Design release 2, so changes can be tried with users without affecting the design version.\", lists \"Dashboard of live animal notifications\", \"Example templates for live animals\", \"The same journey and features as Design release 2\", \"Some content written only for the live animals journey\" and \"Its own dashboard and saved data\", and its \"Start round 2 (live animals)\" button goes to /testing3.",
+      "kind": "copy",
+      "ref": "app/views/index.html:184-219",
+      "quote": "For the second round of research on importing live animals. It is a copy of Design release 2, so changes can be tried with users without affecting the design version.",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p1-038",
       "statement": "GET /index renders the service index page; DR2.1 has no override of it, so /design-release-2.1/index shows the same root index page with the DR2.1 navigation.",
       "kind": "behaviour",
-      "ref": "app/routes.js:11720-11722; app/views/design-release-2.1/ (no index.html)",
+      "ref": "app/routes.js:13494-13496; app/views/design-release-2.1/ (no index.html)",
       "quote": "router.get('/index', (req, res) => {\n  return res.render('index')\n})",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "The index page itself turns service navigation off (index.html:8), so in practice no navigation bar shows there."
     },
     {
       "id": "prototype-dr2-1-source-p1-039",
       "statement": "Signing in (POST /intro/sign-in) takes the user to the DR2.1 dashboard at /design-release-2.1.",
       "kind": "behaviour",
-      "ref": "app/routes.js:13103-13105",
+      "ref": "app/routes.js:15140-15142",
       "quote": "router.post('/intro/sign-in', function (req, res) {\n  return res.redirect('/design-release-2.1')\n})",
       "confidence": "verbatim"
     },
@@ -320,7 +418,7 @@
       "id": "prototype-dr2-1-source-p1-040",
       "statement": "The fixed design-release notification reference is GBN-AG-26-7K8M2P; the testing version uses GB.2026.7963913 - CHEDA instead.",
       "kind": "data",
-      "ref": "app/routes.js:62-64",
+      "ref": "app/routes.js:85-87, 351-355",
       "quote": "const DESIGN_RELEASE_NOTIFICATION_REFERENCE = 'GBN-AG-26-7K8M2P'",
       "confidence": "verbatim"
     },
@@ -328,7 +426,7 @@
       "id": "prototype-dr2-1-source-p1-041",
       "statement": "A design-release notification reference has the form GBN-, two letters, a hyphen, two digits, a hyphen and then letters or digits (matched case-insensitively), such as GBN-AG-26-7K8M2P.",
       "kind": "rule",
-      "ref": "app/routes.js:283-285",
+      "ref": "app/routes.js:357-359",
       "quote": "return /^GBN-[A-Z]{2}-\\d{2}-[A-Z0-9]+$/i.test(String(reference || '').trim())",
       "confidence": "verbatim"
     },
@@ -336,32 +434,58 @@
       "id": "prototype-dr2-1-source-p1-042",
       "statement": "When a notification has no reference, or its reference is not in the design-release format, a new reference GBN-AG-26- followed by six random upper-case letters or digits is generated, avoiding the fixed reference and every reference already used on the dashboard, in drafts and in submitted notifications.",
       "kind": "rule",
-      "ref": "app/routes.js:291-304 (calls generateDesignReleaseNotificationReference, defined at app/routes.js:7820)",
+      "ref": "app/routes.js:365-385 (calls generateDesignReleaseNotificationReference, defined at app/routes.js:9073)",
       "quote": "if (!value || !isDesignReleaseNotificationReference(value)) {\n    sessionData.notificationReference = generateDesignReleaseNotificationReference(sessionData)\n  }",
       "confidence": "verbatim",
       "note": "The generator's body sits in another part's range; it builds `GBN-AG-26-${code}` from a six-character random code and skips any reference in the existing set."
     },
     {
+      "id": "prototype-dr2-1-source-p1-115",
+      "statement": "Under /design-release-2.1 the notification reference is always in the GBN design-release format: the testing-format (GB.<year>.<sequence> - <type>) references are used only by the Round 1 testing version and by Testing 3 and 4.",
+      "kind": "rule",
+      "ref": "app/routes.js:365-385",
+      "quote": "if (isRound2TestingSessionData(sessionData)) {\n    if (!value || !isTestingNotificationReference(value)) {\n      sessionData.notificationReference = generateTesting3NotificationReference(sessionData)\n    }\n    return\n  }",
+      "confidence": "inferred",
+      "note": "Inferred: DR2.1 sets neither _isTestingVersion nor a Round 2 testing flag, so it reaches only the design-release branch."
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-116",
+      "statement": "The notification reference utility formats testing-format references as GB.<year>.<sequence> - <type>, defaulting to GB.2026.7963913 - CHEDA; under DR2.1 none of its output is shown, because routes.js uses it only to build Testing 3 and 4 dashboard references.",
+      "kind": "data",
+      "ref": "app/utils/notification-reference.js:1-13; app/routes.js:63-67, 387-398",
+      "quote": "return `GB.${year}.${sequence} - ${type}`",
+      "confidence": "inferred",
+      "note": "Inferred: routes.js is the only file that requires the utility, and it imports only formatNotificationReference and the two defaults, used in toTesting3DashboardReference. The utility's other helpers (submitted-reference test, legacy-reference test, normalising, ensureDraftNotificationReference and a random submitted sequence from 7000000) are not called in scope."
+    },
+    {
       "id": "prototype-dr2-1-source-p1-043",
       "statement": "Seed dashboard notifications whose reference is in the testing format are shown with a design-release reference: the first notification, and any with sequence 7963913, show GBN-AG-26-7K8M2P; others show GBN-AG-26- followed by a six-character code derived from their sequence number.",
       "kind": "rule",
-      "ref": "app/routes.js:306-327",
+      "ref": "app/routes.js:400-425",
       "quote": "const code = sequence.toString(36).toUpperCase().padStart(6, '0').slice(-6)\n\n  return `GBN-AG-26-${code}`",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-044",
-      "statement": "Starting a new notification journey clears every answer in the version's session, but keeps the added address book addresses, draft notifications, deleted notification references, submitted notifications, saved templates and deleted template ids, along with the testing, design release 2 and design release 2.1 session nests.",
+      "id": "prototype-dr2-1-source-p1-117",
+      "statement": "A dashboard notification whose reference is already in the design-release format keeps that reference unchanged under DR2.1.",
+      "kind": "rule",
+      "ref": "app/routes.js:405-409",
+      "quote": "if (isDesignReleaseNotificationReference(value)) {\n    return value\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-118",
+      "statement": "Starting a new notification journey clears every answer in the version's session, but keeps the added address book addresses, draft notifications, deleted notification references, submitted notifications, saved templates and deleted template ids (each only when not empty), along with the Testing, Design release 2.1, Testing 2, Testing 3 and Testing 4 session nests.",
       "kind": "behaviour",
-      "ref": "app/routes.js:329-379",
+      "ref": "app/routes.js:427-487",
       "quote": "Object.keys(sessionData).forEach((key) => {\n    delete sessionData[key]\n  })",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-045",
-      "statement": "The journey session is reset when the user starts a notification at /create-notification, among other entry points (called at app/routes.js 5876, 8539, 8562, 8596, 8961, 8992, 9012, 11109, 11602 and 12107).",
+      "id": "prototype-dr2-1-source-p1-119",
+      "statement": "The journey session is reset when the user starts a notification at /create-notification, which also clears the creating-a-template flag; other entry points reset it too (called at app/routes.js 6835, 6860, 9819, 9842, 9876, 10407, 10451, 10471, 13295, 13349 and 13918).",
       "kind": "behaviour",
-      "ref": "app/routes.js:11105-11109",
+      "ref": "app/routes.js:12716-12722",
       "quote": "resetNotificationJourneySession(req.session.data)\n  delete req.session.data.isCreatingTemplate",
       "confidence": "verbatim",
       "note": "The other call sites belong to other parts' pages (templates, copy, amend, dashboard); they are listed so the reconciler can find them."
@@ -370,16 +494,33 @@
       "id": "prototype-dr2-1-source-p1-046",
       "statement": "The prototype shortcut /prototype/reason-for-import seeds a notification (origin France, no region of origin, commodity Cattle 0102, species cattle-bison-bison with 5 animals, certification purpose Slaughter, unweaned animals No, a design-release reference) and goes straight to the reason for import page.",
       "kind": "behaviour",
-      "ref": "app/routes.js:381-400, 11523-11527",
+      "ref": "app/routes.js:489-508, 13203-13207",
       "quote": "sessionData.countryOfOrigin = 'France'\n  sessionData.regionOfOriginRequired = 'No'\n  sessionData.commodityId = 'cattle'\n  sessionData.commodityCode = '0102'\n  sessionData.commodityName = 'Cattle'",
       "confidence": "verbatim",
       "note": "A designer shortcut, not a user-facing page; /prototype/reason-for-import is a DR2.1 journey prefix so it stays inside the version."
     },
     {
+      "id": "prototype-dr2-1-source-p1-120",
+      "statement": "Germinal products have three temperature options, Ambient, Chilled and Frozen, and their quantity is labelled \"Quantity (unit/pieces)\".",
+      "kind": "data",
+      "ref": "app/routes.js:82-83",
+      "quote": "const germinalTemperatureOptions = ['Ambient', 'Chilled', 'Frozen']\nconst GERMINAL_QUANTITY_LABEL = 'Quantity (unit/pieces)'",
+      "confidence": "verbatim",
+      "note": "Constants in this part's lines; the pages that use them are other parts'."
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-121",
+      "statement": "The commodity search under /design-release-2.1 (and Testing 3 and 4) also offers the germinal product commodities and the extra Testing 3 live commodities; other versions include them only so their species can be looked up.",
+      "kind": "rule",
+      "ref": "app/routes.js:89-91",
+      "quote": "// The extra commodities are included so their species can be looked up. Only\n// the search in Design release 2.1, Testing 3 and Testing 4 offers them (see getSearchCommodities).",
+      "confidence": "verbatim"
+    },
+    {
       "id": "prototype-dr2-1-source-p1-047",
       "statement": "A page is treated as reached from the notification overview (hub) when its query or form carries from=hub.",
       "kind": "rule",
-      "ref": "app/routes.js:440-442",
+      "ref": "app/routes.js:548-550",
       "quote": "return req.query.from === 'hub' || (req.body && req.body.from === 'hub')",
       "confidence": "verbatim"
     },
@@ -387,7 +528,7 @@
       "id": "prototype-dr2-1-source-p1-048",
       "statement": "A page is treated as reached from the check-your-answers review page when its query or form carries from=review.",
       "kind": "rule",
-      "ref": "app/routes.js:444-446",
+      "ref": "app/routes.js:552-554",
       "quote": "return req.query.from === 'review' || (req.body && req.body.from === 'review')",
       "confidence": "verbatim"
     },
@@ -395,7 +536,7 @@
       "id": "prototype-dr2-1-source-p1-049",
       "statement": "A page is treated as reached from a template review when its query or form carries from=template-review, or the session is marked as editing a template from its review.",
       "kind": "rule",
-      "ref": "app/routes.js:448-455",
+      "ref": "app/routes.js:556-563, 597",
       "quote": "return req.query.from === 'template-review' ||\n    (req.body && req.body.from === 'template-review')",
       "confidence": "verbatim"
     },
@@ -403,23 +544,23 @@
       "id": "prototype-dr2-1-source-p1-050",
       "statement": "The return path to a template review is /templates/<template id> (the template being edited, or the session's template), or /templates when there is no template id; in DR2.1 this becomes /design-release-2.1/templates/<id>.",
       "kind": "rule",
-      "ref": "app/routes.js:457-461",
+      "ref": "app/routes.js:565-569",
       "quote": "return templateId ? `/templates/${templateId}` : '/templates'",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-051",
-      "statement": "Saving a page while editing a template from its review saves the template, sets the success message \"<template title> has been updated\" (or \"Template has been updated\" when it has no title or name), clears the template editing state and returns to that template's review page.",
+      "id": "prototype-dr2-1-source-p1-122",
+      "statement": "Saving a page while editing a template from its review saves the template, sets the success message \"<template title> has been updated.\" (using the template name, or \"Template\" when it has neither title nor name), clears the template editing state, ends template creation and returns to that template's review page.",
       "kind": "behaviour",
-      "ref": "app/routes.js:468-486",
-      "quote": "sessionData.templateReviewSuccessMessage = `${templateTitle} has been updated`",
+      "ref": "app/routes.js:571-594",
+      "quote": "sessionData.templateReviewSuccessMessage = `${templateTitle} has been updated.`",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p1-052",
       "statement": "A journey page's back link goes to the template review when the page was reached from a template review, to the notification overview (/notification-hub) when reached from the hub, and otherwise to the previous page in the journey.",
       "kind": "rule",
-      "ref": "app/routes.js:488-498",
+      "ref": "app/routes.js:596-606",
       "quote": "if (isFromHub(req)) {\n    return '/notification-hub'\n  }\n\n  return linearBackLink",
       "confidence": "verbatim"
     },
@@ -427,7 +568,7 @@
       "id": "prototype-dr2-1-source-p1-053",
       "statement": "A page reached from the check-your-answers review page does not get a back link to the review: the back-link rule only special-cases template review and hub, so from=review pages fall back to the previous journey page.",
       "kind": "behaviour",
-      "ref": "app/routes.js:488-498",
+      "ref": "app/routes.js:596-606",
       "quote": "function getJourneyBackLink (req, linearBackLink) {",
       "confidence": "inferred",
       "note": "Inferred from the absence of an isFromReview branch in getJourneyBackLink; individual pages may override their own back link."
@@ -436,15 +577,23 @@
       "id": "prototype-dr2-1-source-p1-054",
       "statement": "The journey step order starts with origin of the import, what are you importing, reason for import and consignment details, in that order.",
       "kind": "rule",
-      "ref": "app/routes.js:1495-1501",
+      "ref": "app/routes.js:1711-1717",
       "quote": "const steps = [\n    '/origin-of-the-import',\n    '/what-are-you-importing',\n    '/reason-for-import',\n    '/consignment-details'\n  ]",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-055",
-      "statement": "The animal identification details step follows consignment details only when at least one selected species has identifier fields.",
+      "id": "prototype-dr2-1-source-p1-123",
+      "statement": "The consignment gross weight step follows consignment details only when the notification has germinal products only.",
       "kind": "rule",
-      "ref": "app/routes.js:1503-1505 (hasAnimalIdentifiersRequired at app/routes.js:1796)",
+      "ref": "app/routes.js:1719-1721 (showsGerminalGrossWeightField at app/routes.js:1368 returns hasGerminalProductsOnly)",
+      "quote": "if (showsGerminalGrossWeightField(sessionData)) {\n    steps.push('/consignment-gross-weight')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-124",
+      "statement": "The animal identification details step comes after consignment details and any gross weight step, only when at least one selected species has identifier fields.",
+      "kind": "rule",
+      "ref": "app/routes.js:1723-1725 (hasAnimalIdentifiersRequired at app/routes.js:2081)",
       "quote": "if (hasAnimalIdentifiersRequired(sessionData)) {\n    steps.push('/animal-identification-details')\n  }",
       "confidence": "verbatim"
     },
@@ -452,7 +601,7 @@
       "id": "prototype-dr2-1-source-p1-056",
       "statement": "The additional animal details step comes next only when that page would ask the certification purpose question or the unweaned animals question.",
       "kind": "rule",
-      "ref": "app/routes.js:1507-1509 (requiresAdditionalAnimalDetailsPage at app/routes.js:1413)",
+      "ref": "app/routes.js:1727-1729 (requiresAdditionalAnimalDetailsPage at app/routes.js:1623)",
       "quote": "if (requiresAdditionalAnimalDetailsPage(sessionData)) {\n    steps.push('/additional-animal-details')\n  }",
       "confidence": "verbatim"
     },
@@ -460,7 +609,7 @@
       "id": "prototype-dr2-1-source-p1-057",
       "statement": "Arrival details is always a step, after the animal steps.",
       "kind": "rule",
-      "ref": "app/routes.js:1511",
+      "ref": "app/routes.js:1731",
       "quote": "steps.push('/arrival-details')",
       "confidence": "verbatim"
     },
@@ -468,7 +617,7 @@
       "id": "prototype-dr2-1-source-p1-058",
       "statement": "The transit countries step follows arrival details only when the means of transport is Rail or Road.",
       "kind": "rule",
-      "ref": "app/routes.js:1513-1515, 48 (requiresTransitCountries at app/routes.js:2307)",
+      "ref": "app/routes.js:1733-1735, 70 (requiresTransitCountries at app/routes.js:2676)",
       "quote": "const TRANSIT_MEANS_OF_TRANSPORT = ['Rail', 'Road']",
       "confidence": "verbatim"
     },
@@ -476,7 +625,7 @@
       "id": "prototype-dr2-1-source-p1-059",
       "statement": "Means of transport values are normalised before the transit check: airplane and air mean Air; railway and rail mean Rail; road vehicle and road mean Road; vessel and sea mean Sea.",
       "kind": "data",
-      "ref": "app/routes.js:49-58",
+      "ref": "app/routes.js:71-80",
       "quote": "airplane: 'Air',\n  air: 'Air',\n  railway: 'Rail',\n  rail: 'Rail',\n  'road vehicle': 'Road',\n  road: 'Road',\n  vessel: 'Sea',\n  sea: 'Sea'",
       "confidence": "verbatim"
     },
@@ -484,7 +633,7 @@
       "id": "prototype-dr2-1-source-p1-060",
       "statement": "Transporter is always a step, after arrival details and any transit countries.",
       "kind": "rule",
-      "ref": "app/routes.js:1517",
+      "ref": "app/routes.js:1737",
       "quote": "steps.push('/transporter')",
       "confidence": "verbatim"
     },
@@ -492,56 +641,90 @@
       "id": "prototype-dr2-1-source-p1-061",
       "statement": "In DR2.1, the upload documents step is skipped when the user is creating a template; otherwise it follows transporter.",
       "kind": "rule",
-      "ref": "app/routes.js:1519-1521 (isDesignRelease21TemplateCreate at app/routes.js:8949)",
+      "ref": "app/routes.js:1739-1741 (isDesignRelease21TemplateCreate at app/routes.js:10395)",
       "quote": "if (!isDesignRelease21TemplateCreate(sessionData)) {\n    steps.push('/upload-documents')\n  }",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-062",
-      "statement": "Roles and addresses, contact address for consignment and review notification are always steps, in that order, after documents.",
+      "id": "prototype-dr2-1-source-p1-125",
+      "statement": "Roles and addresses is always a step, after documents (or after transporter when creating a template).",
       "kind": "rule",
-      "ref": "app/routes.js:1523-1527",
-      "quote": "steps.push(\n    '/roles-and-addresses',\n    '/contact-address-for-consignment',\n    '/review-notification'\n  )",
+      "ref": "app/routes.js:1743",
+      "quote": "steps.push('/roles-and-addresses')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-126",
+      "statement": "The contact address for consignment step follows roles and addresses only when the version asks the contact address question, so under /design-release-2.1 it is not a step.",
+      "kind": "rule",
+      "ref": "app/routes.js:1745-1747, 347-349",
+      "quote": "if (!omitsContactAddressQuestion(sessionData)) {\n    steps.push('/contact-address-for-consignment')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-127",
+      "statement": "Review notification is always a step, after roles and addresses (and contact address where a version asks it).",
+      "kind": "rule",
+      "ref": "app/routes.js:1749",
+      "quote": "steps.push('/review-notification')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p1-063",
       "statement": "In DR2.1, the declaration step after review is skipped when the user is creating a template; otherwise declaration is the last step.",
       "kind": "rule",
-      "ref": "app/routes.js:1529-1531",
+      "ref": "app/routes.js:1751-1753",
       "quote": "if (!isDesignRelease21TemplateCreate(sessionData)) {\n    steps.push('/declaration')\n  }",
       "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-128",
+      "statement": "Under /design-release-2.1 the full linear order is: origin of the import, what are you importing, reason for import, consignment details, gross weight (germinal products only), animal identification details (when needed), additional animal details (when needed), arrival details, transit countries (Rail or Road only), transporter, upload documents (not for templates), roles and addresses, review notification, declaration (not for templates).",
+      "kind": "rule",
+      "ref": "app/routes.js:1711-1756, 341-349",
+      "quote": "function getJourneySteps (sessionData) {",
+      "confidence": "inferred",
+      "note": "Inferred by applying the DR2.1 flags (contact address omitted) to getJourneySteps."
     },
     {
       "id": "prototype-dr2-1-source-p1-064",
       "statement": "The step order has no step for CPH number, permanent address, place of origin, consignor, consignee, importer or place of destination; those pages are reached from within roles and addresses or the hub, not as linear steps.",
       "kind": "behaviour",
-      "ref": "app/routes.js:1495-1534",
+      "ref": "app/routes.js:1711-1756",
       "quote": "function getJourneySteps (sessionData) {",
       "confidence": "inferred",
-      "note": "Inferred by comparing getJourneySteps with JOURNEY_PATH_PREFIXES (app/lib/version-mount.js:11-46), which lists those paths. How they are reached is other parts' business."
+      "note": "Inferred by comparing getJourneySteps with JOURNEY_PATH_PREFIXES (app/lib/version-mount.js:11-47), which lists those paths. How they are reached is other parts' business."
     },
     {
       "id": "prototype-dr2-1-source-p1-065",
       "statement": "The next page after a step is the following step in the order; after the last step, or from a page that is not a step, the next page is the notification overview (/notification-hub) unless the caller gives another fallback.",
       "kind": "rule",
-      "ref": "app/routes.js:1536-1554",
+      "ref": "app/routes.js:1758-1776",
       "quote": "if (currentIndex >= steps.length - 1) {\n    return options.fallback || '/notification-hub'\n  }\n\n  return steps[currentIndex + 1]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-129",
+      "statement": "The current page is matched against the step order without its query string.",
+      "kind": "rule",
+      "ref": "app/routes.js:1759",
+      "quote": "const path = (currentPath || '').split('?')[0]",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p1-066",
       "statement": "After roles and addresses, the next page is the notification overview instead of contact address for consignment when every notification hub section is already complete.",
       "kind": "rule",
-      "ref": "app/routes.js:1545-1547",
+      "ref": "app/routes.js:1767-1769",
       "quote": "if (path === '/roles-and-addresses' && hasAllNotificationHubSectionsComplete(sessionData)) {\n    return '/notification-hub'\n  }",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "Under DR2.1 the step after roles and addresses is review notification (contact address is omitted), so this sends a complete notification to the overview instead of the review."
     },
     {
       "id": "prototype-dr2-1-source-p1-067",
       "statement": "A notification is being amended when its status is exactly Amend.",
       "kind": "rule",
-      "ref": "app/routes.js:1556-1558",
+      "ref": "app/routes.js:1778-1780",
       "quote": "return String(sessionData && sessionData.notificationStatus || '').trim() === 'Amend'",
       "confidence": "verbatim"
     },
@@ -549,7 +732,7 @@
       "id": "prototype-dr2-1-source-p1-068",
       "statement": "Journey forms send the button pressed as the action field; hub and review are soft-save actions (save and leave the linear flow), and continue moves on.",
       "kind": "rule",
-      "ref": "app/routes.js:1560-1566",
+      "ref": "app/routes.js:1782-1788",
       "quote": "return action === 'hub' || action === 'review'",
       "confidence": "verbatim"
     },
@@ -557,7 +740,7 @@
       "id": "prototype-dr2-1-source-p1-069",
       "statement": "When a journey page is saved, the notification is persisted as a draft; then the action review goes to the review page (/review-notification), the action hub goes to the notification overview (/notification-hub), and any other action goes to the next page.",
       "kind": "behaviour",
-      "ref": "app/routes.js:1568-1586",
+      "ref": "app/routes.js:1790-1808",
       "quote": "if (action === 'review') {\n    return '/review-notification'\n  }\n\n  if (action === 'hub') {\n    return '/notification-hub'\n  }",
       "confidence": "verbatim"
     },
@@ -565,7 +748,7 @@
       "id": "prototype-dr2-1-source-p1-070",
       "statement": "When a journey page is saved while editing a template from its review, the save returns to the template review and does not persist a draft notification.",
       "kind": "behaviour",
-      "ref": "app/routes.js:1569-1571",
+      "ref": "app/routes.js:1791-1793",
       "quote": "if (sessionData && isEditingTemplateFromReview(sessionData)) {\n    return saveAndReturnToTemplateReview(sessionData)\n  }",
       "confidence": "verbatim"
     },
@@ -573,7 +756,7 @@
       "id": "prototype-dr2-1-source-p1-071",
       "statement": "When a section page continues, it returns to the template review if reached from one, to the notification overview if reached from the hub, to the review page if reached from review, and otherwise to the next page in the journey; the template review takes precedence over hub, and hub over review.",
       "kind": "rule",
-      "ref": "app/routes.js:1588-1602",
+      "ref": "app/routes.js:1810-1824",
       "quote": "if (isFromHub(req)) {\n    return '/notification-hub'\n  }\n\n  if (isFromReview(req)) {\n    return '/review-notification'\n  }\n\n  return linearPath",
       "confidence": "verbatim"
     },
@@ -581,7 +764,7 @@
       "id": "prototype-dr2-1-source-p1-072",
       "statement": "By default a DR2.1 journey page shows a primary \"Save and continue\" button (action continue), a secondary \"Save and return to overview\" button (action hub) and a \"Cancel and return to overview\" link to the notification overview (/design-release-2.1/notification-hub).",
       "kind": "copy",
-      "ref": "app/views/partials/design-release-2.1/journey-form-actions.html:27-33, 57-101",
+      "ref": "app/views/partials/design-release-2.1/journey-form-actions.html:29-36, 64-108",
       "quote": "{% set continueText = options.continueText if options.continueText else 'Save and continue' %}\n{% set hubText = options.hubText if options.hubText else 'Save and return to overview' %}\n{% set cancelText = options.cancelText if options.cancelText else 'Cancel and return to overview' %}",
       "confidence": "verbatim"
     },
@@ -589,15 +772,23 @@
       "id": "prototype-dr2-1-source-p1-073",
       "statement": "A page may change the default actions: rename any of the three, hide the save and return to overview button, hide the cancel link, or point the cancel link elsewhere.",
       "kind": "rule",
-      "ref": "app/views/partials/design-release-2.1/journey-form-actions.html:17-33",
+      "ref": "app/views/partials/design-release-2.1/journey-form-actions.html:17-36",
       "quote": "{% set showHub = true if options.showHub is not defined else options.showHub %}\n{% set showCancel = true if options.showCancel is not defined else options.showCancel %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-130",
+      "statement": "While creating a template (and not editing one from its review), a journey page's secondary button reads \"Save and return to template\" and its cancel link reads \"Cancel and return to template\" and goes to the Review your template page (/design-release-2.1/review-notification), ignoring any cancel link the page sets.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/journey-form-actions.html:27-30, 37-40",
+      "quote": "{% if isTemplateCreate %}\n  {% set hubText = 'Save and return to template' %}\n  {% set cancelText = 'Cancel and return to template' %}\n{% endif %}",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p1-074",
       "statement": "When a notification is being amended, a journey page shows a primary \"Save and return\" button (action review, going to the review page), a secondary \"Save and continue\" button (action continue) and a link-styled \"Save and return to overview\" button (action hub); there is no cancel link.",
       "kind": "copy",
-      "ref": "app/views/partials/design-release-2.1/journey-form-actions.html:7-10, 44-56, 88-96",
+      "ref": "app/views/partials/design-release-2.1/journey-form-actions.html:7-10, 51-63, 95-103",
       "quote": "{{ govukButton({\n        text: \"Save and return\",\n        name: \"action\",\n        value: \"review\"\n      }) }}",
       "confidence": "verbatim"
     },
@@ -605,7 +796,7 @@
       "id": "prototype-dr2-1-source-p1-075",
       "statement": "When the user is editing a template from its review, a journey page shows only a primary \"Save and return\" button (action continue, which returns to the template review) and a \"Cancel\" link to the template's page; this mode takes precedence over amend.",
       "kind": "copy",
-      "ref": "app/views/partials/design-release-2.1/journey-form-actions.html:4-5, 38-43, 84-87",
+      "ref": "app/views/partials/design-release-2.1/journey-form-actions.html:4-5, 45-50, 91-94",
       "quote": "<a class=\"govuk-link\" href=\"{{ templateReviewCancelHref }}\">Cancel</a>",
       "confidence": "verbatim"
     },
@@ -613,7 +804,7 @@
       "id": "prototype-dr2-1-source-p1-076",
       "statement": "The template review Cancel link is built in the page as /templates/<template id> and is not prefixed with /design-release-2.1, so in DR2.1 it points at the root templates path rather than the version's.",
       "kind": "behaviour",
-      "ref": "app/views/partials/design-release-2.1/journey-form-actions.html:28; app/lib/version-mount.js:289-293",
+      "ref": "app/views/partials/design-release-2.1/journey-form-actions.html:31; app/lib/version-mount.js:291-295",
       "quote": "{% set templateReviewCancelHref = '/templates/' + (data.editingTemplateId or data.templateId or '') %}",
       "confidence": "inferred",
       "note": "Inferred: version prefixing applies to redirects and render data, not to hrefs built inside a template. Possibly a prototype defect; the cancel href for the default mode uses journeyBasePath and is prefixed."
@@ -622,15 +813,23 @@
       "id": "prototype-dr2-1-source-p1-077",
       "statement": "Every journey page shows a notification status bar with a status tag and the notification reference: the status is Template (with the template name instead of a reference) while creating a template, otherwise the notification's status, or Draft when it has none.",
       "kind": "behaviour",
-      "ref": "app/views/partials/design-release-2.1/notification-status.html:1-9",
+      "ref": "app/views/partials/design-release-2.1/notification-status.html:1-11",
       "quote": "{% set statusText = \"Template\" if isCreatingTemplate else (data.notificationStatus if data.notificationStatus else \"Draft\") %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-131",
+      "statement": "In DR2.1 the status bar's reference is prefixed with the notification type label and a hyphen, for example \"Live animals - GBN-AG-26-7K8M2P\"; the labels are Live animals, Germinal products, Plants for planting, Potatoes (seed and ware) and Wood products. With no known type, the reference shows on its own.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/notification-reference.html:1-15; app/views/partials/design-release-2.1/notification-status.html:7",
+      "quote": "\"live-animals\": \"Live animals\",\n  \"germinal-products\": \"Germinal products\",\n  \"plants-for-planting\": \"Plants for planting\",\n  \"potatoes\": \"Potatoes (seed and ware)\",\n  \"wood-products\": \"Wood products\"",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p1-078",
       "statement": "The status tag is styled by its status name in lower case with spaces as hyphens (for example draft, amend, template), giving each status its own tag colour.",
       "kind": "constraint",
-      "ref": "app/views/partials/design-release-2.1/notification-status.html:3, 8",
+      "ref": "app/views/partials/design-release-2.1/notification-status.html:5, 10",
       "quote": "{% set statusModifier = statusText | lower | replace(\" \", \"-\") %}",
       "confidence": "verbatim",
       "note": "The colours themselves live in app/assets Sass, outside the scope."
@@ -639,7 +838,7 @@
       "id": "prototype-dr2-1-source-p1-079",
       "statement": "When the status is Amend, the status bar shows a \"Cancel amend\" link-styled button that opens the cancel amendment dialog.",
       "kind": "behaviour",
-      "ref": "app/views/partials/design-release-2.1/notification-status.html:10-14",
+      "ref": "app/views/partials/design-release-2.1/notification-status.html:12-16",
       "quote": "<button class=\"govuk-link app-dr2-notification-status__cancel-link\" type=\"button\" data-modal-open=\"cancel-amend-modal\">\n      Cancel amend\n    </button>",
       "confidence": "verbatim"
     },
@@ -647,31 +846,40 @@
       "id": "prototype-dr2-1-source-p1-080",
       "statement": "The root notification status partial renders the same design release status bar under DR2.1 (as DR2.1 is also design release 2); only outside design release 2 does it fall back to GOV.UK tags coloured grey for Template, blue for Draft and purple otherwise.",
       "kind": "behaviour",
-      "ref": "app/views/partials/notification-status.html:8-27",
+      "ref": "app/views/partials/notification-status.html:9-30",
       "quote": "classes: \"govuk-tag--grey\" if isCreatingTemplate else (\"govuk-tag--blue\" if statusText == \"Draft\" else \"govuk-tag--purple\")",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-081",
-      "statement": "Under DR2.1 the address book is reached at /design-release-2.1/address-book, and address book links built by handlers use that base followed by the page suffix or query string.",
+      "id": "prototype-dr2-1-source-p1-132",
+      "statement": "In the root status partial, Cancel amend opens the dialog under DR2.1; only Testing 3 and 4 make it a link to the cancel-amend page with a return address.",
       "kind": "behaviour",
-      "ref": "app/routes.js:7059-7091",
+      "ref": "app/views/partials/notification-status.html:14-20",
+      "quote": "{% if isAmendStatus and (isTesting3Version or isTesting4Version) %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p1-133",
+      "statement": "Under DR2.1 the address book is reached at /design-release-2.1/address-book, and address book links built by handlers use that base followed by the page suffix (a leading / is added when missing) or query string.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8228-8248",
       "quote": "return versionBasePath ? `${versionBasePath}/address-book` : '/address-book'",
       "confidence": "verbatim"
     },
     {
-      "id": "prototype-dr2-1-source-p1-082",
-      "statement": "Under DR2.1 the back link to the dashboard goes to /design-release-2.1 (the testing version goes to /testing, design release 2 to /design-release-2 and the root journey to /).",
+      "id": "prototype-dr2-1-source-p1-134",
+      "statement": "Under DR2.1 the back link to the dashboard goes to /design-release-2.1; the Round 1 testing version goes to /testing, Testing 2 to /testing2, Testing 3 to /testing3, Testing 4 to /testing4 and the root journey to /.",
       "kind": "rule",
-      "ref": "app/routes.js:7093-7105",
-      "quote": "const designReleaseBasePath = getDesignReleaseBasePath(sessionData)\n\n  if (designReleaseBasePath) {\n    return designReleaseBasePath\n  }",
-      "confidence": "verbatim"
+      "ref": "app/routes.js:8208-8226, 8250-8262",
+      "quote": "if (sessionData._isDesignRelease21Version) {\n    return '/design-release-2.1'\n  }",
+      "confidence": "verbatim",
+      "note": "The testing flags are checked before the DR2.1 flag, so a testing version that also sets the DR2.1 flag gets its own base path."
     },
     {
       "id": "prototype-dr2-1-source-p1-083",
       "statement": "The dashboard is the DR2.1 home: the version base path /design-release-2.1 is the Dashboard navigation target and the dashboard back-link target.",
       "kind": "behaviour",
-      "ref": "app/lib/design-release-2.1-version.js:23; app/routes.js:7059-7062",
+      "ref": "app/lib/design-release-2.1-version.js:23; app/routes.js:8221-8223",
       "quote": "if (sessionData._isDesignRelease21Version) {\n    return '/design-release-2.1'\n  }",
       "confidence": "inferred",
       "note": "What GET / renders under DR2.1 is the dashboard part's to claim; this records only that the base path is used as the dashboard link."

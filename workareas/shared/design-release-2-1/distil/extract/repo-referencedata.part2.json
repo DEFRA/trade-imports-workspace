@@ -1,0 +1,666 @@
+{
+  "source": "repo:referencedata",
+  "structure": "Part 2, commodities and species. Read in full: the commodities package (CommoditiesController, CommoditySearchService, SpeciesCheckService and the five records CommoditySearchResponse, CommodityGroup, CommodityLine, CommoditySpecies, SpeciesCheckRequest, SpeciesCheckResponse), the MDM client layer (MdmService and MdmClient in full, claiming only searchProducts, getCommodities and getCommoditySpecies; the records MdmCommodity, MdmSpecies, MdmProductPage, MdmProductSearchResult), the five commodity unit test files (CommoditiesControllerTest, CommoditySearchServiceTest, SpeciesCheckServiceTest, CommoditySpeciesTest, CommodityGroupTest), CommoditiesControllerIT, the product, commodity and species tests of MdmServiceTest, and the six MDM fixtures (commodities, search 0102, species of 0102, search cattle, bison, dog). Covered: GET /commodities (q, page, size, the two-character minimum, how MDM species and commodity rows become species matches, the germinal exclusion, de-duplication by code and Latin name, grouping by code in MDM order, the page-size cap and what total counts), POST /commodities/species-check (request and response fields, validation, per-code paged lookups, exact-case matching, every answer), the three MDM product calls with their dataset and paging, how MDM failures surface on these endpoints, the OpenAPI descriptions, what the fixtures show of MDM's commodity and species data, and every test that proves this behaviour. Gaps recorded: no commodity description in the response, no germinal search, no commodity hierarchy browsing, and no caching of product calls.",
+  "claims": [
+    {
+      "id": "repo-referencedata-p2-001",
+      "statement": "The service exposes a commodity search at GET /commodities, described as searching species by name or commodity code.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:26-41",
+      "quote": "@RequestMapping(\"/commodities\") ... @Operation(summary = \"Search species by name or commodity code\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-002",
+      "statement": "The commodity endpoints are tagged as serving live-animal commodity codes and species from MDM.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:22",
+      "quote": "@Tag(name = \"Commodities\", description = \"Live-animal commodity codes and species from MDM\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-003",
+      "statement": "GET /commodities takes an optional search term in the query parameter q, which may be a species name or a commodity code.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:42-43",
+      "quote": "@Parameter(description = \"Search term: a species name or a commodity code\", example = \"dog\") @RequestParam(value = \"q\", required = false) String q",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-004",
+      "statement": "GET /commodities takes a zero-based page number in the query parameter page, defaulting to 0 and refusing anything below 0.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:44-45",
+      "quote": "@Parameter(description = \"Zero-based page number\") @RequestParam(defaultValue = \"0\") @Min(0) int page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-005",
+      "statement": "GET /commodities takes the most species to list in the query parameter size, defaulting to 100 and limited to between 1 and 100.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:46-48; CommoditySearchService.java:29",
+      "quote": "@Parameter(description = \"Most species to list, from 1 to 100\") @RequestParam(defaultValue = \"100\") @Min(1) @Max(CommoditySearchService.MAXIMUM_PAGE_SIZE) int size ... static final int MAXIMUM_PAGE_SIZE = 100;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-006",
+      "statement": "GET /commodities answers 400 when the page or size is not valid, 503 when MDM is unavailable, and 200 with the matching species otherwise.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:36-38",
+      "quote": "@ApiResponse(responseCode = \"200\", description = \"The matching species\") @ApiResponse(responseCode = \"400\", description = \"The page or size is not valid\") @ApiResponse(responseCode = \"503\", description = \"MDM unavailable\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-007",
+      "statement": "The search term is trimmed of surrounding spaces before it is used, and a missing term counts as empty.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:35",
+      "quote": "String trimmedSearchTerm = searchTerm == null ? \"\" : searchTerm.trim();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-008",
+      "statement": "A trimmed search term shorter than two characters matches nothing: the search answers 200 with a total of 0, the page and size asked for, and no groups, without asking MDM.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:28,36-41; CommoditiesController.java:34-35",
+      "quote": "static final int MINIMUM_SEARCH_LENGTH = 2; ... if (trimmedSearchTerm.length() < MINIMUM_SEARCH_LENGTH) { ... return CommoditySearchResponse.builder().total(0).page(page).size(size).groups(List.of()).build(); ... \"A term shorter than two characters matches nothing.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-009",
+      "statement": "A search term of two characters or more is sent to MDM's product search with the page and size the caller gave.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:43-44",
+      "quote": "mdmService.searchProducts(trimmedSearchTerm, page, size);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-010",
+      "statement": "The service does not itself tell a search by commodity code apart from a search by species name: both go to MDM's one product search as the same q term, and MDM's answer decides whether species rows or commodity rows come back.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:34-62; client/MdmClient.java:34-41",
+      "quote": "@GetMapping(value = \"/mdm/trade/product/search\") ... @RequestParam(value = \"q\") String query",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any code-versus-name branch in CommoditySearchService; the IT shows a q of 0102 returning a commodity row and q of dog, cattle or bison returning species rows."
+    },
+    {
+      "id": "repo-referencedata-p2-011",
+      "statement": "MDM product search returns two kinds of row, species and commodity; a row of any other result type is read as having no type and contributes nothing to the search.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmProductSearchResult.java:10,17-22; commodities/CommoditySearchService.java:92-100,119-123",
+      "quote": "@JsonFormat(with = JsonFormat.Feature.READ_UNKNOWN_ENUM_VALUES_AS_NULL) ResultType resultType ... @JsonProperty(\"species\") SPECIES, @JsonProperty(\"commodity\") COMMODITY ... return null;",
+      "confidence": "verbatim",
+      "note": "mechanism: maps MDM product search rows to a commodity code by result type."
+    },
+    {
+      "id": "repo-referencedata-p2-012",
+      "statement": "A species row from MDM search becomes one species match under the row's commodityCnCode, with the row's speciesName as the Latin name and its commonName.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:93-95,130-133; client/MdmProductSearchResult.java:11-13",
+      "quote": "if (row.resultType() == SPECIES) { return row.commodityCnCode(); } ... Stream.of(new SpeciesMatch(code, row.latinName(), row.commonName())); ... @JsonProperty(\"speciesName\") String latinName",
+      "confidence": "verbatim",
+      "note": "mechanism: turns MDM species search rows into code and species pairs."
+    },
+    {
+      "id": "repo-referencedata-p2-013",
+      "statement": "A commodity row from MDM search contributes one species match per entry in its scientificNames list, each under the row's code; a commodity row with no scientificNames contributes nothing.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:96-98,135-142; client/MdmProductSearchResult.java:14-15",
+      "quote": "if (row.resultType() == COMMODITY) { return row.code(); } ... if (row.species() == null) { return Stream.empty(); } ... @JsonProperty(\"scientificNames\") List<MdmSpecies> species",
+      "confidence": "verbatim",
+      "note": "mechanism: expands an MDM commodity search row into its listed species."
+    },
+    {
+      "id": "repo-referencedata-p2-014",
+      "statement": "An MDM search row with no commodity code (no commodityCnCode on a species row, no code on a commodity row, or no result type) is left out of the search.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:119-123",
+      "quote": "String code = codeOf(row); if (code == null) { return Stream.empty(); }",
+      "confidence": "verbatim",
+      "note": "mechanism: drops MDM search rows that carry no commodity code."
+    },
+    {
+      "id": "repo-referencedata-p2-015",
+      "statement": "After each search, the service asks MDM once for the commodity records of every distinct code the search rows carry, and leaves out every row whose code MDM flags as germinal (isGerminal true).",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:45,77-90,102-108",
+      "quote": "return mdmService.getCommodities(codes).stream().filter(CommoditySearchService::isGerminal) ... return Boolean.TRUE.equals(commodity.isGerminal()); ... .filter(row -> !germinalCodes.contains(codeOf(row)))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-016",
+      "statement": "The commodity search lists only non-germinal species, so it serves live animals only and offers no search over germinal-product commodities.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:34",
+      "quote": "\"Lists the non-germinal species MDM matches to the term, grouped by code. \"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-017",
+      "statement": "A code MDM does not flag as germinal is listed even when it sits outside the live-animals chapter; a missing isGerminal counts as not germinal.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java:114-128; CommoditySearchService.java:88-90",
+      "quote": "search_listsACodeOutsideTheLiveAnimalsChapter_whenMdmDoesNotFlagItGerminal ... givenMdmCommodities(commodity(\"0102\", false), commodity(\"05111000\", null));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-018",
+      "statement": "A species with no Latin name is left out of the search results.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:110-117",
+      "quote": ".filter(match -> match.latinName() != null)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-019",
+      "statement": "The same species (same Latin name) under the same code is listed once, keeping the first occurrence's common name, even when MDM returns it on both a species row and a commodity row.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:110-117",
+      "quote": "matchesByCodeAndLatinName.putIfAbsent(List.of(match.code(), match.latinName()), match)",
+      "confidence": "verbatim",
+      "note": "mechanism: de-duplicates MDM species matches by commodity code and Latin name."
+    },
+    {
+      "id": "repo-referencedata-p2-020",
+      "statement": "The same species under two different codes is listed under each code, so one species can appear in several groups.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:66-86",
+      "quote": "searchCommodities_groupsMdmSpeciesRowsUnderTheirCodes ... .code(\"01061900\").species(List.of(species(\"Bison bonasus\", \"European Bison\")))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-021",
+      "statement": "The search lists no more species than the size asked for, in MDM's order, but its total counts every distinct named, non-germinal species match on the MDM page it read.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:51-61",
+      "quote": "List<SpeciesMatch> listed = matches.stream().limit(size).toList(); ... .total(matches.size())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-022",
+      "statement": "The search total is the number of species matches on the one MDM page read, not MDM's totalElements, so it does not count matches on later MDM pages.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:43-61; CommoditiesControllerIT.java:88-93; mdm-product-search-0102-response.json totalElements",
+      "quote": ".total(matches.size()) ... assertThat(response.getBody().total()).isEqualTo(15); ... \"totalElements\": 1",
+      "confidence": "inferred",
+      "note": "Inferred: totalElements of the MDM search page is never read by CommoditySearchService; the 0102 fixture has totalElements 1 and the endpoint answers total 15. The schema text 'Number of species matching the search term' is therefore true only of the page read. MDM pages are of rows (a commodity row can hold many species), so page and size mean different units to MDM and to this service."
+    },
+    {
+      "id": "repo-referencedata-p2-023",
+      "statement": "Matching species are grouped by commodity code, with the groups and the species within each group in the order MDM returned them.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:144-151; CommoditySearchResponse.java:19-21",
+      "quote": "Collectors.groupingBy(SpeciesMatch::code, LinkedHashMap::new, ... \"Species on this page, grouped by commodity code in MDM's order\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-024",
+      "statement": "The search response has four required fields: total (number of species matching the term), page (zero-based page number), size (most species the page lists) and groups (species on this page grouped by commodity code).",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchResponse.java:9-21",
+      "quote": "\"Number of species matching the search term\" ... long total, ... \"Zero-based page number\" ... int page, ... \"Most species the page lists\" ... int size, ... List<CommodityGroup> groups",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-025",
+      "statement": "The search response echoes the page and size the caller asked for.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:56-60",
+      "quote": ".page(page) .size(size)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-026",
+      "statement": "A commodity group has a required commodity (CN) code, such as 0102, and the list of matching species under that code.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommodityGroup.java:10-21",
+      "quote": "\"Commodity (CN) code\", requiredMode = REQUIRED, example = \"0102\") String code, @Schema(description = \"Matching species listed under the code\", requiredMode = REQUIRED) List<CommoditySpecies> species",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-027",
+      "statement": "A species in the search has a required Latin (scientific) name, such as Bos taurus, and a common name, such as Cattle or Cow, which is null when MDM holds none.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySpecies.java:11-23",
+      "quote": "\"Latin (scientific) name\", requiredMode = REQUIRED, example = \"Bos taurus\") String latinName, @Schema(description = \"Common name, when MDM holds one\", requiredMode = NOT_REQUIRED, types = {\"string\", \"null\"}, example = \"Cattle or Cow\") @Nullable String commonName",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-028",
+      "statement": "The search response gives each group only its commodity code: it carries no commodity description (such as MDM's \"Live bovine animals\"), selectability or hierarchy, though MDM returns them.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommodityGroup.java:12-16; src/test/resources/integration/mdm-product-search-0102-response.json",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in CommodityGroup, CommoditySearchResponse and MdmProductSearchResult: no description, isSelectable, parentCode or children field is read or returned. A page showing a commodity name beside the code has no source in this service today."
+    },
+    {
+      "id": "repo-referencedata-p2-029",
+      "statement": "Each GET /commodities call is counted as a commodity-search lookup in the service's lookup metric.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:49; CommoditiesControllerTest.java:42-51",
+      "quote": "lookupMetrics.recordLookup(LookupMetrics.COMMODITY_SEARCH); ... assertThat(lookupTypesCounted()).containsExactly(\"commodity-search\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-030",
+      "statement": "A search logs, at info, how many MDM rows it left out for having no code, how many species for having no Latin name and how many beyond the page size, and logs the germinal codes it left out.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:46-49,64-75",
+      "quote": "\"Commodity search for '{}' leaves out {} MDM rows with no code, {} species with no \" + \"Latin name and {} species beyond the page size\" ... \"Commodity search for '{}' leaves out germinal codes {}\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-031",
+      "statement": "The service exposes a species check at POST /commodities/species-check, which returns the lines whose Latin name MDM does not list under their code.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:53-64",
+      "quote": "@Operation(summary = \"Check chosen species are still listed under their codes\", description = \"Returns the lines whose Latin name MDM does not list under their code.\") ... @PostMapping(\"/species-check\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-032",
+      "statement": "The species check answers 200 with the lines MDM does not list, 400 when the body is not a list of complete lines, and 503 when MDM is unavailable.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:55-57",
+      "quote": "@ApiResponse(responseCode = \"200\", description = \"The lines MDM does not list\") @ApiResponse(responseCode = \"400\", description = \"The body is not a list of complete lines\") @ApiResponse(responseCode = \"503\", description = \"MDM unavailable\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-033",
+      "statement": "The species check request has one required field, lines: the commodity lines whose species to check against MDM.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckRequest.java:12-21",
+      "quote": "\"Commodity lines whose species to check against MDM\", requiredMode = REQUIRED) @NotNull @Valid List<CommodityLine> lines",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-034",
+      "statement": "A commodity line is a species chosen under a commodity code, with a required, non-blank commodity (CN) code and a required, non-blank Latin name.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommodityLine.java:9-16",
+      "quote": "@Schema(description = \"A species chosen under a commodity code\") ... \"Commodity (CN) code\", requiredMode = REQUIRED, example = \"0102\") @NotBlank String code, ... \"Latin (scientific) name of the species\", requiredMode = REQUIRED, example = \"Bos taurus\") @NotBlank String latinName",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-035",
+      "statement": "The species check response has one required field, unlisted: the lines whose species MDM does not list under their code, in the order they were sent.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckResponse.java:9-14; SpeciesCheckService.java:32-34",
+      "quote": "\"Lines whose species MDM does not list under their code\", requiredMode = REQUIRED) List<CommodityLine> unlisted ... request.lines().stream().filter(line -> !isListed(line, latinNamesByCode)).toList();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-036",
+      "statement": "A line is listed when its Latin name exactly matches, case included, a species name MDM lists under the line's code; otherwise it is returned as unlisted.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckService.java:42-44; SpeciesCheckServiceTest.java:46-57",
+      "quote": "return latinNamesByCode.get(line.code()).contains(line.latinName()); ... check_returnsTheLinesWhoseLatinNameIsNotListedUnderTheirCode_matchingCaseExactly",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-037",
+      "statement": "The species check asks MDM once per distinct code among the lines, reading every page of that code's species, 100 at a time.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckService.java:22,28-31,46-59",
+      "quote": "static final int PAGE_SIZE = 100; ... .map(CommodityLine::code).distinct() ... mdmService.getCommoditySpecies(code, page, PAGE_SIZE);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-038",
+      "statement": "The species check stops reading a code's species at the first empty page, or once the pages read cover MDM's total.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckService.java:53-57",
+      "quote": "if (speciesPage.content().isEmpty() || (long) (page + 1) * PAGE_SIZE >= total) { return latinNames; }",
+      "confidence": "verbatim",
+      "note": "mechanism: pages through MDM's species list for one commodity code."
+    },
+    {
+      "id": "repo-referencedata-p2-039",
+      "statement": "Every line under a code MDM lists no species for is returned as unlisted.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckServiceTest.java:112-123",
+      "quote": "check_returnsEveryLine_forACodeMdmHasNoSpeciesFor",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-040",
+      "statement": "A species check with an empty list of lines answers with no unlisted lines and does not call MDM.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckServiceTest.java:135-141",
+      "quote": "check_returnsNothingWithoutCallingMdm_whenThereAreNoLines",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-041",
+      "statement": "The species check applies no germinal rule: it checks lines under any code, germinal or not.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckService.java:27-40",
+      "quote": "Map<String, Set<String>> latinNamesByCode = request.lines().stream().map(CommodityLine::code).distinct()",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any getCommodities or isGerminal call in SpeciesCheckService, unlike the search."
+    },
+    {
+      "id": "repo-referencedata-p2-042",
+      "statement": "When the species check finds unlisted lines it logs, at warn, how many and the code and Latin name of each.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckService.java:35-38; SpeciesCheckServiceTest.java:59-71",
+      "quote": "log.warn(\"Species check found {} lines MDM does not list under their code: {}\", unlisted.size(), unlisted);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-043",
+      "statement": "Each POST /commodities/species-check call is counted as a species-check lookup in the service's lookup metric.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:62; CommoditiesControllerTest.java:53-61",
+      "quote": "lookupMetrics.recordLookup(LookupMetrics.SPECIES_CHECK); ... containsExactly(\"species-check\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-044",
+      "statement": "The commodity search calls MDM GET /mdm/trade/product/search with the term as q, dataset gbnag, and the page and size, sending the APIM subscription key header.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmClient.java:34-41; MdmService.java:23,53-58",
+      "quote": "@GetMapping(value = \"/mdm/trade/product/search\") ... @RequestParam(value = \"q\") String query, @RequestParam(value = \"dataset\") String dataset, @RequestParam(value = \"page\") int page, @RequestParam(value = \"size\") int size ... private static final String DATASET = \"gbnag\";",
+      "confidence": "verbatim",
+      "note": "The subscription key value comes from configuration and is [REDACTED] here."
+    },
+    {
+      "id": "repo-referencedata-p2-045",
+      "statement": "The germinal lookup calls MDM GET /mdm/trade/product/commodities with the codes comma-separated in codes and dataset gbnag, and is not called when there are no codes.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmClient.java:43-48; MdmService.java:60-67",
+      "quote": "@GetMapping(value = \"/mdm/trade/product/commodities\") ... @RequestParam(value = \"codes\") String commaSeparatedCodes, @RequestParam(value = \"dataset\") String dataset ... if (codes.isEmpty()) { return List.of(); } ... String.join(\",\", codes)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-046",
+      "statement": "The species check calls MDM GET /mdm/trade/product/commodities/{code}/species with dataset gbnag, page and size.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmClient.java:50-57; MdmService.java:69-74",
+      "quote": "@GetMapping(value = \"/mdm/trade/product/commodities/{code}/species\") ... @PathVariable(\"code\") String code, @RequestParam(value = \"dataset\") String dataset, @RequestParam(value = \"page\") int page, @RequestParam(value = \"size\") int size",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-047",
+      "statement": "The service reads from MDM's commodity record only its code and isGerminal flag, and from an MDM species only its speciesName (as Latin name) and commonName.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmCommodity.java:6; MdmSpecies.java:7",
+      "quote": "public record MdmCommodity(String code, Boolean isGerminal) ... public record MdmSpecies(@JsonProperty(\"speciesName\") String latinName, String commonName)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-048",
+      "statement": "MDM product search and species pages are read as content plus totalElements; a page with no body, no content or no total is treated as MDM unavailable.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmProductPage.java:7; MdmService.java:76-99",
+      "quote": "\"MDM returned no body for %s request for %s\" ... \"MDM returned a %s page with no content for %s\" ... \"MDM returned a %s page with no total for %s\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-049",
+      "statement": "A commodities lookup that returns no body is treated as MDM unavailable.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:64-66,79-83; MdmServiceTest.java:330-338",
+      "quote": "\"MDM returned no body for commodities request for [0102]\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-050",
+      "statement": "A dropped MDM connection on any product call is treated as MDM unavailable.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:108-114; MdmServiceTest.java:276-297",
+      "quote": "} catch (RetryableException ex) { throw new MdmUnavailableException(\"MDM unavailable\", ex); }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-051",
+      "statement": "Each MDM product call logs MDM's trace id with the request name and what it was for, or warns when MDM returned none.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:21,116-125; MdmServiceTest.java:205-226",
+      "quote": "\"MDM trace id for product search request for cattle is trace-abc-123\" ... \"No MDM trace id returned for commodity species request for 0102\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-052",
+      "statement": "The product search, commodities and species calls are not cached: every commodity search and species check asks MDM afresh, unlike countries and ports.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:28,40,53,60,69",
+      "quote": "@Cacheable(value = CacheConfig.MDM_POE_CACHE ... @Cacheable(value = CacheConfig.MDM_COUNTRIES_CACHE ... public MdmProductPage<MdmProductSearchResult> searchProducts(",
+      "confidence": "inferred",
+      "note": "Inferred from the @Cacheable annotation on the countries and ports methods only."
+    },
+    {
+      "id": "repo-referencedata-p2-053",
+      "statement": "The service offers no way to browse commodities by hierarchy (parent and child codes) or to list a commodity's species without a search term, although MDM's product data holds parentCode, parents and children.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java; src/test/resources/integration/mdm-product-search-0102-response.json",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in CommoditiesController (two endpoints only) and the MDM records. A catalogue page that lists commodities by group would need a new endpoint."
+    },
+    {
+      "id": "repo-referencedata-p2-054",
+      "statement": "The service offers no commodity search for germinal products: the germinal-products set has no reference-data endpoint for its commodities today.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:45-50",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The only search drops germinal codes; no other endpoint lists them."
+    },
+    {
+      "id": "repo-referencedata-p2-055",
+      "statement": "MDM's commodities lookup returns, for each code, a description, isGerminal, isSelectable and speciesCount: for example 0102 Live bovine animals (not germinal, 15 species), 01061900 Other (not germinal, 2 species) and 05111000 Bovine semen (germinal, 1 species).",
+      "kind": "data",
+      "ref": "src/test/resources/integration/mdm-commodities-response.json",
+      "quote": "\"code\": \"0102\", \"description\": \"Live bovine animals\", \"isGerminal\": false, \"isSelectable\": true, \"speciesCount\": 15 ... \"code\": \"05111000\", \"description\": \"Bovine semen\", \"isGerminal\": true",
+      "confidence": "verbatim",
+      "note": "Test fixture: evidence of the shape of today's MDM content only, not of what the service must offer."
+    },
+    {
+      "id": "repo-referencedata-p2-056",
+      "statement": "MDM product search by a commodity code (0102) returns a commodity row carrying the code, description, isSelectable, isGerminal, commodityGroup \"Great British notification - Animals & Germinals\", parent code 01, CN code details and its 15 species in scientificNames.",
+      "kind": "data",
+      "ref": "src/test/resources/integration/mdm-product-search-0102-response.json",
+      "quote": "\"resultType\": \"commodity\", ... \"code\": \"0102\", \"depth\": 4, \"description\": \"Live bovine animals\", \"isSelectable\": true, ... \"commodityGroup\": \"Great British notification - Animals & Germinals\", \"isGerminal\": false, ... \"parentCode\": \"01\", ... \"speciesCount\": 15, \"scientificNames\": [",
+      "confidence": "verbatim",
+      "note": "Test fixture: evidence of MDM's data shape only. The row also carries empty lists for certifiedAs, breedCategory, identificationSystems, animalSubcategory, natureOfCommodity, packageType, treatmentType and productTemperature."
+    },
+    {
+      "id": "repo-referencedata-p2-057",
+      "statement": "MDM species rows carry speciesName, commonName, a commonNames list (such as Cattle or Cow and Aurochs), an EPPO code, taxonomy, the commodityCnCode and the dataset gbnag.",
+      "kind": "data",
+      "ref": "src/test/resources/integration/mdm-product-search-cattle-response.json; mdm-product-search-dog-response.json",
+      "quote": "\"speciesName\": \"Bos taurus\", \"commonName\": \"Cattle or Cow\", \"commonNames\": [ \"Cattle or Cow\", \"Aurochs\" ], \"languageId\": \"la\", \"eppoCode\": \"BOVSTA\", ... \"commodityCnCode\": \"0102\", ... \"dataset\": \"gbnag\"",
+      "confidence": "verbatim",
+      "note": "Test fixture: evidence of MDM's data shape only. The service reads only commonName, so a species' other common names are not offered."
+    },
+    {
+      "id": "repo-referencedata-p2-058",
+      "statement": "MDM product search by a species name returns one species row per code the species sits under: cattle returns Bos taurus under 0102 and under germinal 05111000; bison returns Bison bison under 0102 and Bison bonasus under both 0102 and 01061900; dog returns Raccoon Dog and Dog under 01061900.",
+      "kind": "data",
+      "ref": "src/test/resources/integration/mdm-product-search-cattle-response.json; mdm-product-search-bison-response.json; mdm-product-search-dog-response.json",
+      "quote": "\"speciesName\": \"Nyctereutes procyonoides\", \"commonName\": \"Raccoon Dog\", ... \"commodityCnCode\": \"01061900\" ... \"speciesName\": \"Canis familiaris\", \"commonName\": \"Dog\"",
+      "confidence": "verbatim",
+      "note": "Test fixtures: evidence of today's MDM content only."
+    },
+    {
+      "id": "repo-referencedata-p2-059",
+      "statement": "MDM's species list for commodity 0102 returns 15 species in alphabetical order of Latin name, from Bibos spp. to Syncerus, with a totalElements of 15.",
+      "kind": "data",
+      "ref": "src/test/resources/integration/mdm-product-species-0102-response.json",
+      "quote": "\"speciesName\": \"Syncerus\", \"commonName\": \"African Buffaloes\", ... \"page\": 0, \"size\": 100, \"totalElements\": 15",
+      "confidence": "verbatim",
+      "note": "Test fixture. The search's commodity row lists the same 15 species in a different, non-alphabetical order, and the search keeps MDM's order."
+    },
+    {
+      "id": "repo-referencedata-p2-060",
+      "statement": "Proven by test: species from MDM species rows are grouped under their code in MDM's order, with a total of every match.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java:40-57 search_groupsSpeciesByCodeInMdmOrder",
+      "quote": "search_groupsSpeciesByCodeInMdmOrder",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-061",
+      "statement": "Proven by test: a species MDM returns on both species rows and a commodity row is listed once per code, germinal codes are dropped, and a species with no common name is listed with none.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java:59-92 search_listsACommodityRowsSpeciesOncePerCode",
+      "quote": "search_listsACommodityRowsSpeciesOncePerCode ... assertThat(response.total()).isEqualTo(5);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-062",
+      "statement": "Proven by test: the codes MDM flags as germinal are left out of the search, whether they arrive on species rows or commodity rows.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java:94-112 search_leavesOutTheCodesMdmFlagsAsGerminal; CommoditiesControllerIT.java:50-64",
+      "quote": "search_leavesOutTheCodesMdmFlagsAsGerminal ... .withQueryStringParameter(\"codes\", \"0102,05111000\") .withQueryStringParameter(\"dataset\", \"gbnag\"), VerificationTimes.exactly(1)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-063",
+      "statement": "Proven by test: the search counts every species match but lists no more than the page size.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java:130-149 search_countsEverySpeciesMatchButListsNoMoreThanThePageSize",
+      "quote": "search_countsEverySpeciesMatchButListsNoMoreThanThePageSize ... assertThat(response.total()).isEqualTo(4);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-064",
+      "statement": "Proven by test: rows with no result type, commodity rows with no species, and species with no Latin name are left out of the search.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java:151-183 search_listsOnlyTheNamedSpeciesOfRowsWithAKnownResultType, search_listsNothingForACommodityRowWithNoSpecies",
+      "quote": "search_listsOnlyTheNamedSpeciesOfRowsWithAKnownResultType ... search_listsNothingForACommodityRowWithNoSpecies",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-065",
+      "statement": "Proven by test: the search logs the rows and species it leaves out.",
+      "kind": "non-functional",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java:185-200 search_logsTheRowsAndSpeciesItLeavesOut",
+      "quote": "\"Commodity search for 'bos' leaves out 1 MDM rows with no code, 1 species with no \" + \"Latin name and 1 species beyond the page size\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-066",
+      "statement": "Proven by test: the term is trimmed before searching, and a blank, missing or one-character term returns nothing without calling MDM.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java:202-228; CommoditiesControllerIT.java:143-150",
+      "quote": "search_trimsTheTermBeforeSearching ... search_returnsNothingWithoutCallingMdm_whenTheTrimmedTermIsShorterThanTheMinimum ... \"{\\\"total\\\":0,\\\"page\\\":0,\\\"size\\\":100,\\\"groups\\\":[]}\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-067",
+      "statement": "Proven by integration test: a search by commodity code 0102 lists and counts the 15 species of that commodity, in MDM's order.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:88-113 searchCommodities_listsAndCountsTheSpeciesOfACommodityFoundByCode",
+      "quote": "searchCommodities_listsAndCountsTheSpeciesOfACommodityFoundByCode ... assertThat(response.getBody().total()).isEqualTo(15);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-068",
+      "statement": "Proven by integration test: a search by species name (bison) groups MDM species rows under their codes, with a total of 3.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:66-86 searchCommodities_groupsMdmSpeciesRowsUnderTheirCodes",
+      "quote": "searchCommodities_groupsMdmSpeciesRowsUnderTheirCodes ... assertThat(response.getBody().total()).isEqualTo(3);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-069",
+      "statement": "Proven by integration test: the search asks MDM for the page and size given, and for page 0 and size 100 with dataset gbnag when none is given.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:115-141",
+      "quote": "searchCommodities_asksMdmForThePageAndSizeGiven ... searchCommodities_asksMdmForOneHundredResults_whenNoSizeIsGiven",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-070",
+      "statement": "Proven by integration test: a page below 0, a size of 0 or above 100, or a page or size that is not a number answers 400 without calling MDM.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:209-218",
+      "quote": "@ValueSource(strings = {\"page=-1\", \"size=0\", \"size=101\", \"page=first\", \"size=many\"}) void searchCommodities_answersBadRequestWithoutCallingMdm_forPagingOutsideItsLimits",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-071",
+      "statement": "Proven by integration test: the search answers 503 when MDM answers 502, 503 or 504 or drops the connection, and 500 when MDM answers 400, 401 or 500.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:241-271",
+      "quote": "@ValueSource(ints = {502, 503, 504}) void searchCommodities_answersServiceUnavailable_whenMdmIsDown ... searchCommodities_answersServiceUnavailable_whenMdmDropsTheConnection ... @ValueSource(ints = {400, 401, 500}) void searchCommodities_answersInternalServerError_forAnMdmStatusOtherThanUnavailable",
+      "confidence": "verbatim",
+      "note": "The status mapping itself is shared error handling (part 3); this claims only what these tests prove for the commodity search."
+    },
+    {
+      "id": "repo-referencedata-p2-072",
+      "statement": "Proven by integration test: the species check returns the lines MDM does not list under their code, asking MDM for the code's species with dataset gbnag, page 0 and size 100.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:152-170 checkSpecies_returnsTheLinesMdmDoesNotListUnderTheirCode",
+      "quote": "checkSpecies_returnsTheLinesMdmDoesNotListUnderTheirCode ... .containsExactly(CommodityLine.builder().code(\"0102\").latinName(\"Bos spp.\").build());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-073",
+      "statement": "Proven by integration test: the species check answers 503 when MDM sends no body.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:194-207 checkSpecies_answersServiceUnavailable_whenMdmSendsNoBody",
+      "quote": "checkSpecies_answersServiceUnavailable_whenMdmSendsNoBody ... HttpStatus.SERVICE_UNAVAILABLE",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-074",
+      "statement": "Proven by integration test: the species check answers 400 without calling MDM for an empty body, malformed JSON, a body with no lines, null lines, a null line, a line with no code, or a line with a blank Latin name.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:220-239",
+      "quote": "\"\", \"{\", \"{}\", \"{\\\"lines\\\":null}\", \"{\\\"lines\\\":[null]}\", \"{\\\"lines\\\":[{\\\"latinName\\\":\\\"Bos taurus\\\"}]}\", \"{\\\"lines\\\":[{\\\"code\\\":\\\"0102\\\",\\\"latinName\\\":\\\" \\\"}]}\" ... checkSpecies_answersBadRequestWithoutCallingMdm_forABodyThatIsNotAListOfLines",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-075",
+      "statement": "Proven by test: the species check asks MDM once per code and reads every page, stopping at the first empty page.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckServiceTest.java:73-99 check_asksMdmOncePerCode_andReadsEveryPage, check_stopsReadingPages_atTheFirstEmptyPage",
+      "quote": "check_asksMdmOncePerCode_andReadsEveryPage ... check_stopsReadingPages_atTheFirstEmptyPage",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-076",
+      "statement": "Proven by test: the species check fails as MDM unavailable when MDM sends a species page with no total or no page at all.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckServiceTest.java:101-133",
+      "quote": "check_throwsMdmUnavailable_whenMdmSendsASpeciesPageWithNoTotal ... check_throwsMdmUnavailable_whenMdmSendsNoSpeciesPageForACode",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-077",
+      "statement": "Proven by test: a search species must have a Latin name, and a commodity group must have a code and a species list and keeps its own copy of the species.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySpeciesTest.java:9-16; CommodityGroupTest.java:12-36",
+      "quote": "rejectsANullLatinName ... holdsItsOwnCopyOfTheSpecies ... rejectsANullCode ... rejectsANullSpeciesList",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-078",
+      "statement": "Proven by integration test: the OpenAPI document describes both commodity endpoints by their summaries, latinName as the only required species field, commonName as a string or null, lines as required on the request, the unlisted field's description, and total, page, size and groups as required on the search response.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:172-192 openApiDocument_describesBothCommodityEndpointsAndTheirFields",
+      "quote": "openApiDocument_describesBothCommodityEndpointsAndTheirFields",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-079",
+      "statement": "Proven by test: the MDM product calls send the subscription key, dataset gbnag and the paging given; commodities are asked for comma-separated and not at all for no codes; and MDM's content, totals and commodity records are returned as sent.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java:195-373",
+      "quote": "searchProducts_callsMdmWithGbnagDatasetAndPaging ... getCommodities_callsMdmWithCodesCommaSeparated ... getCommodities_doesNotCallMdm_whenThereAreNoCodes ... getCommoditySpecies_callsMdmWithCodeGbnagDatasetAndPaging ... searchProducts_returnsBodyFromMdmResponse ... getCommodities_returnsBodyFromMdmResponse ... getCommoditySpecies_returnsBodyFromMdmResponse",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-080",
+      "statement": "Proven by test: an MDM product search with no body, no content, no total or a dropped connection, and a commodities or species call with no body, each fail as MDM unavailable with a message naming the request.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java:246-297,330-338,365-373",
+      "quote": "searchProducts_throwsMdmUnavailable_whenMdmBodyIsNull ... searchProducts_throwsMdmUnavailable_whenMdmContentIsNull ... searchProducts_throwsMdmUnavailable_whenMdmTotalIsNull ... searchProducts_throwsMdmUnavailable_whenMdmDropsTheConnection ... getCommodities_throwsMdmUnavailable_whenMdmBodyIsNull ... getCommoditySpecies_throwsMdmUnavailable_whenMdmBodyIsNull",
+      "confidence": "verbatim"
+    }
+  ]
+}

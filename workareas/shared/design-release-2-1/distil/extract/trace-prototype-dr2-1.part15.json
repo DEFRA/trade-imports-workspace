@@ -1,945 +1,828 @@
 {
   "source": "trace:prototype-dr2-1",
-  "structure": "Part 15, Templates: all 12 traces of templates.fit.spec.js, every one opened and mined (actions, page snapshots with eval of main text, links, controls and classes, and the page-level network log). Traces, referred to below by their zip name without the templates-- prefix: manage-templates-lists-the-saved-templates-with-view-and-use-actions (T1), manage-templates-the-dashboard-use-template-button-opens-manage-templates (T2), a-saved-template-view-the-template-answers-with-a-change-link-per-section (T3), a-saved-template-use-starts-a-new-draft-notification-from-the-template (T4), a-saved-template-change-one-section-save-and-return-goes-back-to-the-template (T5), a-saved-template-posting-to-a-template-page-just-reloads-it-and-an-unknown-template-returns-to-the-list (T6), a-saved-template-edit-opens-the-template-on-its-own-task-list (T7), a-saved-template-delete-confirm-then-the-list-says-it-was-deleted (T8), create-a-new-template-type-name-answers-review-save (T9), create-a-new-template-a-template-with-no-name-is-saved-as-untitled-template (T10), create-a-new-template-discard-a-template-being-created (T11), create-a-new-template-the-discard-page-outside-a-template-journey-returns-to-manage-templates (T12). Page inventory, in journey order: (1) dashboard Use template button (/design-release-2.1, T2) -> (2) Manage templates (/templates: intro, Create new template, My templates list of cards with View template and Use template, sort select, success banner after save/delete; T1, T8, T9, T10, T11) -> (3) template view (/templates/<slug>: caption Templates, name heading, Date created, Use template, Delete, review cards with Change links per section; T3, T5, T6, T8) -> (3a) change one section (/templates/<slug>/change/<page> redirects to the question page with ?from=template-review, Save and return / Cancel, back to the view with an 'has been updated' banner; T5) -> (3b) use (/templates/<slug>/use redirects to the notification hub as a new Draft GBN-AG reference; T4) -> (3c) edit (/templates/<slug>/edit opens the hub as a Template tasklist with no Documents section; T7) -> (3d) delete confirmation (/templates/<slug>/delete: Delete this template?, Name summary, Yes, delete / No, cancel; T8). Create journey (conditional on Create new template): /templates/create?new=1 redirects to (4) notification type (What are you importing?, back to /templates) -> (5) Enter template name (/templates/create, caption Create a new template) -> (6) origin of the import and what are you importing in template mode (caption Template + name) -> (7) the template's own task list (hub, Template tasklist) -> (8) Review your template (/review-notification, Save template, Delete to /templates/discard) -> Manage templates with 'saved to templates' banner. Guards: documents and declaration redirect away in a template (T9), /templates/save with no name saves 'Untitled template' (T10), (9) discard confirmation /templates/discard inside a template journey (T11) and its redirect to /templates outside one (T12), POST to a template page reloads it and an unknown template slug returns to the list (T6). All 12 traces passed with no errors, so no validation message renders anywhere in this part; the only conditional surfaces are the template-mode variants of shared pages.",
+  "structure": "Part 15, Dashboards. Read dashboard.fit.spec.js in full and opened and mined all 9 of its traces (0 errors in each): (1) overall dashboard summarises every category, 51 actions; (2) /dashboard redirects, 24 actions; (3) prototype index, 31 actions; (4) live animals summary, search, filters, tabs and cards, 134 actions; (5) live animals filters replace the tabs, 55 actions; (6) germinal products quantity and amend examples, 82 actions; (7) action needed drill-down, 45 actions; (8) inspection required drill-down, 44 actions; (9) status updated drill-down, 41 actions. Every trace is a single-page visit or a short series of navigations; none walks the notification journey. Page inventory, in the order a user meets them: the prototype index (/design-release-2.1/index, a release chooser outside the service shell); the overall dashboard at the mount root /design-release-2.1 (also reached by /dashboard, which 302s there, or to /live-animals keeping the query when one is given); the category dashboards /live-animals and /germinal-products, each with a Summary of two glance cards, a search and sort form, an Additional filters details panel, and three link tabs Submitted, Draft and Amend (?tab=drafts) and Past (?tab=completed), whose place a Filtered results list takes when needsAction or status is set; and three at a glance drill-downs, /actions (optionally ?category=), /changes (optionally ?category=) and /inspection, each listing notification cards. The amend card's View link (/notifications/amend?reference=...&resume=1) 302s to /review-notification in Amend; that page belongs to the manage notifications part and is claimed here only as the destination. Snapshots read: trace 1 action 30; trace 2 requests 1 and 42; trace 3 action 11; trace 4 actions 23, 50, 62, 86, 100, 115 and requests 165 to 247; trace 5 actions 13 and 32; trace 6 actions 16, 39, 52, 65; trace 7 actions 15 and 26; trace 8 action 25; trace 9 actions 14 and 22. The network logs hold only page GETs, redirects, static assets and the prototype kit's browser-sync socket: the dashboards are rendered on the server from the prototype's session data, with no data API call. Conditional surface: the filtered results view (needsAction or status set), the category-scoped drill-downs and their back links, and amend cards linking into amend. Not walked: the date filters (Today, Tomorrow, Next 7 days, date range and its date picker), Arrival date sort, a filter or search with no matches, pagination beyond one page, the plants dashboard and the inspection View requirements link (both '#'), Messages and Manage account (both '#'), /changes?category=live-animals and /actions?category=germinal-products.",
   "claims": [
     {
       "id": "trace-prototype-dr2-1-p15-001",
-      "statement": "The dashboard has a secondary 'Use template' button, a link styled as a button, that opens Manage templates at /design-release-2.1/templates.",
-      "kind": "behaviour",
-      "ref": "trace T2 (manage-templates-the-dashboard-use-template-button-opens-manage-templates) action 8, request 40",
-      "quote": "<a href=\"/design-release-2.1/templates\" role=\"button\" draggable=\"false\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\">Use template</a>",
-      "confidence": "verbatim"
+      "statement": "The prototype index page lists every version of the prototype and is titled 'Import notification service', with an H1 'Import notification service' under a caption 'Prototypes'.",
+      "kind": "copy",
+      "ref": "trace dashboard--overall-dashboard-the-prototype-index-lists-every-design-release action 11",
+      "quote": "Prototypes\nImport notification service",
+      "confidence": "verbatim",
+      "note": "Reached at /design-release-2.1/index in this trace; the page has no GOV.UK suffix in its title."
     },
     {
       "id": "trace-prototype-dr2-1-p15-002",
-      "statement": "The Manage templates page has the browser title 'Manage templates - Import notification service - GOV.UK' and the H1 'Manage templates'.",
+      "statement": "The prototype index opens with a lead paragraph explaining that each version has its own journey, dashboard and saved data, and all versions share one address book.",
       "kind": "copy",
-      "ref": "trace T1 (manage-templates-lists-the-saved-templates-with-view-and-use-actions) action 24",
-      "quote": "Manage templates - Import notification service - GOV.UK ... <h1 class=\"app-dr2-dashboard-intro__heading\" id=\"dashboard-templates-heading\">Manage templates</h1>",
+      "ref": "trace dashboard--overall-dashboard-the-prototype-index-lists-every-design-release action 11",
+      "quote": "Choose a version of the prototype. Each one has its own journey, dashboard and saved data. They all share one address book.",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-003",
-      "statement": "Under the Manage templates heading the page describes itself with the line 'Select, manage or create new notification templates'.",
+      "statement": "The prototype index groups versions under two H2 headings, 'Latest designs' and 'Testing prototypes'.",
       "kind": "copy",
-      "ref": "trace T1 action 24",
-      "quote": "Select, manage or create new notification templates",
+      "ref": "trace dashboard--overall-dashboard-the-prototype-index-lists-every-design-release action 11",
+      "quote": "Latest designs ... Testing prototypes",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-004",
-      "statement": "Manage templates has a primary 'Create new template' button (a link styled as a button) that starts a new template at /templates/create?new=1.",
+      "statement": "Under 'Latest designs', the 'Design release 1' card is tagged 'In design' (purple), subtitled 'The first notification journey', and its 'Start design release 1' button links to /create-notification.",
       "kind": "behaviour",
-      "ref": "trace T1 action 11 and 24",
-      "quote": "<a href=\"/design-release-2.1/templates/create?new=1\" role=\"button\" draggable=\"false\" class=\"govuk-button\" data-module=\"govuk-button\">Create new template</a>",
+      "ref": "trace dashboard--overall-dashboard-the-prototype-index-lists-every-design-release action 11",
+      "quote": "In design\nDesign release 1\nThe first notification journey\n\nThe original journey for telling us about an import of live animals, from starting a notification to submitting it. The later versions are built on this one.",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-005",
-      "statement": "The saved templates are listed under an H2 'My templates'.",
-      "kind": "copy",
-      "ref": "trace T1 action 12",
-      "quote": "<h2 class=\"app-dr2-dashboard-templates__heading\" id=\"dashboard-templates-list-heading\">My templates</h2>",
+      "statement": "Under 'Latest designs', the 'Design release 2' card is tagged 'In design' (purple), subtitled 'The current design', describes the live animals and germinal products design, and its 'Start design release 2' button links to /design-release-2.1.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--overall-dashboard-the-prototype-index-lists-every-design-release action 11",
+      "quote": "The latest design for importing live animals and germinal products. It adds a dashboard, templates and an address book to the first journey, and has the newest changes.",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-006",
-      "statement": "The template list shows a result count in the form 'Show 1-N of N results'; with the five seeded templates it reads 'Show 1-5 of 5 results'.",
+      "statement": "The 'Design release 2' card's collapsed 'What this version includes' details lists six features: both journeys, a dashboard with three tabs, identification details that follow the commodity, templates, an address book showing address uses, and amending after submission.",
       "kind": "copy",
-      "ref": "trace T1 action 13-24",
-      "quote": "Show 1-5 of 5 results",
+      "ref": "trace dashboard--overall-dashboard-the-prototype-index-lists-every-design-release action 11",
+      "quote": "What this version includes Journeys for live animals and for germinal products Dashboard with Submitted, Draft and Amend, and Past tabs Identification details that change with the commodity Templates you can create, edit and reuse Address book showing what each address can be used for Amending a notification after it has been submitted",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-007",
-      "statement": "The template list has a 'Sort by:' select (name sort) with the options 'Select one' (selected, empty value), 'Newest first', 'Oldest first' and 'Arrival date'.",
-      "kind": "data",
-      "ref": "trace T1 action 24 (main outerHTML, select#dashboard-templates-sort)",
-      "quote": "Sort by: ... <option value=\"\" selected=\"\">Select one</option> <option value=\"newest\">Newest first</option> <option value=\"oldest\">Oldest first</option> <option value=\"arrival-date\">Arrival date</option>",
+      "statement": "The 'Design release 1' card's collapsed 'What this version includes' details lists the four sections of the first journey.",
+      "kind": "copy",
+      "ref": "trace dashboard--overall-dashboard-the-prototype-index-lists-every-design-release action 11",
+      "quote": "What this version includes Origin, commodity and reason for import Consignment, animal and arrival details Documents and consignment addresses Review, declaration and submission",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-008",
-      "statement": "No trace drives the Sort by select, so whether choosing an option reorders the template list (and how 'Arrival date' applies to a template, which has no arrival) is not shown.",
+      "statement": "Under 'Testing prototypes', three research versions are listed: 'Round 1 (Live animals)' tagged 'Tested' (green) starting at /testing, 'Round 1 (Germinals)' tagged 'Testing' (yellow) starting at /testing4, and 'Round 2 (Live animals)' tagged 'Testing' (yellow) starting at /testing3, each with its own description and collapsed 'What this version includes' list.",
       "kind": "behaviour",
-      "ref": "traces T1, T8, T9, T10, T11: the select is rendered, never changed",
-      "quote": "",
-      "confidence": "gap"
+      "ref": "trace dashboard--overall-dashboard-the-prototype-index-lists-every-design-release action 11",
+      "quote": "Tested\nRound 1 (Live animals)\nFirst round of research on live animals\n\nThe version tested with users in the first round of research on importing live animals. It uses CHEDA reference numbers and a dashboard that looks like IPAFFS.",
+      "confidence": "verbatim",
+      "note": "Round 1 (Germinals): 'For research on importing germinal products: semen, embryos and ova. It works the same way as Round 2 (Live animals), but its dashboard and example templates are for germinal products.' Round 2 (Live animals): 'For the second round of research on importing live animals. It is a copy of Design release 2, so changes can be tried with users without affecting the design version.' These are prototype-only surfaces, outside the service."
     },
     {
       "id": "trace-prototype-dr2-1-p15-009",
-      "statement": "Five templates are seeded: Arena Aintree, Rice Lane City Farm, Monk Park Farm, Acorn Farm and Glen Keen Farm, in that order.",
-      "kind": "data",
-      "ref": "trace T1 action 13-18 and 24",
-      "quote": "Arena Aintree ... Rice Lane City Farm ... Monk Park Farm ... Acorn Farm ... Glen Keen Farm",
+      "statement": "The prototype index uses only GOV.UK components (Tag, Details, Button, bullet list, headings) plus two prototype classes, prototype-page-header and prototype-release-card, for its layout.",
+      "kind": "constraint",
+      "ref": "trace dashboard--overall-dashboard-the-prototype-index-lists-every-design-release action 11 (class list)",
+      "quote": "govuk-details govuk-tag govuk-tag--green govuk-tag--purple govuk-tag--yellow prototype-page-header prototype-release-card",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-010",
-      "statement": "Each template in the list is a card (an article labelled 'Template <name>') showing the notification type category ('Live animals') above the template name as an H3.",
-      "kind": "copy",
-      "ref": "trace T1 action 24, article.app-dr2-dashboard-template-card",
-      "quote": "<article class=\"app-dr2-dashboard-template-card\" aria-label=\"Template Arena Aintree\"> ... <p class=\"app-dr2-dashboard-template-card__category\">Live animals</p> <h3 class=\"app-dr2-dashboard-template-card__title\">Arena Aintree</h3>",
+      "statement": "The mount root /design-release-2.1 is the overall dashboard, titled 'Dashboard - Import notification service - GOV.UK', with the caption 'Dashboard' above the H1 'Import notification service'.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one action 30",
+      "quote": "Dashboard - Import notification service - GOV.UK\n=====\nDashboard\n\nImport notification service",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-011",
-      "statement": "Each template card has two links: 'View template' to /templates/<slug> and 'Use template' to /templates/<slug>/use, where the slug is the template name in kebab case.",
+      "statement": "The service navigation shows 'Import notification service' and 'Dashboard' (both to /design-release-2.1), 'Templates' (/design-release-2.1/templates), 'Address book' (/design-release-2.1/address-book) and 'Manage account' (#).",
       "kind": "behaviour",
-      "ref": "trace T1 action 19-20 and 24",
-      "quote": "<a class=\"govuk-link app-dr2-dashboard-template-card__action-link\" href=\"/design-release-2.1/templates/arena-aintree\">View template</a> <a class=\"govuk-link app-dr2-dashboard-template-card__action-link\" href=\"/design-release-2.1/templates/arena-aintree/use\">Use template</a>",
-      "confidence": "verbatim"
+      "ref": "trace dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one actions 19-21",
+      "quote": "A|/design-release-2.1|govuk-service-navigation__link|Dashboard\nA|/design-release-2.1/templates|govuk-service-navigation__link|Templates\nA|/design-release-2.1/address-book|govuk-service-navigation__link|Address book\nA|#|govuk-service-navigation__link|Manage account",
+      "confidence": "verbatim",
+      "note": "The header homepage link goes to /index, the prototype index. Manage account is a placeholder."
     },
     {
       "id": "trace-prototype-dr2-1-p15-012",
-      "statement": "Each template card summarises four answers as a description list: Commodity, Origin, Consignee and Consignor.",
-      "kind": "data",
-      "ref": "trace T1 action 24, dl.app-dr2-dashboard-template-card__details",
-      "quote": "<dt class=\"app-dr2-dashboard-template-card__key\">Commodity</dt> ... Origin ... Consignee ... Consignor",
-      "confidence": "verbatim"
+      "statement": "The overall dashboard shows a Messages link with a count of 12 and visually hidden text '12 unread messages'; the link goes nowhere (#).",
+      "kind": "behaviour",
+      "ref": "trace dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one action 23",
+      "quote": "Messages\n12\n12 unread messages",
+      "confidence": "verbatim",
+      "note": "The count is fixed example data; no messages page exists in the traces."
     },
     {
       "id": "trace-prototype-dr2-1-p15-013",
-      "statement": "The seeded template cards read: Arena Aintree (Horse, Republic of Ireland, consignee Valea Mare Farm, consignor Valea Mare Farm); Rice Lane City Farm (Pigs, Republic of Ireland, Glen Keen Farm, Rice Lane City Farm); Monk Park Farm (Goats and Sheep, Republic of Ireland, Glen Keen Farm, Monk Park Farm); Acorn Farm (Cattle, Republic of Ireland, Glen Keen Farm, Acorn Farm); Glen Keen Farm (Poultry, Republic of Ireland, Glen Keen Farm, Glen Keen Farm).",
-      "kind": "data",
-      "ref": "trace T1 action 24; trace T9 action 78 (CARDS)",
-      "quote": "Live animals Arena Aintree View template Use template Commodity Horse Origin Republic of Ireland Consignee Valea Mare Farm Consignor Valea Mare Farm",
+      "statement": "The overall dashboard has a primary 'Create new' button to /design-release-2.1/create-notification and a secondary 'Use template' button to /design-release-2.1/templates.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one actions 24-25",
+      "quote": "A|/design-release-2.1/create-notification|govuk-button|Create new\nA|/design-release-2.1/templates|govuk-button govuk-button--secondary|Use template",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-014",
-      "statement": "A template card shows 'Not applicable' for any of Commodity, Origin, Consignee or Consignor the template has not answered.",
-      "kind": "copy",
-      "ref": "trace T9 action 78 (Weekly Irish cattle card); trace T10 action 16 (Untitled template card)",
-      "quote": "Live animals Untitled template View template Use template Commodity Not applicable Origin Not applicable Consignee Not applicable Consignor Not applicable",
+      "statement": "The overall dashboard has one section per category, each an H2 with a 'View dashboard' link: 'Live animals' to /live-animals, 'Germinal products' to /germinal-products, and 'Plants, plant products or other objects' to #.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one actions 27-37",
+      "quote": "H2|Live animals\nA|/design-release-2.1/live-animals|govuk-link|View dashboard ... H2|Germinal products\nA|/design-release-2.1/germinal-products|govuk-link|View dashboard ... H2|Plants, plant products or / other objects\nA|#|govuk-link|View dashboard",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-015",
-      "statement": "On Manage templates the service navigation marks 'Templates' as the active item.",
-      "kind": "behaviour",
-      "ref": "trace T1 action 21",
-      "quote": "locator('.govuk-service-navigation__item--active') toContainText 'Templates'",
-      "confidence": "verbatim"
+      "statement": "Each category section on the overall dashboard has two glance cards: 'Action needed' ('Tasks requiring your attention', a count, 'View tasks') and 'Status updates' ('Changes in the past 24 hours', a count, 'View updates').",
+      "kind": "copy",
+      "ref": "trace dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one action 30",
+      "quote": "Action needed\n\nTasks requiring your attention\n\n4\n\nView tasks\nStatus updates\n\nChanges in the past 24 hours\n\n8\n\nView updates",
+      "confidence": "verbatim",
+      "note": "The overall dashboard heads the second card 'Status updates'; the category dashboards head it 'Status updated' (claim p15-026)."
     },
     {
       "id": "trace-prototype-dr2-1-p15-016",
-      "statement": "Manage templates is built from custom app-dr2-dashboard-* blocks (intro, templates list, template card, results count, sort) rather than GOV.UK components, apart from the govuk-button, govuk-link, govuk-label and govuk-select inside them; the template card is a bespoke card with a dl, which a GOV.UK summary card could replace.",
-      "kind": "constraint",
-      "ref": "trace T1 action 24 (main outerHTML classes)",
-      "quote": "app-dr2-dashboard-intro app-dr2-dashboard-intro--templates ... app-dr2-dashboard-templates ... app-dr2-dashboard-template-card ... app-dr2-dashboard-results__count ... govuk-select app-dr2-dashboard-search__sort-select",
-      "confidence": "inferred",
-      "note": "The replacement suggestion is the extractor's reading of the classes, hence inferred."
+      "statement": "The live animals glance cards link to /actions?category=live-animals and /changes?category=live-animals, and the germinal products ones to /actions?category=germinal-products and /changes?category=germinal-products.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one actions 34-36",
+      "quote": "A|/design-release-2.1/actions?category=live-animals|View tasks ... A|/design-release-2.1/changes?category=live-animals|View updates ... A|/design-release-2.1/actions?category=germinal-products|View tasks ... A|/design-release-2.1/changes?category=germinal-products|View updates",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-017",
-      "statement": "No pagination control is shown on Manage templates; with at most six templates in any trace, whether the list pages beyond a page size is not shown.",
-      "kind": "behaviour",
-      "ref": "traces T1, T9, T10: counts 'Show 1-5 of 5 results' and 'Show 1-6 of 6 results' only",
-      "quote": "",
-      "confidence": "gap"
+      "statement": "The overall dashboard shows glance counts of 4 action needed and 8 status updates for live animals, 2 and 1 for germinal products, and 4 and 4 for plants.",
+      "kind": "data",
+      "ref": "trace dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one action 30",
+      "quote": "Live animals ... Tasks requiring your attention\n\n4 ... Changes in the past 24 hours\n\n8 ... Germinal products ... 2 ... 1 ... Plants, plant products or\nother objects ... 4 ... 4",
+      "confidence": "verbatim",
+      "note": "These counts do not match the lists they open: /actions?category=live-animals lists 1, the live animals dashboard shows 1 and 2, and /actions shows 2 in total. The counts look like fixed example numbers, not computed."
     },
     {
       "id": "trace-prototype-dr2-1-p15-018",
-      "statement": "View template on a card opens the template's page at /templates/<slug>, with the browser title '<template name> - Import notification service - GOV.UK' and the template name as its heading.",
+      "statement": "The plants section on the overall dashboard is a placeholder: its 'View dashboard', 'View tasks' and 'View updates' links all go to #.",
       "kind": "behaviour",
-      "ref": "trace T3 (a-saved-template-view-the-template-answers-with-a-change-link-per-section) actions 8-10, 20",
-      "quote": "Arena Aintree - Import notification service - GOV.UK ... Templates\n\nArena Aintree",
+      "ref": "trace dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one action 37",
+      "quote": "A|#|govuk-link app-dr2-dashboard-glance-card__link|View tasks ... A|#|govuk-link app-dr2-dashboard-glance-card__link|View updates",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-019",
-      "statement": "The template page shows 'Templates' as a caption above the template name.",
-      "kind": "copy",
-      "ref": "trace T3 action 11, 20",
-      "quote": "Templates\n\nArena Aintree",
-      "confidence": "verbatim"
+      "statement": "The overall dashboard has an 'Inspection required' card ('Consignments due at the BCP', count 6) whose 'View requirements' link goes to #, not to /inspection.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one action 38",
+      "quote": "Inspection required\n\nConsignments due at the BCP\n\n6\n\nView requirements",
+      "confidence": "verbatim",
+      "note": "/inspection exists and lists 4 notifications (claim p15-083), but nothing in the traces links to it."
     },
     {
       "id": "trace-prototype-dr2-1-p15-020",
-      "statement": "The template page shows the date the template was created as 'Date created: <d Month yyyy>'; the seeded Arena Aintree reads 'Date created: 15 April 2026'.",
-      "kind": "data",
-      "ref": "trace T3 action 12, 20",
-      "quote": "Date created: 15 April 2026",
-      "confidence": "verbatim"
+      "statement": "The overall dashboard is built from custom classes outside GOV.UK Frontend (app-overall-dashboard-section with --muted and --plants modifiers, app-dr2-dashboard-glance-card with an --action modifier and a blue count); a GOV.UK summary card or a plain grid of headings and links could carry the same content.",
+      "kind": "constraint",
+      "ref": "trace dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one action 30 (class list)",
+      "quote": "app-dr2-dashboard-glance-card app-dr2-dashboard-glance-card--action app-dr2-dashboard-glance-card__count app-dr2-dashboard-glance-card__count--blue ... app-overall-dashboard-section--muted app-overall-dashboard-section--plants",
+      "confidence": "verbatim",
+      "note": "The Germinal products section carries --muted and the plants section --plants."
     },
     {
       "id": "trace-prototype-dr2-1-p15-021",
-      "statement": "After a section of a template is changed, its Date created shows the date of the change (Arena Aintree moved from 15 April 2026 to 7 October 2026, the run date), so the label behaves as a last-updated date.",
+      "statement": "Requesting /design-release-2.1/dashboard redirects to the overall dashboard at the mount root.",
       "kind": "behaviour",
-      "ref": "trace T5 (a-saved-template-change-one-section-save-and-return-goes-back-to-the-template) action 26",
-      "quote": "Arena Aintree has been updated\n\nTemplates\n\nArena Aintree\n\nDate created: 7 October 2026",
-      "confidence": "inferred",
-      "note": "Inferred from the before (T3) and after (T5) values; may be a prototype quirk rather than intent. Recorded, not reconciled."
+      "ref": "trace dashboard--overall-dashboard-dashboard-redirects-to-the-overall-dashboard-or-to-live-animals-with-a-query request 1",
+      "quote": "GET 302 dashboard",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-022",
-      "statement": "The template page has a primary 'Use template' button linking to /templates/<slug>/use.",
-      "kind": "behaviour",
-      "ref": "trace T3 action 13, 20",
-      "quote": "A|govuk-button|Use template|/design-release-2.1/templates/arena-aintree/use",
+      "statement": "Requesting /design-release-2.1/dashboard with a query redirects to the live animals dashboard and keeps the query (?tab=drafts goes to /live-animals?tab=drafts).",
+      "kind": "rule",
+      "ref": "trace dashboard--overall-dashboard-dashboard-redirects-to-the-overall-dashboard-or-to-live-animals-with-a-query request 42",
+      "quote": "location: /design-release-2.1/live-animals?tab=drafts",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-023",
-      "statement": "The template page has a red warning 'Delete' button linking to /templates/<slug>/delete.",
+      "statement": "The live animals dashboard is titled 'Dashboard - Import notification service - GOV.UK', has the caption 'Dashboard', the H1 'Live animals', and a Back link to the overall dashboard (/design-release-2.1).",
       "kind": "behaviour",
-      "ref": "trace T3 action 14, 20",
-      "quote": "A|govuk-button govuk-button--warning|Delete|/design-release-2.1/templates/arena-aintree/delete",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 23",
+      "quote": "A|/design-release-2.1||govuk-back-link|Back\nH1||dashboard-page-heading|app-dr2-dashboard-intro__heading|Live animals",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-024",
-      "statement": "The template page's back link goes to Manage templates (/templates).",
+      "statement": "The live animals dashboard's 'Create new' button goes to /create-notification?category=live-animals, so creating from here carries the category.",
       "kind": "behaviour",
-      "ref": "trace T3 action 17, 20",
-      "quote": "<a href=\"/design-release-2.1/templates\" class=\"govuk-back-link\">Back</a>",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 12",
+      "quote": "A|/design-release-2.1/create-notification?category=live-animals||govuk-button|Create new",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-025",
-      "statement": "The template page lists the template's answers in five numbered sections: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Consignment addresses' and '5. Contact address'; there is no documents section.",
-      "kind": "copy",
-      "ref": "trace T3 action 16, 20",
-      "quote": "1. About the consignment ... 2. Description of the goods ... 3. Transport and arrival ... 4. Consignment addresses ... 5. Contact address",
-      "confidence": "verbatim"
+      "statement": "The category dashboards' secondary 'Use template' button goes to /templates with no category.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 23; trace dashboard--category-dashboards-germinal-products-quantity-in-units-or-pieces-and-amend-examples-that-open-in-amend action 16",
+      "quote": "A|/design-release-2.1/templates||govuk-button govuk-button--secondary|Use template",
+      "confidence": "verbatim",
+      "note": "No test drives it; seen on both the live animals and germinal products dashboards."
     },
     {
       "id": "trace-prototype-dr2-1-p15-026",
-      "statement": "Section 1 of the template page has three cards: 'Origin of import' (Country of origin, Region of origin code, Internal reference number), 'What are you importing?' (Commodity code, Common name, Species) and 'Main import reason' (Main import reason, Purpose in the market).",
-      "kind": "data",
-      "ref": "trace T3 action 20",
-      "quote": "Origin of import\nChange\nCountry of origin\nRepublic of Ireland\nRegion of origin code\nROI-092032\nInternal reference number\nNot applicable\nWhat are you importing?\nChange\nCommodity code\n0101\nCommon name\nHorse\nSpecies\nEquus Cabalus\nMain import reason\nChange\nMain import reason\nInternal market\nPurpose in the market\nRacing, competition, show or training",
+      "statement": "The category dashboard has a 'Summary' H2 with two glance cards, 'Action needed' ('Tasks requiring your attention', 'View tasks') and 'Status updated' ('Changes in the past 24 hours', 'View updates').",
+      "kind": "copy",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards actions 13-17",
+      "quote": "Summary\nAction needed\n\nTasks requiring your attention\n\n1\n\nView tasks\nStatus updated\n\nChanges in the past 24 hours\n\n2\n\nView updates",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-027",
-      "statement": "Section 2 of the template page has a card per commodity headed '<common name> (<code>)' with the species, 'Number of animals' and 'Number of packages (when required)', an identification details table (Animal, Microchip, Passport, Horse name for horses) and an 'Additional details' card with 'Certified for'.",
+      "statement": "The live animals dashboard shows 1 action needed and 2 status updated, and its cards link to /actions?category=live-animals and /changes?category=live-animals.",
       "kind": "data",
-      "ref": "trace T3 action 20",
-      "quote": "Horse (0101)\nChange\nEquus Cabalus\nNumber of animals\n2\nChange\nNumber of packages (when required)\n0\nIdentification details\nAnimal\nMicrochip\nPassport\nHorse name\nChange\nEquus cabalus 1\n123456789\n123456789\nI Am Maximus\nEquus cabalus 2\n123456789\n123456789\nJohnnywho\nAdditional details\nChange\nCertified for\nRegistered equine animal",
-      "confidence": "verbatim"
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 23",
+      "quote": "A|/design-release-2.1/actions?category=live-animals||govuk-link app-dr2-dashboard-glance-card__link|View tasks ... A|/design-release-2.1/changes?category=live-animals||govuk-link app-dr2-dashboard-glance-card__link|View updates",
+      "confidence": "verbatim",
+      "note": "The overall dashboard shows 4 and 8 for the same category (claim p15-017)."
     },
     {
       "id": "trace-prototype-dr2-1-p15-028",
-      "statement": "Section 3 of the template page has an 'Arrival details' card (Port of entry, Means of transport to the port of entry, Transport identification, Transport document reference) and a 'Transport details' card (Name, Address, Country, Approval number, Type); no arrival date or time is held in the template.",
+      "statement": "Below the summary, a 'Notifications' H2 heads a search form: a text field labelled 'Search by' (name search) with the hint 'Keyword, notification number, commodity, consignee or consignor', and a search button with the accessible name 'Search' shown as an icon.",
       "kind": "data",
-      "ref": "trace T3 action 20",
-      "quote": "Arrival details\nChange\nPort of entry\nLiverpool - GBLIV\nMeans of transport to the port of entry\nSea\nTransport identification\nAB12 CDE\nTransport document reference\nN/A\nTransport details\nChange\nName\nDylan O’Malley Livestock Transport ... Country\nRepublic of Ireland\nApproval number\nIE/GALWAY/T1/00092015\nType\nCommercial",
-      "confidence": "verbatim",
-      "note": "The absence of an arrival date row is read from the rendered card; the hub for a template also shows Arrival details Complete without a date."
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 50",
+      "quote": "LABEL|dashboard-search|govuk-label app-dr2-dashboard-search__label||Search by\nDIV||govuk-hint||Keyword, notification number, commodity, consignee or consignor\nBUTTON||app-dr2-dashboard-search__button|Search|",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-029",
-      "statement": "Section 4 of the template page has an 'Addresses' card listing Place of origin, Consignor, Consignee, Importer and Place of destination, each as a full multi-line address.",
+      "statement": "The search form has a 'Sort by:' select (name sort) with the options 'Select one' (blank, the default), 'Newest first' (newest), 'Oldest first' (oldest) and 'Arrival date' (arrival-date).",
       "kind": "data",
-      "ref": "trace T3 action 20",
-      "quote": "4. Consignment addresses\nAddresses\nChange\nPlace of origin\n\nValea Mare Farm\n\nStr. Câmpului nr. 18 ... Consignor ... Consignee ... Importer ... Place of destination",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards actions 20, 50",
+      "quote": "sort :: =Select one* | newest=Newest first | oldest=Oldest first | arrival-date=Arrival date",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-030",
-      "statement": "Section 5 of the template page has a 'Contact address' card with the contact address for the consignment.",
-      "kind": "data",
-      "ref": "trace T3 action 20",
-      "quote": "5. Contact address\nContact address\nChange\nContact address\n\nValea Mare Farm",
-      "confidence": "verbatim"
+      "statement": "The search, sort and filters on a category dashboard are one form that submits as a GET to the same category list (/design-release-2.1/live-animals), with every field in the query.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards request 247",
+      "quote": "GET http://localhost:3010/design-release-2.1/live-animals?search=Horses&sort=oldest&startDate=&endDate=&status=&needsAction=_unchecked",
+      "confidence": "verbatim",
+      "note": "needsAction=_unchecked is the prototype kit's hidden value for an unticked checkbox."
     },
     {
       "id": "trace-prototype-dr2-1-p15-031",
-      "statement": "Every card on the template page has its own 'Change' link to /templates/<slug>/change/<question page>: origin-of-the-import, what-are-you-importing, reason-for-import, consignment-details (card header and the number-of-animals row), animal-identification-details, additional-animal-details, arrival-details, transporter, roles-and-addresses and contact-address-for-consignment.",
+      "statement": "After a search, the page keeps the search term in 'Search by' and the chosen sort selected.",
       "kind": "behaviour",
-      "ref": "trace T3 action 15, 20 (LINKS)",
-      "quote": "A|app-dr2-review-card__header-link|Change|/design-release-2.1/templates/arena-aintree/change/origin-of-the-import ... /change/what-are-you-importing ... /change/reason-for-import ... /change/consignment-details ... A|app-dr2-review-row__change-link|Change|/design-release-2.1/templates/arena-aintree/change/consignment-details ... /change/animal-identification-details ... /change/additional-animal-details ... /change/arrival-details ... /change/transporter ... /change/roles-and-addresses ... /change/contact-address-for-consignment",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 115",
+      "quote": "Horses | sort=oldest | tabs=3",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-032",
-      "statement": "The template page and the template review use custom app-dr2-review-card / app-dr2-review-row blocks for the answer cards and their Change links rather than the GOV.UK summary card.",
-      "kind": "constraint",
-      "ref": "trace T3 action 20 (LINKS classes); trace T9 action 68",
-      "quote": "A|app-dr2-review-card__header-link|Change| ... A|app-dr2-review-row__change-link|Change|",
-      "confidence": "inferred",
-      "note": "Read from the link classes only; the full card markup was not dumped."
+      "statement": "Searching 'Horses' sorted 'Oldest first' leaves the Submitted tab showing the same two cards in the same order, including the Goats and Sheep notification, and keeps the tabs; the search and sort did not narrow or reorder the list in the trace.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 115",
+      "quote": "Submitted notifications\n\nNotifications you have submitted. You can still change them and add documents.\n\nGBN-AG-26-7K8M2P\nView\n\nITAHC is missing\n\nCommodity\nGoats and Sheep",
+      "confidence": "verbatim",
+      "note": "The test asserts only the URL and the kept value. Whether search should filter is not shown by the prototype."
     },
     {
       "id": "trace-prototype-dr2-1-p15-033",
-      "statement": "A template's Change link redirects (302) from /templates/<slug>/change/<page> to the question page with ?from=template-review, e.g. /origin-of-the-import?from=template-review.",
+      "statement": "An 'Additional filters' disclosure (a details element with a chevron) sits under the search, closed by default, and opens a filter panel.",
       "kind": "behaviour",
-      "ref": "trace T5 request 40-41",
-      "quote": "GET /design-release-2.1/templates/arena-aintree/change/origin-of-the-import 302 Found location: /design-release-2.1/origin-of-the-import?from=template-review",
-      "confidence": "verbatim"
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards actions 41-42",
+      "quote": "<details class=\"app-dr2-dashboard-filters\" open=\"\">\n          <summary class=\"app-dr2-dashboard-filters__summary\">\n            <span class=\"app-dr2-dashboard-filters__summary-text\">Additional filters</span>",
+      "confidence": "verbatim",
+      "note": "Snapshot taken after the click, so open is set; the test clicks the summary to open it."
     },
     {
       "id": "trace-prototype-dr2-1-p15-034",
-      "statement": "A question page opened from a template's Change link shows a 'Template' caption with the template name above the section caption and question heading.",
-      "kind": "copy",
-      "ref": "trace T5 action 14 (t5-edit capture)",
-      "quote": "Template\nArena Aintree\n\nAbout the consignment\n\nOrigin of the import",
+      "statement": "The filter panel has a 'By arrival date' column of small radios (name dateRange): 'Today' (today), 'Tomorrow' (tomorrow) and 'Next 7 days' (next-seven-days).",
+      "kind": "data",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 50",
+      "quote": "By arrival date\n\n By arrival date \nToday\nTomorrow\nNext 7 days",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-035",
-      "statement": "When changing a template section, the question page's only submit button is 'Save and return' (name action, value continue) and there is a 'Cancel' link.",
-      "kind": "behaviour",
-      "ref": "trace T5 actions 10-11, 14",
-      "quote": "BUTTON|submit|action||continue|govuk-button|Save and return| ... A||||undefined|govuk-link|Cancel|/templates/arena-aintree",
+      "statement": "The filter panel has a 'By date range' column with the hint 'For example, 27/3/2026' and two text fields, 'Start date' (startDate) and 'End date' (endDate), each with a 'Choose date' calendar button.",
+      "kind": "data",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards actions 44-47",
+      "quote": "By date range\n\nFor example, 27/3/2026\n\nStart date\nChoose date\nEnd date\nChoose date",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-036",
-      "statement": "When changing a template section, the question page's back link returns to the template page (/templates/<slug>).",
-      "kind": "behaviour",
-      "ref": "trace T5 action 14",
-      "quote": "<a href=\"/design-release-2.1/templates/arena-aintree\" class=\"govuk-back-link\">Back</a>",
-      "confidence": "verbatim"
+      "statement": "The date range fields use the MOJ Frontend date picker, outside GOV.UK Frontend: a calendar dialog with 'Previous year', 'Previous month', 'Next month', 'Next year', 'Select' and 'Close' buttons.",
+      "kind": "constraint",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 50",
+      "quote": "BUTTON||moj-datepicker__toggle moj-js-datepicker-toggle||Choose date\nBUTTON||moj-datepicker__button moj-js-datepicker-prev-year||Previous year\nBUTTON||moj-datepicker__button moj-js-datepicker-prev-month||Previous month\nBUTTON||moj-datepicker__button moj-js-datepicker-next-month||Next month\nBUTTON||moj-datepicker__button moj-js-datepicker-next-year||Next year\nBUTTON||govuk-button moj-js-datepicker-ok||Select\nBUTTON||govuk-button govuk-button--secondary moj-js-datepicker-cancel||Close",
+      "confidence": "verbatim",
+      "note": "A GOV.UK date input would replace it without a calendar."
     },
     {
       "id": "trace-prototype-dr2-1-p15-037",
-      "statement": "The 'Cancel' link on a template's change page has the href '/templates/arena-aintree' without the /design-release-2.1 prefix, so it points outside the design release, unlike the back link.",
-      "kind": "behaviour",
-      "ref": "trace T5 action 14",
-      "quote": "A||||undefined|govuk-link|Cancel|/templates/arena-aintree",
-      "confidence": "verbatim",
-      "note": "Looks like a prototype defect; no trace clicks Cancel, so where it lands is not shown."
+      "statement": "The filter panel has a 'Status' select (name status) with 'All statuses' (blank, the default), 'Draft', 'Amend', 'Submitted' and 'Past'.",
+      "kind": "data",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 48",
+      "quote": "status :: =All statuses* | draft=Draft | amend=Amend | submitted=Submitted | past=Past",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-038",
-      "statement": "When changing a template section, the origin page is prefilled with the template's answers (country Republic of Ireland, region of origin Yes with code suffix 092032 after a fixed 'IE' prefix).",
+      "statement": "The filter panel has a 'Needs action' fieldset (legend visually hidden) with one small checkbox, 'Only show notifications that need action' (needsAction, value 1), unticked by default.",
       "kind": "data",
-      "ref": "trace T5 action 14 (CONTROLS)",
-      "quote": "INPUT|hidden|countryOfOrigin||Republic of Ireland|app-country-search__value|| ... INPUT|text|regionOfOriginCodeSuffix|region-of-origin-code-suffix|092032|govuk-input app-region-origin-code__input||",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 49",
+      "quote": "LEGEND||govuk-fieldset__legend govuk-visually-hidden||Needs action\nLABEL|dashboard-filter-needs-action|govuk-label govuk-checkboxes__label||Only show notifications that need action",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-039",
-      "statement": "The seeded Arena Aintree region of origin code reads 'ROI-092032' on the template page but 'IE-092032' after the origin section is re-saved, because the form's code prefix is 'IE'.",
-      "kind": "data",
-      "ref": "trace T3 action 20; trace T5 actions 14 and 26",
-      "quote": "Region of origin code\nROI-092032 ... Region of origin code\nIE-092032",
-      "confidence": "inferred",
-      "note": "Inferred from before and after values; seed data and form prefix disagree."
+      "statement": "The filter panel ends with an 'Apply filters' button that submits the dashboard form.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--category-dashboards-live-animals-filters-needs-action-and-status-replace-the-tabs-with-filtered-results action 29",
+      "quote": "BUTTON||govuk-button govuk-!-margin-bottom-0||Apply filters",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-040",
-      "statement": "Saving a template section posts the question page's own form (POST /origin-of-the-import) and redirects to the template page /templates/<slug>.",
-      "kind": "behaviour",
-      "ref": "trace T5 request 80 (t5-req80)",
-      "quote": "POST http://localhost:3010/design-release-2.1/origin-of-the-import ... status: 302 Found ... location: /design-release-2.1/templates/arena-aintree",
+      "statement": "The search row and the filter panel are custom components (app-dr2-dashboard-search, app-dr2-dashboard-filters with date, range and selects columns) built around GOV.UK inputs, radios, select and checkboxes; the disclosure could be a GOV.UK Details component.",
+      "kind": "constraint",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 50 (class list)",
+      "quote": "app-dr2-dashboard-filters__column--date app-dr2-dashboard-filters__column--range app-dr2-dashboard-filters__column--selects ... app-dr2-dashboard-search__icon app-dr2-dashboard-search__input ... govuk-checkboxes--small ... govuk-radios--small govuk-select",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-041",
-      "statement": "After a template section is saved, the template page shows a success notification banner titled 'Success' with the heading '<template name> has been updated'.",
+      "statement": "The category dashboard shows three tabs: 'Submitted (2)', 'Draft and Amend (3)' and 'Past'; Past shows no count.",
       "kind": "copy",
-      "ref": "trace T5 actions 22, 26",
-      "quote": "<h2 class=\"govuk-notification-banner__title\" id=\"govuk-notification-banner-title\">Success</h2> ... <h3 class=\"govuk-notification-banner__heading\">Arena Aintree has been updated</h3>",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 21",
+      "quote": "Submitted (2)\nDraft and Amend (3)\nPast",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-042",
-      "statement": "After a template section is saved, the template page shows the new answer (Internal reference number AINTREE-2026).",
+      "statement": "The tabs are links that reload the page: Submitted is the category root, 'Draft and Amend' adds ?tab=drafts and 'Past' adds ?tab=completed; the selected tab carries aria-selected true.",
       "kind": "behaviour",
-      "ref": "trace T5 actions 18, 23, 26",
-      "quote": "Internal reference number\nAINTREE-2026",
-      "confidence": "verbatim"
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards actions 58-59, 82-83; requests 42, 83",
+      "quote": "<a class=\"govuk-tabs__tab\" href=\"/design-release-2.1/live-animals\" role=\"tab\" aria-selected=\"true\">\n                Submitted <strong>(2)</strong>\n              </a> ... href=\"/design-release-2.1/live-animals?tab=drafts\" ... href=\"/design-release-2.1/live-animals?tab=completed\"",
+      "confidence": "verbatim",
+      "note": "Styled with GOV.UK Tabs classes, but each tab is a server round trip, not a JavaScript panel switch."
     },
     {
       "id": "trace-prototype-dr2-1-p15-043",
-      "statement": "The success banners on templates pages (updated, saved, deleted) are GOV.UK success notification banners with role alert and a data-auto-dismiss-ms of 5000, so they dismiss themselves after five seconds.",
-      "kind": "behaviour",
-      "ref": "trace T5 action 26; trace T11 action 28",
-      "quote": "class=\"govuk-notification-banner govuk-notification-banner--success app-view-template-page__success-banner\" role=\"alert\" ... data-auto-dismiss-ms=\"5000\"",
-      "confidence": "verbatim",
-      "note": "Auto-dismiss of a role=alert banner is outside standard GOV.UK banner behaviour."
+      "statement": "The Submitted tab is headed 'Submitted notifications' with a description saying submitted notifications can still be changed and have documents added.",
+      "kind": "copy",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards actions 22-23",
+      "quote": "Submitted notifications\n\nNotifications you have submitted. You can still change them and add documents.",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-044",
-      "statement": "Only the origin section's Change link is followed; changing any other template section (commodity, reason, goods, identification, additional details, arrival, transporter, addresses, contact) is not shown.",
-      "kind": "behaviour",
-      "ref": "trace T5: only change/origin-of-the-import is visited",
-      "quote": "",
-      "confidence": "gap"
+      "statement": "The live animals Submitted tab lists two notifications, GBN-AG-26-7K8M2P and GBN-AG-26-7K8M2U, both with status Submitted.",
+      "kind": "data",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 24",
+      "quote": "GBN-AG-26-7K8M2P\nView\n\nITAHC is missing\n\nCommodity\nGoats and Sheep\nArrival date\n2 December 2026\nConsignee\nGlen Keen Farm\nNotification status\nSubmitted\nNumber of animals\n12\nOrigin\nRepublic of Ireland\nConsignor\nMonk Park Farm\nGBN-AG-26-7K8M2U\nView\nCommodity\nHorses\nArrival date\n6 December 2026\nConsignee\nWestbridge Equine Imports\nNotification status\nSubmitted\nNumber of animals\n4\nOrigin\nRepublic of Ireland\nConsignor\nCurragh Sport Horses",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-045",
-      "statement": "No trace follows the Cancel link on a template change page, so its destination in use is not shown.",
+      "statement": "Each notification is a card (an article labelled 'Notification <reference>') with the reference as an H3 and a single 'View' link in its header.",
       "kind": "behaviour",
-      "ref": "trace T5",
-      "quote": "",
-      "confidence": "gap"
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards actions 26-29",
+      "quote": "<article class=\"app-dr2-dashboard-notification-card app-dr2-dashboard-notification-card--error\" aria-label=\"Notification GBN-AG-26-7K8M2P\"> ... <h3 class=\"app-dr2-dashboard-notification-card__reference\">GBN-AG-26-7K8M2P</h3> ... >View</a>",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-046",
-      "statement": "A POST to a template page (/templates/<slug>) does nothing but redirect (302) back to the same template page.",
-      "kind": "rule",
-      "ref": "trace T6 (a-saved-template-posting-to-a-template-page-just-reloads-it-and-an-unknown-template-returns-to-the-list) action 8-10, request 40",
-      "quote": "POST 302 arena-aintree; expect(response.headers().location).toBe(url('/templates/arena-aintree'))",
+      "statement": "A live animals notification card shows seven fields in two rows: Commodity, Arrival date, Consignee, Notification status, then Number of animals, Origin, Consignor.",
+      "kind": "data",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 26",
+      "quote": "Commodity ... Arrival date ... Consignee ... Notification status ... Number of animals ... Origin ... Consignor",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-047",
-      "statement": "Opening a template slug that does not exist (/templates/no-such-template) redirects to Manage templates.",
+      "statement": "A card's arrival date shows as day, full month name and year, such as '2 December 2026'.",
       "kind": "rule",
-      "ref": "trace T6 action 11-12, requests 41-42",
-      "quote": "GET 302 no-such-template ... GET 200 templates",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 23",
+      "quote": "Arrival date\n2 December 2026",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-048",
-      "statement": "Use template (/templates/<slug>/use) redirects (302) to the notification hub and starts a new draft notification prefilled from the template.",
-      "kind": "behaviour",
-      "ref": "trace T4 (a-saved-template-use-starts-a-new-draft-notification-from-the-template) action 7-8, requests 1-2",
-      "quote": "GET 302 use ... GET 200 notification-hub",
-      "confidence": "verbatim"
+      "statement": "A notification with an outstanding problem shows its card in an error style with a side marker and a message under the header, such as 'ITAHC is missing'.",
+      "kind": "rule",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 25",
+      "quote": "<span class=\"app-dr2-dashboard-notification-card__error-marker\" aria-hidden=\"true\"></span> ... <p class=\"app-dr2-dashboard-notification-card__error-message\">ITAHC is missing</p>",
+      "confidence": "verbatim",
+      "note": "The marker is aria-hidden; only the message text is announced."
     },
     {
       "id": "trace-prototype-dr2-1-p15-049",
-      "statement": "A notification started from a template shows 'Draft' and a new GBN-AG reference (e.g. GBN-AG-26-060KW4) at the top of the hub, with the heading 'Notification tasklist'.",
-      "kind": "copy",
-      "ref": "trace T4 actions 9-10, 14",
-      "quote": "Draft\nGBN-AG-26-060KW4\nOverview ... Notification tasklist",
+      "statement": "A submitted, draft or past card's View link goes to /review-notification?reference=<reference>.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards actions 29, 66, 89",
+      "quote": "A|/design-release-2.1/review-notification?reference=GBN-AG-26-7K8M2P||govuk-link app-dr2-dashboard-notification-card__action-link|View",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-050",
-      "statement": "A notification started from the Arena Aintree template carries over its answers: the hub shows 2 commodities and every task Complete except 'Arrival details' and 'Upload documents', which are 'To do'.",
-      "kind": "behaviour",
-      "ref": "trace T4 action 14",
-      "quote": "Your commodities\n\n2 ... Arrival details\nTo do\nTransport details\nComplete\n4. Documents\nUpload documents\nTo do",
+      "statement": "The status Submitted shows as a default (blue) GOV.UK tag on the category dashboard cards.",
+      "kind": "rule",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 50",
+      "quote": "<strong class=\"govuk-tag\">\n  Submitted\n</strong>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-051",
-      "statement": "A notification started from a template uses the normal six-section notification task list, including '4. Documents' and '5. Consignment parties', and ends with 'Review and submit' and 'Return to dashboard'.",
-      "kind": "behaviour",
-      "ref": "trace T4 action 14",
-      "quote": "4. Documents\nUpload documents\nTo do\n5. Consignment parties ... 6. Contact address ... Review and submit\nReturn to dashboard",
+      "statement": "The notification card is a custom component (app-dr2-dashboard-notification-card with an --error modifier) laid out as a description list; a GOV.UK summary card with a summary list could replace it.",
+      "kind": "constraint",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 50 (class list)",
+      "quote": "app-dr2-dashboard-notification-card app-dr2-dashboard-notification-card--error app-dr2-dashboard-notification-card__action-link ... app-dr2-dashboard-notification-card__error-marker app-dr2-dashboard-notification-card__error-message",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-052",
-      "statement": "The overview of a notification started from the Arena Aintree template shows the figures 2 and 0 under 'Your commodities' against the tiles 'Animals' (Total number of animals in this consignment) and 'Packages/boxes' (Total number of packages in this consignment); the template holds 2 animals and 0 packages.",
-      "kind": "data",
-      "ref": "trace T4 action 14",
-      "quote": "Animals\n\nTotal number of animals in this consignment\n\n0\n\nPackages/boxes\n\nTotal number of packages in this consignment",
-      "confidence": "inferred",
-      "note": "The innerText layout makes it ambiguous whether 0 belongs to Animals or Packages/boxes; recorded as seen."
+      "statement": "The 'Draft and Amend' tab is headed 'Draft notifications' with a description that it holds notifications started but not submitted and notifications being amended.",
+      "kind": "copy",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards actions 60-61",
+      "quote": "Draft notifications\n\nNotifications you have started but not submitted, and notifications that are being amended.",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-053",
-      "statement": "Nothing on the hub of a notification started from a template says which template it came from.",
-      "kind": "copy",
-      "ref": "trace T4 action 14",
-      "quote": "Draft\nGBN-AG-26-060KW4\nOverview",
-      "confidence": "inferred",
-      "note": "Read from the absence of the template name in main text."
+      "statement": "The live animals Draft and Amend tab lists GBN-AG-26-7K8M2S (Draft, Cattle, 11 December 2026) and GBN-AG-26-7K8M3F (Amend, Cattle, 5 December 2026) and GBN-AG-26-7K8M3G (Amend, Goats and Sheep, 14 December 2026).",
+      "kind": "data",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 62",
+      "quote": "GBN-AG-26-7K8M2S\nView\nCommodity\nCattle\nArrival date\n11 December 2026\nConsignee\nNorth Moor Farm\nNotification status\nDraft\nNumber of animals\n18\nOrigin\nBelgium\nConsignor\nFlanders Livestock Export\nGBN-AG-26-7K8M3F\nView\nCommodity\nCattle\nArrival date\n5 December 2026\nConsignee\nNorthern Livestock Imports Ltd\nNotification status\nAmend\nNumber of animals\n5\nOrigin\nNetherlands\nConsignor\nNordic Livestock Export AB\nGBN-AG-26-7K8M3G\nView\nCommodity\nGoats and Sheep\nArrival date\n14 December 2026\nConsignee\nNorthern Livestock Imports Ltd\nNotification status\nAmend\nNumber of animals\n3\nOrigin\nFrance\nConsignor\nNordic Livestock Export AB",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-054",
-      "statement": "Edit (/templates/<slug>/edit) opens the template on the notification hub, showing a 'Template' tag and the template name in place of a draft reference.",
-      "kind": "behaviour",
-      "ref": "trace T7 (a-saved-template-edit-opens-the-template-on-its-own-task-list) actions 7-9, 17",
-      "quote": "TAGS: govuk-tag app-dr2-review-status__tag app-dr2-review-status__tag--template:Template ... Template\nArena Aintree\nOverview",
-      "confidence": "verbatim"
+      "statement": "The status Draft shows as a tag with a custom draft style (app-dr2-dashboard-status-tag--draft), and Amend as a yellow GOV.UK tag.",
+      "kind": "rule",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 62",
+      "quote": "govuk-tag app-dr2-dashboard-status-tag app-dr2-dashboard-status-tag--draft :: Draft\ngovuk-tag govuk-tag--yellow :: Amend",
+      "confidence": "verbatim",
+      "note": "The draft tag is a custom modifier where a GOV.UK colour modifier such as govuk-tag--grey could serve."
     },
     {
       "id": "trace-prototype-dr2-1-p15-055",
-      "statement": "No link or button to /templates/<slug>/edit appears on the template page or Manage templates in any trace; the edit route is reached only by URL.",
-      "kind": "behaviour",
-      "ref": "trace T3 action 20 (LINKS); trace T1 action 24; trace T7 action 7",
-      "quote": "Navigate to \"/design-release-2.1/templates/arena-aintree/edit\"",
-      "confidence": "inferred"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-056",
-      "statement": "A template's hub is headed 'Template tasklist' (instead of 'Notification tasklist') and keeps the 'Overview' H1 and the 'Your commodities' summary.",
-      "kind": "copy",
-      "ref": "trace T7 actions 10, 17",
-      "quote": "H: H1:Overview | H2:Your commodities | H2:Template tasklist",
+      "statement": "A card for a notification being amended links its View to /notifications/amend?reference=<reference>&resume=1 instead of the review page.",
+      "kind": "rule",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards actions 70, 74",
+      "quote": "Notification GBN-AG-26-7K8M3F -> /design-release-2.1/notifications/amend?reference=GBN-AG-26-7K8M3F&resume=1 View",
       "confidence": "verbatim"
     },
     {
+      "id": "trace-prototype-dr2-1-p15-056",
+      "statement": "Following an amend card's View link redirects to /review-notification, which shows the notification in Amend: an 'Amend' tag, the reference and a 'Cancel amend' button above the H1 'Review your notification'.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 100; requests 165-166",
+      "quote": "<div class=\"app-dr2-notification-status app-dr2-notification-status--amend\">\n  <strong class=\"govuk-tag app-dr2-review-status__tag app-dr2-review-status__tag--amend\">Amend</strong>\n  <span class=\"app-dr2-notification-status__reference\">GBN-AG-26-7K8M3F</span>",
+      "confidence": "verbatim",
+      "note": "GET amend?reference=GBN-AG-26-7K8M3F&resume=1 returns 302 to review-notification. The review page's content belongs to the manage notifications part."
+    },
+    {
       "id": "trace-prototype-dr2-1-p15-057",
-      "statement": "A template's task list has five sections with no Documents section: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Consignment parties' and '5. Contact address'.",
+      "statement": "The 'Past' tab is headed 'Past notifications' and says notifications move there 2 weeks after the commodity arrival date.",
       "kind": "rule",
-      "ref": "trace T7 actions 11-12, 17",
-      "quote": "H3:1. About the consignment | H3:2. Description of the goods | H3:3. Transport and arrival | H3:4. Consignment parties | H3:5. Contact address",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards actions 84-85",
+      "quote": "Past notifications\n\nNotifications that have been processed. They move here 2 weeks after the commodity arrival date.",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-058",
-      "statement": "A template's task list has no 'Upload documents' task.",
-      "kind": "rule",
-      "ref": "trace T7 action 12",
-      "quote": "locator('main').getByRole('link', { name: 'Upload documents' }) toHaveCount 0",
-      "confidence": "verbatim"
+      "statement": "The live animals Past tab lists six notifications, newest arrival first: GBN-AG-26-7K8M2W (Pigs, 9 November 2026), 7K8M2X (Cattle, 5 November), 7K8M2Z (Horses, 25 October), 7K8M3A (Goats and Sheep, 18 October), 7K8M3C (Camelids, 1 October) and 7K8M3E (Poultry, 10 September), each with status Past.",
+      "kind": "data",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 86",
+      "quote": "GBN-AG-26-7K8M2W ... Pigs\nArrival date\n9 November 2026 ... GBN-AG-26-7K8M2X ... Cattle\nArrival date\n5 November 2026 ... GBN-AG-26-7K8M2Z ... Horses\nArrival date\n25 October 2026 ... GBN-AG-26-7K8M3A ... Goats and Sheep\nArrival date\n18 October 2026 ... GBN-AG-26-7K8M3C ... Camelids\nArrival date\n1 October 2026 ... GBN-AG-26-7K8M3E ... Poultry\nArrival date\n10 September 2026",
+      "confidence": "verbatim",
+      "note": "Order inferred as newest arrival first from the dates shown; no sort was chosen."
     },
     {
       "id": "trace-prototype-dr2-1-p15-059",
-      "statement": "The template task list's tasks are: Where is this consignment coming from?, What are you importing?, Main import reason, Commodity details, Identification details, Additional details, Arrival details, Transport details, Roles and addresses (hint 'Consignor or Exporter, Consignee, Importer and Place of Destination') and Contact address for this consignment, each linking to its question page with ?from=hub.",
-      "kind": "data",
-      "ref": "trace T7 action 17 (LINKS)",
-      "quote": "Where is this consignment coming from?|/design-release-2.1/origin-of-the-import?from=hub ... Roles and addresses\n\nConsignor or Exporter, Consignee, Importer and Place of Destination ... Contact address for this consignment|/design-release-2.1/contact-address-for-consignment?from=hub",
+      "statement": "The status Past shows as a green GOV.UK tag.",
+      "kind": "rule",
+      "ref": "trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards action 86",
+      "quote": "govuk-tag govuk-tag--green :: Past",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-060",
-      "statement": "Each task on a template's task list shows a status tag, green 'Complete' or 'To do'; for the seeded Arena Aintree every task, Arrival details included, is Complete.",
-      "kind": "behaviour",
-      "ref": "trace T7 action 17 (TAGS); trace T9 action 52",
-      "quote": "govuk-tag govuk-tag--green app-notification-hub-tasklist__tag:Complete ... Arrival details\nComplete",
+      "statement": "Opening /live-animals?needsAction=1 ticks 'Only show notifications that need action' and replaces the tabs with a 'Filtered results' H3.",
+      "kind": "rule",
+      "ref": "trace dashboard--category-dashboards-live-animals-filters-needs-action-and-status-replace-the-tabs-with-filtered-results actions 10-12",
+      "quote": "true | status= ... H3:Filtered results",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-061",
-      "statement": "A template's task list ends with a primary 'Review template' button to /review-notification and a secondary 'Return to manage templates' button to /templates, in place of Review and submit and Return to dashboard.",
-      "kind": "behaviour",
-      "ref": "trace T7 actions 13-14, 17",
-      "quote": "A|govuk-button|Review template|/design-release-2.1/review-notification\nA|govuk-button govuk-button--secondary|Return to manage templates|/design-release-2.1/templates",
+      "statement": "When filters are applied, the tabs are not shown at all.",
+      "kind": "rule",
+      "ref": "trace dashboard--category-dashboards-live-animals-filters-needs-action-and-status-replace-the-tabs-with-filtered-results actions 11, 32",
+      "quote": "amend | tabs=0",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-062",
-      "statement": "Create new template (/templates/create?new=1) starts a fresh template and redirects (302) to the notification type question.",
-      "kind": "behaviour",
-      "ref": "trace T11 request 1; trace T9 actions 9-10",
-      "quote": "GET http://localhost:3010/design-release-2.1/templates/create?new=1 ... status: 302 Found ... location: /design-release-2.1/notification-type",
+      "statement": "The filtered results show a live status line with the match count and a 'Clear filters' link: singular for one match ('1 notification matches your filters.').",
+      "kind": "copy",
+      "ref": "trace dashboard--category-dashboards-live-animals-filters-needs-action-and-status-replace-the-tabs-with-filtered-results action 13",
+      "quote": "<p class=\"govuk-body govuk-!-margin-bottom-4\" role=\"status\">\n          \n            1 notification matches your filters.\n          \n          <a class=\"govuk-link\" href=\"/design-release-2.1/live-animals\">Clear filters</a>\n        </p>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-063",
-      "statement": "In a new template, the notification type page asks 'What are you importing?' under the caption 'About the consignment', with the radios Live animals, Germinal products (semen, ova, embryos), Plants for planting, Potatoes (seed and ware) and Wood products, and a 'Continue' button.",
-      "kind": "data",
-      "ref": "trace T9 action 11 (t9-type)",
-      "quote": "About the consignment\nWhat are you importing?\nLive animals\nGerminal products (semen, ova, embryos)\nPlants for planting\nPotatoes (seed and ware)\nWood products\nContinue",
+      "statement": "The match count is plural for more than one match ('2 notifications match your filters.').",
+      "kind": "copy",
+      "ref": "trace dashboard--category-dashboards-live-animals-filters-needs-action-and-status-replace-the-tabs-with-filtered-results action 31",
+      "quote": "2 notifications match your filters. Clear filters",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-064",
-      "statement": "The notification type radios (name notificationType) have the values live-animals, germinal-products, plants-for-planting, potatoes and wood-products, none preselected.",
-      "kind": "data",
-      "ref": "trace T9 action 11 (CONTROLS)",
-      "quote": "INPUT|radio|notificationType|notificationType|live-animals|false ... germinal-products|false ... plants-for-planting|false ... potatoes|false ... wood-products|false",
-      "confidence": "verbatim"
+      "statement": "The needs action filter on live animals returns only GBN-AG-26-7K8M2P, the submitted Goats and Sheep notification with 'ITAHC is missing', across all tabs.",
+      "kind": "rule",
+      "ref": "trace dashboard--category-dashboards-live-animals-filters-needs-action-and-status-replace-the-tabs-with-filtered-results action 14",
+      "quote": "Filtered results\n\n1 notification matches your filters. Clear filters\n\nGBN-AG-26-7K8M2P\nView\n\nITAHC is missing",
+      "confidence": "verbatim",
+      "note": "Its status shows 'Submitted' here, while the action needed drill-down shows the same notification as 'Action required' (claim p15-075)."
     },
     {
       "id": "trace-prototype-dr2-1-p15-065",
-      "statement": "In a new template, the notification type page's back link goes to Manage templates, and the page shows no 'Template' caption yet.",
-      "kind": "behaviour",
-      "ref": "trace T9 action 11",
-      "quote": "BACK: <a href=\"/design-release-2.1/templates\" class=\"govuk-back-link\">Back</a> ... =====\nAbout the consignment\nWhat are you importing?",
+      "statement": "Choosing Status 'Amend' and 'Apply filters' reloads with status=amend and lists only GBN-AG-26-7K8M3F and GBN-AG-26-7K8M3G, whose View links still open them in amend.",
+      "kind": "rule",
+      "ref": "trace dashboard--category-dashboards-live-animals-filters-needs-action-and-status-replace-the-tabs-with-filtered-results actions 28-32; request 83",
+      "quote": "amend | tabs=0 | /design-release-2.1/notifications/amend?reference=GBN-AG-26-7K8M3F&resume=1 ; /design-release-2.1/notifications/amend?reference=GBN-AG-26-7K8M3G&resume=1",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-066",
-      "statement": "Only Live animals is chosen as a template's type in any trace; what a template of another type (germinal products, plants, potatoes, wood) asks is not shown.",
+      "statement": "After filters are applied, the chosen status stays selected and the filter panel stays open showing every filter.",
       "kind": "behaviour",
-      "ref": "traces T9, T10, T11 action Check input[value=live-animals]",
-      "quote": "",
-      "confidence": "gap"
+      "ref": "trace dashboard--category-dashboards-live-animals-filters-needs-action-and-status-replace-the-tabs-with-filtered-results action 32",
+      "quote": "Additional filters\n\nBy arrival date ... Status\nAll statuses\nDraft\nAmend\nSubmitted\nPast\n Needs action \nOnly show notifications that need action\nApply filters\nFiltered results",
+      "confidence": "inferred",
+      "note": "Inferred from the panel's text being rendered (innerText) in the snapshot after Apply filters, where on an unfiltered load it is hidden; the test did not click the summary in that step."
     },
     {
       "id": "trace-prototype-dr2-1-p15-067",
-      "statement": "No trace submits the notification type page without a choice, so its error message in template mode is not shown.",
-      "kind": "rule",
-      "ref": "traces T9, T10, T11",
-      "quote": "",
-      "confidence": "gap"
+      "statement": "'Clear filters' goes back to the category root (/live-animals) with no query, and the three tabs return.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--category-dashboards-live-animals-filters-needs-action-and-status-replace-the-tabs-with-filtered-results actions 40-42; request 124",
+      "quote": "<a class=\"govuk-link\" href=\"/design-release-2.1/live-animals\">Clear filters</a>",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-068",
-      "statement": "After the notification type, a new template goes to the template name page at /templates/create, titled 'Enter template name - Import notification service - GOV.UK'.",
+      "statement": "The germinal products dashboard has the H1 'Germinal products', a Back link to the overall dashboard, and a 'Create new' button to /create-notification?category=germinal-products.",
       "kind": "behaviour",
-      "ref": "trace T9 actions 15-16; trace T11 requests 41-42",
-      "quote": "Enter template name - Import notification service - GOV.UK",
+      "ref": "trace dashboard--category-dashboards-germinal-products-quantity-in-units-or-pieces-and-amend-examples-that-open-in-amend actions 8-9, 16",
+      "quote": "/design-release-2.1\n=====\nDashboard\n\nGerminal products\nCreate new ... /design-release-2.1/create-notification?category=germinal-products Create new",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-069",
-      "statement": "The template name page has the caption 'Create a new template' and the H1 'Enter template name'.",
-      "kind": "copy",
-      "ref": "trace T9 action 23 (t9-name)",
-      "quote": "<span class=\"govuk-caption-l\">Create a new template</span> <h1 class=\"govuk-heading-l\" id=\"template-name-heading\">Enter template name</h1>",
-      "confidence": "verbatim"
+      "statement": "The germinal products dashboard has the same summary, search, filters and tabs as live animals, with 1 action needed and 1 status updated, glance links scoped to category=germinal-products, and tabs at /germinal-products, ?tab=drafts and ?tab=completed.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--category-dashboards-germinal-products-quantity-in-units-or-pieces-and-amend-examples-that-open-in-amend action 16",
+      "quote": "/design-release-2.1/actions?category=germinal-products View tasks\n/design-release-2.1/changes?category=germinal-products View updates\n/design-release-2.1/germinal-products Submitted (2)\n/design-release-2.1/germinal-products?tab=drafts Draft and Amend (3)\n/design-release-2.1/germinal-products?tab=completed Past",
+      "confidence": "verbatim",
+      "note": "The overall dashboard shows 2 action needed for germinal products (claim p15-017). No test drives the germinal filters."
     },
     {
       "id": "trace-prototype-dr2-1-p15-070",
-      "statement": "The template name page has one text input (name templateName) labelled by the H1, with a visually hidden label 'Enter template name' and no hint.",
-      "kind": "data",
-      "ref": "trace T9 action 23",
-      "quote": "<label class=\"govuk-label govuk-visually-hidden\" for=\"template-name\">Enter template name</label> <input class=\"govuk-input\" id=\"template-name\" name=\"templateName\" type=\"text\" value=\"\" aria-labelledby=\"template-name-heading\">",
+      "statement": "On germinal products cards, the quantity field is labelled 'Quantity (unit/pieces)' in place of 'Number of animals', and the commodity reads species then product, such as 'Cattle, Semen'.",
+      "kind": "rule",
+      "ref": "trace dashboard--category-dashboards-germinal-products-quantity-in-units-or-pieces-and-amend-examples-that-open-in-amend actions 12, 16",
+      "quote": "Commodity\nCattle, Semen\nArrival date\n30 November 2026\nConsignee\nBriarwood Genetics Ltd\nNotification status\nSubmitted\nQuantity (unit/pieces)\n10",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-071",
-      "statement": "The template name form posts to /templates/create with novalidate, and the name is optional: submitting it empty is accepted and moves on to the origin of the import.",
-      "kind": "rule",
-      "ref": "trace T9 action 23; trace T10 actions 11-13, requests 81-82",
-      "quote": "<form method=\"post\" action=\"/design-release-2.1/templates/create\" novalidate=\"\"> ... POST 302 create ... GET 200 origin-of-the-import",
-      "confidence": "verbatim"
+      "statement": "The germinal products tabs list: Submitted GBN-GP-26-7K8M2Q (Cattle, Semen) and GBN-GP-26-7K8M2V (Sheep, Semen, 'ITAHC is missing'); Draft and Amend GBN-GP-26-7K8M2T (Draft, Pig, Embryos/Ova), GBN-GP-26-7K8M3H (Amend, Cattle, Semen) and GBN-GP-26-7K8M3J (Amend, Horse, Embryos/Ova); Past GBN-GP-26-7K8M2R, 7K8M2Y, 7K8M3B and 7K8M3D.",
+      "kind": "data",
+      "ref": "trace dashboard--category-dashboards-germinal-products-quantity-in-units-or-pieces-and-amend-examples-that-open-in-amend actions 16, 39, 52",
+      "quote": "GBN-GP-26-7K8M2V\nView\n\nITAHC is missing\n\nCommodity\nSheep, Semen ... GBN-GP-26-7K8M2T ... Pig, Embryos/Ova ... GBN-GP-26-7K8M3H ... Cattle, Semen ... Amend ... GBN-GP-26-7K8M3J ... Horse, Embryos/Ova ... GBN-GP-26-7K8M2R ... Horse, Embryos/Ova\nArrival date\n12 November 2026 ... GBN-GP-26-7K8M2Y ... Cattle, Semen\nArrival date\n31 October 2026 ... GBN-GP-26-7K8M3B ... Horse, Embryos/Ova\nArrival date\n10 October 2026 ... GBN-GP-26-7K8M3D ... Pig, Embryos/Ova\nArrival date\n21 September 2026",
+      "confidence": "verbatim",
+      "note": "Germinal commodity values seen: Cattle, Semen; Sheep, Semen; Pig, Embryos/Ova; Horse, Embryos/Ova. Germinal amend cards also link to /notifications/amend?reference=...&resume=1, and Draft and Past use the same tags as live animals."
     },
     {
       "id": "trace-prototype-dr2-1-p15-072",
-      "statement": "The template name page has a 'Save and continue' button and a 'Cancel and return to manage templates' link to /templates.",
+      "statement": "Opening the germinal amend example GBN-GP-26-7K8M3H lands on 'Review your notification' in Amend with that reference, but the review shows live animal answers (commodity code 0102 (Cattle), species Bison bison, Number of animals 5), not the germinal product on its card.",
       "kind": "behaviour",
-      "ref": "trace T9 actions 19, 23",
-      "quote": "Save and continue ... <a class=\"govuk-link\" href=\"/design-release-2.1/templates\">Cancel and return to manage templates</a>",
-      "confidence": "verbatim"
+      "ref": "trace dashboard--category-dashboards-germinal-products-quantity-in-units-or-pieces-and-amend-examples-that-open-in-amend action 65",
+      "quote": "Amend\nGBN-GP-26-7K8M3H\nCancel amend\nReview your notification\n1. About the consignment ... Commodity code\n0102 (Cattle)\nSpecies\nBison bison ... Number of animals\n5",
+      "confidence": "verbatim",
+      "note": "The test title says it 'opens as germinal products being amended' but asserts only the Amend tag, reference and heading. The arrival date (23 December 2026) matches the card; the goods do not. Likely prototype example data reused across amend examples."
     },
     {
       "id": "trace-prototype-dr2-1-p15-073",
-      "statement": "The template name page's back link goes to the notification type page.",
-      "kind": "behaviour",
-      "ref": "trace T9 actions 20, 23",
-      "quote": "<a href=\"/design-release-2.1/notification-type\" class=\"govuk-back-link\">Back</a>",
+      "statement": "The action needed drill-down /actions is titled 'Tasks requiring your attention - Import notification service - GOV.UK', with the caption 'Action needed', the H1 'Tasks requiring your attention', and a description telling the user to add missing information or upload documents to prevent delay.",
+      "kind": "copy",
+      "ref": "trace dashboard--at-a-glance-drill-downs-action-needed-lists-notifications-needing-action action 15",
+      "quote": "Action needed\n\nTasks requiring your attention\n\nAdd missing information or upload documents to prevent your consignment from being delayed.",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-074",
-      "statement": "The template name page uses custom app-dr2-create-template-page wrappers for its header and actions around standard GOV.UK caption, heading, input and button.",
-      "kind": "constraint",
-      "ref": "trace T9 action 23",
-      "quote": "app-dr2-create-template-page ... app-dr2-create-template-page__header ... app-dr2-create-template-page__actions ... app-dr2-create-template-page__continue ... app-dr2-create-template-page__cancel",
+      "statement": "Without a category, /actions lists notifications needing action across every category under a visually hidden H2 'Notifications needing action', with a results line 'Show 1-2 of 2 results': GBN-AG-26-7K8M2P (live animals) and GBN-GP-26-7K8M2V (germinal products), both 'ITAHC is missing'.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--at-a-glance-drill-downs-action-needed-lists-notifications-needing-action action 15",
+      "quote": "Show 1-2 of 2 results\n\nGBN-AG-26-7K8M2P\nView\n\nITAHC is missing ... GBN-GP-26-7K8M2V\nView\n\nITAHC is missing",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-075",
-      "statement": "No trace shows a maximum length, allowed characters or duplicate-name check for a template name.",
+      "statement": "On the action needed list, each card's status shows 'Action required' as a custom tag (app-dr2-dashboard-status-tag--action-required), where the category dashboard shows the same notification as 'Submitted'.",
       "kind": "rule",
-      "ref": "traces T9, T10, T11",
-      "quote": "",
-      "confidence": "gap"
+      "ref": "trace dashboard--at-a-glance-drill-downs-action-needed-lists-notifications-needing-action action 26",
+      "quote": "<strong class=\"govuk-tag app-dr2-dashboard-status-tag app-dr2-dashboard-status-tag--action-required\">Action required</strong>",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-076",
-      "statement": "After the template name, the template journey goes to 'Origin of the import', which shows the 'Template' caption with the template name, the caption 'About the consignment', and a 'Save and continue' button; its back link returns to /templates/create.",
-      "kind": "behaviour",
-      "ref": "trace T11 action 14; trace T9 actions 30-38",
-      "quote": "BACK: <a href=\"/design-release-2.1/templates/create\" class=\"govuk-back-link\">Back</a> ... Template\nThrowaway\n\nAbout the consignment\n\nOrigin of the import ... Save and continue",
+      "statement": "The action needed list mixes categories, each card keeping its own quantity label ('Number of animals' or 'Quantity (unit/pieces)').",
+      "kind": "rule",
+      "ref": "trace dashboard--at-a-glance-drill-downs-action-needed-lists-notifications-needing-action action 15",
+      "quote": "Number of animals\n12 ... Quantity (unit/pieces)\n14",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-077",
-      "statement": "In a template, the origin page asks Country of origin (search), 'Does the consignment have a region of origin code?' (Yes/No, hint 'Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.') and 'Your internal reference for this consignment (optional)'.",
-      "kind": "data",
-      "ref": "trace T11 action 14; trace T5 action 14",
-      "quote": "Country of origin\nSearch\nDoes the consignment have a region of origin code?\n\nCheck the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.\n\nYes\nNo\nYour internal reference for this consignment (optional)\nEnter any internal reference you want to use to identify this consignment, or leave blank.",
-      "confidence": "verbatim"
+      "statement": "The action needed page has its own search and sort (the same 'Search by' field, hint and 'Sort by:' options) that submits as a GET to /actions, carrying the category in a hidden field; it has no Additional filters and no tabs.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--at-a-glance-drill-downs-action-needed-lists-notifications-needing-action action 26",
+      "quote": "FORM get /design-release-2.1/actions | category=live-animals(hidden), search=(text), =(submit), sort=(select-one)",
+      "confidence": "verbatim",
+      "note": "No test submits this search."
     },
     {
       "id": "trace-prototype-dr2-1-p15-078",
-      "statement": "The region of origin code, revealed under Yes, is entered after a fixed 'IE' prefix with the hint 'Enter up to 5 characters.'.",
-      "kind": "data",
-      "ref": "trace T5 action 14 (HINTS)",
-      "quote": "Enter the region of origin code\nEnter up to 5 characters.\nIE",
+      "statement": "/actions?category=live-animals lists only live animals notifications ('Show 1-1 of 1 results', GBN-AG-26-7K8M2P) and its Back link goes to the live animals dashboard; without a category the Back link goes to the overall dashboard.",
+      "kind": "rule",
+      "ref": "trace dashboard--at-a-glance-drill-downs-action-needed-lists-notifications-needing-action actions 10, 24-26",
+      "quote": "/design-release-2.1/live-animals\nFORM get /design-release-2.1/actions | category=live-animals(hidden) ... Show 1-1 of 1 results\n\nGBN-AG-26-7K8M2P",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-079",
-      "statement": "In the create trace the country is chosen by typing 'Irel' and picking 'Republic of Ireland' from the country search options, and region of origin 'No' is checked.",
-      "kind": "behaviour",
-      "ref": "trace T9 actions 32-38",
-      "quote": "Type \"Irel\" locator('#country-of-origin') ... locator('button.app-country-search__option').filter({ hasText: 'Republic of Ireland' }) ... Check locator('input[name=\"regionOfOriginRequired\"][value=\"No\"]')",
+      "statement": "The inspection required drill-down /inspection is titled 'Consignments due at the border control post (BCP) - Import notification service - GOV.UK', with the caption 'Inspection required', the H1 'Consignments due at the border control post (BCP)', and the description 'Consignments that must go to your chosen BCP for inspection.'; its Back link goes to the overall dashboard.",
+      "kind": "copy",
+      "ref": "trace dashboard--at-a-glance-drill-downs-inspection-required-lists-consignments-due-at-the-bcp action 25",
+      "quote": "Inspection required\n\nConsignments due at the border control post (BCP)\n\nConsignments that must go to your chosen BCP for inspection.",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-080",
-      "statement": "In a template, 'What are you importing?' shows the 'Template' caption with the template name, has a back link to the origin page, and offers 'Save and continue', 'Save and return to overview' (value hub) and a 'Cancel and return to overview' link to the hub.",
+      "statement": "The inspection page has a GOV.UK Details component 'What to do at a border inspection', closed until opened.",
       "kind": "behaviour",
-      "ref": "trace T9 action 43",
-      "quote": "BACK: <a href=\"/design-release-2.1/origin-of-the-import\" class=\"govuk-back-link\">Back</a> TOP: Template\nWeekly Irish cattle\n\nAbout the consignment\n\nWhat are you importing? ... Save and continue|continue || Save and return to overview|hub || Cancel and return to overview|/design-release-2.1/notification-hub",
+      "ref": "trace dashboard--at-a-glance-drill-downs-inspection-required-lists-consignments-due-at-the-bcp actions 22-23",
+      "quote": "DETAILS||govuk-details app-dr2-dashboard-intro__details|What to do at a border inspection",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-081",
-      "statement": "The commodity page in a template carries the same guidance as in a notification, beginning 'You must submit a separate notification for every single ITAHC.', and links to the trade tariff (https://www.gov.uk/trade-tariff).",
+      "statement": "Opened, the border inspection details says the user or transporter must take consignments needing sanitary or phytosanitary checks to the chosen BCP, and links to GOV.UK guidance.",
       "kind": "copy",
-      "ref": "trace T9 action 43",
-      "quote": "You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not n ... |https://www.gov.uk/trade-tariff",
-      "confidence": "verbatim",
-      "note": "Text truncated at 200 characters in the capture."
+      "ref": "trace dashboard--at-a-glance-drill-downs-inspection-required-lists-consignments-due-at-the-bcp actions 24-25",
+      "quote": "If your consignments need to have sanitary or phytosanitary checks, you or the transporter must take it to your chosen border control post (BCP).\n\nRead the guidance on what you need to do at a border inspection",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-082",
-      "statement": "In the create trace the commodity is chosen by searching 'cattle' and checking the species Cattle, Bos taurus.",
-      "kind": "behaviour",
-      "ref": "trace T9 actions 40-46",
-      "quote": "Type \"cattle\" locator('#commodity-search') ... Check locator('#commodity-species-cattle-bos-taurus')",
+      "statement": "The guidance link 'what you need to do at a border inspection' goes to the GOV.UK page on SPS checks at border control posts.",
+      "kind": "integration",
+      "ref": "trace dashboard--at-a-glance-drill-downs-inspection-required-lists-consignments-due-at-the-bcp action 25",
+      "quote": "A|https://www.gov.uk/guidance/sanitary-and-phytosanitary-sps-checks-at-border-control-posts-bcps|govuk-link|what you need to do at a border inspection",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-083",
-      "statement": "In a template, saving 'What are you importing?' returns to the template's task list (notification hub) instead of going on to the main import reason.",
-      "kind": "rule",
-      "ref": "trace T9 actions 46-49, requests 199-200",
-      "quote": "POST 302 what-are-you-importing ... GET 200 notification-hub",
-      "confidence": "verbatim"
+      "statement": "The inspection page lists 'Notifications chosen for inspection' (visually hidden H2) with 'Show 1-4 of 4 results': GBN-AG-26-7K8M2U (Submitted), GBN-AG-26-7K8M2Z (Completed), GBN-AG-26-7K8M3F (Amend) and GBN-AG-26-7K8M3G (Amend), all live animals.",
+      "kind": "data",
+      "ref": "trace dashboard--at-a-glance-drill-downs-inspection-required-lists-consignments-due-at-the-bcp action 25",
+      "quote": "Show 1-4 of 4 results\n\nGBN-AG-26-7K8M2U ... Notification status\nSubmitted ... GBN-AG-26-7K8M2Z ... Notification status\nCompleted ... GBN-AG-26-7K8M3F ... Notification status\nAmend ... GBN-AG-26-7K8M3G ... Notification status\nAmend",
+      "confidence": "verbatim",
+      "note": "The overall dashboard's inspection card shows 6 (claim p15-019). GBN-AG-26-7K8M2Z shows 'Past' on the live animals dashboard but 'Completed' here."
     },
     {
       "id": "trace-prototype-dr2-1-p15-084",
-      "statement": "After origin and commodity, a new template's task list shows 'Template' and its name, overview figures of 0 animals and 0 packages, the first two tasks Complete and every other task To do.",
-      "kind": "behaviour",
-      "ref": "trace T9 action 52 (t9-hub)",
-      "quote": "Template\nWeekly Irish cattle\nOverview\nYour commodities\n\n0 ... Where is this consignment coming from?\nComplete\nWhat are you importing?\nComplete\nMain import reason\nTo do\n2. Description of the goods\nCommodity details\nTo do",
+      "statement": "On the drill-downs, Submitted and Completed statuses show as plain text, not a tag, while Amend and Draft keep their tags; amend cards still link into amend.",
+      "kind": "rule",
+      "ref": "trace dashboard--at-a-glance-drill-downs-inspection-required-lists-consignments-due-at-the-bcp action 25; trace dashboard--at-a-glance-drill-downs-status-updated-lists-changes-in-the-past-24-hours action 14",
+      "quote": "A|/design-release-2.1/notifications/amend?reference=GBN-AG-26-7K8M3F&resume=1|govuk-link app-dr2-dashboard-notification-card__action-link|View\nSTRONG||govuk-tag govuk-tag--yellow|Amend",
       "confidence": "verbatim",
-      "note": "No number of animals has been entered yet, so the 0 figures are as expected."
+      "note": "Completed uses app-dr2-dashboard-status-text--completed. The only .govuk-tag elements on /inspection are the two Amend tags."
     },
     {
       "id": "trace-prototype-dr2-1-p15-085",
-      "statement": "In a template, opening Upload documents redirects to the template's task list: documents are not part of a template.",
-      "kind": "rule",
-      "ref": "trace T9 actions 57-58, requests 239-240",
-      "quote": "GET 302 upload-documents ... GET 200 notification-hub",
+      "statement": "The inspection page has the same search and sort, submitting as a GET to /inspection, with no category field, filters or tabs.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--at-a-glance-drill-downs-inspection-required-lists-consignments-due-at-the-bcp action 25",
+      "quote": "FORM get /design-release-2.1/inspection | search=(text), =(submit), sort=(select-one)",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-086",
-      "statement": "In a template, opening the declaration redirects to the review page: a template has no declaration.",
-      "kind": "rule",
-      "ref": "trace T9 actions 59-60, requests 279-280",
-      "quote": "GET 302 declaration ... GET 200 review-notification",
-      "confidence": "verbatim"
+      "statement": "The status updated drill-down /changes is titled 'Changes in past 24 hours - Import notification service - GOV.UK', with the caption 'Status updated', the H1 'Changes in past 24 hours', and a description of the changes it lists.",
+      "kind": "copy",
+      "ref": "trace dashboard--at-a-glance-drill-downs-status-updated-lists-changes-in-the-past-24-hours action 14",
+      "quote": "Status updated\n\nChanges in past 24 hours\n\nNotifications that have progressed, or been validated, rejected, cancelled, or replaced in the past 24 hours.",
+      "confidence": "verbatim",
+      "note": "The H1 says 'Changes in past 24 hours'; the glance cards that link here say 'Changes in the past 24 hours'."
     },
     {
       "id": "trace-prototype-dr2-1-p15-087",
-      "statement": "No trace in this part fills a template's main import reason, description of the goods, transport, consignment parties or contact address in template mode; those pages' template variants are not shown here.",
+      "statement": "The changes list is grouped under H2 headings by what changed: 'Passed inspection' (GBN-AG-26-7K8M2W, Completed), 'Needs inspection' (GBN-GP-26-7K8M2T, Draft) and 'Delayed' (GBN-AG-26-7K8M3A, Completed).",
       "kind": "behaviour",
-      "ref": "trace T9: only origin and commodity are answered",
-      "quote": "",
-      "confidence": "gap"
+      "ref": "trace dashboard--at-a-glance-drill-downs-status-updated-lists-changes-in-the-past-24-hours action 14",
+      "quote": "Passed inspection\nGBN-AG-26-7K8M2W ... Notification status\nCompleted ... Needs inspection\nGBN-GP-26-7K8M2T ... Notification status\nDraft ... Delayed\nGBN-AG-26-7K8M3A ... Notification status\nCompleted",
+      "confidence": "verbatim",
+      "note": "A draft listed under 'Needs inspection' is odd example data. The group headings use a custom class (app-dr2-dashboard-changes-section)."
     },
     {
       "id": "trace-prototype-dr2-1-p15-088",
-      "statement": "Review template opens /review-notification titled 'Review your template - Import notification service - GOV.UK' with the H1 'Review your template' under the 'Template' caption and the template name.",
-      "kind": "copy",
-      "ref": "trace T9 actions 63-65, 68 (t9-review)",
-      "quote": "Review your template - Import notification service - GOV.UK ... Template\nWeekly Irish cattle\nReview your template",
-      "confidence": "verbatim"
+      "statement": "The changes page has no search, sort, results count, filters or tabs; its Back link goes to the overall dashboard.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--at-a-glance-drill-downs-status-updated-lists-changes-in-the-past-24-hours action 14",
+      "quote": "Changes in past 24 hours - Import notification service - GOV.UK\n/design-release-2.1\n\n=====",
+      "confidence": "verbatim",
+      "note": "The empty line after the back link href is the list of forms, which is empty."
     },
     {
       "id": "trace-prototype-dr2-1-p15-089",
-      "statement": "The template review's back link returns to the template's task list (/notification-hub).",
-      "kind": "behaviour",
-      "ref": "trace T9 action 68",
-      "quote": "<a href=\"/design-release-2.1/notification-hub\" class=\"govuk-back-link\">Back</a>",
+      "statement": "/changes?category=germinal-products lists only the germinal change ('Needs inspection', GBN-GP-26-7K8M2T) and its Back link goes to the germinal products dashboard.",
+      "kind": "rule",
+      "ref": "trace dashboard--at-a-glance-drill-downs-status-updated-lists-changes-in-the-past-24-hours action 22",
+      "quote": "/design-release-2.1/germinal-products\n=====\nStatus updated\n\nChanges in past 24 hours ... Needs inspection\nGBN-GP-26-7K8M2T",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p15-090",
-      "statement": "The template review shows the same five sections as the template page (About the consignment, Description of the goods, Transport and arrival, Consignment addresses, Contact address) and shows 'Not applicable' for every unanswered row.",
-      "kind": "copy",
-      "ref": "trace T9 action 68",
-      "quote": "H2:1. About the consignment ... H2:2. Description of the goods ... H2:3. Transport and arrival ... H2:4. Consignment addresses ... H2:5. Contact address ... Main import reason\nNot applicable",
-      "confidence": "verbatim"
+      "statement": "The dashboards make no data API call: each page is a server-rendered GET, and the network logs hold only page requests, redirects, static assets and the prototype kit's live-reload socket.",
+      "kind": "integration",
+      "ref": "trace dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one requests 1-40; trace dashboard--category-dashboards-live-animals-summary-search-filters-tabs-and-notification-cards requests 1-247",
+      "quote": "GET 200 live-animals ... GET 200 live-animals?tab=drafts ... GET 200 live-animals?tab=completed ... GET 302 amend?reference=GBN-AG-26-7K8M3F&resume=1 ... GET 200 review-notification",
+      "confidence": "verbatim",
+      "note": "The notifications come from the prototype's session data. The rebuild will need a source of notifications per user and category; the prototype does not show one."
     },
     {
       "id": "trace-prototype-dr2-1-p15-091",
-      "statement": "For cattle, the template review's Additional details card has the rows 'Certified for' and 'Includes unweaned animals', and the Addresses card adds 'County parish holding (CPH) number'.",
-      "kind": "data",
-      "ref": "trace T9 action 68",
-      "quote": "Additional details\nChange\nCertified for\nNot applicable\nIncludes unweaned animals\nNot applicable ... County parish holding (CPH) number\nNot applicable",
-      "confidence": "verbatim"
+      "statement": "The dashboard pages load two dashboard scripts, dashboard-tabs-scroll.js and dashboard-search-delete.js, whose behaviour no test drives.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one requests 33-34",
+      "quote": "dashboard-tabs-scroll.js ... dashboard-search-delete.js",
+      "confidence": "inferred",
+      "note": "Inferred from the file names: something scrolls the tabs into view and something clears the search. Not observed."
     },
     {
       "id": "trace-prototype-dr2-1-p15-092",
-      "statement": "The template review's Change links go straight to the question pages (e.g. /origin-of-the-import, /contact-address-for-consignment?from=review), not to /templates/<slug>/change/... as on a saved template.",
-      "kind": "behaviour",
-      "ref": "trace T9 action 68 (LINKS)",
-      "quote": "A|app-dr2-review-card__header-link|Change|/design-release-2.1/origin-of-the-import ... A|app-dr2-review-card__header-link|Change|/design-release-2.1/contact-address-for-consignment?from=review",
-      "confidence": "verbatim"
+      "statement": "No trace drives the arrival date radios (Today, Tomorrow, Next 7 days), the date range fields or their date picker, so what they filter and any validation of a bad or reversed date range are not shown.",
+      "kind": "rule",
+      "ref": "dashboard.fit.spec.js lines 112-125 (filters asserted present, not used)",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "trace-prototype-dr2-1-p15-093",
-      "statement": "The template review ends with a 'Save template' submit button (form POST to /review-notification) and a red warning 'Delete' button linking to /templates/discard.",
+      "statement": "No trace shows the 'Arrival date' or 'Newest first' sort applied, or a sort that changes the card order.",
       "kind": "behaviour",
-      "ref": "trace T9 action 68",
-      "quote": "FORMS: post /design-release-2.1/review-notification [submit:=:Save template] ... BUTTON|govuk-button|Save template|\nA|govuk-button govuk-button--warning|Delete|/design-release-2.1/templates/discard",
-      "confidence": "verbatim"
+      "ref": "dashboard.fit.spec.js lines 157-166",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "trace-prototype-dr2-1-p15-094",
-      "statement": "Save template saves the template and redirects to Manage templates, which shows a success banner '<name> saved to templates' and the new template first in the list (count 'Show 1-6 of 6 results').",
-      "kind": "behaviour",
-      "ref": "trace T9 actions 72-75, 78, requests 396-397",
-      "quote": "BANNER: Success\nWeekly Irish cattle saved to templates ... Show 1-6 of 6 results ... Live animals Weekly Irish cattle View template Use template Commodity Cattle Origin Republic of Ireland Consignee Not applicable Consignor Not applicable => /design-release-2.1/templates/weekly-irish-cattle,/design-release-2.1/templates/weekly-irish-cattle/use",
-      "confidence": "verbatim"
+      "statement": "No trace shows a search or filter that matches nothing, so the empty state of the filtered results, a tab and a drill-down is not shown.",
+      "kind": "copy",
+      "ref": "dashboard.fit.spec.js (no empty-state test)",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "trace-prototype-dr2-1-p15-095",
-      "statement": "A template can be saved with only some sections answered; nothing requires the template's tasks to be complete before Save template.",
-      "kind": "rule",
-      "ref": "trace T9 actions 52, 72-75",
-      "quote": "Main import reason\nTo do ... Weekly Irish cattle saved to templates",
-      "confidence": "inferred",
-      "note": "Inferred: the template was saved with most tasks To do and no error."
+      "statement": "The drill-downs show 'Show 1-N of N results', implying paging, but no list in the traces is long enough to page, and the category tabs show no paging at all; paging controls and page size are not shown.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--at-a-glance-drill-downs-action-needed-lists-notifications-needing-action action 15",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "trace-prototype-dr2-1-p15-096",
-      "statement": "A template saved without a name is saved as 'Untitled template': /templates/save redirects to Manage templates with the banner 'Untitled template saved to templates'.",
-      "kind": "rule",
-      "ref": "trace T10 (create-a-new-template-a-template-with-no-name-is-saved-as-untitled-template) actions 14-16, requests 121-122",
-      "quote": "GET 302 save ... BANNER: Success\nUntitled template saved to templates",
-      "confidence": "verbatim"
+      "statement": "The plants dashboard, the inspection 'View requirements' destination, the Messages page and Manage account are placeholders (#), so none of their content is shown.",
+      "kind": "behaviour",
+      "ref": "trace dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one action 30",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "trace-prototype-dr2-1-p15-097",
-      "statement": "An untitled template is listed first as 'Untitled template' with the slug untitled-template and every card field 'Not applicable'.",
-      "kind": "data",
-      "ref": "trace T10 action 16",
-      "quote": "COUNT: Show 1-6 of 6 results\nCARD1: Live animals Untitled template View template Use template Commodity Not applicable Origin Not applicable Consignee Not applicable Consignor Not applicable => /design-release-2.1/templates/untitled-template,/design-release-2.1/templates/untitled-template/use",
-      "confidence": "verbatim"
+      "statement": "The traces do not walk /changes?category=live-animals, /actions?category=germinal-products, a category-scoped /inspection, or the germinal products filters.",
+      "kind": "behaviour",
+      "ref": "dashboard.fit.spec.js lines 245-305",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "trace-prototype-dr2-1-p15-098",
-      "statement": "A GET to /templates/save saves the template in progress (no form submit is needed), the same effect as Save template.",
-      "kind": "behaviour",
-      "ref": "trace T10 action 14, request 121",
-      "quote": "Navigate to \"/design-release-2.1/templates/save\" ... GET 302 save",
-      "confidence": "verbatim"
+      "statement": "The traces do not say what makes a notification need action, appear in 'Changes in past 24 hours' or be chosen for inspection; the lists are fixed examples.",
+      "kind": "rule",
+      "ref": "dashboard.fit.spec.js lines 244-306",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "trace-prototype-dr2-1-p15-099",
-      "statement": "What happens when two templates would share a name (e.g. a second 'Untitled template', and so the same slug) is not shown.",
+      "statement": "The traces do not show whose notifications a dashboard holds (the signed-in user, their organisation or every user), or a dashboard with no notifications yet.",
       "kind": "rule",
-      "ref": "traces T9, T10",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-100",
-      "statement": "A template being created can be discarded at /templates/discard, a page titled 'Delete this template? - Import notification service - GOV.UK' with the H1 'Delete this template?'.",
-      "kind": "behaviour",
-      "ref": "trace T11 (create-a-new-template-discard-a-template-being-created) actions 14-16, 21",
-      "quote": "Delete this template? - Import notification service - GOV.UK ... <h1 class=\"govuk-heading-l\">Delete this template?</h1>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-101",
-      "statement": "The discard page shows the template's name in a one-row summary list keyed 'Name'.",
-      "kind": "data",
-      "ref": "trace T11 actions 17, 21",
-      "quote": "<dt class=\"govuk-summary-list__key\">Name</dt> <dd class=\"govuk-summary-list__value\">Throwaway</dd>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-102",
-      "statement": "The discard page's back link and its 'No, cancel' link both go to the template review (/review-notification).",
-      "kind": "behaviour",
-      "ref": "trace T11 actions 18, 21",
-      "quote": "<a href=\"/design-release-2.1/review-notification\" class=\"govuk-back-link\">Back</a> ... <a class=\"govuk-link\" href=\"/design-release-2.1/review-notification\">No, cancel</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-103",
-      "statement": "Confirming 'Yes, delete' on the discard page (POST /templates/discard) drops the template and redirects to Manage templates with the banner '<name> has been deleted'; the list is unchanged (Show 1-5 of 5 results).",
-      "kind": "behaviour",
-      "ref": "trace T11 actions 25-28, requests 159-160",
-      "quote": "<form method=\"post\" action=\"/design-release-2.1/templates/discard\"> ... Throwaway has been deleted ... COUNT: Show 1-5 of 5 results",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-104",
-      "statement": "Opening /templates/discard when no template is being created redirects (302) to Manage templates.",
-      "kind": "rule",
-      "ref": "trace T12 (create-a-new-template-the-discard-page-outside-a-template-journey-returns-to-manage-templates) actions 7-8, requests 1-2",
-      "quote": "GET 302 discard ... GET 200 templates",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-105",
-      "statement": "The delete confirmation for a saved template is at /templates/<slug>/delete, titled 'Delete this template? - Import notification service - GOV.UK' with the H1 'Delete this template?'.",
-      "kind": "behaviour",
-      "ref": "trace T8 (a-saved-template-delete-confirm-then-the-list-says-it-was-deleted) actions 8-11, 18",
-      "quote": "Delete this template? - Import notification service - GOV.UK ... <h1 class=\"govuk-heading-l\">Delete this template?</h1>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-106",
-      "statement": "The delete confirmation shows the template name in a summary list row 'Name', then the paragraphs 'Confirm that you want to delete this template.' and 'This action cannot be undone.'.",
-      "kind": "copy",
-      "ref": "trace T8 actions 12-14, 18",
-      "quote": "Name ... Arena Aintree ... <p class=\"govuk-body\">Confirm that you want to delete this template.</p> <p class=\"govuk-body\">This action cannot be undone.</p>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-107",
-      "statement": "The delete confirmation has a red warning 'Yes, delete' submit button (POST to /templates/<slug>/delete) and a 'No, cancel' link back to the template page, grouped in a GOV.UK button group.",
-      "kind": "behaviour",
-      "ref": "trace T8 action 18",
-      "quote": "<form method=\"post\" action=\"/design-release-2.1/templates/arena-aintree/delete\"> <div class=\"govuk-button-group\"> <button type=\"submit\" class=\"govuk-button govuk-button--warning\">Yes, delete</button> <a class=\"govuk-link\" href=\"/design-release-2.1/templates/arena-aintree\">No, cancel</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-108",
-      "statement": "The delete confirmation's back link goes to the template page.",
-      "kind": "behaviour",
-      "ref": "trace T8 actions 15, 18",
-      "quote": "<a href=\"/design-release-2.1/templates/arena-aintree\" class=\"govuk-back-link\">Back</a>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-109",
-      "statement": "The delete and discard confirmation pages are built entirely from GOV.UK components (heading, summary list, body, button group, warning button, link).",
-      "kind": "constraint",
-      "ref": "trace T8 action 18; trace T11 action 21",
-      "quote": "govuk-heading-l ... govuk-summary-list ... govuk-body ... govuk-button-group ... govuk-button govuk-button--warning ... govuk-link",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-110",
-      "statement": "Confirming 'Yes, delete' removes the template and redirects to Manage templates with the success banner '<name> has been deleted' and one fewer template (Show 1-4 of 4 results).",
-      "kind": "behaviour",
-      "ref": "trace T8 actions 22-26, 29, requests 79-80",
-      "quote": "BANNER: Success\nArena Aintree has been deleted\nCOUNT: Show 1-4 of 4 results\nTITLES: Rice Lane City Farm | Monk Park Farm | Acorn Farm | Glen Keen Farm",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-111",
-      "statement": "No trace follows 'No, cancel' on either delete confirmation, so the cancel path is shown only by its href.",
-      "kind": "behaviour",
-      "ref": "traces T8, T11",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-112",
-      "statement": "The templates journey makes no calls to other systems: every request in the 12 traces is to the prototype itself (page GETs and form POSTs answered with 302 redirects) or to its static assets; templates are held in the prototype session.",
-      "kind": "integration",
-      "ref": "requests of traces T1-T12 (e.g. T1 requests 1-39)",
-      "quote": "GET 200 templates ... GET 200 application.css ... localhost:3011?EIO=4&transport=polling",
-      "confidence": "inferred",
-      "note": "The localhost:3011 calls are the prototype kit's browser-sync reload, not a service. Session storage is inferred from the session cookie on every request."
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-113",
-      "statement": "Whether templates are shared across an organisation or private to the user who made them is not shown by any trace.",
-      "kind": "rule",
-      "ref": "traces T1-T12",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-114",
-      "statement": "No trace shows a way to rename a saved template after it is created.",
-      "kind": "behaviour",
-      "ref": "traces T3, T5, T7",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-115",
-      "statement": "No trace shows what Manage templates looks like with no templates saved (empty state).",
-      "kind": "copy",
-      "ref": "traces T1, T8, T9, T10, T11",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p15-116",
-      "statement": "Editing a saved template through its own task list (T7) and then reviewing and saving it is not traced end to end, so whether Save template on an edited template updates it in place or creates a new one is not shown.",
-      "kind": "behaviour",
-      "ref": "trace T7 stops at the task list",
+      "ref": "dashboard.fit.spec.js (all tests run on the seeded example data)",
       "quote": "",
       "confidence": "gap"
     }

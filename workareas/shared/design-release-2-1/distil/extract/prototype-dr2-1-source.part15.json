@@ -1,12 +1,12 @@
 {
   "source": "prototype:dr2-1-source",
-  "structure": "Part 15, Address book: list, view, edit and delete (GB-notification-service at 04a073b, read from the extracted copy in the work folder). Read in full: app/views/address-book.html (the list; DR2.1 sets isDesignRelease2Version so its DR2 branch applies: collapsible filter, category tabs, per-category table columns), app/views/address-book-view.html (one address as a summary list with Edit and Delete), app/views/address-book-lookup.html in edit mode (search and manual toggle hidden, manual fields shown, Save changes / Cancel), app/views/partials/address-book-manual-address-fields.html (the nine manual fields), app/views/design-release-2.1/delete-address.html with partials/design-release-2.1/delete-confirmation.html (the delete question), app/data/address-book.js (type labels, the four categories, seeded addresses, page size 8, per-category minimum counts) and app/data/address-book-address-types.js (the seven types and their hints). In app/routes.js: lines 6161-6265 (delete summary row and address HTML), 7052-7084 (DR2.1 base path), 9124-9729 (hrefs, pagination, results text, type filter items, merged address list, return paths, viewable addresses, view summary rows, view and delete render, update and delete of an entry, renderAddressBookEditPage, updated and deleted banner text, entry built from manual fields), 9944-10051 (getAddressBookViewModel, renderAddressBookPage, category aliases, base path), 10412-10523 (country items, body parsing and validation for the manual fields, reached by the edit POST), 11742-11745 (GET /address-book) and 11978-12044 (GET and POST edit, GET and POST delete, GET view). Covered: the list route, heading, intro, add button, filter (search and type), four category tabs, results text, both table layouts, View link, pagination, success banner and the empty state; the view page rows and actions; the edit page fields, labels, hint, seven validation messages and where save and cancel lead; the delete page row, copy, buttons and redirects; the seeded data and address types. The client-side search module (app-address-book-search) and the seed files consignment-addresses.js, contact-addresses.js and transporters.js are outside this part's read list; only what the list shows of them is claimed. Adding an address (/address-book/add) is part 16's.",
+  "structure": "Part 15, Address book: list, view, edit and delete (GB-notification-service at c2078fb, the checkout's HEAD). Read in full: app/views/address-book.html (the list; DR2.1 sets isDesignRelease2Version, so its DR2 branch applies: collapsible filter, four category tabs, per-category table columns), app/views/address-book-view.html (one address as a summary list, an address-book-only inset, Edit and Delete), app/views/address-book-lookup.html in edit mode (search and manual toggle hidden, DR2.1 inset, manual fields shown, the 'What can this address be used for?' checkboxes, Save changes / Cancel), app/views/partials/address-book-manual-address-fields.html (the nine manual fields), app/views/design-release-2.1/delete-address.html with partials/design-release-2.1/delete-confirmation.html (the delete question with an inset), app/data/address-book.js (type labels, the four categories, seeded addresses, page size 8, per-category minimum counts) and app/data/address-book-address-types.js (the seven types and their hints). In app/routes.js: 7173-7185 and 7213-7277 (delete summary row and address HTML), 10583-11135 (hrefs, pagination, results text, type filter items, merged address list, return paths, viewable addresses, view summary rows, view and delete render, update and delete of an entry, renderAddressBookEditPage), 11143-11220 (updated and deleted banner text, entry built from manual fields), 11436-11518 (getAddressBookViewModel, renderAddressBookPage), 13516-13518 (GET /address-book) and 13769-13855 (GET and POST edit, GET and POST delete, GET view). Helpers the handlers call, read for this part's behaviour only: routes.js 93-95 and 316-322 (the DR2.1 flags), 8202-8240 (address book base path), 11526-11611 (category aliases, use options per category, use parsing), 11830-11845 (type labels for saved uses), 11955-11966 (country items), 12015-12067 (manual-field parsing and validation), app/data/address-book-origin-uses.js, -destination-uses.js and -branch-uses.js, app/lib/design-release-2.1-version.js (the DR2.1 locals) and app/data/transporters.js (names and types only). Covered: the list route, heading, intro, add button, filter (search and type), four category tabs, results text, both table layouts, View link, pagination, success banners and the empty state; the view page rows (including 'Address can be used for'), inset and actions; the edit page fields, labels, hint, inset, uses checkboxes, eight validation messages and where save and cancel lead; the delete page row, inset, question, buttons and where each leads; the seeded address book and address types. Changed since the earlier extract at 04a073b: the edit page gains an inset and the uses checkboxes and now keeps an address's types, the view page gains the uses row and an inset, and the delete page's text is now an inset saying existing notifications keep the address.",
   "claims": [
     {
       "id": "prototype-dr2-1-source-p15-001",
       "statement": "The address book list is served at GET /address-book, which under Design Release 2.1 is mounted at /design-release-2.1/address-book.",
       "kind": "behaviour",
-      "ref": "app/routes.js:11742-11744; app/lib/design-release-2.1-version.js:26",
+      "ref": "app/routes.js:13516; app/routes.js:8221-8231",
       "quote": "router.get('/address-book', (req, res) => {\n  return renderAddressBookPage(req, res)\n})",
       "confidence": "verbatim"
     },
@@ -23,7 +23,7 @@
       "statement": "The address book list page shows an Alpha phase banner with a feedback link.",
       "kind": "copy",
       "ref": "app/views/address-book.html:12-17",
-      "quote": "html: 'This is a new service. Help us improve it and <a class=\"govuk-link\" href=\"#\">give your feedback by email</a>.'",
+      "quote": "This is a new service. Help us improve it and <a class=\"govuk-link\" href=\"#\">give your feedback by email</a>.",
       "confidence": "verbatim"
     },
     {
@@ -54,7 +54,7 @@
       "id": "prototype-dr2-1-source-p15-007",
       "statement": "When a success message is waiting in the session, the list page shows it in a success notification banner titled \"Success\", then clears it so it shows only once.",
       "kind": "behaviour",
-      "ref": "app/views/address-book.html:24-31; app/routes.js:10014-10026",
+      "ref": "app/views/address-book.html:24-31; app/routes.js:11506-11518",
       "quote": "if (successMessage) {\n    delete sessionData.addressBookSuccessMessage\n  }",
       "confidence": "verbatim"
     },
@@ -62,7 +62,7 @@
       "id": "prototype-dr2-1-source-p15-008",
       "statement": "Under Design Release 2 and 2.1 the filter sits inside a collapsible details element whose summary reads \"Filter addresses\" with a chevron icon.",
       "kind": "behaviour",
-      "ref": "app/views/address-book.html:54-58",
+      "ref": "app/views/address-book.html:54-59",
       "quote": "<span class=\"app-address-book-page__filter-summary-text\">Filter addresses</span>",
       "confidence": "verbatim"
     },
@@ -86,7 +86,7 @@
       "id": "prototype-dr2-1-source-p15-011",
       "statement": "The filter has a search field labelled \"Search\", named search, with the placeholder \"Search by name, address or country\", prefilled with the current search.",
       "kind": "copy",
-      "ref": "app/views/address-book.html:64-76",
+      "ref": "app/views/address-book.html:63-76",
       "quote": "placeholder=\"Search by name, address or country\"\n                    value=\"{{ searchQuery or '' }}\"",
       "confidence": "verbatim"
     },
@@ -94,7 +94,7 @@
       "id": "prototype-dr2-1-source-p15-012",
       "statement": "The search field has an icon button with the accessible name \"Search\"; it is type=\"button\", so it does not submit the form itself, and the list is searched by the client-side app-address-book-search module, which the page gives every address book entry as JSON.",
       "kind": "behaviour",
-      "ref": "app/views/address-book.html:77-79,144-145; app/routes.js:10008",
+      "ref": "app/views/address-book.html:77-79,144-145",
       "quote": "<button class=\"app-address-book-page__search-button\" type=\"button\" aria-label=\"Search\">",
       "confidence": "inferred",
       "note": "The client-side module's script is outside this part's read list; what it does with the JSON is not read here."
@@ -103,7 +103,7 @@
       "id": "prototype-dr2-1-source-p15-013",
       "statement": "The filter has a select labelled \"Type\", named type, whose first option is \"Select one\" with an empty value.",
       "kind": "copy",
-      "ref": "app/views/address-book.html:83-96; app/routes.js:9193-9225; app/data/address-book.js:59-67",
+      "ref": "app/views/address-book.html:84-96; app/data/address-book.js:59-67",
       "quote": "{ value: '', text: 'Select one' }",
       "confidence": "verbatim"
     },
@@ -111,15 +111,15 @@
       "id": "prototype-dr2-1-source-p15-014",
       "statement": "On the Transporter tab the Type filter offers only \"Commercial\" and \"Private\" after \"Select one\".",
       "kind": "rule",
-      "ref": "app/routes.js:9194-9212",
-      "quote": "value: 'Commercial',\n        text: 'Commercial',",
+      "ref": "app/routes.js:10652-10671",
+      "quote": "if (categoryId === 'transporter') {\n    return [\n      {\n        value: '',\n        text: 'Select one',",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p15-015",
       "statement": "On the other tabs the Type filter offers only the address types that belong to that tab's category, drawn from the address-type list (which has no divider entry).",
       "kind": "rule",
-      "ref": "app/routes.js:9214-9224",
+      "ref": "app/routes.js:10673-10683",
       "quote": ".filter((option) => !option.value || !allowedTypes || allowedTypes.has(option.value))",
       "confidence": "verbatim"
     },
@@ -127,8 +127,8 @@
       "id": "prototype-dr2-1-source-p15-016",
       "statement": "So the Origin and Consignor tab's Type filter offers \"Place of Origin\" and \"Consignor\"; the Destination, Consignee and Importer tab offers \"Consignee\", \"Importer\" and \"Place of Destination\"; the Branch tab offers \"Branch Address\". The category's other types (consignor-or-exporter, exporter, contact, packer) have no filter option.",
       "kind": "rule",
-      "ref": "app/routes.js:9214-9224; app/data/address-book.js:21-57; app/data/address-book-address-types.js",
-      "quote": "types: [\n      'place-of-origin',\n      'consignor',\n      'consignor-or-exporter',\n      'exporter'\n    ]",
+      "ref": "app/routes.js:10673-10683; app/data/address-book.js:21-67; app/data/address-book-address-types.js",
+      "quote": "types: ADDRESS_TYPE_OPTIONS",
       "confidence": "inferred",
       "note": "Derived by intersecting each category's types with the address-type options list."
     },
@@ -136,7 +136,7 @@
       "id": "prototype-dr2-1-source-p15-017",
       "statement": "The type filter matches a transporter by its type label (Commercial or Private) and any other address when any of its types equals the selected type.",
       "kind": "rule",
-      "ref": "app/routes.js:9227-9241",
+      "ref": "app/routes.js:10686-10700",
       "quote": "if (address.category === 'transporter' || address.type === 'transporter') {\n    return address.typeLabel === typeFilter\n  }",
       "confidence": "verbatim"
     },
@@ -144,7 +144,7 @@
       "id": "prototype-dr2-1-source-p15-018",
       "statement": "Search is a case-insensitive substring match of the trimmed search text against each address's search text.",
       "kind": "rule",
-      "ref": "app/routes.js:9945,9955,9970-9972",
+      "ref": "app/routes.js:11437,11447,11462-11464",
       "quote": "addresses = addresses.filter((address) => address.searchText.includes(normalisedSearch))",
       "confidence": "verbatim"
     },
@@ -168,7 +168,7 @@
       "id": "prototype-dr2-1-source-p15-021",
       "statement": "An edited or added address's search text covers its name, type label, formatted address and country.",
       "kind": "rule",
-      "ref": "app/routes.js:9721-9726",
+      "ref": "app/routes.js:11213-11218",
       "quote": "searchText: buildAddressBookSearchText([\n      manualAddress.nameOrOrganisation,\n      typeLabel,\n      formattedAddress,\n      manualAddress.country\n    ])",
       "confidence": "verbatim"
     },
@@ -176,7 +176,7 @@
       "id": "prototype-dr2-1-source-p15-022",
       "statement": "Under Design Release 2 and 2.1 the list is split into four category tabs, in this order: \"Origin and Consignor\", \"Destination, Consignee and Importer\", \"Transporter\" and \"Branch\".",
       "kind": "behaviour",
-      "ref": "app/data/address-book.js:21-57; app/routes.js:9986-9997; app/views/address-book.html:147-160",
+      "ref": "app/views/address-book.html:147-160; app/data/address-book.js:21-57; app/routes.js:11478-11489",
       "quote": "label: 'Origin and Consignor',",
       "confidence": "verbatim"
     },
@@ -184,7 +184,7 @@
       "id": "prototype-dr2-1-source-p15-023",
       "statement": "Each tab panel has its own heading: \"Origin and Consignor addresses\", \"Destination, Consignee and Importer addresses\", \"Transporter addresses\" or \"Branch addresses\".",
       "kind": "copy",
-      "ref": "app/data/address-book.js:25,35,48,54; app/views/address-book.html:163",
+      "ref": "app/views/address-book.html:163; app/data/address-book.js:25,35,48,54",
       "quote": "heading: 'Destination, Consignee and Importer addresses',",
       "confidence": "verbatim"
     },
@@ -200,7 +200,7 @@
       "id": "prototype-dr2-1-source-p15-025",
       "statement": "The selected tab comes from the category query parameter; when it is missing or unknown the Origin and Consignor tab is shown.",
       "kind": "rule",
-      "ref": "app/routes.js:9948-9951",
+      "ref": "app/routes.js:11440-11443",
       "quote": "const categoryId = isDr2 && addressBookData.categories[requestedCategory]\n    ? requestedCategory\n    : 'origin-and-consignor'",
       "confidence": "verbatim"
     },
@@ -208,7 +208,7 @@
       "id": "prototype-dr2-1-source-p15-026",
       "statement": "The older category values origin-and-sender and destination-and-receiver are accepted as aliases of origin-and-consignor and destination-consignee-importer.",
       "kind": "rule",
-      "ref": "app/routes.js:10034-10037",
+      "ref": "app/routes.js:11526-11529",
       "quote": "'origin-and-sender': 'origin-and-consignor',\n  'destination-and-receiver': 'destination-consignee-importer'",
       "confidence": "verbatim"
     },
@@ -216,7 +216,7 @@
       "id": "prototype-dr2-1-source-p15-027",
       "statement": "An address appears on every tab whose category holds any of its types, so an address with several types can appear on more than one tab.",
       "kind": "rule",
-      "ref": "app/data/address-book.js:89-97; app/routes.js:9962-9964",
+      "ref": "app/data/address-book.js:89-97; app/routes.js:11454-11456",
       "quote": "return getAddressTypes(address).some((type) => categoryTypes.includes(type))",
       "confidence": "verbatim"
     },
@@ -224,7 +224,7 @@
       "id": "prototype-dr2-1-source-p15-028",
       "statement": "Each tab link goes to page 1 of that category, keeps the current search and drops the type filter.",
       "kind": "behaviour",
-      "ref": "app/routes.js:9991-9994",
+      "ref": "app/routes.js:11483-11486",
       "quote": "href: buildAddressBookPageHref(1, searchQuery, '', {",
       "confidence": "verbatim"
     },
@@ -232,7 +232,7 @@
       "id": "prototype-dr2-1-source-p15-029",
       "statement": "Above the table, a results line reads \"Showing <start>-<end> of <total>\", or \"Showing 0 of 0\" when nothing matches.",
       "kind": "copy",
-      "ref": "app/routes.js:9185-9191; app/views/address-book.html:164",
+      "ref": "app/routes.js:10644-10650; app/views/address-book.html:164",
       "quote": "if (!total) {\n    return 'Showing 0 of 0'\n  }\n\n  return `Showing ${start}-${end} of ${total}`",
       "confidence": "verbatim"
     },
@@ -241,14 +241,14 @@
       "statement": "On every tab except Transporter the table's columns are Name, Type, Address and Country, followed by an action column with the visually hidden header \"Action\".",
       "kind": "data",
       "ref": "app/views/address-book.html:170,175-182",
-      "quote": "<th scope=\"col\" class=\"govuk-table__header app-address-book-table__header\">Type</th>\n                      <th scope=\"col\" class=\"govuk-table__header app-address-book-table__header\">Address</th>\n                      <th scope=\"col\" class=\"govuk-table__header app-address-book-table__header\">Country</th>",
+      "quote": "<span class=\"govuk-visually-hidden\">Action</span>",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p15-031",
       "statement": "On the Transporter tab the table's columns are Name, Address, Approval number and Type, followed by the action column.",
       "kind": "data",
-      "ref": "app/views/address-book.html:171-174,205-218",
+      "ref": "app/views/address-book.html:171-174",
       "quote": "<th scope=\"col\" class=\"govuk-table__header app-address-book-table__header\">Approval number</th>",
       "confidence": "verbatim"
     },
@@ -258,7 +258,8 @@
       "kind": "behaviour",
       "ref": "app/data/address-book.js:103-111; app/views/address-book.html:195-203",
       "quote": "return [parts[0], parts.slice(1).join(' ')]",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "mechanism: splits an address's name into two display lines."
     },
     {
       "id": "prototype-dr2-1-source-p15-033",
@@ -272,7 +273,7 @@
       "id": "prototype-dr2-1-source-p15-034",
       "statement": "In the Type column an address with several types shows their labels joined by a comma and space.",
       "kind": "behaviour",
-      "ref": "app/data/address-book.js:133-134; app/routes.js:9292",
+      "ref": "app/data/address-book.js:133-134; app/routes.js:10751",
       "quote": "const displayTypeLabel = typeLabel || typeLabels.join(', ')",
       "confidence": "verbatim"
     },
@@ -281,7 +282,7 @@
       "statement": "The list shows type labels \"Place of origin\", \"Consignor\" (for consignor, consignor-or-exporter and exporter), \"Consignee\", \"Importer\", \"Place of destination\", \"Transporter\", \"Branch\", \"Contact address\" and \"Packer\"; these differ in case and wording from the filter options (\"Place of Origin\", \"Branch Address\").",
       "kind": "copy",
       "ref": "app/data/address-book.js:7-19",
-      "quote": "'place-of-origin': 'Place of origin',\n  consignor: 'Consignor',\n  'consignor-or-exporter': 'Consignor',\n  consignee: 'Consignee',\n  importer: 'Importer',\n  'place-of-destination': 'Place of destination',\n  transporter: 'Transporter',\n  'branch-address': 'Branch',\n  contact: 'Contact address',\n  exporter: 'Consignor',\n  packer: 'Packer'",
+      "quote": "'branch-address': 'Branch',\n  contact: 'Contact address',",
       "confidence": "verbatim"
     },
     {
@@ -290,13 +291,14 @@
       "kind": "data",
       "ref": "app/data/address-book.js:170-184",
       "quote": "const typeLabel = transporter.type || 'Commercial'",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "mechanism: derives a transporter's country from the last part of its free-text address."
     },
     {
       "id": "prototype-dr2-1-source-p15-037",
       "statement": "Each row ends with a \"View\" link to that address's view page.",
       "kind": "behaviour",
-      "ref": "app/views/address-book.html:234-236; app/routes.js:9273,9277",
+      "ref": "app/views/address-book.html:234-236",
       "quote": "<a class=\"govuk-link\" href=\"{{ address.viewHref }}\">View</a>",
       "confidence": "verbatim"
     },
@@ -304,7 +306,7 @@
       "id": "prototype-dr2-1-source-p15-038",
       "statement": "The list shows 8 addresses per page.",
       "kind": "rule",
-      "ref": "app/data/address-book.js:412; app/routes.js:9954",
+      "ref": "app/data/address-book.js:412; app/routes.js:11446",
       "quote": "pageSize: 8,",
       "confidence": "verbatim"
     },
@@ -312,7 +314,7 @@
       "id": "prototype-dr2-1-source-p15-039",
       "statement": "When there is more than one page, pagination shows a numbered link to every page with the current one marked, plus \"Previous\" and \"Next\" links where they apply.",
       "kind": "behaviour",
-      "ref": "app/routes.js:9149-9183; app/views/address-book.html:243-255",
+      "ref": "app/routes.js:10608-10642; app/views/address-book.html:243-255",
       "quote": "text: 'Next'",
       "confidence": "verbatim"
     },
@@ -320,7 +322,7 @@
       "id": "prototype-dr2-1-source-p15-040",
       "statement": "Pagination links keep the category, search and type filter and add page only for pages after the first.",
       "kind": "behaviour",
-      "ref": "app/routes.js:9124-9147",
+      "ref": "app/routes.js:10583-10606",
       "quote": "if (page > 1) {\n    params.set('page', String(page))\n  }",
       "confidence": "verbatim"
     },
@@ -328,7 +330,7 @@
       "id": "prototype-dr2-1-source-p15-041",
       "statement": "A page number below 1 or not a number shows page 1, and one beyond the last page shows the last page.",
       "kind": "rule",
-      "ref": "app/routes.js:9953,9975-9976",
+      "ref": "app/routes.js:11445,11467-11468",
       "quote": "const currentPage = Math.min(requestedPage, totalPages)",
       "confidence": "verbatim"
     },
@@ -336,7 +338,7 @@
       "id": "prototype-dr2-1-source-p15-042",
       "statement": "When no address matches, the list shows an empty table and \"Showing 0 of 0\", with no empty-state message or prompt to add an address.",
       "kind": "behaviour",
-      "ref": "app/views/address-book.html:164-256; app/routes.js:9186-9188",
+      "ref": "app/views/address-book.html:162-256; app/routes.js:10644-10647",
       "quote": "return 'Showing 0 of 0'",
       "confidence": "inferred",
       "note": "No empty-state copy exists in the template; inferred from the table rendering zero rows."
@@ -345,7 +347,7 @@
       "id": "prototype-dr2-1-source-p15-043",
       "statement": "The list shows addresses the user added this session first, then the seeded addresses less any deleted this session, each with any edits made this session applied.",
       "kind": "behaviour",
-      "ref": "app/routes.js:9260-9297",
+      "ref": "app/routes.js:10719-10737",
       "quote": "...(sessionData.addressBookAddedAddresses || []),\n    ...addressBookData.addresses.filter((address) => !deletedIds.has(address.id))",
       "confidence": "verbatim"
     },
@@ -353,7 +355,7 @@
       "id": "prototype-dr2-1-source-p15-044",
       "statement": "Additions, edits and deletions in the address book are held in the user's prototype session only, not saved anywhere else.",
       "kind": "constraint",
-      "ref": "app/routes.js:9556-9604",
+      "ref": "app/routes.js:11046-11094",
       "quote": "sessionData.addressBookUpdatedEntries[addressId] = {",
       "confidence": "inferred",
       "note": "Prototype persistence; the real service is expected to persist to the address-book service. Inferred from every write going to req.session.data."
@@ -362,7 +364,7 @@
       "id": "prototype-dr2-1-source-p15-045",
       "statement": "The address view page is served at GET /address-book/:addressId.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12042-12044",
+      "ref": "app/routes.js:13853-13855",
       "quote": "router.get('/address-book/:addressId', (req, res) => {\n  return renderAddressBookViewPage(req, res)\n})",
       "confidence": "verbatim"
     },
@@ -370,7 +372,7 @@
       "id": "prototype-dr2-1-source-p15-046",
       "statement": "The view page can show any address the service knows by id, searching the address book first and then consignment addresses, contact addresses and transporters.",
       "kind": "behaviour",
-      "ref": "app/routes.js:9354-9389",
+      "ref": "app/routes.js:10813-10848",
       "quote": "const consignmentAddress = getAllConsignmentAddresses(sessionData)\n    .find((address) => address.id === normalisedId)",
       "confidence": "verbatim"
     },
@@ -378,7 +380,7 @@
       "id": "prototype-dr2-1-source-p15-047",
       "statement": "If no address has that id, the view page redirects to its back link: the return path, or the address book list.",
       "kind": "behaviour",
-      "ref": "app/routes.js:9516-9530",
+      "ref": "app/routes.js:10987-10998",
       "quote": "if (!viewModel) {\n    return res.redirect(backLink)\n  }",
       "confidence": "verbatim"
     },
@@ -386,7 +388,7 @@
       "id": "prototype-dr2-1-source-p15-048",
       "statement": "The view page has a \"Back\" link to the return query path when one is given, otherwise to the address book list.",
       "kind": "behaviour",
-      "ref": "app/views/address-book-view.html:18-21; app/routes.js:9518",
+      "ref": "app/views/address-book-view.html:19-22; app/routes.js:10989",
       "quote": "const backLink = getSafeReturnPath(req.query.return, addressBookBasePath)",
       "confidence": "verbatim"
     },
@@ -394,15 +396,15 @@
       "id": "prototype-dr2-1-source-p15-049",
       "statement": "A return path is honoured only when it starts with a single /; anything else falls back to the default, and an unversioned /address-book path is rewritten to the Design Release's own address book path.",
       "kind": "rule",
-      "ref": "app/routes.js:9322-9345",
-      "quote": "if (path.startsWith('/') && !path.startsWith('//')) {\n    return normalizeAddressBookReturnPath(path, versionedAddressBookBasePath)\n  }\n\n  return fallback",
+      "ref": "app/routes.js:10781-10804",
+      "quote": "if (path.startsWith('/') && !path.startsWith('//')) {\n    return normalizeAddressBookReturnPath(path, versionedAddressBookBasePath)\n  }",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p15-050",
       "statement": "The view page's heading is the address's name.",
       "kind": "copy",
-      "ref": "app/views/address-book-view.html:28; app/routes.js:9508",
+      "ref": "app/routes.js:10967; app/views/address-book-view.html:29",
       "quote": "pageHeading: address.name,",
       "confidence": "verbatim"
     },
@@ -410,7 +412,7 @@
       "id": "prototype-dr2-1-source-p15-051",
       "statement": "The view page's summary list always shows the rows \"Name or organisation name\", \"Address line 1\", \"Town or city\", \"Postcode or Zip code\", \"Country\", \"Email address\" and \"Phone number\".",
       "kind": "data",
-      "ref": "app/routes.js:9437-9488",
+      "ref": "app/routes.js:10896-10947",
       "quote": "key: { text: 'Postcode or Zip code' },",
       "confidence": "verbatim"
     },
@@ -418,23 +420,24 @@
       "id": "prototype-dr2-1-source-p15-052",
       "statement": "The view page shows \"Address line 2 (optional)\" after Address line 1 and \"County (optional)\" after Town or city only when they have a value.",
       "kind": "rule",
-      "ref": "app/routes.js:9449-9466",
-      "quote": "if (details.addressLine2) {\n    rows.push({\n      key: { text: 'Address line 2 (optional)' },",
+      "ref": "app/routes.js:10908-10925",
+      "quote": "if (details.county) {\n    rows.push({\n      key: { text: 'County (optional)' },",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p15-053",
       "statement": "The view page's row values come from the address's stored details or, failing those, are split from its address lines into the manual fields.",
       "kind": "behaviour",
-      "ref": "app/routes.js:9391-9435",
+      "ref": "app/routes.js:10850-10894",
       "quote": "if (address.details) {\n    return address.details\n  }",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "mechanism: reshapes stored address lines into the nine manual fields for display."
     },
     {
       "id": "prototype-dr2-1-source-p15-054",
       "statement": "When the address is in the address book, the view page shows a secondary \"Edit\" button and a warning \"Delete\" button; an address found only elsewhere (a consignment, contact or transporter address) shows neither.",
       "kind": "rule",
-      "ref": "app/views/address-book-view.html:35-49; app/routes.js:9497,9510-9512",
+      "ref": "app/views/address-book-view.html:42-56; app/routes.js:10969",
       "quote": "canManage: Boolean(addressBookEntry),",
       "confidence": "verbatim"
     },
@@ -442,7 +445,7 @@
       "id": "prototype-dr2-1-source-p15-055",
       "statement": "The Edit button links to <address book>/<id>/edit and the Delete button to <address book>/<id>/delete, each carrying the view page's return path when it is not the list itself.",
       "kind": "behaviour",
-      "ref": "app/routes.js:9304-9310,9501,9511-9512",
+      "ref": "app/routes.js:10960,10970-10971,10763-10769",
       "quote": "editHref: addressBookEntry ? `${addressBookBasePath}/${encodedAddressId}/edit${returnQuery}` : null,",
       "confidence": "verbatim"
     },
@@ -450,7 +453,7 @@
       "id": "prototype-dr2-1-source-p15-056",
       "statement": "The edit page is served at GET /address-book/:addressId/edit; if the id is not in the address book it redirects to the return path or the list.",
       "kind": "behaviour",
-      "ref": "app/routes.js:9606-9619,11978-11980",
+      "ref": "app/routes.js:13769-13771,11105-11109",
       "quote": "if (!entry) {\n    return res.redirect(getSafeReturnPath(req.query.return, addressBookBasePath))\n  }",
       "confidence": "verbatim"
     },
@@ -458,7 +461,7 @@
       "id": "prototype-dr2-1-source-p15-057",
       "statement": "The edit page's heading is \"Edit address and contact details\".",
       "kind": "copy",
-      "ref": "app/routes.js:9630; app/views/address-book-lookup.html:37",
+      "ref": "app/routes.js:11120; app/views/address-book-lookup.html:39",
       "quote": "pageHeading: 'Edit address and contact details',",
       "confidence": "verbatim"
     },
@@ -466,15 +469,15 @@
       "id": "prototype-dr2-1-source-p15-058",
       "statement": "The edit page's \"Back\" link goes to the return path when given, otherwise to the address's view page.",
       "kind": "behaviour",
-      "ref": "app/routes.js:9610-9614,9627; app/views/address-book-lookup.html:18-21",
-      "quote": "const viewBackLink = getSafeReturnPath(\n    req.query.return,\n    `${addressBookBasePath}/${addressId}`,\n    addressBookBasePath\n  )",
+      "ref": "app/routes.js:11100-11104,11117",
+      "quote": "const viewBackLink = getSafeReturnPath(\n    req.query.return,\n    `${addressBookBasePath}/${addressId}`,",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p15-059",
       "statement": "In edit mode the address search and the \"Enter address manually\" link are hidden and the manual address fields are shown straight away.",
       "kind": "behaviour",
-      "ref": "app/routes.js:9636-9637; app/views/address-book-lookup.html:43,112,133-138",
+      "ref": "app/routes.js:11126-11127; app/views/address-book-lookup.html:51,120,141-146",
       "quote": "showManualAddress: true,\n    hideSearch: true,",
       "confidence": "verbatim"
     },
@@ -482,18 +485,9 @@
       "id": "prototype-dr2-1-source-p15-060",
       "statement": "The edit page is prefilled with the address's current details.",
       "kind": "behaviour",
-      "ref": "app/routes.js:9621-9622,9635",
+      "ref": "app/routes.js:11111-11112,11125",
       "quote": "const manualAddress = locals.manualAddress || details",
       "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p15-061",
-      "statement": "The address type cannot be changed on the edit page: it is posted as a hidden field, and the type select items the handler builds are not rendered.",
-      "kind": "behaviour",
-      "ref": "app/views/address-book-lookup.html:41; app/routes.js:9632-9634",
-      "quote": "<input type=\"hidden\" name=\"addressType\" value=\"{{ selectedAddressType }}\">",
-      "confidence": "inferred",
-      "note": "addressTypeItems and addressTypeLabel are passed to the view but address-book-lookup.html never uses them."
     },
     {
       "id": "prototype-dr2-1-source-p15-062",
@@ -515,7 +509,7 @@
       "id": "prototype-dr2-1-source-p15-064",
       "statement": "The \"Phone number\" field has the hint \"For international numbers include the country code\".",
       "kind": "copy",
-      "ref": "app/views/partials/address-book-manual-address-fields.html:104-106",
+      "ref": "app/views/partials/address-book-manual-address-fields.html:100-106",
       "quote": "text: \"For international numbers include the country code\"",
       "confidence": "verbatim"
     },
@@ -523,15 +517,15 @@
       "id": "prototype-dr2-1-source-p15-065",
       "statement": "The Country select lists United Kingdom with the service's country options, sorted alphabetically, with no blank \"Select\" option, and the address's country selected.",
       "kind": "data",
-      "ref": "app/routes.js:10412-10423,9638",
-      "quote": "const options = [\n    { value: 'United Kingdom', label: 'United Kingdom' },\n    ...countryOptions\n  ].sort((left, right) => left.label.localeCompare(right.label))",
+      "ref": "app/routes.js:11955-11966,11128",
+      "quote": "].sort((left, right) => left.label.localeCompare(right.label))",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p15-066",
       "statement": "The edit page's buttons are \"Save changes\" and a secondary \"Cancel\".",
       "kind": "copy",
-      "ref": "app/views/address-book-lookup.html:140-154",
+      "ref": "app/views/address-book-lookup.html:177-191",
       "quote": "text: \"Save changes\" if isEditMode else \"Save and continue\",",
       "confidence": "verbatim"
     },
@@ -539,7 +533,7 @@
       "id": "prototype-dr2-1-source-p15-067",
       "statement": "The edit form posts to <address book>/<id>/edit, carrying the return path when it is not the list.",
       "kind": "behaviour",
-      "ref": "app/routes.js:9631; app/views/address-book-lookup.html:40",
+      "ref": "app/routes.js:11113,11121; app/views/address-book-lookup.html:48",
       "quote": "formAction: `${addressBookBasePath}/${encodeURIComponent(addressId)}/edit${returnQuery}`,",
       "confidence": "verbatim"
     },
@@ -547,7 +541,7 @@
       "id": "prototype-dr2-1-source-p15-068",
       "statement": "Cancel on the edit page clears any errors and returns to the return path, by default the address's view page, without saving.",
       "kind": "behaviour",
-      "ref": "app/routes.js:11986-11990,11997-12002",
+      "ref": "app/routes.js:13777-13793",
       "quote": "if (action === 'cancel') {\n    req.session.data.errorList = null\n    req.session.data.errors = null\n\n    return res.redirect(returnPath)\n  }",
       "confidence": "verbatim"
     },
@@ -555,7 +549,7 @@
       "id": "prototype-dr2-1-source-p15-069",
       "statement": "Posting the edit form for an id that is not in the address book redirects to the return path or the list without saving.",
       "kind": "behaviour",
-      "ref": "app/routes.js:11991-11995",
+      "ref": "app/routes.js:13782-13786",
       "quote": "if (!entry) {\n    return res.redirect(getSafeReturnPath(req.query.return, addressBookBasePath))\n  }",
       "confidence": "verbatim"
     },
@@ -563,7 +557,7 @@
       "id": "prototype-dr2-1-source-p15-070",
       "statement": "Every edit field is trimmed of surrounding spaces before it is validated and saved.",
       "kind": "rule",
-      "ref": "app/routes.js:10471-10483",
+      "ref": "app/routes.js:12015-12027",
       "quote": "nameOrOrganisation: (body.addressBookManualName || '').trim(),",
       "confidence": "verbatim"
     },
@@ -571,7 +565,7 @@
       "id": "prototype-dr2-1-source-p15-071",
       "statement": "If \"Name or organisation name\" is empty, the error is \"Enter a name or organisation name\".",
       "kind": "rule",
-      "ref": "app/routes.js:10494-10496",
+      "ref": "app/routes.js:12038-12040",
       "quote": "addError('addressBookManualName', 'Enter a name or organisation name', '#address-book-manual-name')",
       "confidence": "verbatim"
     },
@@ -579,7 +573,7 @@
       "id": "prototype-dr2-1-source-p15-072",
       "statement": "If \"Address line 1\" is empty, the error is \"Enter address line 1\".",
       "kind": "rule",
-      "ref": "app/routes.js:10498-10500",
+      "ref": "app/routes.js:12042-12044",
       "quote": "addError('addressBookManualAddressLine1', 'Enter address line 1', '#address-book-manual-address-line-1')",
       "confidence": "verbatim"
     },
@@ -587,7 +581,7 @@
       "id": "prototype-dr2-1-source-p15-073",
       "statement": "If \"Town or city\" is empty, the error is \"Enter a town or city\".",
       "kind": "rule",
-      "ref": "app/routes.js:10502-10504",
+      "ref": "app/routes.js:12046-12048",
       "quote": "addError('addressBookManualTownOrCity', 'Enter a town or city', '#address-book-manual-town-or-city')",
       "confidence": "verbatim"
     },
@@ -595,7 +589,7 @@
       "id": "prototype-dr2-1-source-p15-074",
       "statement": "If \"Postcode or Zip code\" is empty, the error is \"Enter a postcode or Zip code\".",
       "kind": "rule",
-      "ref": "app/routes.js:10506-10508",
+      "ref": "app/routes.js:12050-12052",
       "quote": "addError('addressBookManualPostcode', 'Enter a postcode or Zip code', '#address-book-manual-postcode')",
       "confidence": "verbatim"
     },
@@ -603,7 +597,7 @@
       "id": "prototype-dr2-1-source-p15-075",
       "statement": "If \"Country\" is empty, the error is \"Select a country\".",
       "kind": "rule",
-      "ref": "app/routes.js:10510-10512",
+      "ref": "app/routes.js:12054-12056",
       "quote": "addError('addressBookManualCountry', 'Select a country', '#address-book-manual-country')",
       "confidence": "verbatim"
     },
@@ -611,7 +605,7 @@
       "id": "prototype-dr2-1-source-p15-076",
       "statement": "If \"Email address\" is empty, the error is \"Enter an email address\".",
       "kind": "rule",
-      "ref": "app/routes.js:10514-10516",
+      "ref": "app/routes.js:12058-12060",
       "quote": "addError('addressBookManualEmail', 'Enter an email address', '#address-book-manual-email')",
       "confidence": "verbatim"
     },
@@ -619,7 +613,7 @@
       "id": "prototype-dr2-1-source-p15-077",
       "statement": "If \"Phone number\" is empty, the error is \"Enter a phone number\".",
       "kind": "rule",
-      "ref": "app/routes.js:10518-10520",
+      "ref": "app/routes.js:12062-12064",
       "quote": "addError('addressBookManualPhone', 'Enter a phone number', '#address-book-manual-phone')",
       "confidence": "verbatim"
     },
@@ -627,8 +621,8 @@
       "id": "prototype-dr2-1-source-p15-078",
       "statement": "\"Address line 2 (optional)\" and \"County (optional)\" are not validated and may be left blank.",
       "kind": "rule",
-      "ref": "app/routes.js:10485-10523",
-      "quote": "label: {\n      text: \"Address line 2 (optional)\"\n    },",
+      "ref": "app/routes.js:12029-12067; app/views/partials/address-book-manual-address-fields.html:31,53",
+      "quote": "text: \"Address line 2 (optional)\"",
       "confidence": "inferred",
       "note": "validateAddressBookManualAddress has no check for addressLine2 or county."
     },
@@ -636,7 +630,7 @@
       "id": "prototype-dr2-1-source-p15-079",
       "statement": "The source checks only that each required field is filled; it sets no format rule or message for email address, phone number or postcode, and no maximum lengths.",
       "kind": "rule",
-      "ref": "app/routes.js:10485-10523",
+      "ref": "app/routes.js:12029-12067",
       "quote": "",
       "confidence": "gap",
       "note": "Looked in validateAddressBookManualAddress; only presence checks exist."
@@ -645,57 +639,42 @@
       "id": "prototype-dr2-1-source-p15-080",
       "statement": "On a validation error the edit page is shown again with an error summary titled \"There is a problem\", each error linked to its field, the message shown on the field, and the values the user entered kept.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12007-12014; app/views/address-book-lookup.html:28-33; app/views/partials/address-book-manual-address-fields.html:15",
-      "quote": "titleText: \"There is a problem\",",
+      "ref": "app/views/address-book-lookup.html:30-35; app/routes.js:13811-13819",
+      "quote": "return renderAddressBookEditPage(req, res, {\n      manualAddress: validation.value,",
       "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p15-081",
-      "statement": "When the edit is valid it replaces the address's details, keeps its primary address type, and returns the user to the address book list (its default tab), not the view page.",
-      "kind": "behaviour",
-      "ref": "app/routes.js:12016-12021,9556-9581",
-      "quote": "updateAddressBookEntry(req.session.data, addressId, validation.value, entry.type)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p15-082",
-      "statement": "Editing an address with several types saves it with only its first type, so it loses its other types.",
-      "kind": "behaviour",
-      "ref": "app/routes.js:12016,9681-9707",
-      "quote": "const addressTypes = (Array.isArray(addressTypeOrTypes)\n    ? addressTypeOrTypes\n    : [addressTypeOrTypes]\n  )",
-      "confidence": "inferred",
-      "note": "entry.type is the primary type only; buildAddressBookEntryFromManual then sets types to that one value. Looks like a prototype defect, recorded as observed."
     },
     {
       "id": "prototype-dr2-1-source-p15-083",
       "statement": "After a valid edit the list shows a success banner reading \"<Name> address updated\", with the name's first letter capitalised and the rest lower-cased, or \"Address updated\" when the name is blank.",
       "kind": "copy",
-      "ref": "app/routes.js:9661-9669,12019",
-      "quote": "return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1).toLowerCase()} address updated`",
-      "confidence": "verbatim"
+      "ref": "app/routes.js:11153-11161,13830",
+      "quote": "return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1).toLowerCase()} address updated.`",
+      "confidence": "verbatim",
+      "note": "The banner text ends with a full stop: \"address updated.\" and \"Address updated.\"."
     },
     {
       "id": "prototype-dr2-1-source-p15-084",
       "statement": "An edited address's formatted address joins address line 1, address line 2, town or city, county and postcode with commas, leaving out blanks; the country is kept separately.",
       "kind": "data",
-      "ref": "app/routes.js:9691-9698",
+      "ref": "app/routes.js:11183-11201",
       "quote": "const formattedAddress = addressParts.join(', ')",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "mechanism: joins the manual fields into one address string for the list."
     },
     {
       "id": "prototype-dr2-1-source-p15-085",
       "statement": "For a seeded address, an edit is merged over the original without replacing its stored address lines, so the list's Address column and the delete page can still show the old address lines after an edit.",
       "kind": "behaviour",
-      "ref": "app/routes.js:9268-9274,9700-9727; app/views/address-book.html:222-230",
+      "ref": "app/routes.js:10727-10733,11065-11068,11192-11219; app/views/address-book.html:222-230; app/routes.js:7229-7231",
       "quote": "const merged = updated\n      ? {\n        ...address,\n        ...updated,",
       "confidence": "inferred",
-      "note": "buildAddressBookEntryFromManual sets address but not addressLines; the template prefers addressLines. Prototype defect, recorded as observed."
+      "note": "mechanism: merges a session edit over a seeded address. buildAddressBookEntryFromManual sets address but not addressLines; the template and the delete row prefer addressLines. Prototype defect, recorded as observed."
     },
     {
       "id": "prototype-dr2-1-source-p15-086",
       "statement": "The delete page is served at GET /address-book/:addressId/delete; if the id is not in the address book it redirects to the return path or the list.",
       "kind": "behaviour",
-      "ref": "app/routes.js:9532-9540,12024-12026",
+      "ref": "app/routes.js:13835-13837,11022-11030",
       "quote": "if (!entry) {\n    return res.redirect(returnPath)\n  }",
       "confidence": "verbatim"
     },
@@ -703,7 +682,7 @@
       "id": "prototype-dr2-1-source-p15-087",
       "statement": "Design Release 2.1 overrides the delete-address view with its own, which uses the journey layout and an Alpha phase banner.",
       "kind": "behaviour",
-      "ref": "app/views/design-release-2.1/delete-address.html:1,10-15",
+      "ref": "app/views/design-release-2.1/delete-address.html:1,11-16",
       "quote": "{% extends \"layouts/journey.html\" %}",
       "confidence": "verbatim"
     },
@@ -711,7 +690,7 @@
       "id": "prototype-dr2-1-source-p15-088",
       "statement": "The delete page's heading is \"Delete this address?\".",
       "kind": "copy",
-      "ref": "app/routes.js:9547; app/views/partials/design-release-2.1/delete-confirmation.html:4",
+      "ref": "app/routes.js:11037; app/views/partials/design-release-2.1/delete-confirmation.html:5",
       "quote": "pageName: 'Delete this address?',",
       "confidence": "verbatim"
     },
@@ -719,39 +698,33 @@
       "id": "prototype-dr2-1-source-p15-089",
       "statement": "The delete page shows a summary list with one row, \"Address\", holding the name, each address line and the country on separate lines, leaving out any line that repeats one already shown (ignoring case).",
       "kind": "data",
-      "ref": "app/routes.js:6209-6265",
+      "ref": "app/routes.js:7221-7277",
       "quote": "buildDeleteSummaryRow('Address', formatDeleteAddressHtml(entry), { html: true })",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "mechanism: drops repeated lines (case-insensitive) when listing an address for the delete page."
     },
     {
       "id": "prototype-dr2-1-source-p15-090",
       "statement": "When the address has no name, lines or country, the delete page's Address row falls back to its manual-field details, and failing those shows \"Not applicable\".",
       "kind": "rule",
-      "ref": "app/routes.js:6235-6256",
+      "ref": "app/routes.js:7247-7268",
       "quote": "if (!lines.length) {\n    return escapeHtml('Not applicable')\n  }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-source-p15-091",
-      "statement": "Below the summary the delete page says \"Confirm that you want to delete this address.\" and \"This action cannot be undone.\"",
-      "kind": "copy",
-      "ref": "app/routes.js:9548; app/views/partials/design-release-2.1/delete-confirmation.html:10-11",
-      "quote": "<p class=\"govuk-body\">This action cannot be undone.</p>",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "mechanism: fallback text for an address with nothing to show."
     },
     {
       "id": "prototype-dr2-1-source-p15-092",
       "statement": "The delete page has a warning button \"Yes, delete\" that posts to <address book>/<id>/delete, carrying the return path when it is not the list.",
       "kind": "behaviour",
-      "ref": "app/views/partials/design-release-2.1/delete-confirmation.html:13-18; app/routes.js:9552",
-      "quote": "text: \"Yes, delete\",\n      classes: \"govuk-button--warning\"",
+      "ref": "app/views/partials/design-release-2.1/delete-confirmation.html:22-27; app/routes.js:11042",
+      "quote": "deleteAction: `${addressBookBasePath}/${encodedAddressId}/delete${returnQuery}`",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-source-p15-093",
       "statement": "The delete page has a \"No, cancel\" link and a \"Back\" link, both to the address's view page with the return path carried on.",
       "kind": "behaviour",
-      "ref": "app/views/partials/design-release-2.1/delete-confirmation.html:20; app/views/design-release-2.1/delete-address.html:17-20; app/routes.js:9551",
+      "ref": "app/views/partials/design-release-2.1/delete-confirmation.html:29; app/views/design-release-2.1/delete-address.html:18-21; app/routes.js:11041",
       "quote": "backLink: `${addressBookBasePath}/${encodedAddressId}${returnQuery}`,",
       "confidence": "verbatim"
     },
@@ -759,7 +732,7 @@
       "id": "prototype-dr2-1-source-p15-094",
       "statement": "Confirming the delete removes the address from the address book: an address added this session is removed outright, and a seeded address is recorded as deleted and any edit to it discarded.",
       "kind": "behaviour",
-      "ref": "app/routes.js:9583-9604,12034-12035",
+      "ref": "app/routes.js:11073-11094,13839-13848",
       "quote": "if (!sessionData.addressBookDeletedAddressIds.includes(addressId)) {\n      sessionData.addressBookDeletedAddressIds.push(addressId)\n    }",
       "confidence": "verbatim"
     },
@@ -767,15 +740,16 @@
       "id": "prototype-dr2-1-source-p15-095",
       "statement": "After a delete the list shows a success banner reading \"<Name> address deleted\", with the name's first letter capitalised and the rest lower-cased, or \"Address deleted\" when the name is blank.",
       "kind": "copy",
-      "ref": "app/routes.js:9671-9679,12036",
-      "quote": "return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1).toLowerCase()} address deleted`",
-      "confidence": "verbatim"
+      "ref": "app/routes.js:11163-11171,13847",
+      "quote": "return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1).toLowerCase()} address deleted.`",
+      "confidence": "verbatim",
+      "note": "The banner text ends with a full stop: \"address deleted.\" and \"Address deleted.\"."
     },
     {
       "id": "prototype-dr2-1-source-p15-096",
       "statement": "After a delete the user goes to the return path, unless that path is the deleted address's own pages, in which case they go to the address book list.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12031,12039",
+      "ref": "app/routes.js:13850",
       "quote": "return res.redirect(returnPath.startsWith(`${addressBookBasePath}/${addressId}`) ? addressBookBasePath : returnPath)",
       "confidence": "verbatim"
     },
@@ -783,7 +757,7 @@
       "id": "prototype-dr2-1-source-p15-097",
       "statement": "Posting a delete for an id that is not in the address book changes nothing, shows no banner and redirects as a delete would.",
       "kind": "behaviour",
-      "ref": "app/routes.js:12034-12039",
+      "ref": "app/routes.js:13843-13850",
       "quote": "if (entry) {\n    deleteAddressBookEntry(req.session.data, entry.id)",
       "confidence": "verbatim"
     },
@@ -791,10 +765,10 @@
       "id": "prototype-dr2-1-source-p15-098",
       "statement": "The source gives the delete action no extra check, such as whether the address is in use on a notification.",
       "kind": "rule",
-      "ref": "app/routes.js:12028-12040",
+      "ref": "app/routes.js:13839-13851,11073-11094",
       "quote": "",
       "confidence": "gap",
-      "note": "Looked at the POST delete handler and deleteAddressBookEntry; nothing considers notifications that use the address."
+      "note": "Looked at the POST delete handler and deleteAddressBookEntry; nothing considers notifications that use the address. The page's inset says existing notifications keep it (see the delete inset claim)."
     },
     {
       "id": "prototype-dr2-1-source-p15-099",
@@ -808,9 +782,10 @@
       "id": "prototype-dr2-1-source-p15-100",
       "statement": "Each seeded address's id is its source id followed by a hyphen and its position, and its view link is /address-book/<id>.",
       "kind": "data",
-      "ref": "app/data/address-book.js:351-359",
+      "ref": "app/data/address-book.js:349-359",
       "quote": "const id = `${address.id}-${index}`",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "mechanism: the list rewrites each view link to the Design Release's base path (routes.js:10732-10736)."
     },
     {
       "id": "prototype-dr2-1-source-p15-101",
@@ -834,7 +809,8 @@
       "kind": "data",
       "ref": "app/data/address-book.js:361-409",
       "quote": "ensureCategoryCount('origin-and-consignor', 16)\nensureCategoryCount('destination-consignee-importer', 16)\nensureCategoryCount('transporter', 8)\nensureCategoryCount('branch', 3)",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "mechanism: prototype seed padding so the tabs have enough rows to paginate."
     },
     {
       "id": "prototype-dr2-1-source-p15-104",
@@ -850,7 +826,7 @@
       "statement": "Address type \"Place of Origin\" (place-of-origin) has the hint \"The address where the animals begin their journey to Great Britain\".",
       "kind": "data",
       "ref": "app/data/address-book-address-types.js:2-6",
-      "quote": "text: 'Place of Origin',\n    hint: 'The address where the animals begin their journey to Great Britain'",
+      "quote": "hint: 'The address where the animals begin their journey to Great Britain'",
       "confidence": "verbatim"
     },
     {
@@ -905,8 +881,175 @@
       "id": "prototype-dr2-1-source-p15-112",
       "statement": "Every view, edit and delete page sets the service navigation's active item to the address book.",
       "kind": "behaviour",
-      "ref": "app/routes.js:9505,9546,9626,10000",
+      "ref": "app/routes.js:10964,11036,11116,11492",
       "quote": "serviceNavActive: 'address-book',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-113",
+      "statement": "In Design Release 2.1 the edit page shows an inset under its heading reading \"Changing the address here will not affect existing notifications\".",
+      "kind": "copy",
+      "ref": "app/views/address-book-lookup.html:42-46",
+      "quote": "text: \"Changing the address here will not affect existing notifications\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-114",
+      "statement": "In Design Release 2.1 the edit page shows checkboxes below the address fields with the legend \"What can this address be used for?\" and the hint \"Select all that apply.\"",
+      "kind": "copy",
+      "ref": "app/views/address-book-lookup.html:148-175; app/routes.js:11129",
+      "quote": "text: \"What can this address be used for?\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-115",
+      "statement": "The uses checkboxes appear only when the address's category offers more than one use: Origin and Consignor and Destination, Consignee and Importer addresses get them, Branch and Transporter addresses do not.",
+      "kind": "rule",
+      "ref": "app/routes.js:11531-11535,11582-11586; app/data/address-book-branch-uses.js",
+      "quote": "return options.length > 1 ? options : []",
+      "confidence": "verbatim",
+      "note": "Branch has one use (\"Branch address\") and Transporter none, so neither gets the checkboxes."
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-116",
+      "statement": "For an Origin and Consignor address the uses are \"Place of origin\" with the hint \"The address where the animals begin their journey to Great Britain.\" and \"Consignor\" with the hint \"This is the sender of the consignment.\"",
+      "kind": "data",
+      "ref": "app/data/address-book-origin-uses.js",
+      "quote": "text: 'Place of origin',\n    hint: 'The address where the animals begin their journey to Great Britain.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-117",
+      "statement": "For a Destination, Consignee and Importer address the uses are \"Place of destination\" (hint \"This is where the animals will be unloaded and accommodated for at least 48 hours.\"), \"Consignee\" (hint \"This is the receiver or buyer of the consignment being shipped or transported.\") and \"Importer\" (hint \"This is usually the same as the consignee. You can select a different person if needed.\").",
+      "kind": "data",
+      "ref": "app/data/address-book-destination-uses.js",
+      "quote": "text: 'Place of destination',\n    hint: 'This is where the animals will be unloaded and accommodated for at least 48 hours.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-118",
+      "statement": "The uses checkboxes start with the address's current uses ticked, with consignor-or-exporter and exporter counted as Consignor.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11130,11563-11580; app/views/address-book-lookup.html:156",
+      "quote": "const ADDRESS_BOOK_USE_ALIASES = {\n  'consignor-or-exporter': 'consignor',\n  exporter: 'consignor'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-119",
+      "statement": "If the uses checkboxes are shown and none is ticked, the error is \"Select what this address can be used for\", linked from the error summary to #addressUses, and the page keeps what the user entered.",
+      "kind": "rule",
+      "ref": "app/routes.js:13803-13819",
+      "quote": "validation.errors.addressUses = { text: 'Select what this address can be used for' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-120",
+      "statement": "Only uses that belong to the address's own category are accepted from the uses checkboxes; any other posted value is ignored.",
+      "kind": "rule",
+      "ref": "app/routes.js:11600-11611,13799-13801",
+      "quote": ".filter((value) => allowedValues.has(value))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-121",
+      "statement": "When the edit is valid it replaces the address's details, saves the ticked uses as its types (or keeps all its existing types where its uses cannot be changed), and returns the user to the address book list (its default tab), not the view page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:13821-13832",
+      "quote": "const addressTypes = canChangeUses\n    ? selectedAddressUses\n    : (hasUpdates ? entry.types : entry.type)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-122",
+      "statement": "An address's main type cannot be picked on the edit page: it is posted as a hidden field and the type select items the handler builds are not rendered, so only the uses checkboxes change what an address is.",
+      "kind": "behaviour",
+      "ref": "app/views/address-book-lookup.html:49; app/routes.js:11122-11124",
+      "quote": "<input type=\"hidden\" name=\"addressType\" value=\"{{ selectedAddressType }}\">",
+      "confidence": "inferred",
+      "note": "addressTypeItems and addressTypeLabel are passed to the view but address-book-lookup.html never uses them."
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-123",
+      "statement": "After an edit the address's first ticked use, in the checkboxes' order, becomes its main type, which decides its category.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11173-11199,11600-11611",
+      "quote": "const primaryType = addressTypes[0] || ''",
+      "confidence": "inferred",
+      "note": "mechanism: picks the primary type from the saved uses. Inferred: the order of posted checkbox values is the form's order."
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-124",
+      "statement": "An edited address's type labels come from the uses lists, so an edited branch shows \"Branch address\" in the Type column where a seeded one shows \"Branch\".",
+      "kind": "copy",
+      "ref": "app/routes.js:11181-11182,11830-11845; app/data/address-book-branch-uses.js",
+      "quote": "text: 'Branch address',",
+      "confidence": "inferred",
+      "note": "mechanism: labels saved types for the list. The uses lists' labels win over the address book's own labels."
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-125",
+      "statement": "Editing a transporter replaces its Commercial or Private type label with \"Transporter\", so it then shows \"Transporter\" in the Type column and no longer matches the Transporter tab's Commercial or Private filter.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11181-11182,10691-10693,11838-11840",
+      "quote": "if (addressBookData.typeLabels[addressType]) {\n    return addressBookData.typeLabels[addressType]\n  }",
+      "confidence": "inferred",
+      "note": "mechanism: buildAddressBookEntryFromManual rebuilds typeLabel from the type 'transporter'. Prototype defect, recorded as observed."
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-126",
+      "statement": "For a seeded address, an edit does not replace the stored two-line name split, so the Name column can still show the old name after the name is changed.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10727-10733,11192-11219; app/views/address-book.html:195-203",
+      "quote": "{% if address.nameLines and address.nameLines.length > 1 %}",
+      "confidence": "inferred",
+      "note": "mechanism: buildAddressBookEntryFromManual sets name but not nameLines, and the merge keeps the seeded nameLines. Prototype defect, recorded as observed."
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-127",
+      "statement": "In Design Release 2.1 the view page of an address in the address book adds a last row, \"Address can be used for\", listing its use labels one per line.",
+      "kind": "data",
+      "ref": "app/routes.js:11000-11013",
+      "quote": "key: { text: 'Address can be used for' },\n        value: { html: useLabels.map(escapeHtml).join('<br>') }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-128",
+      "statement": "In Design Release 2.1, when the view page is reached from outside the address book (such as choosing an address in a notification), it shows an inset reading \"You can only edit this address in the address book\".",
+      "kind": "copy",
+      "ref": "app/views/address-book-view.html:31-35; app/routes.js:10975-10985,11017-11018",
+      "quote": "text: \"You can only edit this address in the address book\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-129",
+      "statement": "The \"You can only edit this address in the address book\" inset does not hide the Edit and Delete buttons: an address book entry still shows both.",
+      "kind": "behaviour",
+      "ref": "app/views/address-book-view.html:31-56",
+      "quote": "{% if canManage %}",
+      "confidence": "inferred",
+      "note": "The two conditions are independent in the template."
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-130",
+      "statement": "The delete page shows an inset between its heading and the summary list reading \"This will not remove the address from existing notifications.\"",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/delete-address.html:7-8; app/views/partials/design-release-2.1/delete-confirmation.html:7-11; app/routes.js:11038",
+      "quote": "confirmText: 'This will not remove the address from existing notifications.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-131",
+      "statement": "Below the summary list the delete page says \"This action cannot be undone.\"",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/delete-confirmation.html:20",
+      "quote": "<p class=\"govuk-body\">This action cannot be undone.</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p15-132",
+      "statement": "The view, edit and delete pages each show an Alpha phase banner and a \"Back\" link.",
+      "kind": "copy",
+      "ref": "app/views/address-book-view.html:12-22; app/views/address-book-lookup.html:13-23; app/views/design-release-2.1/delete-address.html:11-21",
+      "quote": "{{ govukBackLink({\n    text: \"Back\",\n    href: backLink\n  }) }}",
       "confidence": "verbatim"
     }
   ]

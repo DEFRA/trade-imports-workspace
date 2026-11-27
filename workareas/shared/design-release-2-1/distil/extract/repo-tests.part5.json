@@ -1,6 +1,6 @@
 {
   "source": "repo:tests",
-  "structure": "Part 5: animals e2e/features, accompanying documents and promoted notifications. Read in full: the 11 flat specs tests/animals/e2e/features/documents-entry.spec.ts (24 lines), documents-save-buttons.spec.ts (104), documents-limits.spec.ts (69), documents-reject.spec.ts (24), documents-scan-lifecycle.spec.ts (83), documents-two-tabs.spec.ts (67), documents-back-button.spec.ts (38), documents-refresh-no-js.spec.ts (53), documents-large-uploads.spec.ts (37), promoted-documents.spec.ts (62) and promoted-lifecycle.spec.ts (97); and as support context page-objects/animals/accompanying-documents-page.ts, notification-view-page.ts and overview-page.ts, page-objects/shared/base-page.ts, view-header.ts and govuk-banners.ts, domain/animals/constants/document-types.ts, domain/animals/types/accompanying-document.ts, domain/animals/models/db/accompanying-document.ts, flows/animals/journey.ts and notification-actions.ts, fixtures/ui.ts, utils/eicar-upload.ts, synthetic-file-writer.ts and scan-status.ts, config/file-upload-timeouts.ts and every file under resources/file-upload. Also read, for the meaning of the tags these specs carry, the tag paragraphs of the repo README (@duplicated-in-frontend, @compose, @cross-browser) and, for support values the specs reach through, page-objects/shared/sets.ts, page-objects/shared/date-picker.ts, domain/animals/constants/journey-options.ts (the document answers) and domain/animals/models/api/notification-status.ts.\n\nThe nine documents-*.spec.ts files hold 17 literal test() declarations, which run as 27 tests because documents-save-buttons.spec.ts (5 declarations, one of them inside a loop over the three save buttons) and documents-back-button.spec.ts (1 declaration) are each wrapped in a loop over 'with JavaScript' and 'without JavaScript'. promoted-documents.spec.ts holds 3 and promoted-lifecycle.spec.ts 4. The partition's covers line states 40, 6 and 8 for these three groups; the files on disk hold the counts above, and every test in all 11 files has a claim here.\n\nCovered: the Upload documents page (its route and entry from the Overview task list, its heading, every field with its label and component, the three save buttons and the added-documents table with all five columns and its two row actions); every validation and refusal message these specs prove verbatim; the 15-document cap and the 50MB file-size cap with its exact-boundary and one-byte-over cases; the whole virus-scan lifecycle (pending, clean, infected) with the wording each state shows and what the review page says about a rejected document; what each save button lands on; the no-JavaScript paths (the refresh fallback, the browser back button, two tabs); the promoted-notification document integration (download headers, byte fidelity, removal); and the notification lifecycle statuses promoted-lifecycle.spec.ts drives through the backend API. Gaps recorded where the constants and helpers in scope name a document type, file type, limit, status or stored field that no test in this slice asserts.",
+  "structure": "Part 5: animals e2e/features, accompanying documents and promoted notifications. Read in full: the 11 flat specs tests/animals/e2e/features/documents-entry.spec.ts (24 lines), documents-save-buttons.spec.ts (104), documents-limits.spec.ts (69), documents-reject.spec.ts (24), documents-scan-lifecycle.spec.ts (83), documents-two-tabs.spec.ts (67), documents-back-button.spec.ts (38), documents-refresh-no-js.spec.ts (53), documents-large-uploads.spec.ts (37), promoted-documents.spec.ts (62) and promoted-lifecycle.spec.ts (97); and as support context page-objects/animals/accompanying-documents-page.ts (122), notification-view-page.ts (155) and overview-page.ts (65), page-objects/shared/base-page.ts (381), view-header.ts (70) and govuk-banners.ts (9), domain/animals/constants/document-types.ts (26), domain/animals/types/accompanying-document.ts (9), domain/animals/models/db/accompanying-document.ts (27), flows/animals/journey.ts (1063) and notification-actions.ts (84), fixtures/ui.ts (262), utils/eicar-upload.ts (15), synthetic-file-writer.ts (91) and scan-status.ts (28), config/file-upload-timeouts.ts (11) and every file under resources/file-upload (constants.ts, paths.ts, padded-pdf.ts, restricted-file-10b.txt and seven binary fixtures). Also read, for the meaning of the tags these specs carry, the tag lines of the repo README (@duplicated-in-frontend, @compose, @cross-browser) and, for support values the specs reach through, page-objects/shared/sets.ts, page-objects/shared/date-picker.ts, domain/animals/constants/journey-options.ts (the document answers) and domain/animals/models/api/notification-status.ts.\n\nThe nine documents-*.spec.ts files hold 17 literal test() declarations, which run as 27 tests because documents-save-buttons.spec.ts (5 declarations, one of them inside a loop over the three save buttons, so 7 tests per mode) and documents-back-button.spec.ts (1 declaration) are each wrapped in a loop over 'with JavaScript' and 'without JavaScript'. promoted-documents.spec.ts holds 3 tests and promoted-lifecycle.spec.ts 4. Every test in all 11 files has a claim here. The 11 spec files are unchanged since the earlier extract; journey.ts has moved (its line numbers shifted, and the Overview task lists and the Save-and-continue chain now end at Consignment addresses with no contact address step), and the README's npm test row now also excludes @active and @dynamics, so those refs and quotes are refreshed and two new claims record the new ends of the task list and the chain.\n\nCovered: the Upload documents page (its route and entry from the Overview task list, its heading, every field with its label and component, the three save buttons and the added-documents table with all five columns and its two row actions); every validation and refusal message these specs prove verbatim; the 15-document cap and the 50MB file-size cap with its exact-boundary and one-byte-over cases; the whole virus-scan lifecycle (pending, clean, infected) with the wording each state shows and what the review page says about a rejected document; what each save button lands on; the no-JavaScript paths (the refresh fallback, the browser back button, two tabs); the promoted-notification document integration (download headers, byte fidelity, removal); and the notification lifecycle statuses promoted-lifecycle.spec.ts drives through the backend API. Gaps recorded where the constants and helpers in scope name a document type, file type, limit, status or stored field that no test in this slice asserts.",
   "claims": [
     {
       "id": "repo-tests-p5-001",
@@ -31,7 +31,7 @@
       "id": "repo-tests-p5-004",
       "statement": "The shared route every documents spec takes to the page saves the origin, answers the commodity, then opens the Overview task \"Upload documents\", so the page is reached mid-journey rather than as the first page.",
       "kind": "behaviour",
-      "ref": "flows/animals/journey.ts:351-356",
+      "ref": "flows/animals/journey.ts:361-366",
       "quote": "async toAccompanyingDocuments(): Promise<void> {\n    await this.startNotification();\n    await this.answerCommodity();\n    await this.animalsPages.overview.task('Upload documents').click();\n    await this.animalsPages.accompanyingDocuments.heading.waitFor(pageLoadWait);\n  }",
       "confidence": "verbatim"
     },
@@ -474,7 +474,7 @@
       "id": "repo-tests-p5-058",
       "statement": "The document the download and listing tests add is of type VETERINARY_HEALTH_CERTIFICATE dated 03/01/2026, so a second document type beyond ITAHC is exercised end to end.",
       "kind": "data",
-      "ref": "flows/animals/journey.ts:424-428, domain/animals/constants/journey-options.ts:138-153, domain/animals/constants/document-types.ts:1-4",
+      "ref": "flows/animals/journey.ts:432-436, domain/animals/constants/journey-options.ts:134-150, domain/animals/constants/document-types.ts:1-4",
       "quote": "async uploadScannedDocument(): Promise<Locator> {\n    const reference = timestampedReference('PW');\n    await this.animalsPages.accompanyingDocuments.uploadDocumentAndWaitForScan({ ...ALL_ANSWERS.accompanyingDocument, reference });\n…\n  accompanyingDocument: { ...ITAHC_DOCUMENT, reference: 'DOCREF0001', type: documentTypes.veterinaryHealthCertificate },\n…\nexport const documentTypes = {\n  itahc: 'ITAHC',\n  veterinaryHealthCertificate: 'VETERINARY_HEALTH_CERTIFICATE',\n} as const;",
       "confidence": "verbatim",
       "note": "ITAHC is the default the page object picks when a test names no type (accompanying-documents-page.ts:111-116)."
@@ -484,14 +484,14 @@
       "statement": "The document download, listing and unsupported-type tests run only against the local compose stack, not in the default deployed-environment run, because they carry the @compose tag.",
       "kind": "constraint",
       "ref": "tests/animals/e2e/features/promoted-documents.spec.ts:6, README.md lines 83, 88 and 372",
-      "quote": "test.describe('Promoted accompanying documents integration', { tag: '@compose' }, () => {\n…\n| `npm test`                                    | E2E suite, excluding `@compose` and `@a11y`            | CDP                  |\n…\n| `npm run test:docker-compose`                 | E2E + E2E integration (`@compose`) test suites         | docker-compose stack |",
+      "quote": "test.describe('Promoted accompanying documents integration', { tag: '@compose' }, () => {\n…\n| `npm test`                                    | E2E suite, excluding `@compose`, `@a11y`, `@active` and `@dynamics` | CDP                                   | `playwright.config.ts`                | ✓                |\n…\n| `npm run test:docker-compose`                 | E2E + E2E integration (`@compose`) test suites                      | docker-compose stack                  | `playwright.docker-compose.config.ts` | ✓                |",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p5-060",
       "statement": "The spec titled \"Promoted accompanying documents integration\" exercises a draft notification, not a submitted one: it reaches the documents page through the ordinary draft route.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/features/promoted-documents.spec.ts:6-9, flows/animals/journey.ts:351-356",
+      "ref": "tests/animals/e2e/features/promoted-documents.spec.ts:6-9, flows/animals/journey.ts:361-366",
       "quote": "test.describe('Promoted accompanying documents integration', { tag: '@compose' }, () => {\n  test('uploads, scans, downloads and removes a document', async ({ animalsJourney, pages, animalsPages }) => {\n    test.slow();\n    await animalsJourney.toAccompanyingDocuments();",
       "confidence": "inferred",
       "note": "toAccompanyingDocuments starts a new notification and never submits it, so nothing in this spec proves what a submitted notification's documents allow."
@@ -520,7 +520,7 @@
       "ref": "tests/animals/e2e/features/promoted-lifecycle.spec.ts:10-18",
       "quote": "const notification = await notificationApi.createNotification({ fulfilments: [] });\n…\n    expect(notification.status).toBe(notificationStatuses.draft);\n\n    const initial = await notificationApi.getNotificationFulfilments(id);\n    expect(initial.referenceNumber).toBe(id);\n    expect(initial.status).toBe(notificationStatuses.draft);\n    expect(initial.fulfilments).toEqual([]);",
       "confidence": "verbatim",
-      "note": "A notification submitted without an ITAHC is allowed: the test's title names that case and no refusal follows."
+      "note": "A notification submitted without an ITAHC is allowed: the test's title names that case and no refusal follows. The test is titled 'records a notification submitted without an ITAHC as Submitted through amend and cancel, then copies it into distinct drafts and soft-deletes it'."
     },
     {
       "id": "repo-tests-p5-064",
@@ -712,7 +712,7 @@
       "id": "repo-tests-p5-086",
       "statement": "The documents page also carries a plain \"Continue\" button, which the shared journey flows click to leave the page, but no test in this slice says when it is shown instead of the three save controls.",
       "kind": "behaviour",
-      "ref": "page-objects/animals/accompanying-documents-page.ts:49-51, flows/animals/journey.ts:858-859 and 876-878",
+      "ref": "page-objects/animals/accompanying-documents-page.ts:49-51, flows/animals/journey.ts:830-831 and 848-850",
       "quote": "get continueButton(): Locator {\n    return this.page.getByRole('button', { name: 'Continue' });\n  }\n…\n    await pages.accompanyingDocuments.heading.waitFor(pageLoadWait);\n    await pages.accompanyingDocuments.continueButton.click();",
       "confidence": "inferred",
       "note": "Clicked only by the straight-through journey walks, which belong to another part; the specs in this part only ever use Save and add another, Save and continue or Save and return to overview."
@@ -738,16 +738,16 @@
       "id": "repo-tests-p5-089",
       "statement": "The Overview task list names the documents step \"Upload documents\", placed after \"Transport details\" and before the consignment addresses, in both the air-or-sea and the overland orders.",
       "kind": "data",
-      "ref": "flows/animals/journey.ts:74-101",
-      "quote": "export const AIR_OR_SEA_OVERVIEW_TASKS = [\n…\n  'Transport details',\n  'Upload documents',\n  CONSIGNMENT_ADDRESSES,\n  'Contact address for this consignment',\n] as const;",
+      "ref": "flows/animals/journey.ts:74-99",
+      "quote": "export const AIR_OR_SEA_OVERVIEW_TASKS = [\n…\n  'Transport details',\n  'Upload documents',\n  CONSIGNMENT_ADDRESSES,\n] as const;",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p5-090",
       "statement": "Within the journey's Save-and-continue chain the documents page sits between the transport details page and the consignment addresses page, which is why Save and continue from it lands on Consignment addresses.",
       "kind": "behaviour",
-      "ref": "flows/animals/journey.ts:123-137",
-      "quote": "const stops: SaveAndContinueStop[] = [\n      this.animalsPages.importReason,\n      this.animalsPages.consignmentDetails,\n      this.animalsPages.animalIdentification,\n      this.animalsPages.additionalDetails,\n      this.animalsPages.arrivalDetails,\n      this.animalsPages.transitedCountries,\n      this.animalsPages.transporter,\n      this.animalsPages.accompanyingDocuments,\n      this.animalsPages.addresses,\n      this.animalsPages.contactAddress,\n    ];",
+      "ref": "flows/animals/journey.ts:120-134",
+      "quote": "const stops: SaveAndContinueStop[] = [\n      this.animalsPages.importReason,\n      this.animalsPages.consignmentDetails,\n      this.animalsPages.animalIdentification,\n      this.animalsPages.additionalDetails,\n      this.animalsPages.arrivalDetails,\n      this.animalsPages.transitedCountries,\n      this.animalsPages.transporter,\n      this.animalsPages.accompanyingDocuments,\n      this.animalsPages.addresses,\n    ];",
       "confidence": "verbatim"
     },
     {
@@ -827,6 +827,24 @@
       "quote": "journeyContext: async ({}, use, testInfo) => {\n    const journeyContext = new JourneyContext();\n    await use(journeyContext);\n    for (const referenceNumber of journeyContext.referenceNumbers) {\n      testInfo.annotations.push({ type: 'Reference number', description: referenceNumber });\n    }\n  },",
       "confidence": "verbatim",
       "note": "mechanism: collects the references a test created and writes them into the run's annotations; test housekeeping, not service behaviour."
+    },
+    {
+      "id": "repo-tests-p5-100",
+      "statement": "In both the air-or-sea and the overland Overview task orders, the consignment addresses task is the last task, straight after \"Upload documents\": the task lists the suite holds name no contact address task.",
+      "kind": "data",
+      "ref": "flows/animals/journey.ts:74-99",
+      "quote": "  'Transport details',\n  'Upload documents',\n  CONSIGNMENT_ADDRESSES,\n] as const;\n\nexport const OVERLAND_OVERVIEW_TASKS = [\n…\n  'Transit countries',\n  'Transport details',\n  'Upload documents',\n  CONSIGNMENT_ADDRESSES,\n] as const;",
+      "confidence": "verbatim",
+      "note": "The earlier extract of this file quoted a 'Contact address for this consignment' task after the consignment addresses; the file now ends both lists at CONSIGNMENT_ADDRESSES."
+    },
+    {
+      "id": "repo-tests-p5-101",
+      "statement": "The journey's Save-and-continue chain, from the main import reason towards check your answers, ends at the consignment addresses page: no page follows it in the chain.",
+      "kind": "behaviour",
+      "ref": "flows/animals/journey.ts:120-134",
+      "quote": "/** The pages Save and continue goes through from the main import reason to check your answers, in order, starting at `first`. */\n  saveAndContinueStopsFrom(first: SaveAndContinueStop): SaveAndContinueStop[] {\n…\n      this.animalsPages.accompanyingDocuments,\n      this.animalsPages.addresses,\n    ];",
+      "confidence": "verbatim",
+      "note": "The straight-through walks in the same file go from the consignment addresses page's Continue to the notification review (journey.ts:860-862)."
     }
   ]
 }

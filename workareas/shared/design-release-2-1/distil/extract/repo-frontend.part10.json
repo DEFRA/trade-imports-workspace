@@ -1,7 +1,23 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 10, Commodity lines and animal identification, read the two detail pages of the live-animals commodities feature in trade-imports-animals-frontend and everything they are built from, leaving the search and selection pages to part 9. Read in full: features/commodities/consignment-details/ (consignment-details.controller.js, fields.js, consignment-details.njk, _selected-commodities-table.njk, _species-quantities.njk, view-model/groups.js, view-model/selected-rows.js, view-model/values.js, validation/count-drop.js, remove/actions.js, remove/post-remove.js — skipping the three *.test.js unit tests); features/commodities/animal-identification/ (animal-identification.controller.js, animal-identification.njk, _identification-card.njk, _saved-animals-table.njk, _selected-commodities-summary.njk, animal-label.js, fields.js, line-cap.js, units-for-commodity-line.js, identified-animals.js, card/view-model.js, card/error-summary.js, identifier/fields.js, identifier/table.js, form/forms.js, records/append.js, remove/post-remove.js, summary/selected-commodities.js — skipping its two *.test.js files); the feature-level page.js, lines.js, species-label.js, commodity-label.js, action-prefix.js and copy/thousands-separators.js; copy/copy.en.js and copy/copy.cy.js; and the two fit specs fit/consignment-details.fit.spec.js (547 lines, 6 describes, 24 tests) and fit/identification.fit.spec.js (1,460 lines, 9 describes, 42 tests including a 10-case identifier-length loop and a no-JavaScript describe). Read for context but left to part 9: features/commodities/view-model/selected-commodity-rows.js and commodity-groups.js (which build both pages' tables), commodity-question-detour.js, and check-answers/view-model/applicability.js (packagesApply). Covered: the consignment details page (slug consignment-details) with its caption, H1, selected-commodities table and columns, per-code group and per-species sub-headings, number of animals and number of packages fields, every validation message including the count-drop rule, both removal controls and where they lead, its save actions and persistence; the animal identification page (slug commodities/identification) with its inset, selected-commodities summary and Change link, Add another commodity link, per-code sections, per-species summary cards, the counter, the identifier fields asked of each commodity and species, the saved-animals table and its remove control, the in-card save buttons, the line cap and its wording, every identifier validation message, the per-card error summary, and the no-JavaScript behaviour; the display formatters (species label, commodity label, thousands separators, animal row label, total animals); and the Welsh key parity.",
+  "structure": "Part 10 read, in full, every non-test file under features/commodities/consignment-details/ (controller, fields.js, consignment-details.njk, _selected-commodities-table.njk, _species-quantities.njk, remove/actions.js, remove/post-remove.js, validation/count-drop.js, view-model/groups.js, selected-rows.js, values.js) and features/commodities/animal-identification/ (controller, animal-label.js, fields.js, line-cap.js, identified-animals.js, units-for-commodity-line.js, animal-identification.njk, _identification-card.njk, _saved-animals-table.njk, _selected-commodities-summary.njk, card/error-summary.js, card/view-model.js, form/forms.js, identifier/fields.js, identifier/table.js, records/append.js, remove/post-remove.js, summary/selected-commodities.js), the commodity feature's shared page.js, lines.js, species-label.js, commodity-label.js, action-prefix.js, copy/copy.en.js, copy/copy.cy.js and copy/thousands-separators.js, and the two fit specs fit/consignment-details.fit.spec.js (548 lines) and fit/identification.fit.spec.js (1460 lines), on the repo's main branch. It covers two pages. The commodity details page (id consignmentDetails, slug consignment-details, maturity agreed): its caption and heading, the Selected commodities table with per-code or per-species Remove buttons and what removal does, the Add another commodity link, the per-code groups of species with Number of animals and, where packages apply, Number of packages fields, every quantity rule and message (required, whole number above zero, the 2,147,483,647 ceiling, the count-drop rule against saved identifier records), saving, and the save buttons. The identification details page (id animalIdentification, slug commodities/identification, maturity detailing): its heading, inset, the selected commodities summary with Change links, the per-code sections of species cards with their counter, the identifier fields each species is asked for, the in-card save buttons, the saved animals table with its Remove buttons, the line cap and over-count wording, the at-least-one-identifier and 58-character rules, the error summary, how Enter, an in-card save and Save and continue each read the cards, and the skip when no commodity line exists. It claims only the copy keys the two detail pages use (selectedCommodities, consignmentDetails, identification), and records that the Welsh file carries the same keys as a machine draft. The search and selection pages, and the view-model/ files this part's pages import from the commodity feature's root (selected-commodity-rows.js, commodity-groups.js), belong to part 9; this part claims what those tables show on its pages only as the fit specs prove it. The Save and continue action value and the page surfaces are set in shared files outside this part, so the claims resting on them are inferred. Since the last extract one claim changed meaning: the stay-on-page rule after a whole-form submit now applies to an Enter press, not to Save and continue, so the old claim is replaced by new ones.",
   "claims": [
+    {
+      "id": "repo-frontend-p1-031",
+      "statement": "The consignment details page collects no obligation of its own.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:7,37",
+      "quote": "import { consignmentDetailsPage as page } from '../page.js'\n...\nexport const meta = { ...page, collects: [] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-032",
+      "statement": "The animal identification page collects no obligation of its own.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:33",
+      "quote": "export const meta = { ...page, collects: [] }",
+      "confidence": "verbatim"
+    },
     {
       "id": "repo-frontend-p10-001",
       "statement": "The commodity details page is reached inside a notification journey at the slug consignment-details.",
@@ -476,7 +492,7 @@
       "id": "repo-frontend-p10-058",
       "statement": "A count-drop error is checked only after every field-level check has passed, and its summary carries the service's standard error summary title.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:157-179",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:157-180",
       "quote": "const issues = countDropIssues(request, lines, values)\n  if (issues.length > 0) {",
       "confidence": "verbatim"
     },
@@ -1003,7 +1019,7 @@
       "id": "repo-frontend-p10-122",
       "statement": "The at-least-one-identifier error is shown against the first identifier field of the card whose save button was pressed, and focus moves there from the error summary.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form/forms.js:110-115",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form/forms.js:105-116",
       "quote": "const [first] = scopedFields(commodityCode, speciesLatinName)\n  return {\n    ...errors,\n    [fieldName(first.id, addIndex)]: copy.errors.atLeastOneIdentifier\n  }",
       "confidence": "verbatim"
     },
@@ -1136,14 +1152,6 @@
       "kind": "behaviour",
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:182-186",
       "quote": "if (staysOnIdentification(action, forms, answers)) {\n    return h.redirect(\n      kit.carryTrail(request, pagePath(request.params.journeyId, page.slug))\n    )\n  }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p10-139",
-      "statement": "Pressing Save and continue stays on the identification details page when any card with details typed into it belongs to a line of more than one animal, and otherwise moves on to the next page in the journey.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form/forms.js:26-31",
-      "quote": "export const staysOnIdentification = (action, forms, answers) =>\n  parseAddAction(action) !== null ||\n  (isImplicitSubmitAction(action) &&\n    [...forms].some(\n      ([index, form]) => form.holdsData && !lineHoldsOneAnimal(answers, index)\n    ))",
       "confidence": "verbatim"
     },
     {
@@ -1346,6 +1354,196 @@
       "quote": "test('removes one species row without changing another quantity', async ({",
       "confidence": "verbatim",
       "note": "The fit spec proves it for a per-species removal and for a code-level removal, each checking the surviving line's stored count."
+    },
+    {
+      "id": "repo-frontend-p10-164",
+      "statement": "The commodity details form opens with a hidden Save and continue button ahead of every Remove button, so pressing Enter in the form saves the page rather than removing a commodity.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk:17",
+      "quote": "{{ implicitSubmitButton({ text: sharedCopy.saveActions.saveAndContinue }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-165",
+      "statement": "On the commodity details page the selected commodities table and the Add another commodity link sit inside the form, above the per-code quantity groups.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk:13-30",
+      "quote": "{{ selectedCommoditiesTable(selectedTable, selectedCommoditiesCopy) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-166",
+      "statement": "A number of animals of exactly 2147483647 is accepted, while 2147483648 on another species holds the page with a single error against that species, keeping both fields exactly as typed.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:325-345",
+      "quote": "validation: a number of animals above the largest the service stores holds the page with one error against that species, keeping both fields exactly as typed",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-167",
+      "statement": "A Bos taurus line is asked for a number of animals and a number of packages, while an ostrich (Struthio) line, a species served without being listed under its code, is asked for a number of animals alone.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:354-370",
+      "quote": "asks the listed species for a number of animals and a number of packages, and the served unlisted species for a number of animals alone",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-168",
+      "statement": "A number of packages must be at least 1 when given: zero, a negative number, a decimal or words are refused with \"Number of packages must be a whole number, like 5\".",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:35-41; fit/consignment-details.fit.spec.js:56-61",
+      "quote": "integerInRange(packagesField(index), {\n        min: 1,",
+      "confidence": "verbatim",
+      "note": "The fit spec proves 'boxes' and '-1' get the whole-number message; zero sharing that message is read from min: 1 with only invalid and max messages defined."
+    },
+    {
+      "id": "repo-frontend-p10-169",
+      "statement": "A number of animals of 0 or 2.5 is refused with \"Enter a whole number greater than 0\", and the error link moves focus to the field holding exactly what was typed.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:56-61,187-201",
+      "quote": "['number of animals for Felis catus', SECOND_ANIMALS_QUANTITY_FIELD, '0']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-170",
+      "statement": "On a code whose species are not listed individually (0102), the Remove button posts a removal of the whole code; on a code that lists its species (01061900), it posts a removal of that code and species.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:165-178",
+      "quote": "`remove-species:${FELIS_CATUS_ROW.commodityCode}|${FELIS_CATUS_ROW.speciesLatinName}`",
+      "confidence": "verbatim",
+      "note": "mechanism: the Remove button value carries remove:<code> or remove-species:<code>|<Latin name> for the commodity lines."
+    },
+    {
+      "id": "repo-frontend-p10-171",
+      "statement": "On the identification details page, pressing Enter submits the whole form as an implicit submit that reads every card's identifier fields and saves a record for each card with something typed in it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form/forms.js:59-62; animal-identification.njk:32",
+      "quote": "if (isImplicitSubmitAction(action)) {\n    return lines\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-172",
+      "statement": "After an Enter press on the identification details page, the user stays on the page when any card with something typed in it belongs to a line of more than one animal, and otherwise moves on to the next page in the journey.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form/forms.js:26-31",
+      "quote": "(isImplicitSubmitAction(action) &&\n    [...forms].some(\n      ([index, form]) => form.holdsData && !lineHoldsOneAnimal(answers, index)\n    ))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-173",
+      "statement": "Pressing Save and continue on the identification details page reads only the cards of lines holding one animal, so values typed into a card of a larger line without pressing its own save button are not saved, and the user moves on.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form/forms.js:63-66,26-31",
+      "quote": "? lines.filter(({ index }) => lineHoldsOneAnimal(answers, index))",
+      "confidence": "inferred",
+      "note": "Inferred because the Save and continue button's own action value lives in shared/save-actions.njk, outside this part; read as neither an add: nor the implicit-submit action."
+    },
+    {
+      "id": "repo-frontend-p10-174",
+      "statement": "On a code that lists its species individually, each species gets its own row in the identification details summary, while two species on 0102 share one row whose Number of animals is their sum.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:846-872",
+      "quote": "sums two 0102 species into one row and gives each species on code 01061900 its own row",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-175",
+      "statement": "The selected commodities summary's Number of animals column heading reads \"Number of animals\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:41",
+      "quote": "numberOfAnimals: 'Number of animals'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-176",
+      "statement": "On the identification details page the selected commodities summary and the Add another commodity link sit outside the form, between the inset text and the cards.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:22-28",
+      "quote": "{{ selectedCommoditiesSummary(selectedTable, selectedCommoditiesCopy) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-177",
+      "statement": "The identification details page is laid out on the wider display surface, where the commodity details page keeps the default form width.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:62-67; consignment-details/consignment-details.controller.js:67-71",
+      "quote": "surface: 'display'",
+      "confidence": "inferred",
+      "note": "Inferred: what the display surface means is set in shared/kit.js (SURFACES), outside this part; the consignment details page passes no surface, so takes kit.base's default 'form'."
+    },
+    {
+      "id": "repo-frontend-p10-178",
+      "statement": "The Change number of animals link on a card opens the commodity details page carrying a trail back to identification details, and that page shows every line's stored count.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:52-56; fit/identification.fit.spec.js:359-394",
+      "quote": "const changeCountHref = kit.pushTrail(\n    request,\n    pagePath(request.params.journeyId, consignmentDetailsPage.slug),\n    page.slug\n  )",
+      "confidence": "verbatim",
+      "note": "Where saving commodity details then leads with that trail is not proven by this part's fit specs."
+    },
+    {
+      "id": "repo-frontend-p10-179",
+      "statement": "One saved animal can hold several identifiers at once, and every one is read back in its row after the page is reopened.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:692-710,1014-1029",
+      "quote": "reopening the page shows both saved values on the fallback card",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-180",
+      "statement": "An ostrich (Struthio) line, a commodity with no declared identifier, is asked for Identification details then Description, each a text input twenty characters wide with no hint, and saving either alone heads its table Animal, Identification details, Description and a hidden Actions column.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:601-668",
+      "quote": "asks an unidentified commodity for identification details then description, each a labelled text input the same width as a typed identifier field with no hint",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-181",
+      "statement": "A horse line and a cattle line on the same page each get their own Change number of animals link, so the page shows one per card.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:366-381",
+      "quote": "await expect(changeCount).toHaveCount(2)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-182",
+      "statement": "On the identification details page the commodity code is a level-2 heading, each card's species title a level-3 heading and its counter a level-4 heading, with Bison bison's card above Bos taurus's under 0102.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:1260-1287; _identification-card.njk:8,19",
+      "quote": "groups a commodity code into a section headed by the code holding one card per species with Bison bison above Bos taurus",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-183",
+      "statement": "On the commodity details page the commodity code heading is a level-2 heading and each species sub-heading a level-3 heading, with the quantity labels in small bold label style.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_species-quantities.njk:4-11",
+      "quote": "<h2 class=\"govuk-heading-l\">{{ group.heading }}</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-184",
+      "statement": "A species display name is its Latin name with only the first letter in capitals, and a species sentence name is its Latin name all in lower case.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/species-label.js:10-16",
+      "quote": "return `${name.charAt(0).toUpperCase()}${name.slice(1)}`",
+      "confidence": "verbatim",
+      "note": "mechanism: reshapes a commodity line's species Latin name for display; used by check-answers views outside this part, not by either detail page."
+    },
+    {
+      "id": "repo-frontend-p10-185",
+      "statement": "When an Enter press posts, a card that holds nothing typed is not saved and raises no at-least-one-identifier error: that error is raised only for the card whose own save button was pressed while no read card holds anything.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form/forms.js:105-116; records/append.js:19-22",
+      "quote": "if (addIndex === null || anyData || !forms.has(addIndex)) {\n    return errors\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-186",
+      "statement": "The identification details page checks every identifier length on the cards it reads before saving anything, so one over-long value refuses the whole submission and no card's record is saved.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:168-174",
+      "quote": "if (Object.keys(errors).length > 0) {\n    return renderRefused(request, h, current, { forms, errors })\n  }",
+      "confidence": "verbatim"
     }
   ]
 }

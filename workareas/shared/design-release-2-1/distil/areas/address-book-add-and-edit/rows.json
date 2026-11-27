@@ -1,32 +1,85 @@
 {
   "area": "address-book-add-and-edit",
-  "rows": [],
-  "unobservable": [],
-  "splitOff": [
+  "rows": [
     {
-      "requirement": "req-1214",
-      "theme": "address-book",
-      "why": "It changes the add-details step of the address book in the INS front door, revealing the address, contact and roles fields only once an address is picked or manual entry is chosen. Its claims name app/views/partials/design-release-2.1/consignment-uk-add-address-fields.html, src/server/app/features/address-lookup-spike and tests/ins/e2e/features/address-book/address-book-add-form.spec.ts, so the code is insfrontend:src/server/app/features/address-book/add with its copy, insfrontend:src/server/app/services/address-lookup and tests:tests/ins/e2e/features/address-book, all owned by theme address-book."
-    },
-    {
-      "requirement": "req-1216",
-      "theme": "address-book",
-      "why": "It adds a free-text type-ahead with a results list and a screen-reader result count to the address search on the add-details step. That search sits in insfrontend:src/server/app/features/address-book/add with its copy, is served by insfrontend:src/server/app/services/address-lookup and is proved in tests:tests/ins/e2e/features/address-book, all owned by theme address-book."
-    },
-    {
-      "requirement": "req-1285",
-      "theme": "address-book",
-      "why": "It changes how the add-details step behaves when the search-only layout is saved empty: the field errors show, the hidden fields are revealed so each error summary link reaches a visible field, and what was typed is kept. That is insfrontend:src/server/app/features/address-book/add with its copy and fields, and tests:tests/ins/e2e/features/address-book, all owned by theme address-book."
-    },
-    {
-      "requirement": "req-1864",
-      "theme": "address-book",
-      "why": "It adds an 'Enter address manually' link-styled button below the address search on the add-details step, revealing the address and contact fields. The button, its copy and its proof live in insfrontend:src/server/app/features/address-book/add, insfrontend:src/server/app/features/address-book/copy and tests:tests/ins/e2e/features/address-book, all owned by theme address-book."
-    },
-    {
-      "requirement": "req-2044",
-      "theme": "address-book",
-      "why": "It changes what happens when a search result is picked on the add-details step: the search is hidden, the address and contact fields are revealed and the pick is announced to screen readers. That behaviour sits in insfrontend:src/server/app/features/address-book/add, is fed by insfrontend:src/server/app/services/address-lookup and is proved in tests:tests/ins/e2e/features/address-book, all owned by theme address-book."
+      "title": "Waiting on design: address search's search-only layout, results as the trader types, reveal on a pick and its announcements, in the address book and the commercial transporter form",
+      "detail": "The design opens the add-address pages that have an address search on the search alone: the address fields, contact fields and the uses checkboxes appear once a result is picked or the trader chooses to enter the address by hand, the search box goes once a result is picked, matches list as the trader types with the typed text in bold, and screen readers hear how many results there are. All of it is JavaScript on top of a page that already works without it. It waits on two things at once: design must say whether the search keeps this search-only layout or uses the GOV.UK address pattern with the fields always visible, and the address lookup must become a real feature rather than a gated spike. If design keeps the layout, it is built as an enhancement, and with JavaScript off the page still shows its fields and searches on the server. A destination, consignee, importer or branch address is a UK address a trader finds by searching rather than typing out, so those add-details pages open on the address search by itself. Matches appear as the trader types, picking one hides the search and reveals the address and contact fields, an 'Enter address manually' button reveals them for a trader who cannot find the address, and screen readers hear how many results there are and which address was picked. A save with nothing picked or typed reveals the fields as well, so every error summary link reaches a field the trader can see. All of this is script on top of a page that has to work without script, so it waits: the design team has still to say whether the standard address pattern with the fields always visible will do instead, and the address lookup has still to become a real feature of the front door and its backend. If the layout is kept, it is built as an enhancement of the search that already works without script. With JavaScript, the design starts the commercial transporter form with its address fields and contact-details section hidden behind the address search and a link-style button that reveals them. Whether the fields may be hidden at all is design question 10, which design has still to answer, so this waits with the other address-search questions. Without JavaScript every field shows from the start, which is already how the form works and stays so.",
+      "acceptanceCriteria": [
+        "With JavaScript, an add-address page that has an address search opens with the address fields, the contact fields and the 'What else should this address be used for?' checkboxes hidden; they are shown once the trader picks a search result or chooses to enter the address by hand, and they are shown again after a failed save when anything was picked or entered. (prototype:dr2-1-source p8-089, p8-091; trace:prototype-dr2-1 p7-042-m1, p7-048; prototype:dr2-1-specs p3-070)",
+        "Picking a search result hides the search box and leaves the picked name, address line 1, address line 2, town or city, postcode and country filled in and still editable, with the email address and phone number for the trader to enter. (prototype:dr2-1-source p8-089; trace:prototype-dr2-1 p7-048)",
+        "Below the address search, an 'Enter address manually' link-styled button shows the address and contact fields without a result being picked. (prototype:dr2-1-source p8-088; trace:prototype-dr2-1 p7-045)",
+        "With JavaScript, typing in the address search lists the matching addresses below it under 'Address search results', each as the lookup's one-line address with the typed text in bold. (prototype:dr2-1-source p8-086; trace:prototype-dr2-1 p7-046)",
+        "The number of address search results is announced to screen readers through a polite live region, such as '1 result available'. (trace:prototype-dr2-1 p7-047; ruling:sam-2026-10-09-pm p1-027)",
+        "Saving an add-address page that has an address search, with either save button, before anything is picked or entered shows, in order, 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address' and 'Enter a phone number', with no country error and no error on the search itself, and shows the address and contact fields so every error summary link moves to a visible field. (prototype:dr2-1-source p8-099; trace:prototype-dr2-1 p7-051; prototype:dr2-1-specs p3-071; ruling:sam-2026-10-26 p1-008, p1-013; conflicts:c-109)",
+        "With JavaScript off, the same page shows the address and contact fields from the start and its Search button searches on the server. (ruling:sam-2026-10-09-pm p1-086, p1-087)",
+        "With JavaScript on, 'Destination, Consignee or Importer' and 'Branch' open the add-details step with only the address search; the address fields, the contact fields and the 'Address type' uses question stay hidden until an address is picked or manual entry is chosen, and open already revealed when a picked address or address line 1 already has a value (prototype:dr2-1-source p16-025, p16-037; trace:prototype-dr2-1 p16-083, p16-096, p16-098; prototype:dr2-1-specs p6-140, p6-141)",
+        "Typing in the address search lists matching addresses below the field in a list labelled 'Address search results', each result showing the name, address and country the lookup gives, with the typed text in bold, and a screen-reader announcement gives the number of results, such as '1 result available' (prototype:dr2-1-source p16-027, p16-029, p16-030; trace:prototype-dr2-1 p16-086, p16-086-m1; prototype:dr2-1-specs p6-143; c-178)",
+        "Below the address search an 'Enter address manually' link-styled button reveals the address and contact fields (prototype:dr2-1-source p16-036; trace:prototype-dr2-1 p16-085, p16-130)",
+        "Picking a search result hides the address search, reveals the address and contact fields and announces 'Selected <name>' to screen readers (prototype:dr2-1-source p16-033, p16-034; trace:prototype-dr2-1 p16-087, p16-088)",
+        "Saving the search-only layout with nothing picked or typed shows the same six field errors the manual address form shows, from 'Enter a name or organisation name' to 'Enter a phone number', with no message about the search field, and reveals the address and contact fields so each error summary link moves focus to a field the trader can see (prototype:dr2-1-source p16-077; trace:prototype-dr2-1 p16-092; prototype:dr2-1-specs p6-142; repo:insfrontend p3-065; c-180)",
+        "After an error, the error messages stay on the revealed fields until the next save, and what was typed, the ticked uses and the search text are kept (prototype:dr2-1-source p16-077; trace:prototype-dr2-1 p16-094)",
+        "With JavaScript off, the page behaves as the search that needs no script does: the address and contact fields are shown and the search button searches on the server (ruling:sam-2026-10-09-pm p1-033, p1-035, p1-086, p1-087; c-305)",
+        "With JavaScript, the commercial transporter form opens showing the address search and an 'Enter address manually' link-style button, with the address fields and the 'Enter contact details' section not yet shown, and pressing that button shows them. (prototype:dr2-1-source prototype-dr2-1-source-p7-096, -p7-097; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-057)",
+        "With JavaScript, the address fields and the contact-details section are shown from the start when an address has been looked up, when address line 1 holds a value, when any address field carries an error, or after a refused save, with the search text and the chosen address still shown. (prototype:dr2-1-source prototype-dr2-1-source-p7-097; repo:frontend repo-frontend-p12-085)",
+        "Without JavaScript, the commercial transporter form shows every address and contact field from the start. (repo:frontend repo-frontend-p12-085; trace:animals-fit trace-animals-fit-p20-036)"
+      ],
+      "requirements": [
+        "req-649",
+        "req-652",
+        "req-653",
+        "req-654",
+        "req-1957",
+        "req-1214",
+        "req-1216",
+        "req-1285",
+        "req-1864",
+        "req-2044",
+        "req-458"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "p8-086, p8-088, p8-089, p8-091, p8-099" },
+        { "source": "trace:prototype-dr2-1", "ref": "p7-042-m1, p7-045 to p7-048, p7-051" },
+        { "source": "prototype:dr2-1-specs", "ref": "p3-070, p3-071" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "p1-027, p1-086, p1-087" },
+        { "source": "ruling:sam-2026-10-26", "ref": "p1-008, p1-013" },
+        { "source": "prototype:dr2-1-source", "ref": "p16-025, p16-027, p16-029, p16-030, p16-033, p16-034, p16-036, p16-037, p16-077, p16-112" },
+        { "source": "trace:prototype-dr2-1", "ref": "p16-083, p16-085 to p16-088, p16-086-m1, p16-092, p16-094, p16-096, p16-098, p16-130" },
+        { "source": "prototype:dr2-1-specs", "ref": "p6-140 to p6-143" },
+        { "source": "repo:insfrontend", "ref": "p3-065 (error summary links move focus to the field), p5-114 (the lookup is a spike, not a live feature)" },
+        { "source": "ruling:sam-2026-10-09", "ref": "p1-178, p1-180, p1-182: address search waits on the lookup becoming a real feature; manual entry is built now" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "p1-011, p1-033, p1-035, p1-086, p1-087: script only enhances a page that already works, and the search-only layout waits on design question 10" },
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p7-096, -p7-097 (transporter-add-commercial-fields.html)" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p9-057" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p12-085 (features/transport/commercial-transporter-details, every field shown today)" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p20-036" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm: design question 10 goes in the one waiting-on-design increment; also blocked on the lookup and on transporter management" },
+        "ruling:sam-2026-11-09"
+      ],
+      "repos": ["insfrontend", "frontend", "tests"],
+      "kind": "feat",
+      "status": "deferred",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Combines the drafts of the party-address-add-and-edit, address-book-add-and-edit, transporters areas for this row: they change the same pages, record and journey, so building them apart would repeat the same set-up, review and ladder.",
+        "Pass 2 merged five requirements into one row: they are all the same client-side enhancement of the same add-address pages, with the same two blockers, so building them apart would repeat the same set-up, review and ladder. Kept blocked rather than todo because there is no safe default to build: design may replace the whole layout with the GOV.UK address pattern, and the lookup the search needs does not exist yet. Verified on main 2 Nov: the front door has only features/address-lookup-spike/, no journey page uses a lookup, and there is no 'Enter address manually' control anywhere. Withdrawn claims avoided: c-109 overrules trace-prototype-dr2-1 p7-014 and p7-051-m1, so the error criterion cites p7-051 and the specs instead; the prototype's summary links pointing at hidden fields do not survive, which is why the criterion requires the fields to be shown. Provenance corrected on this draft: req-653, req-654 and req-1957 still carry ruling:sam-2026-10-09-pm claim references p1-017, p1-090, p1-091 and p1-092, which the renumbering moved onto the templates sort control and the germinal date fields; the design-question-10 claims are p1-086 and p1-087, and the JavaScript ruling is p1-027, so those are cited. The combiner keeps the existing row id inc-194 and its waiting-on-design theme, merging this draft with the address book add-and-edit and transporters area drafts there, as the backlog already does: the ruling calls the design question one increment. This row changes only the front door's client-side enhancement scripts and the enhancement specs, so it does not touch the address book theme's server-side add pages.",
+        "Combines this area's five address-search script slices into the one increment the 9 October afternoon ruling calls them: the search-only layout (req-1214), results as the trader types (req-1216), the reveal and announcement on a pick (req-2044), the manual-entry button (req-1864) and the errors that reveal hidden fields (req-1285). They share one script, one page and one block, so building them apart would repeat the same set-up, review and ladder.",
+        "Combiner: merge into the existing blocked row inc-194 and keep its id, its waiting-on-design theme, its dependsOn (inc-042) and its externalDependsOn on the address-book split workarea (inc-072, inc-081) exactly as they are. The server-side pages the script enhances belong to the split-off address-book branch, so this row reaches them only through those external dependencies and must not list them in touches.",
+        "Combiner: merge with the party-address-add-and-edit area's draft for the same row (req-649, req-652 to req-654, req-1957) and the transporters area's draft (req-458, the commercial transporter form's hidden fields), as inc-194 already does, so the search-only layout is built once for the address book, the party pages and the transporter form.",
+        "The real lookup supplies the addresses, not a list shipped with the page (c-178 overruled the shipped list), so each result shows the name, address and country the lookup gives: it may give no organisation name, which is why the announcement on a pick names the picked address.",
+        "The prototype's error layout, which links an error summary to a field that stays hidden, is a gap and not a design choice (c-180), so the criterion reveals the fields with the errors.",
+        "No criterion is split per environment: the row is blocked until the lookup is a real feature in every environment (c-217), so when it builds, every criterion is observable wherever the front door runs.",
+        "Still blocked after this re-distil: c-305 and c-217 name nothing overruled and both blocks stand. The wording moved only to take out the release name, the source-matching phrases and the ids.",
+        "repos is in merge order: the front door holds the page and its script, and the end-to-end suite exercises it afterwards.",
+        "One slice, req-458. Combiner: merge into the existing waiting-on-design row inc-194, which already holds it beside the address book's search-only layout, and keep its id and theme: the hide-and-reveal is one behaviour across both places and design answers question 10 once. Its no-JavaScript counterpart (req-2105) is already met and must stay met. Depends on the commercial transporter address search row.",
+        "Blocked three ways: design question 10, the address lookup, and transporter management. Only design can unblock the first.",
+        "Deferred: ruling:sam-2026-11-09 point 2. Address search is Design Release 2.1 concept work, not needed for the deadline. Every add-address page on main shows all its fields, which works with and without JavaScript. Pick this up only when address search is planned, and then start from design question 10 and a real address lookup."
+      ],
+      "touches": [],
+      "shared": [],
+      "existingRow": "inc-194"
     }
-  ]
+  ],
+  "unobservable": [],
+  "splitOff": []
 }

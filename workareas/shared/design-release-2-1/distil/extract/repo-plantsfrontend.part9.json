@@ -1,7 +1,16 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 9, the address book picker shell. Read in full every file of src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/ (22 files, 2,395 lines): the page shell template.njk; the results macro results.njk; the row-cell macros _cells.njk; the held-address card held-copy.njk; the renderer render.js; the view model view-model.js; the table rows table-rows.js; the address formatting address-lines.js; the paging pagination.js; the results link builder results-href.js; the GET/POST routes picker-routes.js; the save rule save-selection.js; the copy pair copy/copy.en.js and copy/copy.cy.js; and the unit tests results.test.js, table-rows.test.js, address-lines.test.js, save-selection.test.js and copy/copy.test.js, plus the three shared test-support modules test-support.js, controller-test-support.js and paging-test-support.js, which pin down the behaviour every picker page shares. Read src/server/app/shared/paging.js and src/server/app/shared/kit.js for context only (part 13 claims them), and src/server/common/components/submitted-search/macro.njk for context on how the search box renders. This part covers the shell all three party pickers (consignor, place of destination, contact address) share: the page furniture above the form, the submitted search box, the held-address summary card, the results heading and count, the five-column results table with a radio a row and a details cell, the error wiring, eight-addresses-a-page GOV.UK pagination with ellipses, the links that carry the search, the selection and the trail, the inset that names the chosen address, the GET and POST routes with the query they read, the save rule and every refusal it makes, and every copy key in both languages. It stops at the picker pages themselves, their headings, descriptions and their own error messages, which parts 7 and 8 claim.",
+  "structure": "Part 9, the address book picker shell: the feature folder src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/, read in full (all 22 files: picker-routes.js, render.js, view-model.js, table-rows.js and its test, address-lines.js and its test, pagination.js, results-href.js, results.njk and its test, template.njk, _cells.njk, held-copy.njk, save-selection.js and its test, test-support.js, controller-test-support.js, paging-test-support.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js), with src/server/common/components/submitted-search/macro.njk for the search box, and src/server/app/shared/paging.js and kit.js as context only (part 13 claims them). To answer what a search matches on, it also read src/server/app/services/address-book/index.js, the list call in client.js and addressBookCountryCodesMatching in services/countries/index.js. Layout: template.njk is the page (error summary, caption, page-supplied heading and description, held-party card from held-copy.njk, then one form with the search box, the chosen-address inset, the results macro from results.njk and the save controls); _cells.njk renders each row's radio, address and View details cells; picker-routes.js registers the GET and POST and decides search, nothing-chosen, refused and committed saves through save-selection.js; render.js, view-model.js, table-rows.js, address-lines.js, pagination.js and results-href.js shape the address book records into rows, eight to a page, and build the paging links. Covered: every heading, label, hint, button, column, link and copy key in English and Welsh; the search box and what it matches on; the results count, no-matches message, radios, View details disclosure and the GOV.UK pagination with its ellipses; the Selected address inset and when it shows; the save rule (nothing chosen, not in the book, deleted, wrong role, committed, save failure); the routes and the q, page and selected query they carry; the out-of-range page fallbacks; and two gaps (no add-address route, no sorting or page size control). The picker pages' own headings, descriptions, titles and error wording belong to parts 7 and 8.",
   "claims": [
+    {
+      "id": "repo-plantsfrontend-p8-038",
+      "statement": "The state's heading is the page's only level-one heading, and the state's description is the paragraph under it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/template.njk:12-13",
+      "quote": "<h1 class=\"govuk-heading-l\">{{ heading }}</h1>\n  <p class=\"govuk-body\">{{ description }}</p>",
+      "confidence": "verbatim",
+      "note": "The picker template is part 9's; quoted here only to show where the destination page's heading and description land."
+    },
     {
       "id": "repo-plantsfrontend-p9-001",
       "statement": "Every address book picker page lays out, in order: the error summary, the journey section caption, a large heading, a paragraph of descriptive text, the card naming the party the notification already holds, then one form holding the search box, the chosen-address inset, the results and the save controls.",
@@ -58,7 +67,7 @@
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:107",
       "quote": "contentColumnClass: kit.surfaceClass('display'),",
       "confidence": "verbatim",
-      "note": "kit.SURFACES.display is 'govuk-grid-column-full' (src/server/app/shared/kit.js:38-41, claimed by part 13). Proven by controller-test-support.js:96-100, 'Should render the results table on the full-width surface'."
+      "note": "kit.SURFACES.display is 'govuk-grid-column-full' (src/server/app/shared/kit.js:45-48, claimed by part 13). Proven by controller-test-support.js:96-100, 'Should render the results table on the full-width surface'."
     },
     {
       "id": "repo-plantsfrontend-p9-008",
@@ -160,7 +169,43 @@
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:84",
       "quote": "const found = await addressBook.addresses(orgId, { query, role })",
       "confidence": "verbatim",
-      "note": "mechanism: passes the raw query string and the picker's role to the organisation-scoped address book client. The hint tells the trader it matches on name, address or country (claim repo-plantsfrontend-p9-011); the matching rule itself lives in src/server/app/services/address-book, which this source's scope leaves out."
+      "note": "mechanism: passes the raw query string and the picker's role to the organisation-scoped address book client. The hint tells the trader it matches on name, address or country (claim repo-plantsfrontend-p9-011); what the client matches on is claimed by repo-plantsfrontend-p9-097 to repo-plantsfrontend-p9-099."
+    },
+    {
+      "id": "repo-plantsfrontend-p9-097",
+      "statement": "A picker search matches on part of an address's name, part of any of its address fields or part of its country's name, ignoring case and any spaces around the term.",
+      "kind": "rule",
+      "ref": "src/server/app/services/address-book/index.js:50-53, 12-13",
+      "quote": "The organisation's live addresses matching an optional search term (part of\n * a name, part of an address or part of a country's name), narrowed to an\n * optional role",
+      "confidence": "verbatim",
+      "note": "Read from outside the part's scoped folders, only to answer the covers line on what a picker search matches on. The case and space handling: \"searchableTextOf(record).includes(query.trim().toLowerCase())\"."
+    },
+    {
+      "id": "repo-plantsfrontend-p9-098",
+      "statement": "Against the stub address book, a search looks for the term inside one line made of the record's name and every value of its address, so the country name, telephone number and email address of an address all count as matches.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/address-book/index.js:6-13, 55-56",
+      "quote": "const searchableTextOf = (record) =>\n  [record.name, ...Object.values(record.address ?? {})]\n    .filter(Boolean)\n    .join(' ')\n    .toLowerCase()",
+      "confidence": "inferred",
+      "note": "mechanism: joins a stub record's name and address values into one lower-case line to search. Inferred that phone and email match because the stub record's address holds them (test-support.js:51-66 shows phone and email inside address) and Object.values takes every field. The hint names only name, address or country (claim repo-plantsfrontend-p9-011)."
+    },
+    {
+      "id": "repo-plantsfrontend-p9-099",
+      "statement": "Against the real address book, a search sends the trader's term to the address book service as q, together with the code of every country whose name contains the term, so the service can match an address by its country's name as well as by its own fields.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-book/index.js:21-30; src/server/app/services/address-book/client.js:65-70; src/server/app/services/countries/index.js:152-160",
+      "quote": "const countryCodes = await addressBookCountryCodesMatching(query)",
+      "confidence": "verbatim",
+      "note": "mechanism: turns the search term into a list of country codes whose names contain it (\"name.toLowerCase().includes(wanted)\"), sent as repeated countryCode parameters beside q. A blank term sends no country codes. What the service matches q against is the address book service's own rule, outside this source."
+    },
+    {
+      "id": "repo-plantsfrontend-p9-100",
+      "statement": "Against the real address book, the picker reads every page of the matching addresses, a hundred at a time, before it pages them itself eight to a page.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-book/index.js:21-47; src/server/app/services/address-book/client.js:52-53",
+      "quote": "const PAGES_READ_AT_ONCE = 4",
+      "confidence": "verbatim",
+      "note": "mechanism: fetches page one, then the rest four pages at a time at \"MAX_API_PAGE_SIZE = 100\", and joins the records. The picker's own paging is claim repo-plantsfrontend-p9-089."
     },
     {
       "id": "repo-plantsfrontend-p9-020",
@@ -508,7 +553,7 @@
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/picker-routes.js:193-199",
       "quote": "export const pickerRoutes = ({ inScope = () => true, ...settings }) => {\n  const picker = { ...settings, inScope }\n  return kit.pageRoutes(picker.page, {\n    get: (request, h) => getPicker(picker, request, h),\n    post: (request, h) => postPicker(picker, request, h)\n  })\n}",
       "confidence": "verbatim",
-      "note": "kit.pageRoutes builds the GET and POST on the page's slug under session auth (src/server/app/shared/kit.js:342-355, claimed by part 13); the slugs themselves belong to parts 7 and 8."
+      "note": "kit.pageRoutes builds the GET and POST on the page's slug under session auth (src/server/app/shared/kit.js:350-363, claimed by part 13); the slugs themselves belong to parts 7 and 8."
     },
     {
       "id": "repo-plantsfrontend-p9-060",
@@ -628,7 +673,7 @@
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/paging-test-support.js:46, 71-78",
       "quote": "@param {number} picker.wholeCount - how many stub records this picker offers: those carrying its role, together with those carrying none",
       "confidence": "verbatim",
-      "note": "Proven by 'Should offer, across its pages, every address it offers and no other', which compares the ids paged through with those the address book client's offeredForRole accepts. The offeredForRole rule itself lives in src/server/app/services/address-book, outside this source's scope."
+      "note": "Proven by 'Should offer, across its pages, every address it offers and no other', which compares the ids paged through with those the address book client's offeredForRole accepts. The rule: \"!role || record.roles.length === 0 || record.roles.includes(role)\" (src/server/app/services/address-book/index.js:15-16)."
     },
     {
       "id": "repo-plantsfrontend-p9-074",
@@ -807,6 +852,42 @@
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/view-model.js:29-30; results.njk:8-9, 28",
       "quote": "fieldName  (string)  the answer name: the radios' name, and the prefix of the\n                         error message's id",
       "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p9-101",
+      "statement": "The search box's label is shown as a medium GOV.UK label, with the hint under it, and the icon search button joined to the right of the box.",
+      "kind": "behaviour",
+      "ref": "src/server/common/components/submitted-search/macro.njk:39-51",
+      "quote": "label: { text: params.label.text, classes: \"govuk-label--m\" },\n    hint: ({ text: params.hint.text } if params.hint else undefined),",
+      "confidence": "verbatim",
+      "note": "The button is placed after the input inside the input wrapper: \"formGroup: { afterInput: { html: searchButton } }\" with the wrapper class \"moj-search__input-wrapper\"."
+    },
+    {
+      "id": "repo-plantsfrontend-p9-102",
+      "statement": "The results heading \"Select an address\" shows whether or not the search found anything; only the count, the table and the paging give way to the no-matches message.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/results.njk:30-32, 62-63; results.test.js:129-138",
+      "quote": "<h2 class=\"govuk-heading-m\">{{ pickerCopy.resultsHeading }}</h2>\n\n  {% if picker.rows.length %}",
+      "confidence": "verbatim",
+      "note": "The test finds the message as the heading's next sibling: \"const message = document.querySelector('h2').nextElementSibling\"."
+    },
+    {
+      "id": "repo-plantsfrontend-p9-103",
+      "statement": "A picker page's browser title comes from the page's own copy, not from the shared picker shell.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:101-106",
+      "quote": "...kit.base(copy.title, {",
+      "confidence": "verbatim",
+      "note": "kit.base sets it as pageTitle (src/server/app/shared/kit.js:259-286, claimed by part 13). Each page's title wording belongs to parts 7 and 8."
+    },
+    {
+      "id": "repo-plantsfrontend-p9-104",
+      "statement": "A picker save posted after the notification has changed since the page was shown is refused and the trader is sent back to the same page with staleAction=1.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:330-363",
+      "quote": "query.set('staleAction', '1')\n      return h.redirect(`${request.path}?${query.toString()}`)",
+      "confidence": "verbatim",
+      "note": "kit.js is part 13's; read here only because pickerRoutes builds its POST through kit.pageRoutes, which wraps it in redirectOnStaleAction. Logged once at info as 'Save refused: the notification changed since the page was shown'."
     },
     {
       "id": "repo-plantsfrontend-p9-095",

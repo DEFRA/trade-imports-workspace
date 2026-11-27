@@ -1,0 +1,34 @@
+h3. What the specification now says
+
+When a trader presses Enter in the identification card for a species of several animals, the service now saves what they typed and keeps them on the identification details page, or shows an error and keeps the value if it is too long. This summary is generated from the specification as merged to main.
+
+h4. [Live animals: Identification details page|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/identification-details/spec.md]
+
+h5. Changed requirement: A card's button saves only its own species, Enter saves every species typed in, and the page's save buttons save only species of one animal
+
+The requirement now also says that pressing Enter validates and saves every species form holding a value, and returns the user to identification details when a species with more than one animal was saved. Before, it covered only the card buttons and the page's save buttons.
+
+h5. Added: Enter saves a species of several animals and stays on identification details
+
+* *GIVEN* a valid identifier is typed into the form of a species with more than one animal
+* *WHEN* the user presses Enter in that field
+* *THEN* that animal is saved and identification details is shown again
+* *AND* that species' saved-animals table lists the record, its form is empty, and its heading reports the next animal
+
+h5. Added: Enter with an over-length identifier in a species of several animals is blocked and keeps the value
+
+* *GIVEN* an over-length ear tag is typed into the form of a species with more than one animal
+* *WHEN* the user presses Enter in that field
+* *THEN* nothing is saved and the field shows its error
+* *AND* the over-length value stays in the field
+
+h5. Test coverage
+
+* Identification details page: both new scenarios are linked to tests that prove them (a unit test, a test without JavaScript and an end-to-end test for the save; a unit test for the error).
+* Live animals journey flow: one linked unit test was renamed to match its new wording (an identification Enter post with no records moves on to additional details). No behaviour changed.
+
+h4. Pull requests
+
+* [trade-imports-animals-frontend #438|https://github.com/DEFRA/trade-imports-animals-frontend/pull/438]
+* [trade-imports-ins-tests #61|https://github.com/DEFRA/trade-imports-ins-tests/pull/61]
+* [trade-imports-workspace #166|https://github.com/DEFRA/trade-imports-workspace/pull/166]

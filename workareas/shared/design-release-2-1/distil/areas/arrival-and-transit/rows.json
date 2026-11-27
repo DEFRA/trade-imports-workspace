@@ -1,13 +1,44 @@
 {
   "area": "arrival-and-transit",
-  "rows": [],
-  "unobservable": [],
-  "splitOff": [
+  "rows": [
     {
-      "requirement": "req-280",
-      "theme": "arrival-and-transit",
-      "why": "It changes the arrival date hint's worked example on the animals arrival details page so the example is today's date and always falls inside the arrival window. The example has to be worked out from the clock alongside the window bounds in frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry, and the hint assertion it changes is in tests:tests/animals/e2e/pages/arrival-details.spec.ts and tests:page-objects/animals/arrival-details-page.ts, all three of which theme arrival-and-transit owns."
+      "title": "The germinal products set asks transit countries for rail and road, with the same page, list, cap and overview task as live animals",
+      "detail": "The germinal products set takes live animals as its reference point for everything, and the data dictionary marks transit countries for germinal products as well as animals. So a germinal products notification whose means of transport is rail or road is asked which countries the consignment travels through, on a page that asks the same question with the same country list, the same twelve-country cap and the same rules as the live animals page, and its overview shows the matching task while it applies.",
+      "acceptanceCriteria": [
+        "Save and continue on a germinal products notification's arrival details opens its transit countries page when the means of transport is Rail or Road, and the transporter list when it is Air or Sea. (ruling:sam-2026-11-10 ruling-sam-2026-11-10-p1-002, -p1-009; confluence:6497338582 confluence-6497338582-p2-183; repo:frontend repo-frontend-p11-043)",
+        "The germinal products transit countries page has the heading 'Which countries will the consignment travel through?', the caption 'Movement' and the browser tab title 'Transit countries - Import notification service - GOV.UK', and opens straight on a country search labelled 'Enter a country' with the hint 'Enter each country that the consignment will travel through'. (ruling:sam-2026-11-10 ruling-sam-2026-11-10-p1-002; repo:frontend repo-frontend-p11-053)",
+        "Opening or posting a germinal products notification's transit countries page when its saved means of transport is Air or Sea, or none is chosen, shows the notification overview. (ruling:sam-2026-11-10 ruling-sam-2026-11-10-p1-002; repo:frontend repo-frontend-p11-043)",
+        "The germinal products transit country search offers the same countries and subdivisions as the live animals one, each subdivision labelled '<territory> (<parent>)', in alphabetical order by that label. (ruling:sam-2026-11-10 ruling-sam-2026-11-10-p1-002, -p1-009; repo:frontend repo-frontend-p11-053)",
+        "Added germinal transit countries are listed in a table headed 'Country', one row per country in the order added, each with a Remove control whose accessible name is 'Remove <country>', and they are listed again in that order when the trader returns to the page. (ruling:sam-2026-11-10 ruling-sam-2026-11-10-p1-002; repo:frontend repo-frontend-p11-053)",
+        "Once twelve germinal transit countries are added, the page shows 'Maximum of 12 countries reached. Remove a country to add another.' in place of the search and the Add country button, and saving more than twelve is refused with 'Select up to 12 countries'. (ruling:sam-2026-11-10 ruling-sam-2026-11-10-p1-002, -p1-009; repo:frontend repo-frontend-p11-053)",
+        "Save and continue on the germinal products transit countries page with no country added goes to the transporter list, as it does with countries added. (ruling:sam-2026-11-10 ruling-sam-2026-11-10-p1-002; repo:frontend repo-frontend-p11-053)",
+        "Saving a germinal products notification's arrival details with the means of transport Air or Sea clears its saved transit countries, so the transit countries page shows an empty list when the means of transport is next changed to Rail or Road. (ruling:sam-2026-11-10 ruling-sam-2026-11-10-p1-002; repo:frontend repo-frontend-p11-043)",
+        "A germinal products notification's overview shows a 'Transit countries' task between 'Arrival details' and 'Transport details' while its saved means of transport is Rail or Road, reading 'To do' with no country added and 'Complete' once one is. (ruling:sam-2026-11-10 ruling-sam-2026-11-10-p1-002, -p1-009; confluence:6497338582 confluence-6497338582-p2-183, -p2-184)"
+      ],
+      "requirements": ["req-2631"],
+      "sources": [
+        { "source": "ruling:sam-2026-11-10", "ref": "ruling-sam-2026-11-10-p1-002, -p1-009" },
+        { "source": "confluence:6497338582", "ref": "confluence-6497338582-p2-183, -p2-184 (§Transited Countries)" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p11-043, -p11-053 (the live-animals transit countries page and its rail-or-road condition)" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "One slice: the germinal set's transit countries page, the rail-or-road condition that shows it and its overview task share one page and one obligation, so building them apart would repeat the same set-up. Re-distil 27 November: req-2631 already sits in inc-283 (theme germinal-products); this draft restates it unchanged so the combiner keeps that id. inc-283 also carries req-1839 (the overview's section ordering), which the overview area drafts; its criterion is left to that area's draft. c-469 is ruled: the 10 November ruling breaks the data dictionary's tie, so the germinal set asks transit countries on the same rail-or-road condition as live animals. The germinal set does not exist yet (repos/trade-imports-animals-frontend has only live-animals under sets/), so its pages are copies of the live-animals transport pages that the split-off arrival-and-transit branch changes first; inc-283 keeps its externalDependsOn on that branch's inc-028 and inc-029, and its dependsOn on inc-182, which builds the germinal set. Not split off: its code is the germinal-products set's folders, which the arrival-and-transit pointer's touches (live-animals and plants folders only) do not name.",
+      "touches": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/transport/transit-countries",
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/transport/port-of-entry",
+        "frontend:src/server/app/sets/germinal-products/obligations/sections/arrival.js",
+        "tests:tests/animals/e2e/germinal-products"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/hub"
+      ],
+      "existingRow": "inc-283"
     }
   ],
-  "notes": "This area's 142 reconciled requirements hold only one adopted new-or-change requirement that no split-off pointer already holds, req-280, and its code falls inside the split-off arrival-and-transit theme's touches, so the area drafts no row. The other 16 adopted new-or-change requirements from this area are already held by pointers: req-290 and req-291 by type-question-and-templates; req-304, req-1811, req-1812, req-1813, req-1814, req-1932 and req-1933 by reference-lists; req-327 and req-328 by arrival-and-transit; req-332, req-372 and req-375 by overview-and-review; req-296 and req-299 by design-snagging. Every other requirement in the area is adopted as exists or is out of scope, so none needs a row."
+  "unobservable": [],
+  "splitOff": []
 }

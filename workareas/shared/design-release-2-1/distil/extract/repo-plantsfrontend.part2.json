@@ -1,6 +1,6 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 2 read the high-risk plants task-list hub and the journey flow that feeds it, in full: the hub feature folder (page.js, controller.js, template.njk, hub.fit.spec.js, controller.test.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js) and the flow folder (flow.js and flow.test.js, task-rows.js and task-rows.test.js, entry-guard.js and entry-guard.test.js, navigation.test.js, save-and-continue.test.js, section-captions/index.js with its unit test and copy.en.js/copy.cy.js/copy.test.js, fixtures/happy-path.json), plus the journey's config.js and test-support.js; shared/save-actions.njk and shared/section-caption.njk were read for context only (part 13 claims them), and paths.js and set.js were consulted only to resolve the route strings. It covers: the Overview hub served GET-only at /high-risk-plants/notifications/{journeyId}, its H1, task-list heading, Return to dashboard button, Back link, journey strip and accessibility structure; the four numbered hub groups and their captions in both locales; the five status words (Completed, Optional, In progress, Not yet started, Cannot start yet) and the tag styling of each; all seven task rows of task-rows.js (commodities, origin, arrival, destination, consignor, identificationNumbers, contact) with their titles, the pages and obligations each covers, where each link lands, which prerequisite blocks each and every status rule the unit and fit tests pin down, plus the review row the hub builds from the review flow section; the five flow sections (start, about-the-consignment, arrival-and-destination, consignment-parties, review), their pages and order and the readyForCheckYourAnswers gate on review; FLOW_ONLY_KEYS and the journey's session cookie names, template root and layout; what navigation.test.js and save-and-continue.test.js prove about the plants/wood and potato page order, sub-page exits, the missing-earlier-answer landing and its single log line; the entry guard's guarded and exempt paths, its committed-answer test, its redirect, its log line, its 404 and the leave-journey link; the INS notification-type question URL; the section caption of every captioned page and the pages deliberately left bare; the machine-draft state of the Welsh; the journey test-support seeds, in-scope question sets, picked-party copy shape and Back-link cases; and the five use cases the happy-path fixture encodes. It stops at the pages themselves (parts 3 to 11) and at notification-action-slugs.js (part 1).",
+  "structure": "Part 2 read, in full on main at 2f2b07f: the hub feature folder (page.js, controller.js, template.njk, hub.fit.spec.js with its 10 tests, controller.test.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js); flow/flow.js and flow.test.js; flow/task-rows.js and task-rows.test.js; flow/entry-guard.js and entry-guard.test.js; flow/navigation.test.js; flow/save-and-continue.test.js; flow/section-captions/ (index.js, section-captions.test.js and its copy pair and copy test); flow/fixtures/happy-path.json (five cases); journeys/linear/config.js; journeys/linear/test-support.js; and, for context only, shared/save-actions.njk and shared/section-caption.njk. It covers the Overview hub at /high-risk-plants/notifications/{journeyId} (H1, task-list heading, four numbered groups, the seven task rows plus the review row built from the review section, every status and the rule behind it, Back and Return to dashboard), the five flow sections and their pages with the readyForCheckYourAnswers gate, FLOW_ONLY_KEYS (declaration only), the entry guard (what it guards and exempts, the started test, the redirect to commodity type, its log line and its new journey.entry.redirect metric), the five section captions and the bare pages, Save and continue order and fallbacks for plants or wood and for potatoes, the Back and Cancel rules test-support pins, and the happy-path fixture. Since the last extract only entry-guard.js and its test changed (a redirect metric, shifting their line numbers); every other file is unchanged. Kept ids 001-134 hold the same claims with entry-guard refs renumbered; 135-140 are new.",
   "claims": [
     {
       "id": "repo-plantsfrontend-p2-001",
@@ -664,7 +664,7 @@
       "id": "repo-plantsfrontend-p2-081",
       "statement": "The declaration is the journey's only flow-only answer: it is not a notification answer, so it never counts as something the trader has committed.",
       "kind": "rule",
-      "ref": "flow/flow.js:18, flow/entry-guard.test.js:91-95",
+      "ref": "flow/flow.js:18, flow/entry-guard.test.js:93-97",
       "quote": "export const FLOW_ONLY_KEYS = ['declaration']",
       "confidence": "verbatim"
     },
@@ -770,7 +770,7 @@
       "id": "repo-plantsfrontend-p2-094",
       "statement": "The entry guard covers every path under the set's notifications prefix that names a journey.",
       "kind": "behaviour",
-      "ref": "flow/entry-guard.js:18-35, entry-guard.test.js:65-70",
+      "ref": "flow/entry-guard.js:19-36, entry-guard.test.js:67-72",
       "quote": "return Boolean(journeyId) && !isEntrySurface",
       "confidence": "verbatim"
     },
@@ -778,7 +778,7 @@
       "id": "repo-plantsfrontend-p2-095",
       "statement": "The entry guard lets through anything outside a journey: the service root, the dashboard, the create path, another service's paths and another set's notifications.",
       "kind": "behaviour",
-      "ref": "flow/entry-guard.test.js:44-50",
+      "ref": "flow/entry-guard.test.js:46-52",
       "quote": "expect(guardedJourneyPath('/some-other-service/commodity-type')).toBe(false)",
       "confidence": "verbatim"
     },
@@ -786,7 +786,7 @@
       "id": "repo-plantsfrontend-p2-096",
       "statement": "The entry guard lets the commodity type page and any path beneath it through, so a redirect to it cannot loop.",
       "kind": "rule",
-      "ref": "flow/entry-guard.js:31-34, entry-guard.test.js:52-57",
+      "ref": "flow/entry-guard.js:32-35, entry-guard.test.js:54-59",
       "quote": "it('Should exempt the entry page and its sub-paths, so there is no redirect loop', () => {",
       "confidence": "verbatim"
     },
@@ -794,7 +794,7 @@
       "id": "repo-plantsfrontend-p2-097",
       "statement": "The entry guard lets each notification action through: amend, cancel-amend, copy and delete.",
       "kind": "behaviour",
-      "ref": "flow/entry-guard.js:19 and :28-30, entry-guard.test.js:59-64 and :161-170",
+      "ref": "flow/entry-guard.js:20 and :29-31, entry-guard.test.js:61-65 and :163-172",
       "quote": "for (const slug of ['amend', 'cancel-amend', 'copy', 'delete']) {",
       "confidence": "verbatim"
     },
@@ -802,7 +802,7 @@
       "id": "repo-plantsfrontend-p2-098",
       "statement": "The entry guard covers the Overview hub and every journey page beyond the commodity type page, the review page, the declaration and the confirmation page included.",
       "kind": "behaviour",
-      "ref": "flow/entry-guard.test.js:65-70 and :139-159",
+      "ref": "flow/entry-guard.test.js:67-72 and :141-161",
       "quote": "'Should send %s of a notification with no entered answer to the entry page',",
       "confidence": "verbatim"
     },
@@ -810,7 +810,7 @@
       "id": "repo-plantsfrontend-p2-099",
       "statement": "A notification counts as started only when the trader has entered an answer themselves: a system-populated value or a flow-only answer such as the declaration does not count, and neither does an empty value.",
       "kind": "rule",
-      "ref": "flow/entry-guard.js:37-45, entry-guard.test.js:73-96",
+      "ref": "flow/entry-guard.js:38-46, entry-guard.test.js:75-98",
       "quote": "export const hasCommittedNotificationAnswers = (answers) =>\n  Object.entries(answers ?? {}).some(\n    ([key, value]) => userEntered(key) && isAnswered(value)\n  )",
       "confidence": "verbatim"
     },
@@ -818,7 +818,7 @@
       "id": "repo-plantsfrontend-p2-100",
       "statement": "Opening a guarded page of a notification with no entered answer sends the trader to the commodity type page instead, whether they asked for the hub or deep-linked to a later page.",
       "kind": "behaviour",
-      "ref": "flow/entry-guard.js:55-68, entry-guard.test.js:123-137 and :193-197",
+      "ref": "flow/entry-guard.js:56-70, entry-guard.test.js:125-139 and :217-221",
       "quote": "return pagePath(request.params.journeyId, commodityTypePage.slug)",
       "confidence": "verbatim"
     },
@@ -826,7 +826,7 @@
       "id": "repo-plantsfrontend-p2-101",
       "statement": "That redirect is logged once at info as \"No answer entered, sent to the first page\", with the journey reference and the path asked for.",
       "kind": "behaviour",
-      "ref": "flow/entry-guard.js:63-66, entry-guard.test.js:172-185",
+      "ref": "flow/entry-guard.js:64-67, entry-guard.test.js:174-187",
       "quote": "'No answer entered, sent to the first page'",
       "confidence": "verbatim"
     },
@@ -834,7 +834,7 @@
       "id": "repo-plantsfrontend-p2-102",
       "statement": "A guarded path naming a notification that does not exist is refused as not found.",
       "kind": "behaviour",
-      "ref": "flow/entry-guard.test.js:115-121",
+      "ref": "flow/entry-guard.test.js:117-123",
       "quote": ").rejects.toMatchObject({ isBoom: true, output: { statusCode: 404 } })",
       "confidence": "verbatim"
     },
@@ -842,7 +842,7 @@
       "id": "repo-plantsfrontend-p2-103",
       "statement": "A notification that holds an answer the trader entered is let through to the page asked for, and an exempt path is let through without the notification being read at all.",
       "kind": "behaviour",
-      "ref": "flow/entry-guard.js:56-61, entry-guard.test.js:106-113 and :187-191",
+      "ref": "flow/entry-guard.js:57-63, entry-guard.test.js:108-115 and :189-193",
       "quote": "it('Should never consult the journey for an exempt path', async () => {",
       "confidence": "verbatim"
     },
@@ -850,7 +850,7 @@
       "id": "repo-plantsfrontend-p2-104",
       "statement": "A journey page's way out leads to the Overview hub once the trader has entered a notification answer, and to the dashboard while nothing is entered.",
       "kind": "rule",
-      "ref": "flow/entry-guard.js:47-50, entry-guard.test.js:200-212",
+      "ref": "flow/entry-guard.js:48-51, entry-guard.test.js:224-236",
       "quote": "export const leaveJourneyLink = (journey, answers) =>\n  hasCommittedNotificationAnswers(answers)\n    ? hubPath(journey.journeyId)\n    : dashboardPath()",
       "confidence": "verbatim"
     },
@@ -858,7 +858,7 @@
       "id": "repo-plantsfrontend-p2-105",
       "statement": "The journey sends a trader who wants to change what they are importing back to the Import Notification Service's own notification-type question, at the same URL for every notification.",
       "kind": "integration",
-      "ref": "flow/entry-guard.js:52-53, entry-guard.test.js:214-222",
+      "ref": "flow/entry-guard.js:53-54, entry-guard.test.js:238-246",
       "quote": "export const insTypeQuestionUrl = () =>\n  buildInsFrontendUrl('/notification-type')",
       "confidence": "verbatim"
     },
@@ -1106,6 +1106,59 @@
       "quote": "",
       "confidence": "gap",
       "note": "Looked in the hub controller, its unit tests, its fit spec and both copy files. The submitted and amending states are reached through the action slugs part 1 claims and the pages parts 3 to 11 claim."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-135",
+      "statement": "Each time the entry guard sends a trader to the commodity type page it counts one journey.entry.redirect event in the service's metrics, and it counts none when it lets the notification through.",
+      "kind": "non-functional",
+      "ref": "flow/entry-guard.js:68, entry-guard.test.js:195-215",
+      "quote": "countEventInBackground('journey.entry.redirect')",
+      "confidence": "verbatim",
+      "note": "New since the last extract. The test asserts the metric's recorded values are [1] for a notification with no entered answer and [] for one holding commodityType 'potatoes'."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-136",
+      "statement": "While no commodity type is chosen the addresses group shows only the identification numbers and contact rows, both Cannot start yet: the consignor row is hidden until a type that asks for a consignor is chosen.",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.test.js:93-156 (parties group at :131-144)",
+      "quote": "items: [\n          {\n            title: { text: copy.rows.identificationNumbers.title },\n            status: CANNOT_START_STATUS\n          },\n          {\n            title: { text: copy.rows.contact.title },\n            status: CANNOT_START_STATUS\n          }\n        ]",
+      "confidence": "verbatim",
+      "note": "The hidden row follows from the conditional rule (controller.js:82): with no type the consignor question is out of scope, so the row's status is not applicable."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-137",
+      "statement": "On a plants for planting or wood and cut trees notification whose origin is not yet named, the consignor row is shown on Overview reading Cannot start yet.",
+      "kind": "behaviour",
+      "ref": "features/hub/hub.fit.spec.js:177-203",
+      "quote": "await expect(row).toContainText(copy.statuses.cannotStartYet)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-138",
+      "statement": "Pressing Save and return to overview on the commodity type page saves the chosen type and lands the trader on Overview.",
+      "kind": "behaviour",
+      "ref": "features/hub/hub.fit.spec.js:187-195",
+      "quote": "await saveAndReturnToHub(page).click()\n    await expect(page).toHaveURL(HUB_URL)",
+      "confidence": "verbatim",
+      "note": "The only proof in this part of where Save and return to overview lands; the flow tests themselves do not cover it (see repo-plantsfrontend-p2-093)."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-139",
+      "statement": "The hub renders in the form-width content column the journey's question pages use.",
+      "kind": "constraint",
+      "ref": "features/hub/controller.test.js:50-64",
+      "quote": "contentColumnClass: SURFACES.form",
+      "confidence": "verbatim",
+      "note": "SURFACES lives in shared/kit.js, which part 13 claims; this records only that the hub uses the form surface."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-140",
+      "statement": "The hub's page chrome names the service \"Import notification service\".",
+      "kind": "copy",
+      "ref": "features/hub/controller.test.js:81-86",
+      "quote": "expect(view.context.sharedCopy.layout.serviceName).toBe(\n      'Import notification service'\n    )",
+      "confidence": "verbatim",
+      "note": "The string lives in the shared copy, which part 13 claims; the hub test pins it on this page."
     }
   ]
 }

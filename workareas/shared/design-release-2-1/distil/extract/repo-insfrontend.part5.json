@@ -1,926 +1,1417 @@
 {
   "source": "repo:insfrontend",
-  "structure": "Part 5, Address lookup spike (dev only). Read in full: the spike feature folder src/server/app/features/address-lookup-spike/ (controller.js, template.njk, detect-search-mode.js, map-to-address-fields.js, is-dev-or-local.js, copy/copy.en.js, copy/copy.cy.js) and the address lookup service src/server/app/services/address-lookup/ (client.js, index.js, stub.js). For context only, read the lines that register the spike in src/server/app/routes.js, the pageRoutes/base/SURFACES helpers in src/server/app/shared/kit.js, src/server/common/services/mode.js (stub mode), the spike section of src/server/app/docs/features.md and the registration tests in src/server/router.test.js. The slice is one temporary page, /address-lookup-spike (EUDPA-390), registered only when the CDP environment is dev or local. It has one search box that decides between a postcode search and a free-text search, a results list with a 'Use this address' button per result, a 'Where the time went' timings table, three warning states, and a mapped view that shows how a chosen result would fill the address book's fields, with the gaps the lookup cannot fill. Behind it the lookup client calls the INS backend's /address-lookup endpoint, or, in stub mode, an in-memory stub returning three fixed addresses. Claims cover the page's registration and route, every element of the page in render order, the search-mode rules, the mapping rules and gaps, the client and stub, and every English and Welsh copy key (40 keys each).",
+  "structure": "Part 5, Add an address. Read in full: the address-type step (address-type/page.js, address-type.controller.js, address-type.njk), the add page (add/page.js, add.controller.js, add.njk), the shared address-fields.njk macro, fields.js (field rules), field-rule.js, address-countries.js, add-in-progress.js (the session store for an add in progress), stored-address.js, lines-html.js, the address-book copy in English and Welsh (copy.en.js, copy.cy.js; only the add, addressType, form, roles, add success banner and field error keys claimed here), lib/validate (index.js, run.js, validators.js, calendar.js), the countries service (client.js, index.js, stub.js), and the fit helper address-form.js with the two fit specs add.fit.spec.js and address-type.fit.spec.js. Also looked up, for routes and roles only: shared/paths.js (address-book, add and address-type paths and the start query) and services/address-book/address-types.js (address types, form types, roles by type, place roles), and the ROLES_BY_PARTY table in common/test-helpers/journey-handshake.js. Covered: two pages. The address-type page at /address-book/add/address-type (three radio options with hints, one error, Continue, Back, where each option leads, the start query that clears an add in progress). The add page at /address-book/add in its two modes: the address-book mode (after the address-type step, roles question by address type, Save and continue, Cancel and return to address book, success banner and landing on the type's list tab) and the role-handshake mode a notification journey opens (journey strip, the other-roles question, Save and select, Save and return to address page, Cancel and return to hub). For both: every address and contact field with label, hint, width, autocomplete, required and maximum length, the country select and how its list is built from reference data, every validation message in English and Welsh, error handling when the address book refuses or fails, and what is saved. Every validator exported by lib/validate with its limits, and which ones the address fields use. Every test in the two fit specs, a looped test claimed once naming its instances. The handshake context, return URL and journey registry mechanics themselves are part 3's; the list the add lands on is part 4's; view, edit and delete are part 6's.",
   "claims": [
     {
       "id": "repo-insfrontend-p5-001",
-      "statement": "The address lookup spike page is served at /address-lookup-spike, answering both GET (the empty search page) and POST (a search, or a chosen result).",
+      "statement": "The address-type page is served at GET and POST /address-book/add/address-type.",
       "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/controller.js:18, :131",
-      "quote": "const PAGE_PATH = '/address-lookup-spike'\n...\nexport const routes = kit.pageRoutes(PAGE_PATH, { get, post })",
+      "ref": "src/server/app/shared/paths.js:5; src/server/app/features/address-book/address-type/address-type.controller.js:93",
+      "quote": "export const addressTypePath = () => `${addressAddPath()}/address-type`",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-002",
-      "statement": "The spike page needs a signed-in session, like the service's other pages: its routes use the shared session auth option.",
+      "statement": "The address-type page is marked at maturity 'exploring'.",
       "kind": "constraint",
-      "ref": "src/server/app/shared/kit.js:8, :65-68",
-      "quote": "export const routeOptions = { auth: 'session' }\n...\nexport const pageRoutes = (path, { get, post }, options = routeOptions) => [",
+      "ref": "src/server/app/features/address-book/address-type/page.js:1",
+      "quote": "export const addressTypePage = { id: 'address-type', maturity: 'exploring' }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-003",
-      "statement": "The spike page is registered only when the CDP environment is dev or local.",
-      "kind": "constraint",
-      "ref": "src/server/app/features/address-lookup-spike/is-dev-or-local.js:3-4; src/server/app/routes.js:9-12",
-      "quote": "['dev', 'local'].includes(config.get('cdpEnvironment'))\n...\nisDevOrLocalEnvironment()\n          ? [...allRoutes, ...addressLookupSpike.routes]\n          : allRoutes",
+      "statement": "A user reaches the address-type page from the address book list's 'Add a new address' button, which links to the address-type page with the query start=true.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:6-8; src/server/app/features/address-book/fit/address-type.fit.spec.js:47-50",
+      "quote": "const ADDRESS_TYPE_START_QUERY = { start: 'true' }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-004",
-      "statement": "In every other environment (test, perf-test, ext-test, prod, infra-dev, management) /address-lookup-spike does not exist and returns not found.",
-      "kind": "constraint",
-      "ref": "src/server/router.test.js:73-95 'the spike page is not registered when cdpEnvironment is %s'",
-      "quote": "'the spike page is not registered when cdpEnvironment is %s'\n...\nexpect(statusCode).toBe(statusCodes.notFound)",
-      "confidence": "verbatim"
+      "statement": "Opening the address-type page with start=true clears any address being added (the chosen type, the entered values and the ticked roles), so a new add starts with nothing chosen.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/address-type/address-type.controller.js:53-63",
+      "quote": "if (isAddressTypeStart(request.query)) {\n    clearAddInProgress(request)",
+      "confidence": "verbatim",
+      "note": "mechanism: clears the session record of the add in progress. The clearing is logged with the organisation id and path."
     },
     {
       "id": "repo-insfrontend-p5-005",
-      "statement": "The spike is temporary and self-contained: removing it means deleting its folder and its one line in routes.js, and no permanent feature depends on it.",
-      "kind": "constraint",
-      "ref": "src/server/app/docs/features.md:146-155 'The temporary address-lookup-spike feature'",
-      "quote": "`address-lookup-spike/` is EUDPA-390's dev/local-only spike page, kept\nself-contained so that removing it means deleting the folder and its\none line in [`routes.js`](../routes.js) — no permanent feature depends\non it.",
+      "statement": "The address-type page shows the caption 'Add a new address'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/address-type/address-type.njk:8; src/server/app/features/address-book/copy/copy.en.js:109",
+      "quote": "caption: ADD_A_NEW_ADDRESS",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-006",
-      "statement": "Nothing in the service links to the spike page: a user reaches it only by typing its URL. No template or controller other than the spike's own refers to /address-lookup-spike.",
-      "kind": "behaviour",
-      "ref": "grep -rn address-lookup-spike over src/: only the spike's own files, routes.js, router.test.js and docs/",
-      "quote": "const PAGE_PATH = '/address-lookup-spike'",
-      "confidence": "inferred"
+      "statement": "The address-type page's heading and page title are 'Choose an address type'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:110; src/server/app/features/address-book/address-type/address-type.controller.js:45",
+      "quote": "title: 'Choose an address type'",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-007",
-      "statement": "Nothing the spike page does is saved: choosing a result only shows how it would map onto the address book's fields.",
+      "statement": "The address-type question is a GOV.UK radios group named addressType whose fieldset legend repeats 'Choose an address type' and is visually hidden.",
       "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:20; copy/copy.en.js:3",
-      "quote": "Nothing here is saved. The rules are a proposal for the real build to argue with.",
+      "ref": "src/server/app/features/address-book/address-type/address-type.njk:14-25",
+      "quote": "legend: {\n          text: copy.addressType.title,\n          classes: \"govuk-visually-hidden\"\n        }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-008",
-      "statement": "The spike page's browser title and its h1 heading are both 'Address lookup spike'.",
+      "statement": "The address-type page offers three options in this order: 'Origin or Consignor' with hint 'Place of origin, Consignor'; 'Destination, Consignee or Importer' with hint 'Place of destination, Consignee, Importer'; 'Transporter' with hint 'Private, Commercial'.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/controller.js:24-26; copy/copy.en.js:2 title",
-      "quote": "title: 'Address lookup spike',",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:111-121; src/server/app/services/address-book/address-types.js:1-5",
+      "quote": "ORIGIN_OR_CONSIGNOR: {\n        label: 'Origin or Consignor',\n        hint: 'Place of origin, Consignor'\n      },\n      DESTINATION_CONSIGNEE_OR_IMPORTER: {\n        label: 'Destination, Consignee or Importer',\n        hint: 'Place of destination, Consignee, Importer'\n      },\n      TRANSPORTER: { label: 'Transporter', hint: 'Private, Commercial' }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-009",
-      "statement": "Below the h1 the page shows the caption 'EUDPA-390 — dev/local only, temporary. Nothing is saved.' (the caption sits after the heading, not above it).",
+      "statement": "The address-type page has one button, 'Continue'.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:83-84; copy/copy.en.js:3 caption",
-      "quote": "caption: 'EUDPA-390 — dev/local only, temporary. Nothing is saved.',",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:122; src/server/app/features/address-book/address-type/address-type.njk:27",
+      "quote": "continue: 'Continue'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-010",
-      "statement": "The spike page uses the full-width display column rather than the two-thirds form column.",
+      "statement": "The address-type page's Back link goes to the address book list at /address-book.",
       "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/controller.js:25; src/server/app/shared/kit.js:12-15",
-      "quote": "contentColumnClass: kit.surfaceClass('display'),\n...\ndisplay: 'govuk-grid-column-full'",
+      "ref": "src/server/app/features/address-book/address-type/address-type.controller.js:45",
+      "quote": "kit.base(copy.addressType.title, { backLink: addressBookPath() })",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-011",
-      "statement": "The spike page has no back link.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/controller.js:24",
-      "quote": "...kit.base(copy.title, { recoverableError }),",
-      "confidence": "inferred",
-      "note": "kit.base takes an optional backLink; the spike never passes one."
+      "statement": "The address-type question is required: Continue with nothing chosen, or with a value that is not one of the three types, shows the error 'Select an address type' in the error summary and against the radios, with status 400.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/address-type/address-type.controller.js:27-32,74-78; src/server/app/features/address-book/copy/copy.en.js:238-240",
+      "quote": "required: 'Select an address type'",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-012",
-      "statement": "The page has one text input, 'term', labelled 'Postcode or address'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:88-95; copy/copy.en.js:5 form.label",
-      "quote": "label: 'Postcode or address',",
+      "statement": "Choosing 'Origin or Consignor' or 'Destination, Consignee or Importer' and pressing Continue stores the chosen type and goes to the add page at /address-book/add.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/address-type/address-type.controller.js:69-72,79-90",
+      "quote": "addressType === ADDRESS_TYPES.TRANSPORTER\n    ? transporterTypeStartPath()\n    : addressAddPath()",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-013",
-      "statement": "The search input's hint reads 'A UK postcode is searched as a postcode. Anything else is searched as free text.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.en.js:6 form.hint",
-      "quote": "hint: 'A UK postcode is searched as a postcode. Anything else is searched as free text.',",
+      "statement": "Choosing 'Transporter' and pressing Continue goes to the transporter type page at /address-book/add/transporter with start=true, and the hand-over is logged.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/address-type/address-type.controller.js:69-72,80-89; src/server/app/shared/paths.js:11-14",
+      "quote": "'Address type question handed over to the add-a-transporter pages'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-014",
-      "statement": "The search form's button reads 'Search'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:96; copy/copy.en.js:7 form.button",
-      "quote": "button: 'Search'",
+      "statement": "When the user comes back to the address-type page during an add, the type they chose before is shown checked.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/address-type/address-type.controller.js:34-40,64-66",
+      "quote": "checked: addressType === selectedAddressType",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-015",
-      "statement": "After a search, or after choosing a result, the search input is filled again with the term that was searched.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:93; controller.js:104, :115, :124, :127",
-      "quote": "value: term,",
+      "statement": "The address-type page and the add page are sent with Cache-Control: no-store, so the browser does not keep a copy of the form.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/address-book/address-type/address-type.controller.js:51; src/server/app/features/address-book/add/add.controller.js:187",
+      "quote": ".header('Cache-Control', 'no-store')",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-016",
-      "statement": "Searching with an empty term, or one of only spaces, shows the error 'Enter a postcode or an address to search for' and runs no lookup.",
-      "kind": "rule",
-      "ref": "src/server/app/features/address-lookup-spike/controller.js:119-121; copy/copy.en.js:9 errors.termRequired",
-      "quote": "if (!term?.trim()) {\n    return buildView(h, { termError: copy.errors.termRequired })\n  }\n...\nerrors: { termRequired: 'Enter a postcode or an address to search for' },",
+      "statement": "The add page is served at GET and POST /address-book/add.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:4; src/server/app/features/address-book/add/add.controller.js:456-459",
+      "quote": "export const addressAddPath = () => '/address-book/add'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-017",
-      "statement": "The empty-term error is shown only as an inline error on the input: the spike page renders no error summary.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:94",
-      "quote": "errorMessage: { text: termError } if termError",
-      "confidence": "inferred",
-      "note": "The template has no govukErrorSummary and the controller passes no errors list to the layout."
+      "statement": "The add page is marked at maturity 'exploring'.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/address-book/add/page.js:1",
+      "quote": "export const addressAddPage = { id: 'address-add', maturity: 'exploring' }",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-018",
-      "statement": "The page decides the search mode itself from what was typed: a term that looks like a full UK postcode is searched as a postcode, and anything else is searched as free text. The user is never asked to pick a mode.",
-      "kind": "rule",
-      "ref": "src/server/app/features/address-lookup-spike/detect-search-mode.js:2-6, :13, :32-40",
-      "quote": "const UK_POSTCODE = /^[A-Z]{1,2}\\d[A-Z\\d]?\\s*\\d[A-Z]{2}$/i\n...\n  if (UK_POSTCODE.test(term)) {\n    return { mode: 'POSTCODE', term: normalisePostcode(term) }\n  }\n\n  return { mode: 'FIND', term }",
+      "statement": "The add page has two modes: the address-book mode, opened from the address book after the address-type step, and the role-handshake mode, opened by a notification journey with a handshake context.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:59-65",
+      "quote": "const ADD_MODES = Object.freeze({\n  ADDRESS_BOOK: 'address-book',\n  ROLE_HANDSHAKE: 'role-handshake'\n})",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-019",
-      "statement": "A postcode is matched case-insensitively, with or without a space between its halves.",
-      "kind": "rule",
-      "ref": "src/server/app/features/address-lookup-spike/detect-search-mode.js:13",
-      "quote": "/^[A-Z]{1,2}\\d[A-Z\\d]?\\s*\\d[A-Z]{2}$/i",
+      "statement": "In the address-book mode, opening or posting the add page with no chosen address type that the form serves (Origin or Consignor, or Destination, Consignee or Importer) redirects to the address-type page; a stored Transporter choice also redirects there. The redirect is logged.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:220-237; src/server/app/services/address-book/address-types.js:7-10",
+      "quote": "'No address type chosen that this form serves, sending the user to choose one'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-020",
-      "statement": "A postcode term is normalised before searching: spaces removed, upper-cased, and one space put before the last three characters (so 'sw1a1aa' searches as 'SW1A 1AA').",
-      "kind": "rule",
-      "ref": "src/server/app/features/address-lookup-spike/detect-search-mode.js:17-26",
-      "quote": "Upper case with a single space before the final three characters, which is how the\n * lookup returns postcodes and how it expects to be asked. Lets \"sw1a1aa\" find\n * something rather than silently returning nothing.",
-      "confidence": "verbatim"
+      "statement": "The add page shows the caption 'Add new address' in English.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:200; src/server/app/features/address-book/add/add.njk:9",
+      "quote": "caption: 'Add new address'",
+      "confidence": "verbatim",
+      "note": "The address-type page before it uses the caption 'Add a new address'; the Welsh add caption reuses the address-type caption 'Ychwanegu cyfeiriad newydd'."
     },
     {
       "id": "repo-insfrontend-p5-021",
-      "statement": "A partial postcode such as 'SW1A' on its own, and the special postcode GIR 0AA, are not treated as postcodes: they are searched as free text.",
-      "kind": "rule",
-      "ref": "src/server/app/features/address-lookup-spike/detect-search-mode.js:8-11",
-      "quote": "It does\n * not accept the GIR 0AA special case, or a partial postcode such as \"SW1A\" on its own,\n * both of which fall through to `find` — which is arguably where a partial belongs.",
+      "statement": "The add page's heading and page title are 'Add address and contact details', and the browser title reads 'Add address and contact details - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:199; src/server/app/features/address-book/fit/address-type.fit.spec.js:137-147",
+      "quote": "title: 'Add address and contact details'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-022",
-      "statement": "A free-text term is searched as typed, with only leading and trailing spaces trimmed.",
-      "kind": "rule",
-      "ref": "src/server/app/features/address-lookup-spike/detect-search-mode.js:29-33",
-      "quote": "the term\n *   to search with — normalised when it is a postcode, otherwise just trimmed.",
+      "statement": "In the address-book mode the add page's Back link goes to the address-type page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:67-70",
+      "quote": "addMode === ADD_MODES.ADDRESS_BOOK\n    ? addressTypePath()",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-023",
-      "statement": "After a search, a results heading reads 'Searched' followed by the query sent, shown as code: 'postcode=<term>' for a postcode search or 'find=<term>' for a free-text search.",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:22-24; copy/copy.en.js:18 search.searched",
-      "quote": "{{ copy.search.searched }} <code>{{ \"postcode=\" if search.mode == \"POSTCODE\" else \"find=\" }}{{ search.term }}</code>",
+      "statement": "In the role-handshake mode the add page's Back link goes to the journey's return URL.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:67-70",
+      "quote": ": buildReturnUrl(handshakeContext)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-024",
-      "statement": "After a postcode search the page explains 'That looked like a UK postcode, so it was searched as one.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:26-27; copy/copy.en.js:19 search.modePostcode",
-      "quote": "modePostcode: 'That looked like a UK postcode, so it was searched as one.',",
+      "statement": "In the role-handshake mode the add page shows the draft journey strip (the Draft status and the notification id) above the caption; the address-book mode shows no journey strip.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:167-170; src/server/app/features/address-book/fit/add.fit.spec.js:298-346",
+      "quote": "journeyStrip:\n          addMode === ADD_MODES.ADDRESS_BOOK\n            ? null\n            : kit.draftJourneyStrip(handshakeContext.notificationId)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-025",
-      "statement": "After a free-text search the page explains 'That did not look like a UK postcode, so it was searched as free text.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:28-29; copy/copy.en.js:20-21 search.modeFind",
-      "quote": "'That did not look like a UK postcode, so it was searched as free text.',",
-      "confidence": "verbatim"
+      "statement": "In the role-handshake mode the add form carries the journey type, notification id, fulfilment id and handshake token as hidden fields, so a post keeps the journey context.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.njk:14-19",
+      "quote": "<input type=\"hidden\" name=\"journey-type\" value=\"{{ handshakeContext.journeyType }}\" />",
+      "confidence": "verbatim",
+      "note": "mechanism: hidden form fields holding the handshake context; the context itself is part 3's."
     },
     {
       "id": "repo-insfrontend-p5-026",
-      "statement": "Each search shows an outcome tag: a green 'Results' tag when the lookup's outcome is RESULTS, a grey 'No results' tag when it is NO_RESULTS, and a red 'Failed' tag for any other outcome.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:11-19, :33; copy/copy.en.js:29 outcome",
-      "quote": "outcome: { results: 'Results', noResults: 'No results', failed: 'Failed' },",
+      "statement": "The add form groups its fields under two level-2 headings: 'Address' (name, address lines, town or city, county, postcode, country) and 'Contact details' (email address, phone number).",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/address-fields.njk:9,76; src/server/app/features/address-book/copy/copy.en.js:15-16",
+      "quote": "const ADDRESS_HEADING = 'Address'\nconst CONTACT_HEADING = 'Contact details'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-027",
-      "statement": "When the lookup's outcome is FAILED, the page shows a warning 'Failed: <reason>' with the failure reason the lookup returned, and lists no results.",
+      "statement": "The add form asks its fields in this order: Name or organisation, Address line 1, Address line 2 (optional), Town or city, County (optional), Postcode or Zip code, Country, Email address, Phone number.",
       "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:53-57; copy/copy.en.js:24 search.failed",
-      "quote": "failed: (reason) => `Failed: ${reason}`,",
+      "ref": "src/server/app/features/address-book/address-fields.njk:11-98; src/server/app/features/address-book/fit/address-form.js:24-34",
+      "quote": "export const fieldLabelsInFormOrder = [\n  fieldLabels.name,\n  fieldLabels.addressLine1,\n  fieldLabels.addressLine2,\n  fieldLabels.townOrCity,\n  fieldLabels.county,\n  fieldLabels.postcode,\n  fieldLabels.countryCode,\n  fieldLabels.email,\n  fieldLabels.phone\n]",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-028",
-      "statement": "When the lookup returns results, the page says how many came back out of how many matched: '<returned> of <total> returned.'",
+      "statement": "The name field is labelled 'Name or organisation', is full width, has no autocomplete attribute and has no hint.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:59; copy/copy.en.js:22 search.returned",
-      "quote": "returned: (returned, total) => `${returned} of ${total} returned.`,",
+      "ref": "src/server/app/features/address-book/address-fields.njk:11-17; src/server/app/features/address-book/copy/copy.en.js:5",
+      "quote": "const NAME_OR_ORGANISATION = 'Name or organisation'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-029",
-      "statement": "Each result is listed with its whole formatted address line (as the lookup returns it, including town and postcode).",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:60-62",
-      "quote": "<p class=\"govuk-body govuk-!-margin-bottom-1\">{{ row.addressLine }}</p>",
+      "statement": "The name is required and at most 255 characters.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/fields.js:8",
+      "quote": "name: { maxLength: 255, required: true }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-030",
-      "statement": "Under each result's address the page shows its match score, match description and UPRN: 'Match <match> (<description>) · UPRN <uprn>'.",
+      "statement": "A blank name shows 'Enter a name or organisation'; a name over 255 characters shows 'Name must be 255 characters or fewer'.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:63-65; copy/copy.en.js:25-26 search.matchLine",
-      "quote": "matchLine: (match, description, uprn) =>\n      `Match ${match} (${description}) · UPRN ${uprn}`,",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:253-256",
+      "quote": "required: 'Enter a name or organisation',\n      maxLength: (max) => `Name must be ${max} characters or fewer`",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-031",
-      "statement": "Each result has its own secondary button 'Use this address', which posts back to the page with the search term and that whole result.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:66-74; copy/copy.en.js:27 search.useAddress",
-      "quote": "<input type=\"hidden\" name=\"chosen\" value=\"{{ search.response.results[row.index] | dump }}\" />\n...\nuseAddress: 'Use this address'",
-      "confidence": "verbatim",
-      "note": "The chosen result travels in a hidden form field as JSON, so the mapped view shows what the browser sent back, not a fresh lookup."
+      "statement": "Address line 1 is labelled 'Address line 1', is full width and has autocomplete 'address-line1'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/address-fields.njk:19-26; src/server/app/features/address-book/copy/copy.en.js:6",
+      "quote": "autocomplete: \"address-line1\"",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-032",
-      "statement": "When a search did not fail but returned no results, the page says 'Nothing returned.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:77-78; copy/copy.en.js:23 search.nothingReturned",
-      "quote": "nothingReturned: 'Nothing returned.',",
+      "statement": "Address line 1 is required and at most 255 characters.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/fields.js:9",
+      "quote": "addressLine1: { maxLength: 255, required: true }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-033",
-      "statement": "When the backend returns timings with a search, the page shows a 'Where the time went' section; with no timings the section is not shown.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:35-36; controller.js:41-44; copy/copy.en.js:31 timings.heading",
-      "quote": "if (!backendTimings) {\n    return null\n  }\n...\nheading: 'Where the time went',",
+      "statement": "A blank address line 1 shows 'Enter address line 1'; one over 255 characters shows 'Address line 1 must be 255 characters or fewer'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:257-260",
+      "quote": "required: 'Enter address line 1',\n      maxLength: (max) => `Address line 1 must be ${max} characters or fewer`",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-034",
-      "statement": "When the backend says its access token came from cache, the timings section says 'The cached access token was reused, so neither token hop ran.'",
+      "statement": "Address line 2 is labelled 'Address line 2 (optional)', is full width and has autocomplete 'address-line2'.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:38-39; copy/copy.en.js:32 timings.cached",
-      "quote": "cached: 'The cached access token was reused, so neither token hop ran.',",
+      "ref": "src/server/app/features/address-book/address-fields.njk:28-35; src/server/app/features/address-book/copy/copy.en.js:7",
+      "quote": "const ADDRESS_LINE_2 = 'Address line 2 (optional)'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-035",
-      "statement": "When the token was not from cache, the timings section says 'No usable token was cached, so this search paid for both token hops.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:40-41; copy/copy.en.js:33-34 timings.minted",
-      "quote": "'No usable token was cached, so this search paid for both token hops.',",
+      "statement": "Address line 2 is optional and at most 255 characters; over 255 shows 'Address line 2 must be 255 characters or fewer'.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/fields.js:10; src/server/app/features/address-book/copy/copy.en.js:261-263",
+      "quote": "addressLine2: { maxLength: 255, required: false }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-036",
-      "statement": "The timings table has two columns, 'Hop' and a right-aligned numeric 'Time', with each time shown in milliseconds as '<n>ms'.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:44-47; controller.js:63-66; copy/copy.en.js:35-37",
-      "quote": "hop: 'Hop',\n    time: 'Time',\n    milliseconds: (ms) => `${ms}ms`,",
+      "statement": "Town or city is labelled 'Town or city', is one-half width and has autocomplete 'address-level2'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/address-fields.njk:37-45; src/server/app/features/address-book/copy/copy.en.js:8",
+      "quote": "autocomplete: \"address-level2\",\n    classes: \"govuk-!-width-one-half\"",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-037",
-      "statement": "The timings table's rows are, in order: the AWS STS hop and the Entra hop (each only when the backend reports it), then the address lookup gateway, everything the backend did, and this page's own round trip including the call to the backend.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/controller.js:46-59",
-      "quote": "if (stsMs != null) {\n    hops.push([copy.timings.hops.sts, stsMs])\n  }\n  if (entraMs != null) {\n    hops.push([copy.timings.hops.entra, entraMs])\n  }\n  hops.push(\n    [copy.timings.hops.gateway, lookupMs],\n    [copy.timings.hops.backend, totalMs],\n    [copy.timings.hops.page, roundTripMs]\n  )",
+      "statement": "Town or city is required and at most 100 characters.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/fields.js:11",
+      "quote": "townOrCity: { maxLength: 100, required: true }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-038",
-      "statement": "The page's own round-trip time is measured by the frontend from just before the lookup call to just after it returns.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/controller.js:72-78",
-      "quote": "const startedAt = Date.now()\n...\nconst roundTripMs = Date.now() - startedAt",
+      "statement": "A blank town or city shows 'Enter a town or city'; one over 100 characters shows 'Town or city must be 100 characters or fewer'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:264-267",
+      "quote": "required: 'Enter a town or city',\n      maxLength: (max) => `Town or city must be ${max} characters or fewer`",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-039",
-      "statement": "The STS hop is labelled 'AWS STS, minting the assertion'.",
+      "statement": "County is labelled 'County (optional)', is one-half width and has no autocomplete attribute.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.en.js:41 timings.hops.sts",
-      "quote": "sts: 'AWS STS, minting the assertion',",
+      "ref": "src/server/app/features/address-book/address-fields.njk:47-54; src/server/app/features/address-book/copy/copy.en.js:9",
+      "quote": "const COUNTY = 'County (optional)'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-040",
-      "statement": "The Entra hop is labelled 'Entra, exchanging it for an access token'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.en.js:42 timings.hops.entra",
-      "quote": "entra: 'Entra, exchanging it for an access token',",
+      "statement": "County is optional and at most 100 characters; over 100 shows 'County must be 100 characters or fewer'.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/fields.js:12; src/server/app/features/address-book/copy/copy.en.js:268-270",
+      "quote": "county: { maxLength: 100, required: false }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-041",
-      "statement": "The gateway hop is labelled 'The address lookup gateway'.",
+      "statement": "Postcode is labelled 'Postcode or Zip code', is one-half width and has autocomplete 'postal-code'.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.en.js:43 timings.hops.gateway",
-      "quote": "gateway: 'The address lookup gateway',",
+      "ref": "src/server/app/features/address-book/address-fields.njk:56-64; src/server/app/features/address-book/copy/copy.en.js:10",
+      "quote": "const POSTCODE = 'Postcode or Zip code'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-042",
-      "statement": "The backend total row is labelled 'Everything the backend did'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.en.js:44 timings.hops.backend",
-      "quote": "backend: 'Everything the backend did',",
+      "statement": "Postcode is required and at most 12 characters.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/fields.js:13",
+      "quote": "postcode: { maxLength: 12, required: true }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-043",
-      "statement": "The page round-trip row is labelled 'This page, including the call to the backend'.",
+      "statement": "A blank postcode shows 'Enter a postcode or Zip code'; one over 12 characters shows 'Postcode must be 12 characters or fewer'.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.en.js:45 timings.hops.page",
-      "quote": "page: 'This page, including the call to the backend'",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:271-274",
+      "quote": "required: 'Enter a postcode or Zip code',\n      maxLength: (max) => `Postcode must be ${max} characters or fewer`",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-044",
-      "statement": "When the request has a trace ID, the timings section ends with 'Trace ID <id> — for the full picture in OpenSearch.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:48-50; copy/copy.en.js:38-39 timings.traceIdLabel, timings.traceIdSuffix",
-      "quote": "traceIdLabel: 'Trace ID',\n    traceIdSuffix: '— for the full picture in OpenSearch.',",
-      "confidence": "verbatim"
+      "statement": "The add form does not check a postcode's format: the field rules give postcode only required and a maximum length, and the UK postcode validator in lib/validate is not used, so any text up to 12 characters is accepted for any country.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/fields.js:13,60-66; src/server/app/features/address-book/field-rule.js:35-43",
+      "quote": "postcode: { maxLength: 12, required: true }",
+      "confidence": "inferred",
+      "note": "Follows from fieldRuleFor building only required/max-length text rules for fields without email or oneOfCountryCodes."
     },
     {
       "id": "repo-insfrontend-p5-045",
-      "statement": "When the lookup request itself fails (the backend cannot be reached or answers with an error status), the page keeps the term and shows the warning 'The address lookup request failed before the backend could answer.'",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/controller.js:123-128; template.njk:99-104; copy/copy.en.js:12-13 warnings.network; services/address-lookup/client.js:24",
-      "quote": "network:\n      'The address lookup request failed before the backend could answer.',",
+      "statement": "Country is a plain GOV.UK select labelled 'Country', one-half width, with no autocomplete attribute.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/address-fields.njk:66-74; src/server/app/features/address-book/copy/copy.en.js:101; src/server/app/features/address-book/fit/add.fit.spec.js:393-406",
+      "quote": "countryCode: 'Country'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-046",
-      "statement": "The spike's warnings use 'Warning' as the warning icon's fallback text.",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.en.js:11 warnings.iconFallbackText",
-      "quote": "iconFallbackText: 'Warning',",
+      "statement": "Country is required and must be one of the country codes the form offered; a blank or unoffered country shows 'Select a country'.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/fields.js:14,53-58; src/server/app/features/address-book/copy/copy.en.js:275-277",
+      "quote": "countryCode: { required: true, oneOfCountryCodes: true }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-047",
-      "statement": "A failed lookup request, and a chosen result that cannot be read, are each logged as an error with the request's trace ID.",
-      "kind": "non-functional",
-      "ref": "src/server/app/features/address-lookup-spike/controller.js:111-114, :126",
-      "quote": "'Address lookup spike could not read the chosen address'\n...\nlogger.error({ err, traceId }, 'Address lookup spike request failed')",
+      "statement": "The country select's first option is the placeholder 'Select a country' with an empty value.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/address-countries.js:31-34; src/server/app/features/address-book/copy/copy.en.js:1,106",
+      "quote": "{ value: '', text: placeholder }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-048",
-      "statement": "When the chosen result posted back cannot be read as an address object, the page keeps the term and shows the warning 'The chosen address could not be read. Search again and pick a result.'",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/controller.js:96-116; template.njk:106-111; copy/copy.en.js:14-15 warnings.chosen",
-      "quote": "chosen:\n      'The chosen address could not be read. Search again and pick a result.'",
+      "statement": "The country list comes from the reference-data service's countries endpoint, each option showing the country name with its code as the value.",
+      "kind": "integration",
+      "ref": "src/server/app/services/countries/client.js:8-9; src/server/app/features/address-book/address-countries.js:25-29",
+      "quote": "const url = new URL(`${referenceDataUrl}/countries`)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-049",
-      "statement": "Choosing a result shows a section headed \"Mapped onto the address book's fields\", in place of the results list.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/controller.js:96-109; template.njk:117-118; copy/copy.en.js:49 mapped.heading",
-      "quote": "heading: \"Mapped onto the address book's fields\",",
+      "statement": "The country list always includes United Kingdom (code GB), named 'United Kingdom' whatever reference data calls it, and lists it once.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/address-countries.js:5,18-22",
+      "quote": "const GB_COUNTRY = { code: 'GB', name: 'United Kingdom' }",
       "confidence": "verbatim",
-      "note": "The chosen-result POST renders without a search, so the results list is not shown alongside the mapping."
+      "note": "mechanism: drops any GB entry reference data returns and adds its own United Kingdom entry."
     },
     {
       "id": "repo-insfrontend-p5-050",
-      "statement": "The mapped section is a summary list with six rows, in order: 'Address line 1', 'Address line 2', 'Town or city', 'County', 'Postcode' and 'Country'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:120-129; copy/copy.en.js:50-55",
-      "quote": "addressLine1: 'Address line 1',\n    addressLine2: 'Address line 2',\n    townOrCity: 'Town or city',\n    county: 'County',\n    postcode: 'Postcode',\n    country: 'Country',",
+      "statement": "The country list is sorted alphabetically by name in English collation, United Kingdom among them rather than first.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/address-countries.js:7,22",
+      "quote": "return [GB_COUNTRY, ...withoutGb].toSorted(byName)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-051",
-      "statement": "A mapped field with no value is shown as an em dash.",
+      "statement": "When reference data returns no countries, or the countries request fails, the page fails with a service-unavailable error ('Reference data unavailable', dataset countries).",
       "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:122-127",
-      "quote": "value: { text: addressFields.addressLine1 or \"—\" }",
+      "ref": "src/server/app/features/address-book/address-countries.js:12-16; src/server/app/services/countries/index.js:13-21",
+      "quote": "throw Boom.serverUnavailable('Reference data unavailable', {\n      dataset: 'countries'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-052",
-      "statement": "The mapping targets the address book's own fields: address line 1 and 2, town or city, county, postcode and country code.",
-      "kind": "data",
-      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:1-4",
-      "quote": "map one lookup result onto the address book's own fields\n * (`address-book/address-schema.js` — address line 1 and 2, town or city, county,\n * postcode, country code).",
-      "confidence": "verbatim"
+      "statement": "Countries are fetched from reference data once and then held in memory for the life of the service process; in stub mode the captured countries fixture is used instead and no request is made.",
+      "kind": "non-functional",
+      "ref": "src/server/app/services/countries/index.js:6-27; src/server/app/services/countries/stub.js:1",
+      "quote": "if (isStubMode() || loaded) {\n    return\n  }",
+      "confidence": "verbatim",
+      "note": "mechanism: in-process cache of the countries list."
     },
     {
       "id": "repo-insfrontend-p5-053",
-      "statement": "To build the address lines, the result's premises are its sub-building name then building name, joined by ', ', and its street is its building number then street, joined by a space.",
-      "kind": "rule",
-      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:35-45",
-      "quote": "Premises first, then the street. Sub-building before building name because that is\n * the order they read in (\"Unit 1, Downing House\"), and a number binds to its street\n * (\"1 Downing Street\") rather than standing alone.",
+      "statement": "The countries request sends the trace id in the configured tracing header, and can ask for named country blocks as repeated 'blocks' query parameters; the add form asks for no blocks.",
+      "kind": "integration",
+      "ref": "src/server/app/services/countries/client.js:8-23; src/server/app/services/countries/index.js:14",
+      "quote": "url.searchParams.append('blocks', block)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-054",
-      "statement": "When a result has both premises and a street, address line 1 is the premises and address line 2 is the street followed by the locality, joined by ', '.",
-      "kind": "rule",
-      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:48-53",
-      "quote": "if (premises && street) {\n    return {\n      addressLine1: premises,\n      addressLine2: joinPresent([street, locality], ', ')\n    }\n  }",
+      "statement": "In the address-book mode the add form opens with United Kingdom selected in the country select.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:79-83",
+      "quote": "formValues: formValues ?? formValuesOf({ countryCode: GB_COUNTRY.code })",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-055",
-      "statement": "When a result has only premises or only a street, that becomes address line 1 and the locality becomes address line 2.",
-      "kind": "rule",
-      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:55-58",
-      "quote": "const only = premises || street\n  if (only) {\n    return { addressLine1: only, addressLine2: locality }\n  }",
+      "statement": "In the role-handshake mode the add form opens with United Kingdom selected for a receiving party (such as the consignee) and with 'Select a country' for any other party (such as the consignor or place of origin).",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:72-78; src/server/app/features/address-book/fit/add.fit.spec.js:372-407",
+      "quote": "const openingCountry = isReceivingParty(handshakeContext)\n      ? { countryCode: GB_COUNTRY.code }\n      : {}",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-056",
-      "statement": "When a result has no name, number or street, address line 1 falls back to the whole formatted address line, and address line 2 is the locality.",
-      "kind": "rule",
-      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:60-63",
-      "quote": "Nothing to compose from. The formatted line is a poor substitute — it carries the\n  // town and postcode too — but an empty line 1 would fail the form's own validation,\n  // so show it and let the page flag it.",
+      "statement": "Email address is labelled 'Email address', is full width and has autocomplete 'email'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/address-fields.njk:78-85; src/server/app/features/address-book/copy/copy.en.js:11",
+      "quote": "const EMAIL_ADDRESS = 'Email address'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-057",
-      "statement": "The result's town fills 'Town or city' and its postcode fills 'Postcode'.",
+      "statement": "Email address is required, at most 254 characters, and must be in email format; any top-level domain is accepted.",
       "kind": "rule",
-      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:98-100",
-      "quote": "townOrCity: address.town ?? '',\n      county: '',\n      postcode: address.postcode ?? '',",
+      "ref": "src/server/app/features/address-book/fields.js:15; src/server/app/lib/validate/validators.js:79-98",
+      "quote": "email: { maxLength: 254, required: true, email: true }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-058",
-      "statement": "County and country are always left empty by the mapping, because the lookup returns no county and only a free-text country name.",
-      "kind": "rule",
-      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:13-15, :99, :101",
-      "quote": "2. The lookup has no county at all.\n * 3. `country` is free text and upper case (\"ENGLAND\"), where the form wants an ISO\n *    code chosen from reference data.",
+      "statement": "A blank email shows 'Enter an email address'; a malformed one shows 'Enter an email address in the correct format'; one over 254 characters shows 'Email address must be 254 characters or fewer'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:282-286",
+      "quote": "required: 'Enter an email address',\n      format: 'Enter an email address in the correct format',\n      maxLength: (max) => `Email address must be ${max} characters or fewer`",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-059",
-      "statement": "The lookup's formatted address line includes the postcode, so it is not used as address line 1 except as a last resort.",
-      "kind": "rule",
-      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:17-18",
-      "quote": "`addressLine` is the whole formatted address including the postcode, so it cannot\n * stand in for line 1.",
+      "statement": "Phone number is labelled 'Phone number', is two-thirds width, has autocomplete 'tel' and the hint 'For international numbers include the country code'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/address-fields.njk:87-98; src/server/app/features/address-book/copy/copy.en.js:12-13",
+      "quote": "const PHONE_HINT = 'For international numbers include the country code'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-060",
-      "statement": "Below the mapped fields, an inset headed 'What the lookup could not fill:' lists, as bullets, each gap a real implementation would still have to resolve for the chosen address.",
-      "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:131-139; copy/copy.en.js:56 mapped.gapsIntro",
-      "quote": "gapsIntro: 'What the lookup could not fill:',",
+      "statement": "Phone number is required and at most 20 characters.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/fields.js:16",
+      "quote": "phone: { maxLength: 20, required: true }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-061",
-      "statement": "When the chosen result has no sub-building name, building name, building number or street, the gaps list says 'No name, number or street — address line 1 fell back to the whole formatted address.'",
+      "statement": "A blank phone number shows 'Enter a phone number'; one over 20 characters shows 'Phone number must be 20 characters or fewer'.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:74-88",
-      "quote": "'No name, number or street — address line 1 fell back to the whole formatted address.'",
-      "confidence": "verbatim",
-      "note": "This and the other gap messages are hard-coded English in map-to-address-fields.js, not in the copy files, so they are not translated into Welsh."
-    },
-    {
-      "id": "repo-insfrontend-p5-062",
-      "statement": "When the chosen result has no town, the gaps list says 'No town returned, and town or city is required.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:89-91",
-      "quote": "gaps.push('No town returned, and town or city is required.')",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:278-281",
+      "quote": "required: 'Enter a phone number',\n      maxLength: (max) => `Phone number must be ${max} characters or fewer`",
       "confidence": "verbatim"
     },
     {
+      "id": "repo-insfrontend-p5-062",
+      "statement": "The add form does not check a phone number's format: the field rules give phone only required and a maximum length, and the UK phone validator in lib/validate is not used.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/fields.js:16,60-66; src/server/app/features/address-book/field-rule.js:35-43",
+      "quote": "phone: { maxLength: 20, required: true }",
+      "confidence": "inferred",
+      "note": "Follows from fieldRuleFor building only required/max-length text rules for a field without the email flag."
+    },
+    {
       "id": "repo-insfrontend-p5-063",
-      "statement": "The gaps list always says 'The lookup returns no county field at all.'",
+      "statement": "Only Phone number has a hint; no other address or contact field shows a hint.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:25, :92",
-      "quote": "county: 'The lookup returns no county field at all.',",
+      "ref": "src/server/app/features/address-book/address-fields.njk:11-98",
+      "quote": "hint: {\n      text: copy.form.phoneHint\n    }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-064",
-      "statement": "The gaps list always says the lookup returns a free-text country name rather than an ISO code, and that mapping it to the reference-data list is a separate decision.",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:26-28, :92",
-      "quote": "'The lookup returns a country name in free text (\"ENGLAND\"), not an ISO code. ' +\n    'Mapping it to the reference-data list is a separate decision.'",
-      "confidence": "verbatim"
+      "statement": "Every text field's value is trimmed of surrounding spaces before it is checked and saved, so a value of only spaces counts as blank.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/validators.js:53-77; src/server/app/lib/validate/run.js:9-14",
+      "quote": "Joi.string()\n      .trim()\n      .required()\n      .max(max)",
+      "confidence": "verbatim",
+      "note": "mechanism: Joi convert mode returns the trimmed value, which is what the add page saves."
     },
     {
       "id": "repo-insfrontend-p5-065",
-      "statement": "Mapping a lookup country name to a country code from reference data is an open decision, not yet made.",
-      "kind": "rule",
-      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:26-28",
-      "quote": "Mapping it to the reference-data list is a separate decision.",
-      "confidence": "gap",
-      "note": "Recorded as a gap: the spike names the decision and leaves it open."
+      "statement": "Validation checks every field at once and shows at most one error per field, the first that field fails.",
+      "kind": "behaviour",
+      "ref": "src/server/app/lib/validate/run.js:1-15",
+      "quote": "abortEarly: false",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-066",
-      "statement": "Below the gaps, a details component 'The raw result this came from' shows the chosen result as indented JSON.",
+      "statement": "When the add form is refused, the error summary lists each error as a link in field order, each field shows its error inline, the entered values are kept, and the response status is 400.",
       "kind": "behaviour",
-      "ref": "src/server/app/features/address-lookup-spike/template.njk:141-144; controller.js:108; copy/copy.en.js:57 mapped.raw",
-      "quote": "raw: 'The raw result this came from'",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:369-400; src/server/app/features/address-book/fit/add.fit.spec.js:483-510",
+      "quote": "return rerender({ errors: { ...fieldErrors, ...rolesErrors } }).code(\n        HTTP_STATUS_BAD_REQUEST\n      )",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-067",
-      "statement": "The lookup client calls the INS backend's GET /address-lookup endpoint, passing the search as a query parameter: postcode=<postcode> for a postcode search or find=<term> for a free-text search.",
-      "kind": "integration",
-      "ref": "src/server/app/services/address-lookup/client.js:6-8, :15-30",
-      "quote": "const LOOKUP_PATH = '/address-lookup'\n...\nexport const lookupByPostcode = (postcode) => get({ postcode })\nexport const lookupByFind = (find) => get({ find })",
-      "confidence": "verbatim"
+      "statement": "A user's own input errors on the add form are not logged.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:396-400",
+      "quote": "if (fieldErrors || rolesErrors) {\n      return rerender(",
+      "confidence": "inferred",
+      "note": "No logger call on the validation-refusal branch."
     },
     {
       "id": "repo-insfrontend-p5-068",
-      "statement": "The lookup client can also call /address-lookup with no query parameters, for the backend's default postcode; the spike page does not use this call.",
-      "kind": "integration",
-      "ref": "src/server/app/services/address-lookup/client.js:28; controller.js:3-6",
-      "quote": "export const lookupDefaultPostcode = () => get({})",
+      "statement": "Selecting an error summary link moves focus to the field it names.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:580-599",
+      "quote": "await expectErrorFocusOn(page, {\n        message: error,\n        label,",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-069",
-      "statement": "Each lookup request carries the request's trace ID in the configured tracing header, so the backend's work can be followed in the logs.",
-      "kind": "integration",
-      "ref": "src/server/app/services/address-lookup/client.js:7, :10-13",
-      "quote": "'Content-Type': 'application/json',\n  [tracingHeader]: getTraceId() ?? ''",
+      "statement": "A refused add page has its page title prefixed 'Error: '.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:245",
+      "quote": "await expect(page).toHaveTitle(/^Error: /)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-070",
-      "statement": "A lookup response with an error status is treated as a failed request.",
-      "kind": "integration",
-      "ref": "src/server/app/services/address-lookup/client.js:24",
-      "quote": "await throwOnError(response)",
+      "statement": "In the address-book mode, after the address fields a visible section break precedes a roles question: GOV.UK checkboxes named roles, legend in medium size.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.njk:28-44",
+      "quote": "<hr class=\"govuk-section-break govuk-section-break--l govuk-section-break--visible\">",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-071",
-      "statement": "A lookup response carries an outcome (RESULTS, NO_RESULTS or FAILED), the results, the total and returned result counts, a failure reason, and optionally the backend's timings (STS, Entra, lookup and total milliseconds, and whether the token was cached).",
-      "kind": "data",
-      "ref": "src/server/app/services/address-lookup/stub.js:52-59; controller.js:46; template.njk:11-17, :38, :53, :59",
-      "quote": "outcome: 'RESULTS',\n  query: { mode, term },\n  results: RESULTS,\n  totalResults: RESULTS.length,\n  returnedResults: RESULTS.length,\n  failureReason: null",
-      "confidence": "inferred",
-      "note": "Shape read from the stub's response and the fields the controller and template read; the timings shape comes from the controller destructuring { stsMs, entraMs, lookupMs, totalMs, tokenSource }."
-    },
-    {
-      "id": "repo-insfrontend-p5-072",
-      "statement": "Each lookup result has a formatted address line, building number, building name, sub-building name, street, locality, town, postcode, country, UPRN, match score, match description and language.",
-      "kind": "data",
-      "ref": "src/server/app/services/address-lookup/stub.js:5-19",
-      "quote": "addressLine: 'BUCKINGHAM PALACE, LONDON, SW1A 1AA',\n    buildingNumber: null,\n    buildingName: null,\n    subBuildingName: 'BUCKINGHAM PALACE',\n    street: null,\n    locality: null,\n    town: 'LONDON',\n    postcode: 'SW1A 1AA',\n    country: 'ENGLAND',\n    uprn: '100023336901',\n    match: '1',\n    matchDescription: 'EXACT',\n    language: 'EN'",
+      "statement": "For an 'Origin or Consignor' address the roles question's legend is 'What can this address be used for?'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:185-188",
+      "quote": "ORIGIN_OR_CONSIGNOR: 'What can this address be used for?'",
       "confidence": "verbatim"
     },
     {
+      "id": "repo-insfrontend-p5-072",
+      "statement": "For a 'Destination, Consignee or Importer' address the roles question's legend is 'Address type'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:3,185-188",
+      "quote": "DESTINATION_CONSIGNEE_OR_IMPORTER: ADDRESS_TYPE",
+      "confidence": "verbatim",
+      "note": "The two address types use different legends for the same roles question."
+    },
+    {
       "id": "repo-insfrontend-p5-073",
-      "statement": "When stub mode is on (STUB_MODE true) and the service is not running in production, lookups are answered by an in-memory stub instead of the INS backend.",
-      "kind": "integration",
-      "ref": "src/server/app/services/address-lookup/index.js:1-12; src/server/common/services/mode.js",
-      "quote": "isStubMode()\n    ? stub.lookupByPostcode(postcode)\n    : client.lookupByPostcode(postcode)\n...\nconfig.get('stubMode') && !config.get('isProduction')",
+      "statement": "In the address-book mode the roles question's hint is 'Select where this address can be used'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:189",
+      "quote": "hint: 'Select where this address can be used'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-074",
-      "statement": "The stub returns the same three addresses as trade-imports-stub's address lookup simulator, with outcome RESULTS, whatever postcode or term is searched.",
-      "kind": "behaviour",
-      "ref": "src/server/app/services/address-lookup/stub.js:1, :52-65",
-      "quote": "Holds the same three addresses as trade-imports-stub's address lookup simulator.\n...\nexport const lookupByFind = async (find) => response('FIND', find)",
+      "statement": "For an 'Origin or Consignor' address the roles offered are, in order, 'Place of origin' and 'Consignor'.",
+      "kind": "data",
+      "ref": "src/server/app/services/address-book/address-types.js:20-24; src/server/app/features/address-book/fit/add.fit.spec.js:164-169",
+      "quote": "offeredRoles: ['PLACE_OF_ORIGIN', 'CONSIGNOR']",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-075",
-      "statement": "The stub's first address is BUCKINGHAM PALACE, LONDON, SW1A 1AA, with its name only in the sub-building name and no building name, number or street (UPRN 100023336901).",
+      "statement": "For a 'Destination, Consignee or Importer' address the roles offered are, in order, 'Place of destination', 'Consignee' and 'Importer': the place role comes first.",
       "kind": "data",
-      "ref": "src/server/app/services/address-lookup/stub.js:5-19",
-      "quote": "addressLine: 'BUCKINGHAM PALACE, LONDON, SW1A 1AA',\n    buildingNumber: null,\n    buildingName: null,\n    subBuildingName: 'BUCKINGHAM PALACE',\n    street: null,",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:111-114; src/server/app/features/address-book/fit/add.fit.spec.js:170-176",
+      "quote": "offeredRoles: ['PLACE_OF_DESTINATION', 'CONSIGNEE', 'IMPORTER']",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-076",
-      "statement": "The stub's second address is 1 DOWNING STREET, LONDON, SW1A 1AA, with building number 1 and street DOWNING STREET (UPRN 100023336902).",
-      "kind": "data",
-      "ref": "src/server/app/services/address-lookup/stub.js:20-34",
-      "quote": "addressLine: '1 DOWNING STREET, LONDON, SW1A 1AA',\n    buildingNumber: '1',",
+      "statement": "The role checkboxes have no hints and open unticked on a new add.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:116-121; src/server/app/features/address-book/fit/add.fit.spec.js:203-208",
+      "quote": "roles.map((role) => ({\n    value: role,\n    text: copy.roles.options[role].label,\n    checked: tickedRoles.includes(role)\n  }))",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-077",
-      "statement": "The stub's third address is UNIT 1, DOWNING HOUSE, DOWNING STREET, LONDON, SW1A 1AA, with sub-building UNIT 1, building name DOWNING HOUSE and street DOWNING STREET (UPRN 100023336903).",
-      "kind": "data",
-      "ref": "src/server/app/services/address-lookup/stub.js:35-49",
-      "quote": "addressLine: 'UNIT 1, DOWNING HOUSE, DOWNING STREET, LONDON, SW1A 1AA',\n    buildingNumber: null,\n    buildingName: 'DOWNING HOUSE',\n    subBuildingName: 'UNIT 1',\n    street: 'DOWNING STREET',",
+      "statement": "The role option labels are 'Place of origin', 'Consignor', 'Consignee', 'Importer' and 'Place of destination'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:190-196",
+      "quote": "PLACE_OF_ORIGIN: { label: 'Place of origin' },\n      CONSIGNOR: { label: 'Consignor' },\n      CONSIGNEE: { label: 'Consignee' },\n      IMPORTER: { label: 'Importer' },\n      PLACE_OF_DESTINATION: { label: 'Place of destination' }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-078",
-      "statement": "All three stub addresses are in LONDON, SW1A 1AA, ENGLAND, with no locality, match 1 and match description EXACT.",
-      "kind": "data",
-      "ref": "src/server/app/services/address-lookup/stub.js:5-49",
-      "quote": "locality: null,\n    town: 'LONDON',\n    postcode: 'SW1A 1AA',\n    country: 'ENGLAND',\n    ...\n    match: '1',\n    matchDescription: 'EXACT',",
+      "statement": "In the address-book mode at least one role must be ticked; none shows 'Select what this address can be used for', and the summary link focuses the first role.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/fields.js:50-51; src/server/app/features/address-book/copy/copy.en.js:250-252; src/server/app/features/address-book/fit/add.fit.spec.js:233-255",
+      "quote": "required: 'Select what this address can be used for'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-079",
-      "statement": "The stub's default postcode is SW1A 1AA.",
-      "kind": "data",
-      "ref": "src/server/app/services/address-lookup/stub.js:2, :61-62",
-      "quote": "const DEFAULT_POSTCODE = 'SW1A 1AA'",
+      "statement": "The roles error is listed after the address and contact field errors in the summary.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:397; src/server/app/features/address-book/fit/add.fit.spec.js:257-281",
+      "quote": "await expect(page.getByRole('alert').getByRole('link')).toHaveText([\n        copy.errors.name.required,\n        copy.errors.roles.required\n      ])",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-080",
-      "statement": "In stub mode the spike page shows no 'Where the time went' section, because the stub's responses carry no timings.",
-      "kind": "behaviour",
-      "ref": "src/server/app/services/address-lookup/stub.js:52-59; controller.js:42-44",
-      "quote": "if (!backendTimings) {\n    return null\n  }",
-      "confidence": "inferred"
+      "statement": "Only roles the chosen address type offers are saved; any other posted role is dropped, and when one is dropped it is logged.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:272-295; src/server/app/services/address-book/address-types.js:32-35",
+      "quote": "'Posted roles the address page does not offer were not saved'",
+      "confidence": "verbatim",
+      "note": "mechanism: filters posted roles against the roles of the chosen type (address-book mode) or of the journey party (role-handshake mode)."
     },
     {
       "id": "repo-insfrontend-p5-081",
-      "statement": "The spike's Welsh copy is a machine draft that no translator has reviewed, and must not ship to users without Welsh Language Standards sign-off.",
-      "kind": "constraint",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:1",
-      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "statement": "In the role-handshake mode the roles question's legend is 'What else should this address be used for?'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:182; src/server/app/features/address-book/add/add.controller.js:142-146",
+      "quote": "journeyLegend: 'What else should this address be used for?'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-082",
-      "statement": "In Welsh, the page title and heading (title) is 'Sbeic chwilio am gyfeiriad'.",
+      "statement": "In the role-handshake mode the roles hint names the party the address is being added for, with 'a' or 'an' by its first letter: 'This address is being added as a <role> address. Select any other roles or addresses this address should be used for.'",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:3 title",
-      "quote": "title: 'Sbeic chwilio am gyfeiriad',",
-      "confidence": "verbatim"
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:183-184",
+      "quote": "`This address is being added as ${/^[AEIOU]/.test(roleLabel) ? 'an' : 'a'} ${roleLabel} address. Select any other roles or addresses this address should be used for.`",
+      "confidence": "verbatim",
+      "note": "The article test checks upper-case vowels only, while the role labels it receives ('Place of origin', 'Importer') start with a capital, so 'an Importer' reads correctly."
     },
     {
       "id": "repo-insfrontend-p5-083",
-      "statement": "In Welsh, the caption is 'EUDPA-390 — datblygu/lleol yn unig, dros dro. Nid oes dim yn cael ei gadw.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:4-5 caption",
-      "quote": "'EUDPA-390 — datblygu/lleol yn unig, dros dro. Nid oes dim yn cael ei gadw.',",
+      "statement": "In the role-handshake mode the roles question offers only the other roles on the party's side, unticked: place of origin offers Consignor; consignor offers Place of origin; consignee offers Importer and Place of destination; importer offers Consignee and Place of destination; place of destination offers Consignee and Importer.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:138-146; src/server/common/test-helpers/journey-handshake.js:54-73; src/server/app/features/address-book/fit/add.fit.spec.js:457-481",
+      "quote": "const { ownRole, otherRoles } = ownAndOtherRolesOfParty(handshakeContext)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-084",
-      "statement": "In Welsh, the search field label (form.label) is 'Cod post neu gyfeiriad'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:7 form.label",
-      "quote": "label: 'Cod post neu gyfeiriad',",
+      "statement": "In the role-handshake mode the roles question is left out when the party has no other roles to offer.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:139-141",
+      "quote": "if (otherRoles.length === 0) {\n    return null\n  }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-085",
-      "statement": "In Welsh, the search field hint (form.hint) is 'Caiff cod post yn y DU ei chwilio fel cod post. Caiff unrhyw beth arall ei chwilio fel testun rhydd.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:8 form.hint",
-      "quote": "hint: 'Caiff cod post yn y DU ei chwilio fel cod post. Caiff unrhyw beth arall ei chwilio fel testun rhydd.',",
-      "confidence": "verbatim"
+      "statement": "In the role-handshake mode no role need be ticked: there is no roles error, and the address is saved with the party's own role plus any other roles ticked.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:284-295",
+      "quote": "addMode === ADD_MODES.ADDRESS_BOOK ? rolesErrorsOf(savedRoles) : undefined",
+      "confidence": "inferred",
+      "note": "That the party's own role is saved rests on rolesToSaveForParty (journey-registry.js, part 3) and the test that a consignee add with Importer ticked lists as 'Consignee, Importer'."
     },
     {
       "id": "repo-insfrontend-p5-086",
-      "statement": "In Welsh, the search button (form.button) is 'Chwilio'.",
+      "statement": "In the address-book mode the add page has one button, 'Save and continue'.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:9 form.button",
-      "quote": "button: 'Chwilio'",
+      "ref": "src/server/app/features/address-book/add/add.njk:61-64; src/server/app/features/address-book/copy/copy.en.js:14,201",
+      "quote": "const SAVE_AND_CONTINUE = 'Save and continue'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-087",
-      "statement": "In Welsh, the empty-term error (errors.termRequired) is 'Rhowch god post neu gyfeiriad i chwilio amdano'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:11 errors.termRequired",
-      "quote": "errors: { termRequired: 'Rhowch god post neu gyfeiriad i chwilio amdano' },",
+      "statement": "In the address-book mode the add page has a link 'Cancel and return to address book' to /address-book; following it creates no address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.njk:65; src/server/app/features/address-book/add/add.controller.js:101-104; src/server/app/features/address-book/fit/add.fit.spec.js:827-845",
+      "quote": "const CANCEL_AND_RETURN_TO_ADDRESS_BOOK = 'Cancel and return to address book'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-088",
-      "statement": "In Welsh, the warning icon fallback text (warnings.iconFallbackText) is 'Rhybudd'.",
+      "statement": "In the role-handshake mode the add page has two buttons, 'Save and select' (primary) and 'Save and return to address page' (secondary), and a link 'Cancel and return to hub'.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:13 warnings.iconFallbackText",
-      "quote": "iconFallbackText: 'Rhybudd',",
+      "ref": "src/server/app/features/address-book/add/add.njk:46-60; src/server/app/features/address-book/copy/copy.en.js:202-205",
+      "quote": "saveAndSelect: 'Save and select',\n    saveAndReturnToAddressPage: 'Save and return to address page',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-089",
-      "statement": "In Welsh, the failed-request warning (warnings.network) is 'Methodd y cais i chwilio am gyfeiriad cyn i’r ôl-wasanaeth allu ateb.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:14-15 warnings.network",
-      "quote": "'Methodd y cais i chwilio am gyfeiriad cyn i’r ôl-wasanaeth allu ateb.',",
+      "statement": "In the role-handshake mode the 'Cancel and return to hub' link goes to the journey's return URL with the cancel landing, and following it creates no address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:101-104; src/server/app/features/address-book/fit/add.fit.spec.js:446-453",
+      "quote": ": buildReturnUrl(handshakeContext, { landing: ADDRESS_LANDING.CANCEL })",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-090",
-      "statement": "In Welsh, the unreadable-choice warning (warnings.chosen) is 'Nid oedd modd darllen y cyfeiriad a ddewiswyd. Chwiliwch eto a dewiswch ganlyniad.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:16-17 warnings.chosen",
-      "quote": "'Nid oedd modd darllen y cyfeiriad a ddewiswyd. Chwiliwch eto a dewiswch ganlyniad.'",
-      "confidence": "verbatim"
+      "statement": "A post to the add page carrying a cancel field redirects to the cancel destination of its mode without saving; in the role-handshake mode the cancel is logged.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:207-218,420-426",
+      "quote": "'Cancel handed back to the journey'",
+      "confidence": "verbatim",
+      "note": "The template renders Cancel as a link, not a button, so this branch is reached only by a post that sends cancel."
     },
     {
       "id": "repo-insfrontend-p5-091",
-      "statement": "In Welsh, the results heading prefix (search.searched) is 'Wedi chwilio'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:20 search.searched",
-      "quote": "searched: 'Wedi chwilio',",
+      "statement": "A valid add saves a new address to the address-book service for the signed-in organisation, holding name, address line 1, address line 2, town or city, county, postcode, country code, email, phone and the roles kept.",
+      "kind": "integration",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:339,402-409; src/server/app/features/address-book/fields.js:7-19",
+      "quote": "addressToCreate: { ...validatedAddress, roles: savedRoles }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-092",
-      "statement": "In Welsh, the postcode-mode explanation (search.modePostcode) is 'Roedd hynny’n edrych fel cod post yn y DU, felly cafodd ei chwilio fel un.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:21-22 search.modePostcode",
-      "quote": "'Roedd hynny’n edrych fel cod post yn y DU, felly cafodd ei chwilio fel un.',",
-      "confidence": "verbatim"
+      "statement": "After a valid add in the address-book mode, the add in progress is cleared, the success banner '<name> address added to your address book' is set, and the user lands on page 1 of the address book list on the tab of the chosen address type.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:297-309; src/server/app/features/address-book/copy/copy.en.js:82",
+      "quote": "added: (name) => `${name} address added to your address book`",
+      "confidence": "verbatim",
+      "note": "The success is logged with the organisation id, address id and address type."
     },
     {
       "id": "repo-insfrontend-p5-093",
-      "statement": "In Welsh, the free-text-mode explanation (search.modeFind) is 'Nid oedd hynny’n edrych fel cod post yn y DU, felly cafodd ei chwilio fel testun rhydd.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:23-24 search.modeFind",
-      "quote": "'Nid oedd hynny’n edrych fel cod post yn y DU, felly cafodd ei chwilio fel testun rhydd.',",
-      "confidence": "verbatim"
+      "statement": "After a valid add in the role-handshake mode, the browser is sent to the journey's return URL carrying the new address id and the landing the user chose: select for 'Save and select', return for 'Save and return to address page'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:106-109,189-205",
+      "quote": "payload.action === ADDRESS_LANDING.RETURN\n    ? ADDRESS_LANDING.RETURN\n    : ADDRESS_LANDING.SELECT",
+      "confidence": "verbatim",
+      "note": "The hand-back is logged with the organisation id, journey type, notification id, fulfilment id, address id and landing."
     },
     {
       "id": "repo-insfrontend-p5-094",
-      "statement": "In Welsh, the result count (search.returned) is '<returned> o <total> wedi’u dychwelyd.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:25 search.returned",
-      "quote": "returned: (returned, total) => `${returned} o ${total} wedi’u dychwelyd.`,",
+      "statement": "When the address-book service refuses the new address as invalid, the add page shows the service's errors against the form fields with status 400, keeping the entered values, and the refusal is logged at warn.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:311-320",
+      "quote": "logger.warn({ err, ...logContext }, 'Address book refused the new address')",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-095",
-      "statement": "In Welsh, the no-results line (search.nothingReturned) is 'Ni ddychwelwyd dim.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:26 search.nothingReturned",
-      "quote": "nothingReturned: 'Ni ddychwelwyd dim.',",
-      "confidence": "verbatim"
+      "statement": "When saving the new address fails for any other reason, the add page is shown again with a recoverable-error message and status 500, keeping the entered values, and the failure is logged at error.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:321-324",
+      "quote": "logger.error({ err, ...logContext }, 'Failed to create address')",
+      "confidence": "verbatim",
+      "note": "An HTTP error already raised as a Boom error (such as reference data unavailable) is passed on instead of re-rendering."
     },
     {
       "id": "repo-insfrontend-p5-096",
-      "statement": "In Welsh, the failed-outcome warning (search.failed) is 'Wedi methu: <reason>'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:27 search.failed",
-      "quote": "failed: (reason) => `Wedi methu: ${reason}`,",
-      "confidence": "verbatim"
+      "statement": "In the address-book mode the values entered and the roles ticked are kept for the add in progress on every post, so after a refused save the user can go Back to the address-type page, choose the same type again and see the address, contact details and ticked role they entered.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:438-443; src/server/app/features/address-book/add-in-progress.js:18-28; src/server/app/features/address-book/fit/address-type.fit.spec.js:206-221",
+      "quote": "storeEnteredAddress(request, {\n      formValues: postedValues,\n      tickedRoles: keepRolesOfferedBy(addressType, postedRoles)\n    })",
+      "confidence": "verbatim",
+      "note": "mechanism: session record 'addressBookAddInProgress' holding the chosen type, the entered form values and the ticked roles."
     },
     {
       "id": "repo-insfrontend-p5-097",
-      "statement": "In Welsh, the match line (search.matchLine) is 'Cyfatebiaeth <match> (<description>) · UPRN <uprn>'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:28-29 search.matchLine",
-      "quote": "`Cyfatebiaeth ${match} (${description}) · UPRN ${uprn}`,",
+      "statement": "The role-handshake mode keeps nothing in the add in progress: the form opens empty each time the journey opens it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.controller.js:72-78,438-443",
+      "quote": "return { formValues: formValuesOf(openingCountry), tickedRoles: [] }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-098",
-      "statement": "In Welsh, the choose button (search.useAddress) is 'Defnyddio’r cyfeiriad hwn'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:30 search.useAddress",
-      "quote": "useAddress: 'Defnyddio’r cyfeiriad hwn'",
-      "confidence": "verbatim"
+      "statement": "A stored address type that is not one of the three address types is ignored, as though no type were chosen.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/add-in-progress.js:5,13-16",
+      "quote": "return isAddressType(stored) ? stored : undefined",
+      "confidence": "verbatim",
+      "note": "mechanism: guards the session record of the chosen address type."
     },
     {
       "id": "repo-insfrontend-p5-099",
-      "statement": "In Welsh, the outcome tags (outcome.results, outcome.noResults, outcome.failed) are 'Canlyniadau', 'Dim canlyniadau' and 'Wedi methu'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:32-36 outcome",
-      "quote": "results: 'Canlyniadau',\n    noResults: 'Dim canlyniadau',\n    failed: 'Wedi methu'",
-      "confidence": "verbatim"
+      "statement": "A saved address shows in the address book list with each stored postal line on its own line, every line but the last ending in a comma, and its country in a separate column.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/lines-html.js:3-4; src/server/app/features/address-book/fields.js:23-41; src/server/app/features/address-book/fit/add.fit.spec.js:796-824",
+      "quote": "lines.map(escapeHtml).join(`${lineEnding}<br> `)",
+      "confidence": "verbatim",
+      "note": "mechanism: escapes each postal line (address line 1, address line 2, town or city, county, postcode, blank lines dropped) and joins them with a line break and an optional line ending."
     },
     {
       "id": "repo-insfrontend-p5-100",
-      "statement": "In Welsh, the timings heading (timings.heading) is 'Ble aeth yr amser'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:38 timings.heading",
-      "quote": "heading: 'Ble aeth yr amser',",
-      "confidence": "verbatim"
+      "statement": "A saved address's country is shown by its name from the country list, and by its code when the code is not in the list.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/address-countries.js:57-58",
+      "quote": "countries.find((country) => country.code === countryCode)?.name ?? countryCode",
+      "confidence": "verbatim",
+      "note": "mechanism: country label lookup shared with the view and list pages."
     },
     {
       "id": "repo-insfrontend-p5-101",
-      "statement": "In Welsh, the cached-token line (timings.cached) is 'Cafodd y tocyn mynediad a gadwyd ei ailddefnyddio, felly ni redodd yr un o’r camau tocyn.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:39-40 timings.cached",
-      "quote": "'Cafodd y tocyn mynediad a gadwyd ei ailddefnyddio, felly ni redodd yr un o’r camau tocyn.',",
-      "confidence": "verbatim"
+      "statement": "A search term matches a country when the country's name contains the term, ignoring case and surrounding spaces; a blank term matches no country.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/address-countries.js:60-69",
+      "quote": "countries\n    .filter((country) => country.name.toLowerCase().includes(term))",
+      "confidence": "verbatim",
+      "note": "mechanism: maps a free-text search to country codes; the list search is part 4's."
     },
     {
       "id": "repo-insfrontend-p5-102",
-      "statement": "In Welsh, the minted-token line (timings.minted) is 'Nid oedd tocyn defnyddiadwy wedi’i gadw, felly talodd y chwiliad hwn am y ddau gam tocyn.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:41-42 timings.minted",
-      "quote": "'Nid oedd tocyn defnyddiadwy wedi’i gadw, felly talodd y chwiliad hwn am y ddau gam tocyn.',",
-      "confidence": "verbatim"
+      "statement": "On an edit form the country select leaves out the 'Select a country' placeholder when the saved country is in the list, and shows it when it is not.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/address-countries.js:44-55",
+      "quote": "return isOffered\n    ? buildCountryItems(countries)\n    : buildCountrySelectItems(countries, placeholder)",
+      "confidence": "verbatim",
+      "note": "Read in this part's country file; the edit page itself is part 6's."
     },
     {
       "id": "repo-insfrontend-p5-103",
-      "statement": "In Welsh, the timings table headers (timings.hop, timings.time) are 'Cam' and 'Amser', and the milliseconds format (timings.milliseconds) is unchanged as '<n>ms'.",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:43-45 timings.hop, timings.time, timings.milliseconds",
-      "quote": "hop: 'Cam',\n    time: 'Amser',\n    milliseconds: (ms) => `${ms}ms`,",
-      "confidence": "verbatim"
+      "statement": "A saved address or other record that is marked deleted, or that the service answers not found, is treated as not there.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/stored-address.js:9-19",
+      "quote": "return record.deleted ? undefined : record",
+      "confidence": "verbatim",
+      "note": "mechanism: live-record lookup used by the view, edit and delete pages (part 6). Any other lookup failure becomes an internal error after it is logged by the caller."
     },
     {
       "id": "repo-insfrontend-p5-104",
-      "statement": "In Welsh, the trace ID line (timings.traceIdLabel, timings.traceIdSuffix) is 'ID olrhain <id> — am y darlun llawn yn OpenSearch.'",
-      "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:46-47 timings.traceIdLabel, timings.traceIdSuffix",
-      "quote": "traceIdLabel: 'ID olrhain',\n    traceIdSuffix: '— am y darlun llawn yn OpenSearch.',",
+      "statement": "The address-book copy has a Welsh version of every add, address-type, field and error string; the Welsh file is marked as a machine draft, not reviewed by a translator, not to ship to users without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-105",
-      "statement": "In Welsh, the STS hop (timings.hops.sts) is 'AWS STS, yn bathu’r haeriad'.",
+      "statement": "In Welsh the address-type page reads: caption 'Ychwanegu cyfeiriad newydd', heading 'Dewiswch fath o gyfeiriad', button 'Parhau', error 'Dewiswch fath o gyfeiriad'.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:49 timings.hops.sts",
-      "quote": "sts: 'AWS STS, yn bathu’r haeriad',",
-      "confidence": "verbatim"
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:3,115-130,245-247",
+      "quote": "title: 'Dewiswch fath o gyfeiriad'",
+      "confidence": "verbatim",
+      "note": "The Welsh heading and the Welsh error message are the same words."
     },
     {
       "id": "repo-insfrontend-p5-106",
-      "statement": "In Welsh, the Entra hop (timings.hops.entra) is 'Entra, yn ei gyfnewid am docyn mynediad'.",
+      "statement": "In Welsh the address-type options read 'Tarddiad neu Anfonwr' (hint 'Man tarddiad, Anfonwr'), 'Cyrchfan, Derbynnydd neu Fewnforiwr' (hint 'Man cyrchfan, Derbynnydd, Mewnforiwr') and 'Cludydd' (hint 'Preifat, Masnachol').",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:50 timings.hops.entra",
-      "quote": "entra: 'Entra, yn ei gyfnewid am docyn mynediad',",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:118-128",
+      "quote": "label: 'Tarddiad neu Anfonwr',\n        hint: 'Man tarddiad, Anfonwr'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-107",
-      "statement": "In Welsh, the gateway hop (timings.hops.gateway) is 'Y porth chwilio am gyfeiriadau'.",
+      "statement": "In Welsh the add page reads: caption 'Ychwanegu cyfeiriad newydd', heading 'Ychwanegu manylion cyfeiriad a manylion cyswllt', buttons 'Cadw a pharhau', 'Cadw a dewis' and 'Cadw a dychwelyd i’r dudalen gyfeiriad', links 'Canslo a dychwelyd i’r llyfr cyfeiriadau' and 'Canslo a dychwelyd i’r hyb'.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:51 timings.hops.gateway",
-      "quote": "gateway: 'Y porth chwilio am gyfeiriadau',",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:205-213",
+      "quote": "title: 'Ychwanegu manylion cyfeiriad a manylion cyswllt',\n    caption: ADD_A_NEW_ADDRESS,",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-108",
-      "statement": "In Welsh, the backend total row (timings.hops.backend) is 'Popeth a wnaeth yr ôl-wasanaeth'.",
+      "statement": "In Welsh the address fields read: headings 'Cyfeiriad' and 'Manylion cyswllt'; labels 'Enw neu sefydliad', 'Llinell gyfeiriad 1', 'Llinell gyfeiriad 2 (dewisol)', 'Tref neu ddinas', 'Sir (dewisol)', 'Cod post neu god zip', 'Gwlad', 'Cyfeiriad e-bost', 'Rhif ffôn'; phone hint 'Ar gyfer rhifau rhyngwladol, cynhwyswch god y wlad'; country placeholder 'Dewiswch wlad'.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:52 timings.hops.backend",
-      "quote": "backend: 'Popeth a wnaeth yr ôl-wasanaeth',",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:2-17,98-114",
+      "quote": "const ENW_NEU_SEFYDLIAD = 'Enw neu sefydliad'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-109",
-      "statement": "In Welsh, the page round-trip row (timings.hops.page) is 'Y dudalen hon, gan gynnwys yr alwad i’r ôl-wasanaeth'.",
+      "statement": "In Welsh the roles question reads: address-book legends 'Ar gyfer beth y gellir defnyddio’r cyfeiriad hwn?' (Origin or Consignor) and 'Math o gyfeiriad' (Destination, Consignee or Importer), hint 'Dewiswch ble y gellir defnyddio’r cyfeiriad hwn', journey legend 'Ar gyfer beth arall y dylid defnyddio’r cyfeiriad hwn?', role labels 'Man tarddiad', 'Anfonwr', 'Derbynnydd', 'Mewnforiwr', 'Man cyrchfan'.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:53 timings.hops.page",
-      "quote": "page: 'Y dudalen hon, gan gynnwys yr alwad i’r ôl-wasanaeth'",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:188-204",
+      "quote": "journeyLegend: 'Ar gyfer beth arall y dylid defnyddio’r cyfeiriad hwn?'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-110",
-      "statement": "In Welsh, the mapped section heading (mapped.heading) is 'Wedi’i fapio i feysydd y llyfr cyfeiriadau'.",
+      "statement": "In Welsh the journey roles hint reads 'Mae’r cyfeiriad hwn yn cael ei ychwanegu fel cyfeiriad <role>. Dewiswch unrhyw rolau neu gyfeiriadau eraill y dylid defnyddio’r cyfeiriad hwn ar eu cyfer.', with no article choice.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:57 mapped.heading",
-      "quote": "heading: 'Wedi’i fapio i feysydd y llyfr cyfeiriadau',",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:190-191",
+      "quote": "`Mae’r cyfeiriad hwn yn cael ei ychwanegu fel cyfeiriad ${roleLabel}. Dewiswch unrhyw rolau neu gyfeiriadau eraill y dylid defnyddio’r cyfeiriad hwn ar eu cyfer.`",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-111",
-      "statement": "In Welsh, the mapped field labels (mapped.addressLine1, addressLine2, townOrCity, county, postcode, country) are 'Llinell 1 y cyfeiriad', 'Llinell 2 y cyfeiriad', 'Tref neu ddinas', 'Sir', 'Cod post' and 'Gwlad'.",
+      "statement": "In Welsh the add success banner reads 'Cyfeiriad <name> wedi’i ychwanegu at eich llyfr cyfeiriadau'.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:58-63 mapped",
-      "quote": "addressLine1: 'Llinell 1 y cyfeiriad',\n    addressLine2: 'Llinell 2 y cyfeiriad',\n    townOrCity: 'Tref neu ddinas',\n    county: 'Sir',\n    postcode: 'Cod post',\n    country: 'Gwlad',",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:85-86",
+      "quote": "`Cyfeiriad ${name} wedi’i ychwanegu at eich llyfr cyfeiriadau`",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-112",
-      "statement": "In Welsh, the gaps intro (mapped.gapsIntro) is 'Yr hyn na allai’r chwiliad ei lenwi:'.",
+      "statement": "In Welsh the field errors read: 'Rhowch enw neu sefydliad', 'Rhowch linell gyfeiriad 1', 'Rhowch dref neu ddinas', 'Rhowch god post neu god zip', 'Dewiswch wlad', 'Rhowch rif ffôn', 'Rhowch gyfeiriad e-bost', 'Rhowch gyfeiriad e-bost yn y fformat cywir', the roles error 'Dewiswch ar gyfer beth y gellir defnyddio’r cyfeiriad hwn', and each length error as 'Rhaid i’r <field> fod yn <max> nod neu lai'.",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:64 mapped.gapsIntro",
-      "quote": "gapsIntro: 'Yr hyn na allai’r chwiliad ei lenwi:',",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:257-293",
+      "quote": "required: 'Rhowch enw neu sefydliad',\n      maxLength: (max) => `Rhaid i’r enw fod yn ${max} nod neu lai`",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-113",
-      "statement": "In Welsh, the raw-result details summary (mapped.raw) is 'Y canlyniad crai y daeth hwn ohono'.",
+      "statement": "The add page's success banner title is 'Success' (Welsh 'Llwyddiant').",
       "kind": "copy",
-      "ref": "src/server/app/features/address-lookup-spike/copy/copy.cy.js:65 mapped.raw",
-      "quote": "raw: 'Y canlyniad crai y daeth hwn ohono'",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:81; src/server/app/features/address-book/copy/copy.cy.js:84",
+      "quote": "title: 'Success'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-insfrontend-p5-114",
-      "statement": "The address lookup is a spike, not a live feature: no real address book page offers a postcode or address lookup today, and how the real build would use one is still to be decided.",
-      "kind": "constraint",
-      "ref": "src/server/app/features/address-lookup-spike/map-to-address-fields.js:6-8, :20; copy/copy.en.js:3",
-      "quote": "This is the spike's real question. The lookup does not return anything shaped like\n * our form, so the mapping has to be invented",
-      "confidence": "inferred",
-      "note": "Inferred from the spike's own framing ('a proposal for the real build to argue with') and from grep showing only the spike calls lookupByPostcode/lookupByFind."
+      "statement": "lib/validate's requiredText makes a field required after trimming, with one message for blank or missing.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/validators.js:30-37",
+      "quote": "Joi.string().trim().required().messages({\n      'string.empty': message,\n      'any.required': message\n    })",
+      "confidence": "verbatim",
+      "note": "Not used by the address fields."
+    },
+    {
+      "id": "repo-insfrontend-p5-115",
+      "statement": "lib/validate's requiredExactDigits requires exactly the given number of characters, all digits, with separate messages for blank, wrong length and non-digits.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/validators.js:39-48",
+      "quote": "Joi.string().required().length(digitCount).pattern(/^\\d+$/)",
+      "confidence": "verbatim",
+      "note": "Not used by the address fields. It does not trim."
+    },
+    {
+      "id": "repo-insfrontend-p5-116",
+      "statement": "lib/validate's maxText and requiredMaxText cap a trimmed text field at a maximum length, optional or required, falling back to a shared default length message when none is given.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/validators.js:53-77",
+      "quote": "'string.max': messages.maxLength ?? defaults.maxLength(max)",
+      "confidence": "verbatim",
+      "note": "Used by every address text field: requiredMaxText for name, address line 1, town or city, postcode and phone; maxText for address line 2 and county."
+    },
+    {
+      "id": "repo-insfrontend-p5-117",
+      "statement": "lib/validate's maxEmail and requiredEmail check a trimmed email's format (any top-level domain) and maximum length, optional or required.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/validators.js:79-98",
+      "quote": ".email({ tlds: { allow: false } })",
+      "confidence": "verbatim",
+      "note": "requiredEmail is used by the address email field."
+    },
+    {
+      "id": "repo-insfrontend-p5-118",
+      "statement": "lib/validate's postcode validator accepts an optional UK-format postcode: one or two letters, a digit, an optional letter or digit, optional spaces, a digit and two letters.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/validators.js:10,110-111",
+      "quote": "const POSTCODE = /^[A-Za-z]{1,2}\\d[A-Za-z\\d]?\\s*\\d[A-Za-z]{2}$/",
+      "confidence": "verbatim",
+      "note": "Not used by the address fields."
+    },
+    {
+      "id": "repo-insfrontend-p5-119",
+      "statement": "lib/validate's vehicleReg validator accepts an optional registration of two letters, two digits, an optional space and three letters.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/validators.js:11,113-114",
+      "quote": "const VEHICLE_REG = /^[A-Za-z]{2}\\d{2}\\s?[A-Za-z]{3}$/",
+      "confidence": "verbatim",
+      "note": "Not used by the address fields."
+    },
+    {
+      "id": "repo-insfrontend-p5-120",
+      "statement": "lib/validate's ukPhone validator accepts an optional phone number made only of digits, spaces and + ( ) - . , ; with between 7 and 15 digits.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/validators.js:12-15,116-137",
+      "quote": "const UK_PHONE_MIN_DIGITS = 7\nconst UK_PHONE_MAX_DIGITS = 15",
+      "confidence": "verbatim",
+      "note": "Not used by the address fields."
+    },
+    {
+      "id": "repo-insfrontend-p5-121",
+      "statement": "lib/validate's requiredOneOf requires a trimmed value from a given list, with one message for blank, missing or not in the list; an empty list refuses every value.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/validators.js:139-153",
+      "quote": "values.length === 0\n      ? required.custom((_raw, helpers) => helpers.error(ONLY_ERROR_CODE))\n      : required.valid(...values)",
+      "confidence": "verbatim",
+      "note": "Used by the address-type question and the country select."
+    },
+    {
+      "id": "repo-insfrontend-p5-122",
+      "statement": "lib/validate's oneOf accepts blank or a value from a given list.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/validators.js:155-162",
+      "quote": ".valid('', ...values)",
+      "confidence": "verbatim",
+      "note": "Would be used for an optional country; the address country is required."
+    },
+    {
+      "id": "repo-insfrontend-p5-123",
+      "statement": "lib/validate's integerInRange and requiredIntegerInRange accept a whole number, optionally negative, within an optional minimum and maximum.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/validators.js:164-202",
+      "quote": "if (!/^-?\\d+$/.test(raw)) {\n    return helpers.error(NUMBER_ERROR_CODE)\n  }",
+      "confidence": "verbatim",
+      "note": "Not used by the address fields."
+    },
+    {
+      "id": "repo-insfrontend-p5-124",
+      "statement": "lib/validate's dateParts checks a day, month and year entered in three boxes: all blank passes, some blank fails, and all filled must be a real calendar date.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/validators.js:204-246; src/server/app/lib/validate/calendar.js:3-20",
+      "quote": "if (fill === 'partial') {\n          return helpers.error(INVALID_ERROR_CODE)\n        }",
+      "confidence": "verbatim",
+      "note": "Not used by the address fields."
+    },
+    {
+      "id": "repo-insfrontend-p5-125",
+      "statement": "lib/validate's date text validators accept a date written d/M/yyyy with a four-digit year, optionally within a minimum and maximum date, with separate invalid and out-of-range messages.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/validators.js:248-294; src/server/app/lib/validate/calendar.js:65-78",
+      "quote": "const dateTextFormat = 'd/M/yyyy'",
+      "confidence": "verbatim",
+      "note": "Not used by the address fields."
+    },
+    {
+      "id": "repo-insfrontend-p5-126",
+      "statement": "lib/validate's requiredTime requires a 24-hour time written HH:MM.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/validators.js:13,296-308",
+      "quote": "const TIME_24_HOUR = /^([01]\\d|2[0-3]):[0-5]\\d$/",
+      "confidence": "verbatim",
+      "note": "Not used by the address fields."
+    },
+    {
+      "id": "repo-insfrontend-p5-127",
+      "statement": "lib/validate formats a calendar date for display as day, three-letter month and year, such as '5 Jan 2026', and shows nothing for a date that is not real.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/calendar.js:83-107",
+      "quote": "return `${day} ${monthAbbreviations[month - 1]} ${year}`",
+      "confidence": "verbatim",
+      "note": "mechanism: date display formatter; not used by the address pages."
+    },
+    {
+      "id": "repo-insfrontend-p5-128",
+      "statement": "Test (address-type.fit.spec.js): 'opens from Add a new address with the caption, heading, the three types and their hints in order, and Back to the address book' — also proves no type is checked and no serious or critical axe violations.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/address-type.fit.spec.js:59-79",
+      "quote": "test('opens from Add a new address with the caption, heading, the three types and their hints in order, and Back to the address book'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-129",
+      "statement": "Test (address-type.fit.spec.js): 'Continue with nothing chosen shows the problem summary and the inline error, and the summary link focuses the first type' — summary heading 'There is a problem', axe clean.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/address-type.fit.spec.js:81-103",
+      "quote": "await expect(summary.getByRole('heading')).toHaveText('There is a problem')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-130",
+      "statement": "Test (address-type.fit.spec.js): 'Origin or Consignor opens the address form with United Kingdom selected, Back shows it chosen and a new add starts with none chosen' — also proves the add caption, heading, no journey strip, and the placeholder as first option.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/address-type.fit.spec.js:105-135",
+      "quote": "test('Origin or Consignor opens the address form with United Kingdom selected, Back shows it chosen and a new add starts with none chosen'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-131",
+      "statement": "Test (address-type.fit.spec.js): 'choosing a type after Add a new address opens the add page titled Add address and contact details'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/address-type.fit.spec.js:137-147",
+      "quote": "'Add address and contact details - Import notification service - GOV.UK'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-132",
+      "statement": "Test (address-type.fit.spec.js): 'Destination, Consignee or Importer opens the address form and Back shows it chosen'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/address-type.fit.spec.js:149-164",
+      "quote": "opens the address form and Back shows it chosen",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-133",
+      "statement": "Test (address-type.fit.spec.js): 'opening the address form with no type chosen lands on Choose an address type'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/address-type.fit.spec.js:166-173",
+      "quote": "test('opening the address form with no type chosen lands on Choose an address type'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-134",
+      "statement": "Test (address-type.fit.spec.js): 'after an address is saved the next add starts with no type chosen and empty text fields'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/address-type.fit.spec.js:175-190",
+      "quote": "test('after an address is saved the next add starts with no type chosen and empty text fields'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-135",
+      "statement": "Test (address-type.fit.spec.js, looped for Origin or Consignor with Place of origin and for Destination, Consignee or Importer with Consignee): 'after a refused save of <type>, choosing it again shows the address, the contact details and the ticked role entered'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/address-type.fit.spec.js:193-221",
+      "quote": "choosing it again shows the address, the contact details and the ticked role entered",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-136",
+      "statement": "Test (address-type.fit.spec.js, JavaScript off): 'after a refused save of Destination, Consignee or Importer, choosing it again shows the address, the contact details and the ticked role entered'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/address-type.fit.spec.js:223-236",
+      "quote": "test.use({ javaScriptEnabled: false })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-137",
+      "statement": "Test (address-type.fit.spec.js, JavaScript off): 'refuses Continue with nothing chosen, then opens the address form and Back shows the type chosen'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/address-type.fit.spec.js:238-257",
+      "quote": "test('refuses Continue with nothing chosen, then opens the address form and Back shows the type chosen'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-138",
+      "statement": "Test (add.fit.spec.js): 'renders every field, hints and populated country options' — every label, the phone hint, United Kingdom selected and every captured country offered after the placeholder.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:75-100; src/server/app/features/address-book/fit/address-form.js:36-45",
+      "quote": "test('renders every field, hints and populated country options'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-139",
+      "statement": "Test (add.fit.spec.js): 'has a Back link to Choose an address type'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:102-106",
+      "quote": "test('has a Back link to Choose an address type'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-140",
+      "statement": "Test (add.fit.spec.js): 'groups fields under Address and Contact details'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:108-116",
+      "quote": "test('groups fields under Address and Contact details'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-141",
+      "statement": "Tests (add.fit.spec.js): the add page has no serious or critical axe violations, from the address book (Origin or Consignor and Destination, Consignee or Importer forms), from a journey, and on a validation error page.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:118-122,284-294,366-370,701-714",
+      "quote": "test('has no serious or critical axe violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-142",
+      "statement": "Test (add.fit.spec.js): 'finds an address saved with Consignor ticked by searching Consignor'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:128-140",
+      "quote": "test('finds an address saved with Consignor ticked by searching Consignor'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-143",
+      "statement": "Test (add.fit.spec.js, JavaScript off): 'saves with a role ticked and lands on the Origin and Consignor list with the address listed'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:143-158",
+      "quote": "test('saves with a role ticked and lands on the Origin and Consignor list with the address listed'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-144",
+      "statement": "Test (add.fit.spec.js, looped for both address-book types): '<type> opens with the address and contact fields, a section break, then the roles question offering its roles unticked and without hints, and every captured country with United Kingdom selected'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:180-212",
+      "quote": "opens with the address and contact fields, a section break, then the roles question offering its roles unticked and without hints, and every captured country with United Kingdom selected",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-145",
+      "statement": "Test (add.fit.spec.js, looped for both address-book types): '<type> saved with every offered role ticked lands on its tab with the new address first, its roles as its Type' — Type reads 'Place of origin, Consignor' or 'Consignee, Importer, Place of destination'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:163-177,214-231",
+      "quote": "typeText: 'Consignee, Importer, Place of destination'",
+      "confidence": "verbatim",
+      "note": "The list shows the Destination roles in a different order (Consignee, Importer, Place of destination) from the add form (Place of destination, Consignee, Importer)."
+    },
+    {
+      "id": "repo-insfrontend-p5-146",
+      "statement": "Test (add.fit.spec.js, looped for both address-book types): '<type> saved with no role shows the roles error, whose summary link focuses the first option, with no serious or critical axe violations'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:233-255",
+      "quote": "saved with no role shows the roles error, whose summary link focuses the first option, with no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-147",
+      "statement": "Test (add.fit.spec.js, looped for both address-book types): '<type> saved with the name blank and no role shows the name error then the roles error, against their questions and in the summary'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:257-281",
+      "quote": "saved with the name blank and no role shows the name error then the roles error, against their questions and in the summary",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-148",
+      "statement": "Test (add.fit.spec.js): 'shows the Draft status and notification id above the caption, heading, section headings and fields' when reached from a notification journey.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:298-346",
+      "quote": "test('shows the Draft status and notification id above the caption, heading, section headings and fields'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-149",
+      "statement": "Test (add.fit.spec.js): 'sets autocomplete on address lines, town, postcode, email and phone, and none on name, county and country'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:348-364",
+      "quote": "test('sets autocomplete on address lines, town, postcode, email and phone, and none on name, county and country'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-150",
+      "statement": "Test (add.fit.spec.js): 'from the consignee handshake opens the Country select on United Kingdom, offers every captured country alphabetically, and shows every field'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:372-387",
+      "quote": "test('from the consignee handshake opens the Country select on United Kingdom, offers every captured country alphabetically, and shows every field'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-151",
+      "statement": "Test (add.fit.spec.js, looped for the place of origin and consignor handshakes): 'from the <party> handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:389-407",
+      "quote": "handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-152",
+      "statement": "Test (add.fit.spec.js): 'from the consignee handshake a blank name links to the name field and the error page has no serious or critical axe violations'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:409-431",
+      "quote": "test('from the consignee handshake a blank name links to the name field and the error page has no serious or critical axe violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-153",
+      "statement": "Test (add.fit.spec.js): 'from a role handshake offers Back to the journey, Save and select, Save and return to address page and a Cancel and return to hub link' — the two buttons are the only form buttons, in that order.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:433-454",
+      "quote": "await expect(page.locator('form button')).toHaveText([\n      copy.add.saveAndSelect,\n      copy.add.saveAndReturnToAddressPage\n    ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-154",
+      "statement": "Test (add.fit.spec.js, looped for place of origin, consignor, consignee, importer and place of destination): 'from the <party> handshake asks what else the address should be used for, naming the party and offering only the other roles on its side, unticked'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:457-481",
+      "quote": "handshake asks what else the address should be used for, naming the party and offering only the other roles on its side, unticked",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-155",
+      "statement": "Test (add.fit.spec.js): 'Save and return to address page with answers missing keeps the page, lists the errors in field order and keeps the tick' — errors 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:483-510",
+      "quote": "'Enter address line 1',\n      'Enter a town or city',\n      'Enter a postcode or Zip code',\n      'Enter an email address',\n      'Enter a phone number'",
+      "confidence": "verbatim",
+      "note": "The summary lists the email error before the phone error, the order the form asks them."
+    },
+    {
+      "id": "repo-insfrontend-p5-156",
+      "statement": "Test (add.fit.spec.js, JavaScript off): 'Save and select with Importer ticked on the consignee page lists the address under the Consignee and Importer roles' — the return URL carries an addressId and landing select.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:513-535",
+      "quote": "test('Save and select with Importer ticked on the consignee page lists the address under the Consignee and Importer roles'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-157",
+      "statement": "Test (add.fit.spec.js): 'shows the add page and offers Back and Cancel to that notification germinal products return' — the germinal products journey borrows the same add page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:538-563",
+      "quote": "test('shows the add page and offers Back and Cancel to that notification germinal products return'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-158",
+      "statement": "Test (add.fit.spec.js): 'Save and select sends the browser to that notification germinal products return carrying the saved address id and the select landing'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:565-576",
+      "quote": "test('Save and select sends the browser to that notification germinal products return carrying the saved address id and the select landing'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-159",
+      "statement": "Test (add.fit.spec.js, looped for name, address line 1, town or city, postcode, country, phone and email): 'empty <label> links to and focuses the preserved field'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:580-599; src/server/app/features/address-book/fit/address-form.js:209-217",
+      "quote": "test(`empty ${label} links to and focuses the preserved field`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-160",
+      "statement": "Test (add.fit.spec.js, looped from Origin or Consignor, Destination, Consignee or Importer and the consignor picker): 'saving with the name, postcode, country and phone blank shows each message in the summary and against its field'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:601-663",
+      "quote": "saving with the name, postcode, country and phone blank shows each message in the summary and against its field",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-161",
+      "statement": "Test (add.fit.spec.js, looped for every field with a maximum length): '<label> over <max> characters links to and focuses the preserved value'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:665-685; src/server/app/features/address-book/fit/address-form.js:219-268",
+      "quote": "test(`${label} over ${maxLength} characters links to and focuses the preserved value`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-162",
+      "statement": "Test (add.fit.spec.js): 'rejects a malformed email address' with 'Enter an email address in the correct format'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:687-699",
+      "quote": "test('rejects a malformed email address'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-163",
+      "statement": "Test (add.fit.spec.js): 'saves a valid address and shows the Success banner naming it'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:720-726",
+      "quote": "test('saves a valid address and shows the Success banner naming it'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-164",
+      "statement": "Test (add.fit.spec.js): 'keeps the Success banner shown ten seconds after the save' — the banner does not disappear on a timer.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:728-738",
+      "quote": "test('keeps the Success banner shown ten seconds after the save'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-165",
+      "statement": "Test (add.fit.spec.js): 'shows the saved address and no Success banner when the address book is reloaded' — the banner shows once.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:740-750",
+      "quote": "test('shows the saved address and no Success banner when the address book is reloaded'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-166",
+      "statement": "Test (add.fit.spec.js): 'lists the saved address first, ahead of the seeded address, with a View link to its own details page' — the newly added address is listed first even with a name late in the alphabet.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:752-779",
+      "quote": "test('lists the saved address first, ahead of the seeded address, with a View link to its own details page'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-167",
+      "statement": "Test (add.fit.spec.js): 'finds the saved address by its name, a fragment of its address and part of its country name'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:781-794",
+      "quote": "test('finds the saved address by its name, a fragment of its address and part of its country name'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-168",
+      "statement": "Test (add.fit.spec.js): 'lists the saved address with each stored line on its own line, each but the last ending in a comma, and its country apart'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:796-824",
+      "quote": "test('lists the saved address with each stored line on its own line, each but the last ending in a comma, and its country apart'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-169",
+      "statement": "Test (add.fit.spec.js): 'returns to the address book without creating an address' when Cancel and return to address book is followed.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:827-845",
+      "quote": "test('returns to the address book without creating an address'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p5-170",
+      "statement": "No fit test proves the add page's 'Save and return to address page' success path (the return landing) or the add page's behaviour when the address-book service refuses or fails a save.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js (searched every test); add.controller.js:311-324",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through every test in add.fit.spec.js and address-type.fit.spec.js. Unit tests (*.test.js) are out of the scope and were not read."
+    },
+    {
+      "id": "repo-insfrontend-p5-171",
+      "statement": "The add form offers manual entry only: there is no address search or lookup on the add page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/add/add.njk; src/server/app/features/address-book/address-fields.njk",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through the add template, the address fields macro and the add controller; the dev-only address lookup spike is part 8's."
     }
   ]
 }

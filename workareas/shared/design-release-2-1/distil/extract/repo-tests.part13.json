@@ -1,6 +1,6 @@
 {
   "source": "repo:tests",
-  "structure": "Part 13, \"ins address book: add, edit, view and delete a record\": the specs under tests/ins/e2e/features/address-book that change or show one record, read in full with their page objects, flows, domain constants, fixtures and utils.\n\nRead in full: the ten specs address-book-add-type.spec.ts (8 tests), address-book-add-roles.spec.ts (4 tests, run three times by a loop over the three role-backed address types, so 12 at run time), address-book-add-form.spec.ts (4 tests), address-book-edit.spec.ts (18 tests across its top level and the nested describes \"opened without a return\", \"opened from the dashboard\", \"dead links\" and \"an address whose stored country is not offered\"), address-book-view.spec.ts (7 tests across its top level and the nested \"return\" and \"dead links\" describes), address-book-delete.spec.ts (9 tests across its top level and the nested \"return\" and \"dead links\" describes), address-book-validation-messages.spec.ts (3 tests), address-book-add-handshake-guard.spec.ts (1 test), address-book-add-germinal-products-handshake.spec.ts (1 test) and address-book.spec.ts (1 test); the local helpers unknown-address-id.ts, expected-api-refusal.ts, expect-address-book-list.ts and expect-other-organisation-address-returns-to-list.ts; the page objects add-page.ts, form-page.ts, shared-form-fields.ts, address-type-page.ts, edit-page.ts, view-page.ts, delete-page.ts, record-page.ts, url-with-return.ts, list-page.ts, shared/base-page.ts, shared/opens-at-expected-url.ts, shared/summary-list.ts and shared/govuk-banners.ts; the domain constants address-form.ts, address-book-types.ts, address-book-journey.ts, trader-address.ts, address-details.ts, shared/address-types.ts, shared/test-record-names.ts and the DB model address-document.ts; flows/ins/journey.ts and flows/shared/address-book-seed.ts; fixtures/ui.ts; utils/roles-options-assertions.ts and utils/address-book-cleanup.ts.\n\nCovered: the add journey as an ordered sequence (the address book list's Add a new address button, the Choose an address type step, then the add-details form with the roles question), each step's route, caption, heading, fields, options, hints, buttons and links; the four address types with their labels and hints and the at-least-one refusal; the roles question's three per-type legends, its hint, its per-type options and its refusal; the nine details fields in order with County present and marked optional; every validation message the specs assert, on the add form, the edit form and the address book API; the view page's summary rows with and without the two optional fields and its Edit and Delete actions; the edit page's fields, read-only absence of the roles question, whole-record replacement and role retention; the delete page's heading, summary, copy, buttons, tombstoning and refusals; every dead-link and stale-record case for edit, view and delete, the return allow-list, organisation scoping; the add hand-off guard for an unregistered journey type and the germinal-products hand-off's own route, controls and return; and one gap where three validation messages the INS form's own constants hold are asserted nowhere in this slice.\n\nStops at the list, tabs, filter and roles-listing specs (part 12) and the animals-side hand-off specs (part 7); the roles question a journey-reached add form asks (journeyRolesQuestion in address-book-types.ts) is asserted only by the animals-side specs and is left to part 7.\n\nThe partition's counts for four of the ten specs no longer match the repo: it expects 23 tests in address-book-edit.spec.ts (18 today), 12 in address-book-view.spec.ts (7), 11 in address-book-delete.spec.ts (9), 5 in address-book-add-roles.spec.ts (4 literal declarations, 12 at run time), 4 in address-book-validation-messages.spec.ts (3) and 3 in each of the two hand-off specs (1 each). Every test present today is claimed.",
+  "structure": "Part 13 read, in full, the ten INS address book single-record specs under tests/ins/e2e/features/address-book (address-book-add-type, -add-roles, -add-form, -edit, -view, -delete, -validation-messages, -add-handshake-guard, -add-germinal-products-handshake and address-book.spec.ts), the two helpers unknown-address-id.ts and expected-api-refusal.ts (plus expect-address-book-list.ts and expect-other-organisation-address-returns-to-list.ts, which the specs call), the address book page objects (add, form, shared form fields, address type, edit, view, delete, record, url-with-return, list), the shared base page, summary list and banner helpers, the INS address form, address book type, journey hand-off, trader address, address details and address document constants and models, the shared address types and test record names, flows/ins/journey.ts, flows/shared/address-book-seed.ts, fixtures/ui.ts, utils/roles-options-assertions.ts and utils/address-book-cleanup.ts. The specs cover, in journey order: Choose an address type (three options, Origin or Consignor; Destination, Consignee or Importer; Transporter, each with a hint, and its refusal), the add-details form (nine fields under Address and Contact details, the roles question per address type, its refusals, Save and continue and Cancel and return to address book), edit (layout, whole-record save, kept roles, returns, dead links, an unoffered stored country), view (summary rows, Edit and Delete carrying a return, dead links), delete (confirmation wording, tombstoning, returns, stale deletes, a second user), the four required-field messages on the add form, the edit form and the API, the hand-off guard for an unregistered journey type and the germinal products hand-off with Save and select, and the address book smoke check. Since the 26 November extract the Branch address type and the branch address role have gone from the suite, so the claims naming four types, six roles, a Branch roles question and a Branch column label were replaced. Gaps are recorded for field hints and limits, three untested required messages, an edit's effect on notifications, a refusal to delete an address in use, and a stale hand-off token.",
   "claims": [
     {
       "id": "repo-tests-p13-001",
@@ -11,18 +11,19 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-tests-p13-002",
-      "statement": "The Choose an address type step offers exactly four radio options, in the order Origin or Consignor, Destination, Consignee or Importer, Transporter, Branch.",
-      "kind": "copy",
-      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:36-40, domain/ins/constants/address-book-types.ts:136-145",
-      "quote": "await expect(typePage.radios).toHaveCount(addressTypeOptions.length);\n    for (const [index, { label, hint }] of addressTypeOptions.entries()) {\n      await expect(typePage.radios.nth(index)).toHaveAccessibleName(label);",
-      "confidence": "verbatim"
+      "id": "repo-tests-p13-125",
+      "statement": "The Choose an address type step offers exactly three radio options, in the order Origin or Consignor, Destination, Consignee or Importer, Transporter. Branch is not one of them.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:25-40, domain/ins/constants/address-book-types.ts:116-124",
+      "quote": "test('Add a new address opens Choose an address type with its caption, the three types and their hints in order, Continue and Back to the address book' ... await expect(typePage.radios).toHaveCount(addressTypeOptions.length); ... { addressType: addressTypes.originOrConsignor, label: 'Origin or Consignor', ... label: 'Destination, Consignee or Importer', ... { addressType: addressTypes.transporter, label: 'Transporter', hint: 'Private, Commercial' },",
+      "confidence": "verbatim",
+      "note": "Replaces the earlier four-option claim: the Branch address type is no longer in the suite's address types (domain/shared/constants/address-types.ts holds only ORIGIN_OR_CONSIGNOR, DESTINATION_CONSIGNEE_OR_IMPORTER and TRANSPORTER)."
     },
     {
       "id": "repo-tests-p13-003",
       "statement": "The Origin or Consignor option's hint reads \"Place of origin, Consignor\".",
       "kind": "copy",
-      "ref": "domain/ins/constants/address-book-types.ts:133-137, tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:39",
+      "ref": "domain/ins/constants/address-book-types.ts:113-117, tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:37-40",
       "quote": "{ addressType: addressTypes.originOrConsignor, label: 'Origin or Consignor', hint: hintOf(addressTypes.originOrConsignor) }",
       "confidence": "verbatim",
       "note": "mechanism: the hint string is composed by hintOf, which joins the type's role form labels ('Place of origin', 'Consignor') with ', '; the test asserts the composed string as the option's accessible description."
@@ -31,7 +32,7 @@
       "id": "repo-tests-p13-004",
       "statement": "The Destination, Consignee or Importer option's hint reads \"Place of destination, Consignee, Importer\".",
       "kind": "copy",
-      "ref": "domain/ins/constants/address-book-types.ts:129-142",
+      "ref": "domain/ins/constants/address-book-types.ts:108-122",
       "quote": "[addressTypes.destinationConsigneeOrImporter]: [addressRoles.placeOfDestination, addressRoles.consignee, addressRoles.importer],",
       "confidence": "verbatim",
       "note": "mechanism: composed by hintOf from the three role form labels in that order."
@@ -40,18 +41,9 @@
       "id": "repo-tests-p13-005",
       "statement": "The Transporter option's hint reads \"Private, Commercial\".",
       "kind": "copy",
-      "ref": "domain/ins/constants/address-book-types.ts:143",
+      "ref": "domain/ins/constants/address-book-types.ts:123",
       "quote": "{ addressType: addressTypes.transporter, label: 'Transporter', hint: 'Private, Commercial' },",
       "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p13-006",
-      "statement": "The Branch option's hint reads \"Branch address\".",
-      "kind": "copy",
-      "ref": "domain/ins/constants/address-book-types.ts:130-144",
-      "quote": "{ addressType: addressTypes.branch, label: 'Branch', hint: hintOf(addressTypes.branch) },",
-      "confidence": "verbatim",
-      "note": "mechanism: composed by hintOf from the single role form label 'Branch address'."
     },
     {
       "id": "repo-tests-p13-007",
@@ -73,7 +65,7 @@
       "id": "repo-tests-p13-009",
       "statement": "Continuing from Choose an address type with no type chosen is refused with the message \"Select an address type\", shown in the error summary and against the radio group as \"Error: Select an address type\".",
       "kind": "rule",
-      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:55-58, domain/ins/constants/address-book-types.ts:154-156",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:48-58, domain/ins/constants/address-book-types.ts:133-135",
       "quote": "await expect(typePage.radioGroup).toHaveAccessibleDescription(`Error: ${addressTypeQuestion.error}`);",
       "confidence": "verbatim"
     },
@@ -86,13 +78,13 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-tests-p13-011",
-      "statement": "Choosing Origin or Consignor, Destination, Consignee or Importer, or Branch opens the add-details form at /address-book/add, captioned \"Add new address\" above the heading \"Add address and contact details\", with no status tag.",
+      "id": "repo-tests-p13-126",
+      "statement": "Choosing Origin or Consignor, or Destination, Consignee or Importer, opens the add-details form at /address-book/add, captioned \"Add new address\" above the heading \"Add address and contact details\", with no status tag.",
       "kind": "behaviour",
-      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:69-77, page-objects/ins/address-book/add-page.ts:8-16",
-      "quote": "await expect(insPages.addressBookAdd.caption).toBeVisible();\n      await expect(insPages.addressBookAdd.heading).toBeVisible();\n      await expect(insPages.addressBookAdd.statusTag).toHaveCount(0);",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:63-83, page-objects/ins/address-book/add-page.ts:8-16, domain/shared/constants/address-types.ts:9",
+      "quote": "test(`choosing ${label} opens the add form with its caption and heading and no status tag, and Back shows the type chosen` ... await expect(insPages.addressBookAdd.statusTag).toHaveCount(0); ... readonly expectedUrl = '/address-book/add'; ... name: 'Add address and contact details' ... getByText('Add new address', { exact: true })",
       "confidence": "verbatim",
-      "note": "The caption on the add form is 'Add new address' while the caption on the type step is 'Add a new address'; the two page objects assert different strings."
+      "note": "The test loops over the address types that ask the roles question: addressTypesAskingRoles = [addressTypes.originOrConsignor, addressTypes.destinationConsigneeOrImporter]."
     },
     {
       "id": "repo-tests-p13-012",
@@ -106,10 +98,10 @@
       "id": "repo-tests-p13-013",
       "statement": "Transporter is the one address type that does not open the add-details form: it opens the transporter type question instead and carries no roles.",
       "kind": "behaviour",
-      "ref": "domain/shared/constants/address-types.ts:10-16, flows/ins/journey.ts:51-59",
-      "quote": "/** The address types whose add form asks the roles question: every type but Transporter, which\n * opens the add-a-transporter pages instead and carries no roles. */",
+      "ref": "domain/shared/constants/address-types.ts:9, flows/ins/journey.ts:49-59",
+      "quote": "if (addressType === addressTypes.transporter) {\n      await this.insPages.transporterType.heading.waitFor();\n    } else {\n      await this.insPages.addressBookAdd.heading.waitFor();\n    }",
       "confidence": "inferred",
-      "note": "Inferred because the three add-form tests loop only over addressTypesAskingRoles, and the journey's chooseAddressType waits for the transporter type heading for Transporter and the add heading for the rest. No spec in this slice opens the transporter pages."
+      "note": "Inferred because the add-form tests loop only over addressTypesAskingRoles (Origin or Consignor; Destination, Consignee or Importer), and the journey's chooseAddressType waits for the transporter type heading for Transporter and the add heading for the rest. No spec in this slice opens the transporter pages."
     },
     {
       "id": "repo-tests-p13-014",
@@ -118,21 +110,21 @@
       "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:92-121",
       "quote": "await expect(addPage.inputName).toHaveValue(entered.name);\n      await expect(addPage.inputAddressLine1).toHaveValue(entered.addressLine1);",
       "confidence": "verbatim",
-      "note": "Proven for all three role-backed types, each with a role of its own type (Place of origin, Consignee, Branch address); the refusal is forced with email 'not-an-email'."
+      "note": "Proven for both role-backed types, each with a role of its own type (Place of origin, Consignee); the refusal is forced with email 'not-an-email'."
     },
     {
       "id": "repo-tests-p13-015",
       "statement": "Pressing Add a new address again after abandoning a part-filled add form starts a fresh entry: no address type chosen, every text field empty and no role ticked.",
       "kind": "behaviour",
-      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:124-140",
-      "quote": "await expectNoTypeChosen(insPages.addressBookAddressType);\n    await insJourney.chooseAddressType(addressTypes.branch);\n    await expectTextboxesEmpty(addPage);\n    await expect(addPage.rolesOption(addressRoles.branchAddress)).not.toBeChecked();",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:123-139",
+      "quote": "await expectNoTypeChosen(insPages.addressBookAddressType);\n    await insJourney.chooseAddressType(addressTypes.destinationConsigneeOrImporter);\n    await expectTextboxesEmpty(addPage);\n    await expect(addPage.rolesOption(addressRoles.consignee)).not.toBeChecked();",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p13-016",
       "statement": "After an address is saved, the next Add a new address starts with no address type chosen, every text field empty and no role ticked.",
       "kind": "behaviour",
-      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:142-155",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:141-154",
       "quote": "test('after a save the next add starts with no type chosen, empty text fields and no role ticked'",
       "confidence": "verbatim"
     },
@@ -140,7 +132,7 @@
       "id": "repo-tests-p13-017",
       "statement": "Opening /address-book/add with no address type chosen lands the user on Choose an address type instead.",
       "kind": "behaviour",
-      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:157-162",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:156-161",
       "quote": "await expect(pages.page).toHaveURL(new RegExp(`${escapeRegex(insPages.addressBookAddressType.expectedUrl)}$`));\n    await expect(insPages.addressBookAddressType.heading).toBeVisible();",
       "confidence": "verbatim"
     },
@@ -196,24 +188,23 @@
       "id": "repo-tests-p13-024",
       "statement": "The roles question on the Origin or Consignor add form is legended \"What can this address be used for?\".",
       "kind": "copy",
-      "ref": "domain/ins/constants/address-book-types.ts:163-167",
+      "ref": "domain/ins/constants/address-book-types.ts:142-145",
       "quote": "ORIGIN_OR_CONSIGNOR: 'What can this address be used for?',",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-tests-p13-025",
-      "statement": "The roles question on the Destination, Consignee or Importer add form and on the Branch add form is legended \"Address type\".",
+      "id": "repo-tests-p13-127",
+      "statement": "The roles question on the Destination, Consignee or Importer add form is legended \"Address type\".",
       "kind": "copy",
-      "ref": "domain/ins/constants/address-book-types.ts:163-167",
-      "quote": "DESTINATION_CONSIGNEE_OR_IMPORTER: 'Address type',\n  BRANCH: 'Address type',",
-      "confidence": "verbatim",
-      "note": "The same question carries two different legends depending on the address type chosen; recorded as the suite states it, not reconciled."
+      "ref": "domain/ins/constants/address-book-types.ts:142-145, tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts:24-38",
+      "quote": "DESTINATION_CONSIGNEE_OR_IMPORTER: 'Address type',",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p13-026",
       "statement": "The roles question's hint reads \"Select where this address can be used\", and it is the accessible description of the question group.",
       "kind": "copy",
-      "ref": "domain/ins/constants/address-book-types.ts:158-161, tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts:40",
+      "ref": "domain/ins/constants/address-book-types.ts:137-140, tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts:40",
       "quote": "hint: 'Select where this address can be used',",
       "confidence": "verbatim"
     },
@@ -229,7 +220,7 @@
       "id": "repo-tests-p13-028",
       "statement": "The Origin or Consignor add form offers two role checkboxes, \"Place of origin\" then \"Consignor\".",
       "kind": "data",
-      "ref": "domain/ins/constants/address-book-types.ts:127-131, utils/roles-options-assertions.ts:6-12",
+      "ref": "domain/ins/constants/address-book-types.ts:108-111, utils/roles-options-assertions.ts:6-12",
       "quote": "[addressTypes.originOrConsignor]: [addressRoles.placeOfOrigin, addressRoles.consignor],",
       "confidence": "verbatim"
     },
@@ -237,26 +228,18 @@
       "id": "repo-tests-p13-029",
       "statement": "The Destination, Consignee or Importer add form offers three role checkboxes, \"Place of destination\", then \"Consignee\", then \"Importer\".",
       "kind": "data",
-      "ref": "domain/ins/constants/address-book-types.ts:127-131",
+      "ref": "domain/ins/constants/address-book-types.ts:108-111",
       "quote": "[addressTypes.destinationConsigneeOrImporter]: [addressRoles.placeOfDestination, addressRoles.consignee, addressRoles.importer],",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p13-030",
-      "statement": "The Branch add form offers one role checkbox, \"Branch address\".",
-      "kind": "data",
-      "ref": "domain/ins/constants/address-book-types.ts:127-131",
-      "quote": "[addressTypes.branch]: [addressRoles.branchAddress],",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p13-031",
       "statement": "Saving the add form with every field valid but no role ticked is refused with \"Select what this address can be used for\", shown in the error summary and appended to the question's accessible description after its hint.",
       "kind": "rule",
-      "ref": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts:47-58, domain/ins/constants/address-book-types.ts:158-161",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts:47-58, domain/ins/constants/address-book-types.ts:137-140",
       "quote": "await expect(addPage.rolesGroup(legend)).toHaveAccessibleDescription(`${rolesQuestion.hint} Error: ${rolesQuestion.error}`);",
       "confidence": "verbatim",
-      "note": "Proven on all three role-backed add forms, so at least one role is required on each."
+      "note": "Proven on both role-backed add forms, so at least one role is required on each."
     },
     {
       "id": "repo-tests-p13-032",
@@ -299,13 +282,12 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-tests-p13-037",
-      "statement": "A role is shown in the address book list's roles column as \"Place of origin\", \"Consignor\", \"Place of destination\", \"Consignee\", \"Importer\" or \"Branch\", several joined by a comma and a space.",
+      "id": "repo-tests-p13-128",
+      "statement": "A role is shown in the address book list's roles column as \"Place of origin\", \"Consignor\", \"Place of destination\", \"Consignee\" or \"Importer\", several joined by a comma and a space.",
       "kind": "copy",
-      "ref": "domain/ins/constants/address-book-types.ts:16-30",
-      "quote": "export const rolesLabelOf = (roles: readonly AddressRole[]): string => roles.map((role) => roleColumnLabels[role]).join(', ');",
-      "confidence": "verbatim",
-      "note": "mechanism: works on an address record's roles array, turning it into the list's Type cell text. The Branch role's column label is 'Branch' while its form label is 'Branch address' and its option label 'Branch Address'."
+      "ref": "domain/ins/constants/address-book-types.ts:16-29, tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts:95",
+      "quote": "PLACE_OF_ORIGIN: { columnLabel: 'Place of origin', ... CONSIGNOR: { columnLabel: 'Consignor', ... PLACE_OF_DESTINATION: { columnLabel: 'Place of destination', ... CONSIGNEE: { columnLabel: 'Consignee', ... IMPORTER: { columnLabel: 'Importer', ... export const rolesLabelOf = (roles: readonly AddressRole[]): string => roles.map((role) => roleColumnLabels[role]).join(', ');",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p13-038",
@@ -819,6 +801,30 @@
       "note": "The three are asserted only by tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:367-370, which is part 7's slice, so the INS-side form's behaviour on these three fields is unproven end to end."
     },
     {
+      "id": "repo-tests-p13-131",
+      "statement": "No test in this slice asserts a hint or a length limit on any field of the add or edit form: the suite proves the fields' labels, order and required messages only.",
+      "kind": "rule",
+      "ref": "searched every spec in tests/ins/e2e/features/address-book named by this part, page-objects/ins/address-book/shared-form-fields.ts and domain/ins/constants/address-form.ts for hints and limits",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p13-132",
+      "statement": "No test in this slice proves what saving an edit does to a notification that already uses the address: the edit specs check only the stored address record and the list.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts (every test)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p13-133",
+      "statement": "No test in this slice proves a refusal to delete an address that is in use by a notification: every delete test deletes an address no notification uses.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts (every test)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
       "id": "repo-tests-p13-100",
       "statement": "Opening the add page with a hand-off naming a journey type the service does not recognise shows \"Page not found\".",
       "kind": "rule",
@@ -826,6 +832,14 @@
       "quote": "await insPages.addressBookAdd.open({ query: unregisteredJourneyHandshake });\n\n    await expect(pages.page.getByText('Page not found')).toBeVisible();",
       "confidence": "verbatim",
       "note": "The refused hand-off names a fulfilment id the registry does list, under the journey type 'not-a-journey'."
+    },
+    {
+      "id": "repo-tests-p13-134",
+      "statement": "No test in this slice proves what the add page does with a stale or wrong hand-off token: the only refused hand-off is one whose journey type is not registered.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-handshake-guard.spec.ts, domain/ins/constants/address-book-journey.ts:41-56",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "repo-tests-p13-101",
@@ -850,6 +864,15 @@
       "ref": "domain/ins/constants/address-book-journey.ts:5-7, 48-49",
       "quote": "const journeyTypes = {\n  gbnAgGerminalProducts: 'gbn-ag-germinal-products',\n} as const;",
       "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-135",
+      "statement": "A journey hand-off opens the add-details form directly, with no Choose an address type step first: the suite opens /address-book/add with the hand-off as its query and waits for the add page heading.",
+      "kind": "behaviour",
+      "ref": "flows/ins/journey.ts:25-29, tests/ins/e2e/features/address-book/address-book-add-germinal-products-handshake.spec.ts:27",
+      "quote": "/** Opens the add page from a journey handshake and waits for it. */ async toAddressFormFromJourneyHandshake(handshake: JourneyHandshake, options: OpenOptions = {}): Promise<void> { await this.insPages.addressBookAdd.open({ ...options, query: handshake }); await this.insPages.addressBookAdd.heading.waitFor();",
+      "confidence": "inferred",
+      "note": "Inferred because no test asserts the type step is skipped; the flow lands on the add form without choosing a type, while 'opening the add form with no type chosen lands on Choose an address type' when no hand-off is given."
     },
     {
       "id": "repo-tests-p13-104",
@@ -914,9 +937,18 @@
       "id": "repo-tests-p13-111",
       "statement": "Five single-record checks are tagged to run across browsers: the address book opening, the add form's field grouping and order, the edit page's layout and stored country, the details page's full summary rows, and the delete page's summary.",
       "kind": "non-functional",
-      "ref": "tests/ins/e2e/features/address-book/address-book.spec.ts:5, address-book-add-form.spec.ts:21, address-book-edit.spec.ts:86-87, address-book-view.spec.ts:10-11, address-book-delete.spec.ts:31-32",
+      "ref": "tests/ins/e2e/features/address-book/address-book.spec.ts:5, address-book-add-form.spec.ts:19-21, address-book-edit.spec.ts:85-87, address-book-view.spec.ts:9-11, address-book-delete.spec.ts:30-32",
       "quote": "{ tag: '@cross-browser' },",
       "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-129",
+      "statement": "Three single-record checks are also tagged to run on real iPhones: the address book opening, the details page's full summary rows, and the delete page's summary with No, cancel.",
+      "kind": "non-functional",
+      "ref": "tests/ins/e2e/features/address-book/address-book.spec.ts:5, address-book-view.spec.ts:9-11, address-book-delete.spec.ts:30-32",
+      "quote": "{ tag: ['@smoke', '@cross-browser', '@ios'] } ... { tag: ['@cross-browser', '@ios'] }",
+      "confidence": "verbatim",
+      "note": "The add form and edit layout tests carry @cross-browser only."
     },
     {
       "id": "repo-tests-p13-112",
@@ -928,12 +960,13 @@
       "note": "Roles are optional on the stored document, so a record can be held with none."
     },
     {
-      "id": "repo-tests-p13-113",
-      "statement": "An address can hold any of six roles: place of origin, consignor, place of destination, consignee, importer and branch address.",
+      "id": "repo-tests-p13-130",
+      "statement": "An address can hold any of five roles: place of origin, consignor, place of destination, consignee and importer.",
       "kind": "data",
-      "ref": "domain/shared/constants/address-types.ts:20-27",
-      "quote": "export const addressRoles = {\n  placeOfOrigin: 'PLACE_OF_ORIGIN',\n  consignor: 'CONSIGNOR',\n  placeOfDestination: 'PLACE_OF_DESTINATION',\n  consignee: 'CONSIGNEE',\n  importer: 'IMPORTER',\n  branchAddress: 'BRANCH_ADDRESS',\n} as const;",
-      "confidence": "verbatim"
+      "ref": "domain/shared/constants/address-types.ts:13-19",
+      "quote": "placeOfOrigin: 'PLACE_OF_ORIGIN', consignor: 'CONSIGNOR', placeOfDestination: 'PLACE_OF_DESTINATION', consignee: 'CONSIGNEE', importer: 'IMPORTER',",
+      "confidence": "verbatim",
+      "note": "Replaces the earlier six-role claim: the branch address role is no longer one of the suite's roles."
     },
     {
       "id": "repo-tests-p13-114",
@@ -1024,10 +1057,10 @@
       "id": "repo-tests-p13-124",
       "statement": "The shared end-to-end address book is kept at exactly one live record per journey fixture name: a missing one is created, one whose details or roles differ is rewritten, and any extra with the same name is soft-deleted.",
       "kind": "non-functional",
-      "ref": "flows/shared/address-book-seed.ts:180-199",
+      "ref": "flows/shared/address-book-seed.ts:159-178",
       "quote": "/**\n * Ensures one live record per journey fixture name, holding the fixture's details and roles.\n * Creates a missing record, rewrites one that differs and soft-deletes any extra with the name.\n */",
       "confidence": "verbatim",
-      "note": "mechanism: reconciles the seeded records against the fifteen fixtures in E2E_ADDRESS_BOOK_FIXTURES before journeys run. No spec in this slice seeds, so it is context for the journey specs other parts own."
+      "note": "mechanism: reconciles the seeded records against the twelve fixtures in E2E_ADDRESS_BOOK_FIXTURES before journeys run. No spec in this slice seeds, so it is context for the journey specs other parts own."
     }
   ]
 }

@@ -589,7 +589,22 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    A whole-suite run asks for no domain in particular, so it reuses whatever
    is up. A spec in a folder that names no known domain asks for every
    domain, because narrowing on a reach tim cannot place would run it against
-   services that are not there. A service that caches another
+   services that are not there.
+
+   **A stack the gate re-ups keeps the lease's domains.** When
+   `docker/stack` or `tim/src/stack` has changed since the stack started, no
+   single service's refresh can apply that, so the gate starts the stack again
+   under the same lease — in the mode *and for the domains* that lease
+   started it with. Expect one such re-up on any run where `main` has moved
+   those files, because the loop takes its lease before the main sync merges
+   `main` in: the fingerprint the lease recorded is then the pre-merge one.
+   It costs one stack restart, which the gate's result names under
+   `stack.refresh.restacked` with its own log. Design Release 2.1's
+   manage-notifications theme hit exactly that on 27 November, when an nginx
+   sidecar change landed on `main` at 10:23 and the run's lease was taken at
+   12:08 — and before this was fixed the re-up started every service, widening
+   a 16-container stack back to 22 under a lease still recording two domains.
+   A service that caches another
    service's answers names it under `x-refresh-with` in
    `docker/stack/dev.compose.yml`, and the gate restarts it whenever that
    service is rebuilt or restarted. Reference-data names the stub, because it

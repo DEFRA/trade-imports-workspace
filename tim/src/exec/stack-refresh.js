@@ -61,8 +61,10 @@ const stackFilesChanged = (recorded, current) =>
 
 // The stack files themselves changed (a compose overlay, an env file, a
 // stack script): no single service's refresh can apply that, so the stack
-// is started again under the same lease, the way it was first started, and
-// compose recreates whatever the new files change.
+// is started again under the same lease, in the mode and for the domains
+// that lease started it with, and compose recreates whatever the new files
+// change. Starting it for no domain here would widen a narrowed stack back
+// to every service, under a lease still saying it was narrowed.
 const startAgain = async (
   { workspaceRoot, holder, leasePath, lease, logPaths, env },
   stackFiles
@@ -72,7 +74,8 @@ const startAgain = async (
     workspaceRoot,
     mode,
     logPath: logPaths.restack,
-    env
+    env,
+    domains: Array.isArray(lease.domains) ? lease.domains : []
   })
   await recordLeaseContainers({ holder, workspaceRoot, leasePath, env })
   const outcome = {

@@ -1,4 +1,4 @@
-import { rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { execa } from 'execa'
 import nock from 'nock'
@@ -41,6 +41,27 @@ const commitPackageJson = async (folder, packageJson) => {
   writeFileSync(join(folder, 'package.json'), JSON.stringify(packageJson))
   await git(folder, 'add', 'package.json')
   await git(folder, 'commit', '--quiet', '-m', 'package.json')
+}
+
+const upstreamWithPackageJson = async (workspaceRoot, packageJson) => {
+  const barePath = join(workspaceRoot, 'origins', `${FRONTEND}.git`)
+  const seedPath = join(workspaceRoot, 'origins', 'seed')
+  mkdirSync(barePath, { recursive: true })
+  await git(barePath, 'init', '--quiet', '--bare', '--initial-branch=main')
+  mkdirSync(seedPath)
+  await commitPackageJson(seedPath, packageJson)
+  await git(seedPath, 'branch', '-M', 'main')
+  await git(seedPath, 'remote', 'add', 'origin', barePath)
+  await git(seedPath, 'push', '--quiet', 'origin', 'main')
+  const push = async (nextPackageJson) => {
+    writeFileSync(
+      join(seedPath, 'package.json'),
+      JSON.stringify(nextPackageJson)
+    )
+    await git(seedPath, 'commit', '--quiet', '-am', 'package.json')
+    await git(seedPath, 'push', '--quiet', 'origin', 'main')
+  }
+  return { barePath, push }
 }
 
 let root
@@ -173,6 +194,61 @@ describe('#dependencyDrift', () => {
     })
 
     expect(drift.repos[0]).toMatchObject({ read: true, packages: [] })
+  })
+
+  test('Should read origin/main as last fetched without fetch, and as origin has it now with fetch', async () => {
+    serveRegistryPackage('pino', ['10.4.0', '11.0.0'])
+    root = createDepsWorkspace({ cloned: [] })
+    const upstream = await upstreamWithPackageJson(root, {
+      dependencies: { pino: '^10.4.0' }
+    })
+    await git(
+      root,
+      'clone',
+      '--quiet',
+      upstream.barePath,
+      depsCheckoutPath(root, FRONTEND)
+    )
+    await upstream.push({ dependencies: { pino: '^11.0.0' } })
+    const request = {
+      workspaceRoot: root,
+      repos: [FRONTEND],
+      ref: 'origin/main'
+    }
+
+    const stale = await dependencyDrift(request)
+    const fetched = await dependencyDrift({ ...request, fetch: true })
+
+    expect(stale.repos[0].packages.map(({ package: name }) => name)).toEqual([
+      'pino'
+    ])
+    expect(stale.repos[0]).not.toHaveProperty('fetched')
+    expect(fetched.repos[0]).toMatchObject({
+      read: true,
+      fetched: true,
+      packages: []
+    })
+  })
+
+  test('Should still read the local ref, marked fetched false, when fetching origin fails', async () => {
+    serveRegistryPackage('pino', ['10.4.0'])
+    root = createDepsWorkspace()
+    await commitPackageJson(depsCheckoutPath(root, FRONTEND), {
+      dependencies: { pino: '^10.4.0' }
+    })
+
+    const drift = await dependencyDrift({
+      workspaceRoot: root,
+      repos: [FRONTEND],
+      ref: 'HEAD',
+      fetch: true
+    })
+
+    expect(drift.repos[0]).toMatchObject({
+      read: true,
+      fetched: false,
+      packages: []
+    })
   })
 
   test('Should mark a repo whose checkout has no package.json at the ref as not read', async () => {

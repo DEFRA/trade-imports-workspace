@@ -11,6 +11,13 @@ const git = (dir, args) => run('git', ['-C', dir, ...args])
 
 const succeeds = async (dir, args) => (await git(dir, args)).exitCode === 0
 
+/**
+ * @param {string} dir
+ * @returns {Promise<boolean>} Whether `git fetch origin` succeeded in `dir`
+ */
+export const fetchOrigin = (dir) =>
+  succeeds(dir, ['fetch', '--quiet', 'origin'])
+
 const REPO_ENTRY = /^([a-z][a-z0-9-]*):(.+)$/
 
 const STATUS_PREFIX_LENGTH = 3
@@ -96,9 +103,7 @@ const nonEmptyLines = (text) =>
 
 const stateOf = async ({ key, path }, { branch, base, fetch }) => {
   if (!existsSync(join(path, '.git'))) return { key, path, cloned: false }
-  const fetched = fetch
-    ? await succeeds(path, ['fetch', '--quiet', 'origin'])
-    : null
+  const fetched = fetch ? await fetchOrigin(path) : null
   const current = (await git(path, ['branch', '--show-current'])).stdout.trim()
   const changed = parseStatusEntries(
     (await git(path, ['status', '--porcelain', '-z'])).stdout

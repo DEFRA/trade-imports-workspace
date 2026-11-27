@@ -104,6 +104,13 @@ completed run concluded `failure`, `timed_out` or `startup_failure` is red.
 A `cancelled` run alone is not: GitHub cancels a run when a newer one
 supersedes it, so look at the next one back.
 
+Leave out the `Publish Hot Fix` workflow (`publish-hotfix.yml`, event
+`workflow_dispatch`). It is started by hand, and `cdp-build-action`'s
+`build-hotfix` refuses to run on `main`, so a run started on `main` fails by
+design and says nothing about `main`'s health. See
+[`docs/best-practices/github-actions.md`](../../../docs/best-practices/github-actions.md)
+§10.
+
 Label each red workflow before you list it. A red `E2E Tests` run on
 `trade-imports-ins-tests` `main` is "rerun", not "broken", when it follows a
 paired merge:
@@ -197,11 +204,14 @@ security pull requests, and step 3 lists those.
 ### 7. npm drift
 
 ```bash
-tim deps drift --json
+tim deps drift --fetch --json
 ```
 
-It reads each repo's `package.json` at `origin/main` and asks npm which
-packages have a newer release. It changes nothing.
+It fetches origin in each repo, then reads each repo's `package.json` at
+`origin/main` and asks npm which packages have a newer release. Without
+`--fetch` it reads `origin/main` as of the last fetch, which can be a day
+old. It changes nothing else. A repo with `fetched: false` was read from its
+local ref: say so on its "Drift" line.
 
 - `result.setsBehind`: list each cross-repo set in "Waiting", with the repos
   behind and the version each would move to. A set member a hold covers is

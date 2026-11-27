@@ -2337,6 +2337,7 @@ cannot leave a hold that affects nothing.
 ```bash
 tim deps drift
 tim deps drift --json
+tim deps drift --fetch --json
 tim deps drift --repo trade-imports-animals-frontend --repo tim
 ```
 
@@ -2344,6 +2345,10 @@ Reads each repo's `package.json` at `origin/main` (`--ref` to change it)
 and asks npm-check-updates which packages have a newer release. It changes
 nothing: no checkout moves and no file is written. The nightly digest uses
 it for npm drift and for the cross-repo sets that are waiting.
+
+- `origin/main` is only as new as the last fetch. `--fetch` fetches origin
+  in each repo first. A repo whose fetch fails is still read, from its local
+  ref, and carries `fetched: false`; the text report says so on its line.
 
 - Without `--repo`, it reads every repo in scope for the dependency sets.
   A repo out of scope exits 2.
@@ -2354,7 +2359,8 @@ it for npm drift and for the cross-repo sets that are waiting.
   not moved to the latest release, with the repos behind.
 - A repo with no checkout, or no `package.json` at the ref, is listed with
   `read: false`.
-- `--json` gives `{ref, repos: [{repo, read, packages, counts}], setsBehind}`.
+- `--json` gives `{ref, repos: [{repo, read, packages, counts}], setsBehind}`,
+  with `fetched` on each repo under `--fetch`.
 
 ### `tim deps policy` — can an upgrade merge on green CI
 

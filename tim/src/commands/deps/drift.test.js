@@ -18,6 +18,7 @@ const driftEnvelope = z.object({
           .object({
             repo: z.string(),
             read: z.boolean(),
+            fetched: z.boolean().optional(),
             packages: z.array(z.object({ package: z.string() }).passthrough()),
             counts: z.object({
               major: z.number(),
@@ -84,6 +85,32 @@ describe('#renderDriftText', () => {
     )
   })
 
+  test('Should say a repo was read from its local ref when fetching origin failed', () => {
+    const text = renderDriftText({
+      ref: 'origin/main',
+      repos: [
+        {
+          repo: FRONTEND,
+          read: true,
+          fetched: false,
+          counts: { major: 0, minor: 1, patch: 0 }
+        },
+        {
+          repo: 'tim',
+          read: true,
+          fetched: true,
+          counts: { major: 0, minor: 0, patch: 2 }
+        }
+      ],
+      setsBehind: []
+    })
+
+    expect(text.split('\n').slice(1, 3)).toEqual([
+      `${FRONTEND}: 0 major, 1 minor, 0 patch (fetching origin failed, so this is the local ref)`,
+      'tim: 0 major, 0 minor, 2 patch'
+    ])
+  })
+
   test('Should say every cross-repo set is on its latest release when none is behind', () => {
     const text = renderDriftText({
       ref: 'origin/main',
@@ -122,6 +149,30 @@ describe('tim deps drift', () => {
       ],
       setsBehind: []
     })
+  })
+
+  test('Should mark a repo whose fetch failed with --fetch, in the JSON envelope', async () => {
+    root = createDepsWorkspace()
+
+    const result = await runTimInWorkspace(root, [
+      'deps',
+      'drift',
+      '--repo',
+      FRONTEND,
+      '--fetch',
+      '--json'
+    ])
+
+    expect(result.exitCode).toBe(0)
+    expect(driftEnvelope.parse(envelopeOf(result)).result.repos).toEqual([
+      {
+        repo: FRONTEND,
+        read: false,
+        fetched: false,
+        packages: [],
+        counts: { major: 0, minor: 0, patch: 0 }
+      }
+    ])
   })
 
   test('Should refuse a repo out of scope with exit 2', async () => {

@@ -104,7 +104,7 @@ describe('#parseStartFlags', () => {
       [['--domain'], 'error: --domain requires a value', false],
       [
         ['--domain', 'germinal'],
-        "error: unknown --domain name 'germinal'; valid: animals, animals-admin, ins, plants",
+        "error: unknown --domain name 'germinal'; valid: animals, animals-admin, animals-dlq, ins, plants",
         false
       ]
     ])('Should refuse %j with "%s"', (args, message, showUsage) => {

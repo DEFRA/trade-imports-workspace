@@ -599,14 +599,22 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    what it is about to run, so it starts the stack again for those domains
    alone. It costs one restart, and only at the one gate that proves a row,
    so a row restarts the stack at most once. A gate whose specs name no
-   domain narrows nothing. **The better fix is upstream of all of this:** a
-   `tests/<domain>/` folder is the unit of service requirements, so a folder
-   holding specs with materially different needs makes every estimate here
-   crude — of the 21 specs in `tests/animals-admin/`, four reach the DLQ and
-   the Service Bus chain and seventeen do not, which is why a row touching
-   the animals backend starts mssql. Splitting such a folder into its own
-   domain fixes it at the source and makes this narrowing a safety net rather
-   than the answer.
+   domain narrows nothing.
+
+   **Narrowing only pays off where the domains are honest, so fix the folders
+   too.** A `tests/<domain>/` folder is the unit of service requirements, so a
+   folder holding specs that reach a service the rest do not makes every
+   estimate here crude, and no amount of narrowing recovers it: the narrowed
+   set still names that domain, and the domain still starts the service. Two
+   of the 21 specs that were in `tests/animals-admin/` drove the DLQ page,
+   which is what calls the dynamics gateway, and with it the Service Bus
+   emulator, mssql and toxiproxy; the other nineteen touch none of them. They
+   now live in `tests/animals-dlq/`, so `animals-admin` starts 13 services
+   rather than 17, proved with `tim docker domain verify animals-admin
+   --against-full`. Only with both changes does a row that touches the animals
+   backend stop starting mssql: the launch estimate still names
+   `animals-dlq`, because the backend's pull request runs those specs, and the
+   ladder is what narrows it away.
 
    **A stack the gate re-ups keeps the lease's domains.** When
    `docker/stack` or `tim/src/stack` has changed since the stack started, no

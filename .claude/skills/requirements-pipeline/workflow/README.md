@@ -1114,7 +1114,9 @@ took the unit rung red twice on 5000ms timeouts in files that pass in 2.85s alon
    specs need again for those alone: the launch estimate reads the rows' repos, not their specs,
    so it over-reaches, and the ladder is the one gate that knows what it is about to run. One
    restart per row at most. A folder whose specs have different service needs makes every
-   estimate crude whatever this does — see BUILD.md on splitting `tests/animals-admin/`.
+   estimate crude whatever this does, and narrowing cannot recover it — `tests/animals-dlq/`
+   exists because two admin specs reached the dynamics gateway and nineteen did not. See
+   BUILD.md on why both the split and the narrowing are needed.
 2. **Every increment reuses it.** The stack stays up across every increment. Every gate
    command — baseline, implementor, fixer, ladder and the Codex unit phase — passes
    `--holder "<run id>"`, so the gate's E2E phase uses the stack the run holds and rebuilds

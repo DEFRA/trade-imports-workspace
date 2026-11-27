@@ -126,7 +126,8 @@ describe('#servicesForDomain', () => {
 
     expect(sizes).toEqual({
       animals: 15,
-      'animals-admin': 17,
+      'animals-admin': 13,
+      'animals-dlq': 17,
       ins: 17,
       plants: 10
     })

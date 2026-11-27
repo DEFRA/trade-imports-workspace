@@ -205,6 +205,20 @@ CDP sends `x-cdp-request-id` on each request. A service copies it into
 `trace.id` on every log line, and must send it on to the services it
 calls.
 
+A queue listener needs the same, because the request filter runs only
+on HTTP threads. Without it, every dependency call line written while a
+message is handled has no `trace.id`, and on a service that mostly
+reads a queue that is most of its call lines. Put the trace id into the
+MDC at the start of the listener method and put back what was there
+before in a `finally` (ins-backend's `TraceContext.runWithTraceId`).
+Take it from a message attribute the producer sets to its own
+`trace.id` (ins-backend reads `correlationId`, which animals-backend
+sets), so one search finds both services' lines. When the message has
+none, use its SQS message id. Prove it with an integration test that
+sends a message with the attribute and one without, captures stdout
+with `CapturedConsole`, and finds the database call line carrying each
+trace id (ins-backend's `ExternalCallRecorderIT`).
+
 `[UNPROVEN]` The check, in dev OpenSearch: find a request in a calling
 service, filter on its `trace.id` alone, and confirm lines from both
 services appear, including the dependency call line.

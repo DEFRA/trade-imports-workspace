@@ -4,12 +4,11 @@ import { z } from 'zod'
 import { run } from '../../exec/exec.js'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { TimError } from '../../errors.js'
+import { fetchOrigin } from '../../git/fetch-origin.js'
 import { makeRunAction } from '../_run-action.js'
 import { parseOptions } from '../backlog/shared.js'
 
 const git = (dir, args) => run('git', ['-C', dir, ...args])
-
-const succeeds = async (dir, args) => (await git(dir, args)).exitCode === 0
 
 const REPO_ENTRY = /^([a-z][a-z0-9-]*):(.+)$/
 
@@ -96,9 +95,7 @@ const nonEmptyLines = (text) =>
 
 const stateOf = async ({ key, path }, { branch, base, fetch }) => {
   if (!existsSync(join(path, '.git'))) return { key, path, cloned: false }
-  const fetched = fetch
-    ? await succeeds(path, ['fetch', '--quiet', 'origin'])
-    : null
+  const fetched = fetch ? await fetchOrigin(path) : null
   const current = (await git(path, ['branch', '--show-current'])).stdout.trim()
   const changed = parseStatusEntries(
     (await git(path, ['status', '--porcelain', '-z'])).stdout

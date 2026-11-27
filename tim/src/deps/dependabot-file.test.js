@@ -13,11 +13,13 @@ import {
   AXE_HOLD,
   CHECKOUT_WORKSPACE_ROOT,
   createDepsWorkspace,
+  SPRINGDOC_HOLD,
   fixtureDependencySets,
   fixtureDependencySetsHolding
 } from '../test-support/deps-workspace.js'
 
 const REPO = 'trade-imports-animals-frontend'
+const JAVA_REPO = 'trade-imports-animals-backend'
 const CONFIG_PATH = join('repos', REPO, '.github', 'dependabot.yml')
 
 let root
@@ -145,20 +147,62 @@ describe('#syncDependabotConfig', () => {
     expect(result.upToDate).toBe(false)
   })
 
-  test('Should refuse a repo the sets do not cover, listing the repos they do', () => {
-    root = createDepsWorkspace({ cloned: ['trade-imports-animals-backend'] })
+  test('Should refuse a repo the sets do not cover, listing the npm and Maven repos they do', () => {
+    root = createDepsWorkspace({ cloned: ['trade-imports-plants-prototype'] })
 
     expect(() =>
       syncDependabotConfig({
         workspaceRoot: root,
-        repo: 'trade-imports-animals-backend',
+        repo: 'trade-imports-plants-prototype',
         mode: 'print'
       })
     ).toThrow(
       expect.objectContaining({
         code: 'USAGE',
         message:
-          'trade-imports-animals-backend is not in scope for the dependency sets. Repos in scope: tim, trade-imports-animals-frontend.'
+          'trade-imports-plants-prototype is not in scope for the dependency sets. Repos in scope: tim, trade-imports-animals-backend, trade-imports-animals-frontend.'
+      })
+    )
+  })
+
+  test('Should write Maven and GitHub Actions updates for a repo whose stack is java, with its Maven hold', () => {
+    root = createDepsWorkspace({
+      dependencySets: fixtureDependencySetsHolding([SPRINGDOC_HOLD]),
+      cloned: [JAVA_REPO]
+    })
+
+    const result = syncDependabotConfig({
+      workspaceRoot: root,
+      repo: JAVA_REPO,
+      mode: 'write'
+    })
+
+    expect({
+      path: result.path,
+      onDisk: readFileSync(join(root, result.path), 'utf8')
+    }).toEqual({
+      path: join('repos', JAVA_REPO, '.github', 'dependabot.yml'),
+      onDisk: renderDependabotConfig({
+        repo: JAVA_REPO,
+        dependencySets: fixtureDependencySetsHolding([SPRINGDOC_HOLD]),
+        ecosystem: 'maven'
+      })
+    })
+  })
+
+  test('Should refuse a Maven hold on a repo whose stack is not java, naming the Maven repos', () => {
+    root = createDepsWorkspace({
+      dependencySets: fixtureDependencySetsHolding([
+        { ...SPRINGDOC_HOLD, repos: [REPO] }
+      ])
+    })
+
+    expect(() =>
+      syncDependabotConfig({ workspaceRoot: root, repo: REPO, mode: 'check' })
+    ).toThrow(
+      expect.objectContaining({
+        code: 'USAGE',
+        message: `config/dependency-sets.json: the hold on ${SPRINGDOC_HOLD.package} covers a repo out of scope. ${REPO} is not in scope for Maven updates. Repos in scope: ${JAVA_REPO}.`
       })
     )
   })

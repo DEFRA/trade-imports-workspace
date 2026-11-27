@@ -1,8 +1,8 @@
 # Nightly jobs: what they may do unattended
 
-The nightly jobs are scheduled Claude runs in one Claude Code session left open
-on an always-on Mac, inside tmux or screen so it outlives the SSH connection
-that started it. `/nightly-start` registers them
+The nightly jobs are scheduled Claude runs in one ordinary Claude Code session
+that a person opens at the workspace root over SSH and leaves open on the
+always-on Mac. `/nightly-start` registers them
 from [`config/nightly-jobs.json`](../../config/nightly-jobs.json). Each fires a
 prompt that starts `[nightly:<job>]`. These rules apply only to a run that
 started from such a prompt. They change nothing for an attended session, and

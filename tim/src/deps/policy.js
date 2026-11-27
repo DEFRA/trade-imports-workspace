@@ -1,5 +1,7 @@
 import semver from 'semver'
 import { TimError } from '../errors.js'
+import { holdEcosystemOf } from './dependency-sets.js'
+import { mavenRangeIncludes } from './maven-range.js'
 
 const CHANGELOG_DRIVEN = 'changelog-driven'
 const CI_IS_ENOUGH = 'ci-is-enough'
@@ -41,12 +43,17 @@ const jumpOf = (from, to) => {
   return 'patch'
 }
 
+const holdCoversVersion = (hold, version) =>
+  holdEcosystemOf(hold.package) === 'maven'
+    ? mavenRangeIncludes(hold.versions, version)
+    : semver.satisfies(version, hold.versions)
+
 const holdOn = ({ holds, packageName, version, repo }) =>
   holds.find(
     (hold) =>
       hold.package === packageName &&
       (repo === undefined || hold.repos.includes(repo)) &&
-      semver.satisfies(version, hold.versions)
+      holdCoversVersion(hold, version)
   )
 
 const heldPolicy = ({ package: packageName, versions, since, reason }, to) => ({

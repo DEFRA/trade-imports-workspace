@@ -10,7 +10,7 @@ End-to-end, accessibility and security (OWASP ZAP) test suite for the trade impo
 
 - Browser journeys for every functional area of the product, split into one directory per domain, each with `e2e`, `a11y` and `security` test types, so each service's checks run only its own domain. One or more services serve a domain. The `chromium` Playwright project runs them all. `utils/playwright/shared-config.ts` also defines opt-in `chrome`, `firefox`, `webkit`, `mobile-webkit` and `mobile-chromium` projects for the `@cross-browser` tests.
 - Cross-browser runs on BrowserStack (`browserstack.yml`): `@cross-browser` on Edge on Windows 11 and on WebKit on macOS, and `@ios` on iPhone 18 Pro and iPhone 17.
-- Visual regression tests (`@visual`, animals and plants), with baselines updated by `test:visual:update:macos` and `test:visual:update:linux`.
+- Visual regression tests (`@visual`, animals and plants). They run on Linux only, in the e2e suite on GitHub Actions and on CDP, and are skipped on macOS. Linux baselines are updated by `test:visual:update:linux`.
 - `@dynamics` tests, which check what reaches PIMS Dynamics.
 - The ZAP scan plans the workspace security profile stages (`zap/`).
 - The CDP Portal test suite, where `PROFILE` picks the suite and, optionally, the domain.

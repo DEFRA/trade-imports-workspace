@@ -7,15 +7,19 @@ import { makeRunAction } from '../_run-action.js'
 const optionsSchema = z.object({
   repo: z.array(z.string().min(1)).optional(),
   ref: z.string().min(1).default('origin/main'),
+  fetch: z.boolean().default(false),
   workspace: z.string().optional()
 })
 
 const collectRepo = (value, previous = []) => [...previous, value]
 
-const repoLine = ({ repo, read, counts }) =>
-  read
+const fetchFailureNote = (fetched) =>
+  fetched === false ? ' (fetching origin failed, so this is the local ref)' : ''
+
+const repoLine = ({ repo, read, fetched, counts }) =>
+  (read
     ? `${repo}: ${counts.major} major, ${counts.minor} minor, ${counts.patch} patch`
-    : `${repo}: no package.json to read`
+    : `${repo}: no package.json to read`) + fetchFailureNote(fetched)
 
 const behindLine = ({ repo, package: packageName, current, proposed, held }) =>
   `  ${repo}: ${packageName} ${current} to ${proposed}${held ? ' (held)' : ''}`
@@ -57,22 +61,28 @@ export const register = (program, { timVersion }) => {
       'The git ref to read each package.json at',
       'origin/main'
     )
+    .option(
+      '--fetch',
+      'Fetch origin in each repo first, so the ref is not as old as the last fetch. A repo whose fetch fails is still read, from its local ref, and marked fetched: false.'
+    )
     .addHelpText(
       'after',
       '\nIt asks the npm registry about every package, so it can take a minute or more across every repo. A repo with no checkout, or no package.json at the ref, is listed as not read.\n' +
         '\nExamples:\n' +
         '  tim deps drift\n' +
         '  tim deps drift --json\n' +
+        '  tim deps drift --fetch --json\n' +
         '  tim deps drift --repo trade-imports-animals-frontend --repo tim'
     )
     .action(
       makeRunAction({
         parseOptions: zodOptionsParser(optionsSchema),
-        run: async (_context, { repo, ref, workspace }) =>
+        run: async (_context, { repo, ref, fetch, workspace }) =>
           dependencyDrift({
             workspaceRoot: resolveWorkspaceRoot({ explicit: workspace }),
             repos: repo,
-            ref
+            ref,
+            fetch
           }),
         renderText: renderDriftText,
         timVersion

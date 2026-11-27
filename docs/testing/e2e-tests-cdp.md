@@ -104,25 +104,26 @@ runs on a schedule in GitHub Actions instead (see
 The `trade-imports-ins-tests` suite also runs on a schedule, not tied to any
 service's deployment. Each run uses a bare profile, so it covers every domain.
 They run in order: the full e2e run first, then accessibility, then cross-browser,
-then the ZAP scan last, because it is the heaviest.
+then BrowserStack, then the ZAP scan last, because it is the heaviest.
 
 | Profile | Environment | Domains | Schedule |
 |---|---|---|---|
 | `e2e` | test | all | 01:00, Monday to Friday (Europe/London) |
 | `a11y` | test | all | 02:00, Monday to Friday (Europe/London) |
-| `cross-browser` | test | all | 03:00, Monday to Friday (Europe/London) |
-| `security` | test | all | 04:00, Monday to Friday (Europe/London) |
+| `cross-browser` | test | all | 03:00, Monday to Friday (Europe/London). Monday only until a fix lands |
+| `browserstack` | test | all | 04:00, Monday to Friday (Europe/London) |
+| `security` | test | all | 05:00, Monday to Friday (Europe/London) |
 
 The `security` run is not a separate set of specs: it runs the ordinary e2e
 specs through a passive ZAP scan. The `@active` specs under each domain's
 `security/` directory are excluded, and run in GitHub Actions instead.
 
+The `cross-browser` run uses desktop browsers and emulated phones. The
+`browserstack` run sends the same tests to BrowserStack's browsers and devices,
+real iPhones among them. See [Cross-browser testing](../../repos/trade-imports-ins-tests/docs/cross-browser.md).
+
 Times are in the zone the schedule is set in: Europe/London here, UTC in
 GitHub Actions. In summer, 01:00 UTC is 02:00 in London.
-
-## Cross-browser runs `TBC`
-
-The `cross-browser` profile, and `<domain>:cross-browser` for one domain, run the `@cross-browser` tests in Firefox, WebKit and an emulated iPhone. The `cross-browser` profile runs on a [schedule](#scheduled-runs). See [Cross-browser testing](../../repos/trade-imports-ins-tests/docs/cross-browser.md).
 
 ## Family profiles `PROPOSED`
 

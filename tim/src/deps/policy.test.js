@@ -2,6 +2,7 @@ import { describe, test, expect } from 'vitest'
 import { mergePolicyFor, setOfPackage } from './policy.js'
 import {
   AXE_HOLD,
+  SPRINGDOC_HOLD,
   fixtureDependencySets,
   fixtureDependencySetsHolding
 } from '../test-support/deps-workspace.js'
@@ -161,6 +162,57 @@ describe('#mergePolicyFor', () => {
 
     test('Should leave a repo the hold does not cover to its usual policy', () => {
       expect(heldPolicyOf('4.14.0', 'tim').policy).toBe('ci-is-enough')
+    })
+  })
+
+  describe('with a Maven hold on springdoc-openapi [3.0.0,4.0.0) in the animals backend', () => {
+    const heldPolicyOf = (to, repo) =>
+      mergePolicyFor({
+        dependencySets: fixtureDependencySetsHolding([SPRINGDOC_HOLD]),
+        packageName: SPRINGDOC_HOLD.package,
+        from: '2.8.9',
+        to,
+        repo
+      })
+
+    test('Should make a target in the held Maven range held, naming the hold', () => {
+      const { hold, policy, reason } = heldPolicyOf(
+        '3.2.1',
+        'trade-imports-animals-backend'
+      )
+
+      expect({ hold, policy, reason }).toEqual({
+        hold: SPRINGDOC_HOLD,
+        policy: 'held',
+        reason: `${SPRINGDOC_HOLD.package} 3.2.1 is in the range [3.0.0,4.0.0) held since 2026-11-27. ${SPRINGDOC_HOLD.reason} Run tim deps holds to see the hold.`
+      })
+    })
+
+    test('Should leave a minor below the held Maven range to its usual policy', () => {
+      const { hold, policy } = heldPolicyOf(
+        '2.9.0',
+        'trade-imports-animals-backend'
+      )
+
+      expect({ hold, policy }).toEqual({ hold: null, policy: 'ci-is-enough' })
+    })
+
+    test('Should leave a target past the held Maven range to the policy for majors', () => {
+      const { hold, policy } = heldPolicyOf(
+        '4.0.0',
+        'trade-imports-animals-backend'
+      )
+
+      expect({ hold, policy }).toEqual({
+        hold: null,
+        policy: 'changelog-driven'
+      })
+    })
+
+    test('Should leave a repo the Maven hold does not cover to its usual policy', () => {
+      expect(heldPolicyOf('3.2.1', 'trade-imports-stub').policy).toBe(
+        'changelog-driven'
+      )
     })
   })
 

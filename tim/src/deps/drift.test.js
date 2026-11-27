@@ -5,6 +5,7 @@ import nock from 'nock'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import {
   AXE_HOLD,
+  SPRINGDOC_HOLD,
   createDepsWorkspace,
   fixtureDependencySetsHolding
 } from '../test-support/deps-workspace.js'
@@ -143,6 +144,34 @@ describe('#dependencyDrift', () => {
           }
         ],
         counts: { major: 1, minor: 2, patch: 0 }
+      }
+    ])
+  })
+
+  test('Should read only the npm repos beside a Maven hold, marking only the npm hold', async () => {
+    serveRegistryPackage('@axe-core/playwright', ['4.13.0', '4.14.0'])
+    root = createDepsWorkspace({
+      dependencySets: fixtureDependencySetsHolding([AXE_HOLD, SPRINGDOC_HOLD]),
+      cloned: [FRONTEND, 'trade-imports-animals-backend']
+    })
+    await commitPackageJson(depsCheckoutPath(root, FRONTEND), {
+      devDependencies: { '@axe-core/playwright': '^4.13.0' }
+    })
+
+    const drift = await dependencyDrift({ workspaceRoot: root, ref: 'HEAD' })
+
+    expect(
+      drift.repos.map(({ repo, read, packages }) => ({
+        repo,
+        read,
+        held: packages.map(({ package: name, held }) => ({ name, held }))
+      }))
+    ).toEqual([
+      { repo: 'tim', read: false, held: [] },
+      {
+        repo: FRONTEND,
+        read: true,
+        held: [{ name: '@axe-core/playwright', held: true }]
       }
     ])
   })

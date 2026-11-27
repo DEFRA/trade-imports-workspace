@@ -2,12 +2,15 @@ import { describe, test, expect, afterEach } from 'vitest'
 import { readFileSync, rmSync, unlinkSync } from 'node:fs'
 import { join } from 'node:path'
 import {
+  holdEcosystemOf,
   loadDependencySets,
+  mavenReposInScope,
   reposInScope,
   writeHolds
 } from './dependency-sets.js'
 import {
   AXE_HOLD,
+  SPRINGDOC_HOLD,
   CHECKOUT_WORKSPACE_ROOT,
   createDepsWorkspace,
   fixtureDependencySets,
@@ -113,6 +116,28 @@ describe('#loadDependencySets', () => {
     expect(holds).toEqual([AXE_HOLD])
   })
 
+  test('Should read a Maven hold on a groupId:artifactId at a Maven range', () => {
+    root = createDepsWorkspace({
+      dependencySets: fixtureDependencySetsHolding([SPRINGDOC_HOLD])
+    })
+
+    const { holds } = loadDependencySets(root)
+
+    expect(holds).toEqual([SPRINGDOC_HOLD])
+  })
+
+  test('Should refuse a file with no maven section', () => {
+    const { maven, ...withoutMaven } = fixtureDependencySets()
+    root = createDepsWorkspace({ dependencySets: withoutMaven })
+
+    expect(() => loadDependencySets(root)).toThrow(
+      expect.objectContaining({
+        code: 'PARSE',
+        message: expect.stringMatching(/^config\/dependency-sets\.json: maven /)
+      })
+    )
+  })
+
   test('Should accept a hold without clashesWith or link', () => {
     const { clashesWith, link, ...plainHold } = AXE_HOLD
     root = createDepsWorkspace({
@@ -128,7 +153,22 @@ describe('#loadDependencySets', () => {
     [
       'a wildcard package',
       { package: '@axe-core/*' },
-      'holds.0.package must be an exact npm package name'
+      'holds.0.package must be an exact npm package name, or a Maven groupId:artifactId'
+    ],
+    [
+      'a Maven coordinate with a wildcard',
+      { package: 'org.springdoc:springdoc-openapi*' },
+      'holds.0.package must be an exact npm package name, or a Maven groupId:artifactId'
+    ],
+    [
+      'a Maven coordinate held at an npm range',
+      { package: 'org.springdoc:springdoc-openapi-common', versions: '3.x' },
+      'holds.0.versions must be a Maven version range, such as [3.0.0,4.0.0)'
+    ],
+    [
+      'an npm package held at a Maven range',
+      { versions: '[4.14.0,4.15.0)' },
+      'holds.0.versions must be a version range npm understands, such as 4.14.x'
     ],
     [
       'versions with a quote mark',
@@ -266,5 +306,40 @@ describe('#reposInScope', () => {
     const inScope = reposInScope(root, loadDependencySets(root))
 
     expect(inScope).toEqual(['tim', 'trade-imports-animals-frontend'])
+  })
+})
+
+describe('#mavenReposInScope', () => {
+  test('Should take the repos on the stack, add the included ones and drop the excluded ones, sorted', () => {
+    root = createDepsWorkspace({
+      dependencySets: setsWith((config) => ({
+        ...config,
+        maven: {
+          ...config.maven,
+          repos: {
+            stack: 'java',
+            include: ['trade-imports-stub', 'trade-imports-plants-prototype'],
+            exclude: ['trade-imports-plants-prototype']
+          }
+        }
+      }))
+    })
+
+    const inScope = mavenReposInScope(root, loadDependencySets(root))
+
+    expect(inScope).toEqual([
+      'trade-imports-animals-backend',
+      'trade-imports-stub'
+    ])
+  })
+})
+
+describe('#holdEcosystemOf', () => {
+  test.each([
+    ['org.springdoc:springdoc-openapi-starter-webmvc-ui', 'maven'],
+    ['@axe-core/playwright', 'npm'],
+    ['stylelint', 'npm']
+  ])('Should say %s is held through %s', (packageName, ecosystem) => {
+    expect(holdEcosystemOf(packageName)).toBe(ecosystem)
   })
 })

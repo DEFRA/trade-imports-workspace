@@ -89,7 +89,7 @@ const registerHold = (program, { timVersion }) => {
     )
     .option(
       '--versions <range>',
-      'The Dependabot version range to hold back, such as 4.14.x'
+      'The Dependabot version range to hold back: an npm range such as 4.14.x, or a Maven range such as [3.0.0,4.0.0)'
     )
     .option(
       '--repo <name>',
@@ -105,14 +105,17 @@ const registerHold = (program, { timVersion }) => {
     .option('--link <url>', 'A link to the evidence, such as the pull request')
     .addHelpText(
       'after',
-      '\nEach repo must be in scope for the sets. Then run tim deps dependabot <repo> --write for each repo the command lists.\n' +
+      '\nA package named groupId:artifactId is a Maven hold: give it a Maven range, in quotes, and only repos in maven.repos in config/dependency-sets.json. Each repo of an npm hold must be in scope for the sets. Then run tim deps dependabot <repo> --write for each repo the command lists.\n' +
         '\nA hold also blocks security updates inside its range: Dependabot will not raise a security fix for a held version. Check open Dependabot alerts on the package while the hold stands.\n' +
         '\nExamples:\n' +
         '  tim deps hold @axe-core/playwright --versions 4.14.x --repo trade-imports-animals-frontend \\\n' +
         '    --reason "axe 4.14 flags the enhanced file upload button" \\\n' +
         '    --failing-test "FIT accessibility tests (label-content-name-mismatch)" \\\n' +
         '    --clashes-with govuk-frontend --link https://github.com/DEFRA/trade-imports-animals-frontend/pull/492\n' +
-        '  tim deps hold lodash --versions 4.18.x --repo tim --reason "Breaks the build" --failing-test "npm test" --json'
+        '  tim deps hold lodash --versions 4.18.x --repo tim --reason "Breaks the build" --failing-test "npm test" --json\n' +
+        "  tim deps hold org.springdoc:springdoc-openapi-starter-webmvc-ui --versions '[3.0.0,4.0.0)' \\\n" +
+        '    --repo trade-imports-animals-backend --reason "springdoc-openapi 3 needs Spring Boot 4" \\\n' +
+        '    --failing-test "E2E Tests" --clashes-with org.springframework.boot:spring-boot-starter-parent'
     )
     .action(
       makeRunAction({

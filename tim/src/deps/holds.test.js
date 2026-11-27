@@ -5,6 +5,7 @@ import { holdPackage, liftHold, localDateOf } from './holds.js'
 import { loadDependencySets } from './dependency-sets.js'
 import {
   AXE_HOLD,
+  SPRINGDOC_HOLD,
   createDepsWorkspace,
   fixtureDependencySetsHolding,
   fixtureDependencySetsText
@@ -116,6 +117,50 @@ describe('#holdPackage', () => {
         code: 'USAGE',
         message:
           'trade-imports-animals-backend is not in scope for the dependency sets. Repos in scope: tim, trade-imports-animals-frontend.'
+      })
+    )
+    expect(fileText()).toBe(original)
+  })
+
+  test('Should record a Maven hold in a repo whose Maven updates are generated', () => {
+    root = createDepsWorkspace()
+    const { since: _since, ...springdocRequest } = SPRINGDOC_HOLD
+
+    const result = holdPackage({
+      workspaceRoot: root,
+      request: springdocRequest,
+      today: '2026-11-27'
+    })
+
+    expect({ result, holds: loadDependencySets(root).holds }).toEqual({
+      result: {
+        hold: SPRINGDOC_HOLD,
+        replaced: null,
+        regenerate: ['trade-imports-animals-backend']
+      },
+      holds: [SPRINGDOC_HOLD]
+    })
+  })
+
+  test('Should refuse a Maven hold on an npm repo as a usage error naming the Maven repos', () => {
+    root = createDepsWorkspace()
+    const original = fileText()
+    const { since: _since, ...springdocRequest } = SPRINGDOC_HOLD
+
+    expect(() =>
+      holdPackage({
+        workspaceRoot: root,
+        request: {
+          ...springdocRequest,
+          repos: ['trade-imports-animals-frontend']
+        },
+        today: '2026-11-27'
+      })
+    ).toThrow(
+      expect.objectContaining({
+        code: 'USAGE',
+        message:
+          'trade-imports-animals-frontend is not in scope for Maven updates. Repos in scope: trade-imports-animals-backend.'
       })
     )
     expect(fileText()).toBe(original)

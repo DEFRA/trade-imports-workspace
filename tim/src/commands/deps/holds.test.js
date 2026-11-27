@@ -7,6 +7,7 @@ import { localDateOf } from '../../deps/holds.js'
 import { runTimInWorkspace, envelopeOf } from '../../test-support/tim-cli.js'
 import {
   AXE_HOLD,
+  SPRINGDOC_HOLD,
   createDepsWorkspace,
   fixtureDependencySetsHolding
 } from '../../test-support/deps-workspace.js'
@@ -125,6 +126,44 @@ describe('tim deps hold', () => {
     const after = await runDeps('dependabot', REPO, '--check')
 
     expect([before.exitCode, after.exitCode]).toEqual([1, 0])
+  })
+
+  test("Should hold a Maven package at a Maven range, fail the Java repo's --check until it is regenerated, and make the range held for tim deps policy", async () => {
+    const javaRepo = 'trade-imports-animals-backend'
+    root = createDepsWorkspace({ cloned: [javaRepo] })
+    await runDeps('dependabot', javaRepo, '--write')
+
+    const hold = await runDeps(
+      'hold',
+      SPRINGDOC_HOLD.package,
+      '--versions',
+      SPRINGDOC_HOLD.versions,
+      '--repo',
+      javaRepo,
+      '--reason',
+      SPRINGDOC_HOLD.reason,
+      '--failing-test',
+      SPRINGDOC_HOLD.failingTest
+    )
+    const before = await runDeps('dependabot', javaRepo, '--check')
+    await runDeps('dependabot', javaRepo, '--write')
+    const after = await runDeps('dependabot', javaRepo, '--check')
+    const policy = await runDeps(
+      'policy',
+      SPRINGDOC_HOLD.package,
+      '--from',
+      '2.8.9',
+      '--to',
+      '3.2.1',
+      '--repo',
+      javaRepo
+    )
+
+    expect({
+      regenerate: holdEnvelope.parse(envelopeOf(hold)).result.regenerate,
+      checks: [before.exitCode, after.exitCode],
+      policy: envelopeOf(policy).result.policy
+    }).toEqual({ regenerate: [javaRepo], checks: [1, 0], policy: 'held' })
   })
 
   test('Should refuse a missing --failing-test as a usage error', async () => {

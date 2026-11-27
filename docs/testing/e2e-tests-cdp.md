@@ -4,7 +4,7 @@
 
 This page records the runs the CDP Portal triggers after each deployment and on a
 [schedule](#scheduled-runs). Each run is one `PROFILE` of the
-`trade-imports-ins-tests` test suite: `default` or `e2e` (the e2e suite), `a11y`,
+`trade-imports-ins-tests` test suite: `e2e` (also run by `default` or a blank `PROFILE`), `a11y`,
 `dynamics`, `cross-browser`, `browserstack` or `security`, run for every domain, or `<domain>:<suite>` (for
 example `animals:e2e`) for one. The profiles are described in the
 [`trade-imports-ins-tests` README](../../repos/trade-imports-ins-tests/README.md#running-tests-via-cdp-portal).
@@ -68,15 +68,15 @@ The [core services](#core-services), below, have no family.
 #### Core services
 
 Core services have no family. They serve every journey, so nothing is left out: they
-run every domain through the bare `default` profile, which also covers any domain added
+run every domain through the bare `e2e` profile, which also covers any domain added
 later.
 
 | Repo | dev | test | perf-test | ext-test |
 |---|---|---|---|---|
-| dynamics-gateway | `default` | as dev, plus `dynamics` | | |
-| defra-id-stub | `default` | as dev | | |
-| reference-data | `default` | as dev | | |
-| stub | `default` | as dev | | |
+| dynamics-gateway | `e2e` | as dev, plus `dynamics` | | |
+| defra-id-stub | `e2e` | as dev | | |
+| reference-data | `e2e` | as dev | | |
+| stub | `e2e` | as dev | | |
 
 [GitHub Actions](e2e-tests-gh-actions.md#repos-that-run-everything) runs the e2e tests
 for these four on every PR too, plus the workspace and ins-tests repos, with the
@@ -108,7 +108,7 @@ then the ZAP scan last, because it is the heaviest.
 
 | Profile | Environment | Domains | Schedule |
 |---|---|---|---|
-| `default` (e2e) | test | all | 01:00, Monday to Friday (Europe/London) |
+| `e2e` | test | all | 01:00, Monday to Friday (Europe/London) |
 | `a11y` | test | all | 02:00, Monday to Friday (Europe/London) |
 | `cross-browser` | test | all | 03:00, Monday to Friday (Europe/London) |
 | `security` | test | all | 04:00, Monday to Friday (Europe/London) |

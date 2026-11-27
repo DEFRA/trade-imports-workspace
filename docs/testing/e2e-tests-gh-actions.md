@@ -75,7 +75,7 @@ It reads which services call the service directly from the stack's compose wirin
 
 ### Cross-browser tests
 
-A pull request runs the `@cross-browser` tests in Chromium, with the rest of the e2e specs. The Firefox, WebKit and iPhone runs are not part of a pull request: they run on [CDP](e2e-tests-cdp.md#cross-browser-runs-tbc) (`TBC`).
+A pull request runs the `@cross-browser` tests in Chromium, with the rest of the e2e specs. The Firefox, WebKit and iPhone runs are not part of a pull request: they run on [CDP](e2e-tests-cdp.md#scheduled-runs).
 
 ## Merging a tests-repo change with its service change
 

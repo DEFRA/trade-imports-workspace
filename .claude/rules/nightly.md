@@ -210,18 +210,19 @@ merges the next one, in any of them, it waits for:
    `gh run list --repo DEFRA/<repo> --workflow publish.yml --commit <merge sha>`,
    then `gh run watch <run id> --repo DEFRA/<repo>`
 2. the dev deployment to appear: a commit to the service's file, dated after
-   the Publish run finished, in
+   the merge, in
    `gh api "repos/DEFRA/cdp-app-deployments/commits?path=environments/dev/<public or protected>/<repo>.json&per_page=1"`.
-   This is a read. A job never writes to `cdp-app-deployments` (CLAUDE.md
-   rule 3)
-3. 20 minutes more, for the deployment's test runs to finish. A repo with no
-   run after a deployment in
+   CDP deploys part-way through the Publish run, so the commit is usually
+   dated before the run finishes. This is a read. A job never writes to
+   `cdp-app-deployments` (CLAUDE.md rule 3)
+3. 20 minutes more after both, for the deployment's test runs to finish. A
+   repo with no run after a deployment in
    [`docs/testing/e2e-tests-cdp.md`](../../docs/testing/e2e-tests-cdp.md),
    such as the routing proxy and the plants prototype, skips this wait
 
-When the Publish run fails, or the deployment has not appeared 30 minutes
-after the run finished, the job merges nothing more in those repos that night
-and reports it in the digest.
+When the Publish run fails, or the deployment has not appeared 40 minutes
+after the merge, the job merges nothing more in those repos that night and
+reports it in the digest.
 
 A repo with no file under `environments/dev/` does not deploy on merge, so a
 job merges there on green without waiting: this workspace (tim),

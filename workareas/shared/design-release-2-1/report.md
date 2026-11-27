@@ -2,10 +2,10 @@
 
 ## Summary
 
-- The backlog has 65 rows: 29 ready to go and 13 blocked. 4 are deferred, 10 dropped and 9 merged into others.
+- The backlog has 65 rows: 28 ready to go and 13 blocked. 4 are deferred, 10 dropped and 10 merged into others.
 - The 13 blocked rows wait on the INS dashboard's requirements (9), the authorities' outcome feed (1), the plants backend (1), the INS address lookup (1) and templates (1).
-- The 29 ready rows build the germinal products set (20), the live animals list reframe with plants' list (7) and the plants rulings records (2).
-- The combine review weighed 192 pairs: 29 rows became 29, with no merge.
+- The 28 ready rows build the germinal products set (18), the list reframe on the live animals, plants and germinal lists (8) and the plants rulings records (2).
+- The combine review weighed 215 pairs: 29 rows became 28. The bovine semen end-to-end walk (inc-184) went into inc-183.
 - 44 questions are open for Sam, of 44 challenged. Precedence, a ruling or a blocker settled none. Each has a default, so building can start without an answer.
 - Step 0: correct the goal's commodity bullet in sources.json, and merge the split branches that 15 ready rows build on.
 - 14 split branches have work to pick up, each named under "For the split branches". Only test-hygiene has nothing.
@@ -17,7 +17,7 @@
    - The new catalogue content in Design Release 2.1 and V4 is MDM's content. It is out of scope, not blocked.
    - The commodity search control is the separate commodity-search ticket's work.
    - Only commodity types wait, on MDM serving them (req-2131, with req-1656 and req-2137).
-2. **Merge the split branches first.** 15 of the 29 ready rows build on work in a split theme: inc-017, inc-024, inc-052, inc-053, inc-105, inc-126, inc-136, inc-176, inc-177, inc-179, inc-181, inc-182, inc-185, inc-264 and inc-283.
+2. **Merge the split branches first.** 15 of the 28 ready rows build on work in a split theme: inc-017, inc-024, inc-052, inc-053, inc-105, inc-126, inc-136, inc-176, inc-177, inc-179, inc-181, inc-182, inc-185, inc-264 and inc-283.
 3. **Pick up the split-branch changes** listed under "For the split branches" before those themes merge.
 
 ## Decisions the pipeline made
@@ -64,7 +64,7 @@ No repo is read without being changed. trade-imports-plants-backend is outside t
 21. Sam, 9 October templates
 22. Sam, 9 October
 23. Sam, 7 October
-24. V4: Live Animals and Germinals Data Fields, Confluence 6497338582, version 210
+24. V4: Live Animals and Germinals Data Fields, Confluence 6497338582
 25. DR1 parity notes
 26. DR1 parity backlog
 27. Design Release 2.1 prototype source, commit c2078fb (26 November)
@@ -319,7 +319,7 @@ No repo is read without being changed. trade-imports-plants-backend is outside t
 ### 39. Does "Past" hold completed notifications, or those two weeks past arrival? (c-498)
 
 - **Default:** completed only, so the tab stays empty until a real source of completion exists.
-- **Affects:** req-2771, req-1082; inc-135, inc-142.
+- **Affects:** req-2771, req-1082; inc-135, inc-137, inc-142.
 - **Why it is open:** the prototype's code and its description disagree.
 
 ### 40. Does the address book get back its Branch tab and role? (c-499)
@@ -348,8 +348,8 @@ No repo is read without being changed. trade-imports-plants-backend is outside t
 
 ### 44. Which delete message does the germinal list show? (c-511)
 
-- **Default:** today's live animals message while built from main. It takes "Notification has been deleted." in the increment that changes live animals.
-- **Affects:** req-2860.
+- **Default:** today's live animals message while built from main. It takes "Notification has been deleted." in inc-126, together with the live animals list.
+- **Affects:** req-2860, inc-126.
 - **Why it is open:** the 27 November ruling copies the germinal list from main, and manage-notifications changes the live animals message.
 
 ## Waiting on others
@@ -893,39 +893,40 @@ Settled-by key: dates are rulings (Sam unless named). DR2.1 is the 26 November p
 
 ### Ready to go
 
+The table is in build order. A row builds once every row in its Lands after cell has landed.
+
 A **Review point** is a check the owner makes once the theme is built. The build never waits for it mid-run.
 
 | Id | What it delivers | Criteria | Repos | Lands after | Theme |
 |---|---|---|---|---|---|
-| inc-129 **Review point** | The live animals list reframed in place, scoped to the organisation; plants' list takes the same frame | 9 | plantsfrontend, frontend, tests | nothing | animals-dashboard |
+| inc-176 **Review point** | Germinal starts in its own set: draft reference, stored category, chrome, cross-set guard and origin page | 27 | backend, frontend, tests | type-question (inc-148, 150); overview-and-review (inc-098, 100) | germinal-products |
+| inc-181 | Germinal Consignment addresses: five pickers and an overview task, with no CPH and no permanent address | 14 | frontend, tests | identification-and-permanent-address (inc-054); consignment-parties (inc-091) | germinal-products |
 | inc-239 | A success banner only when an action sends the trader back to the list | 4 | frontend | nothing | animals-dashboard |
 | inc-277 **Review point** | Plants rulings records carry the decisions now in force | 8 | plantsfrontend | nothing | recorded-decisions-plants |
 | inc-278 | The plants journey specification says what the set now has | 17 | plantsfrontend | inc-277 | recorded-decisions-plants |
-| inc-181 | Germinal Consignment addresses: five pickers and an overview task, with no CPH and no permanent address | 14 | frontend, tests | identification-and-permanent-address (inc-054); consignment-parties (inc-091) | germinal-products |
-| inc-126 | "Notification has been deleted." on the live animals and plants lists | 16 | backend, plantsfrontend, frontend, tests | inc-129; overview-and-review (inc-110); manage-notifications (inc-120, 121, 125) | animals-dashboard |
-| inc-135 | Tabs "Submitted", "Draft and Amend" and "Past" | 6 | backend, frontend, tests | inc-126 | animals-dashboard |
-| inc-136 | Search and sort as one form that really searches and sorts | 9 | backend, plantsfrontend, frontend, tests | inc-135; design-snagging (inc-210) | animals-dashboard |
-| inc-137 | "Additional filters" for arrival date, date range and status | 11 | backend, frontend, tests | inc-136 | animals-dashboard |
-| inc-138 | 8 a page with numbered pages, and no results count or empty-list message | 7 | backend, plantsfrontend, frontend, tests | inc-136, inc-137 | animals-dashboard |
-| inc-176 **Review point** | Germinal starts in its own set: draft reference, stored category, chrome, cross-set guard and origin page | 27 | backend, frontend, tests | inc-129, inc-126, inc-135; type-question-and-templates (inc-148, 150); overview-and-review (inc-098, 100) | germinal-products |
-| inc-016 | Germinal "What are you importing?" offers germinal commodities only, with its own hint | 6 | frontend, tests | inc-176 | germinal-products |
 | inc-141 | The germinal root shows its own list, a copy of today's live animals list | 4 | backend, frontend, tests | inc-176 | germinal-products |
+| inc-016 | Germinal "What are you importing?" offers germinal commodities only, with its own hint | 6 | frontend, tests | inc-176 | germinal-products |
 | inc-178 | Germinal picks its transporter from the germinal set's own list | 12 | frontend, tests | inc-176 | germinal-products |
 | inc-179 | Germinal's own Upload documents page | 10 | frontend, tests | inc-176; documents (inc-031, 033, 034, 035) | germinal-products |
-| inc-264 | The INS type question takes germinal back to its own journey | 6 | insfrontend, tests | inc-176; type-question-and-templates (inc-263) | germinal-products |
+| inc-264 | The INS type question takes germinal back to its own journey | 6 | insfrontend, tests | inc-176; type-question (inc-263) | germinal-products |
+| inc-129 **Review point** | The live animals list reframed in place, scoped to the organisation; plants' list and the germinal list copy take the same frame | 9 | plantsfrontend, frontend, tests | inc-141 | animals-dashboard |
 | inc-024 | Germinal start and main import reason: two reasons, four purposes, the Transit answers, no exit date | 12 | frontend, tests | inc-016, inc-141; commodities-and-reason (inc-015, 022); design-snagging (inc-218) | germinal-products |
 | inc-017 | Germinal Commodity details: quantity, packages where they apply, gross weight and temperature; the record holds them; every trade line says what it is | 17 | backend, frontend, tests | inc-016, inc-024; commodities-and-reason (inc-018, 012) | germinal-products |
 | inc-177 | Germinal Commodity details checks quantity and weight, with errors by question | 10 | frontend, tests | inc-017; commodities-and-reason (inc-018) | germinal-products |
 | inc-052 | Germinal identification once per species: donor, dates and identification number, held on the record | 10 | backend, frontend, tests | inc-016, inc-017; identification-and-permanent-address (inc-045) | germinal-products |
 | inc-099 | Germinal overview: section 2 tasks, two total cards, Commodity details completeness rule | 15 | frontend, tests | inc-017, inc-177 | germinal-products |
-| inc-172 | The germinal list takes the reframed frame, with its own card facts | 3 | frontend, tests | inc-126, inc-141, inc-017 | germinal-products |
 | inc-105 | Germinal review and confirmation, with germinal transport guidance and the missing-ITAHC reminder | 16 | frontend, tests | inc-017, inc-052, inc-176, inc-099, inc-141; overview-and-review (inc-104, 106) | germinal-products |
 | inc-182 | The germinal journey follows live animals without additional details, CPH or permanent address; certified "Germinal products" | 12 | frontend, tests | inc-099, inc-105, inc-178, inc-179, inc-181; commodities-and-reason (inc-018); arrival-and-transit (inc-028, 029); overview-and-review (inc-110, 111, 112, 113, 115); consignment-parties (inc-094, 095, 097) | germinal-products |
 | inc-053 | Germinal dates and names: text inputs with a "Choose date" calendar, and their checks | 14 | frontend, tests | inc-052, inc-177, inc-182; design-snagging (inc-206) | germinal-products |
 | inc-283 | Germinal transit countries for rail and road, with live animals' page, list, cap and task | 10 | frontend, tests | inc-182; arrival-and-transit (inc-028, 029) | germinal-products |
-| inc-185 | Amend, cancel amendment, copy as new and delete for germinal | 8 | backend, frontend, tests | inc-182, inc-126; manage-notifications (inc-120, 121, 123, 124, 125) | germinal-products |
-| inc-183 | No Additional details step; a germinal species is identified once it has one identifier | 5 | frontend, tests | inc-052, inc-099, inc-105, inc-182, inc-280 (blocked) | germinal-products |
-| inc-184 | End to end: a bovine semen notification from create to submitted | 10 | tests | inc-182, inc-183, inc-141, inc-172, inc-283 | germinal-products |
+| inc-185 | Amend, cancel amendment, copy as new and delete for germinal | 8 | backend, frontend, tests | inc-182; manage-notifications (inc-120, 121, 123, 124, 125) | germinal-products |
+| inc-183 | No Additional details step; a germinal species is identified once it has one identifier; the bovine semen walk from create to submitted | 15 | frontend, tests | inc-052, inc-099, inc-105, inc-182, inc-141, inc-283, inc-280 (blocked) | germinal-products |
+| inc-126 | "Notification has been deleted." with a "Success" banner, and the cards' facts and status styles, on the live animals, plants and germinal lists | 17 | backend, plantsfrontend, frontend, tests | inc-129, inc-185; overview-and-review (inc-110); manage-notifications (inc-120, 121, 125) | animals-dashboard |
+| inc-135 | Tabs "Submitted", "Draft and Amend" and "Past" | 6 | backend, frontend, tests | inc-126 | animals-dashboard |
+| inc-136 | Search and sort as one form that really searches and sorts | 9 | backend, plantsfrontend, frontend, tests | inc-135; design-snagging (inc-210) | animals-dashboard |
+| inc-137 | "Additional filters" for arrival date, date range and status | 11 | backend, frontend, tests | inc-136 | animals-dashboard |
+| inc-138 | 8 a page with numbered pages, and no results count or empty-list message | 7 | backend, plantsfrontend, frontend, tests | inc-136, inc-137 | animals-dashboard |
+| inc-172 | The germinal list takes the rest of the reframed frame, with its own card facts | 3 | frontend, tests | inc-126, inc-141, inc-017, inc-137 | animals-dashboard |
 
 ### Blocked
 
@@ -947,7 +948,7 @@ Whoever owns the INS dashboard's requirements must firm them up and agree them w
 
 #### Waiting on the authorities' outcome feed
 
-The owners of the PIMS Dynamics integration must send post-submission outcomes, and a real source of completion must exist.
+The owners of the PIMS Dynamics integration must send post-submission outcomes. A real source of completion must also exist.
 
 | Id | What it delivers | Repos | Theme |
 |---|---|---|---|
@@ -996,6 +997,7 @@ The row says Sam must plan templates again. Its one requirement, req-1740, no lo
 | inc-198 | Copy buttons on import reference numbers | Dropped: design, 13 November |
 | inc-245 | The obligation model | Dropped: Sam, 10 November second ruling |
 | inc-130, inc-131, inc-140 | Card facts, status styles and the list banner | Merged into inc-126 and inc-129 |
+| inc-184 | End to end: a bovine semen notification from create to submitted | Merged into inc-183 this run |
 | inc-191 | Germinal selections and trade-line codes | Merged into inc-017 |
 | inc-192, inc-244 | Germinal date calendar; same checks on germinal pages | Merged into inc-053 |
 | inc-279 | Plants guides | Merged into inc-278 |
@@ -1004,16 +1006,20 @@ The row says Sam must plan templates again. Its one requirement, req-1740, no lo
 
 **Check these ordering decisions:**
 
-- inc-129 lands first: it is the frame inc-126, inc-176 and the germinal list build on.
-- inc-176 is the germinal gate: every germinal row but inc-181 waits on it.
-- inc-181 can land early. It needs only the identification-and-permanent-address and consignment-parties branches.
-- inc-185 lands after the manage-notifications branch, so germinal amend, copy and delete follow live animals'.
-- inc-280 is blocked, but req-1740 no longer carries a blocker. It could move to ready. Until it does, inc-183 waits, and so does inc-184.
-- inc-172 still names c-496 as open. c-496 is now settled: each animals-dashboard reframe row changes the germinal copy itself. inc-172 may build nothing, or belong in those rows.
-- inc-184 still names c-461 as open. It is settled the default's way, so nothing in the row changes.
-- inc-132 depends on inc-147, which is dropped. That link no longer holds it back.
+- inc-176 lands first. It is the germinal gate: every germinal row but inc-181 waits on it, and so does the list reframe, through inc-141.
+- The list reframe now follows the germinal set. inc-129 waits on inc-141, the germinal list copy it reframes (Sam, 27 November, points 8 and 10).
+- inc-126 waits on inc-185, so the whole list reframe (inc-126, inc-135 to inc-138, inc-172) lands after germinal amend, copy and delete. inc-126 could land earlier if inc-185 took the germinal deletion message itself.
+- inc-181, inc-239 and inc-277 can land early. inc-181 needs only the identification-and-permanent-address and consignment-parties branches.
+- inc-183 waits on inc-280, which is blocked. Since inc-184 merged into it, the bovine semen end-to-end walk waits too.
+- inc-280 is blocked, but req-1740 no longer carries a blocker. Moving inc-280 to ready would free inc-183.
+- inc-183 now holds 15 criteria across frontend and tests, at the edge of one plan. It would split back into the identified rule and the end-to-end walk.
 - inc-176 has 27 criteria and may be too big to review. It would split into the start, reference and category half, and the chrome, guard and origin page half.
-- The combine review kept every pair apart: each merge was too big to review, carried another row's open question, or touched different code.
+- inc-126 has 17 criteria, after absorbing inc-130 and inc-140.
+- inc-172 builds only what the reframe rows leave of the germinal frame and card facts. It may build little beyond its proof.
+- inc-016 needs a germinal commodity search from reference-data, which the split reference-lists branch owns. Default: build the frontend half against such a search, adding it outside this backlog or at a re-distil.
+- inc-017 builds the interim EMBRYO code for a combined embryos-and-ova line. That rests on nobody objecting, not an active approval.
+- inc-132 depends on inc-147, which is dropped. That link no longer holds it back.
+- The combine review merged one pair. It kept the rest apart: too big to review, another row's open question, or different code.
 
 ## Themes
 
@@ -1037,8 +1043,8 @@ Each theme builds on its own branch and machine. No two themes touch the same co
 | consignment-parties | split off to `feat/EUDPA-805-design-release-2-1-consignment-parties` | — | Animals addresses page, pickers, CPH and contact; plants' address-book service | address-book, design-snagging, identification-and-permanent-address, journey-foundation |
 | test-hygiene | split off to `feat/NO_JIRA-design-release-2-1-test-hygiene` | — | Type-ahead and caption fit specs, client helpers, the tests repo README | arrival-and-transit, commodities-and-reason, design-snagging, documents, journey-foundation, origin-page |
 | recorded-decisions-plants | inc-277, inc-278 | — | Plants set spec ledgers, journey spec, fixtures and docs | consignment-parties, journey-foundation, overview-and-review |
-| animals-dashboard | inc-129, inc-239, inc-126, inc-135, inc-136, inc-137, inc-138 | inc-139, inc-142, inc-200 | Live animals and plants dashboard folders, list reads in persistence, the backend's list query and sort, k6 list endpoints, list tests | manage-notifications, overview-and-review |
-| germinal-products | inc-016, 017, 024, 052, 053, 099, 105, 141, 172, 176, 177, 178, 179, 181, 182, 183, 184, 185, 264, 283 | inc-280 | The germinal set folder and routes, the notification mapper, backend germinal fields and outbox, the INS type question, germinal tests | animals-dashboard, arrival-and-transit, commodities-and-reason, consignment-parties, design-snagging, documents, identification-and-permanent-address, journey-foundation, manage-notifications, overview-and-review, type-question-and-templates |
+| germinal-products | inc-016, 017, 024, 052, 053, 099, 105, 141, 176, 177, 178, 179, 181, 182, 183, 185, 264, 283 | inc-280 | The germinal set folder and routes, the notification mapper, backend germinal fields and outbox, the INS type question, germinal tests | arrival-and-transit, commodities-and-reason, consignment-parties, design-snagging, documents, identification-and-permanent-address, journey-foundation, manage-notifications, overview-and-review, type-question-and-templates |
+| animals-dashboard | inc-129, inc-239, inc-126, inc-135, inc-136, inc-137, inc-138, inc-172 | inc-139, inc-142, inc-200 | Live animals, germinal and plants dashboard folders, list reads in persistence, the backend's list query and sort, k6 list endpoints, list tests, the germinal end-to-end folder | germinal-products, manage-notifications, overview-and-review |
 | ins-dashboard | — | inc-128, 132, 133, 134, 143, 144, 145, 146 | The INS read model, drill-down feature folders, notification list, k6 INS page and readiness checks | animals-dashboard, germinal-products |
 | waiting-on-design | — | inc-282 | Client-side enhancements, the address lookup stub and INS lookup, the INS add page, party pickers | address-book, arrival-and-transit, commodities-and-reason, consignment-parties, design-snagging, germinal-products, journey-foundation, manage-notifications, overview-and-review, transporters |
 | obligation-model | — | — | Obligation models in both frontends; holds only the dropped inc-245 | nothing |
@@ -1047,13 +1053,14 @@ In no theme: inc-270, merged into overview-and-review's inc-266.
 
 **Cross-theme dependencies:**
 
-- inc-176 (germinal-products) on inc-129, inc-126 and inc-135 (animals-dashboard): the germinal set starts from the reframed list frame.
-- inc-172 and inc-185 (germinal-products) on inc-126 (animals-dashboard): both follow the live animals list's deletion message and frame.
+- inc-129 (animals-dashboard) on inc-141 (germinal-products): the first reframe row changes the germinal list copy in the same increment.
+- inc-126 (animals-dashboard) on inc-185 (germinal-products): the deletion message changes on the germinal list too, so germinal delete comes first.
+- inc-172 (animals-dashboard) on inc-141 and inc-017 (germinal-products): it reframes the germinal list and totals the germinal quantity.
 - inc-132 (ins-dashboard) on inc-126 (animals-dashboard), and on the dropped inc-147.
 - inc-145 (ins-dashboard) on inc-141 (germinal-products): the INS germinal section links to the germinal list.
-- inc-176 and inc-264 on type-question-and-templates (inc-148, 150, 263): germinal starts from the INS type question.
-- inc-128 (ins-dashboard) and inc-280 (germinal-products) on type-question-and-templates (inc-149, inc-150): the INS home and the origin Back link follow the type question.
-- inc-017, inc-024 and inc-177 on commodities-and-reason (inc-012, 015, 018, 022): germinal copies the live animals commodity and reason pages.
+- inc-176 and inc-264 on the type question (inc-148, 150, 263): germinal starts from the INS type question.
+- inc-128 (ins-dashboard) and inc-280 (germinal-products) on the type question (inc-149, inc-150): the INS home and the origin Back link follow it.
+- inc-017, inc-024, inc-177 and inc-182 on commodities-and-reason (inc-012, 015, 018, 022): germinal copies the live animals commodity and reason pages.
 - inc-052 on identification-and-permanent-address (inc-045), and inc-181 on it (inc-054) and consignment-parties (inc-091): germinal copies those pages.
 - inc-053, inc-024, inc-136 and inc-200 on design-snagging (inc-206, inc-218, inc-210): they build on its date picker, Back links and list snags.
 - inc-179 on documents (inc-031, 033, 034, 035): germinal copies the documents page.
@@ -1377,7 +1384,7 @@ Branch `feat/NO_JIRA-design-release-2-1-test-hygiene`. Nothing to pick up.
 | Out of scope | 419 |
 | Conflicts | 509: 465 settled by precedence, 44 questions |
 | Areas | 32 |
-| Backlog rows | 65: 29 todo, 13 blocked, 4 deferred, 10 dropped, 9 merged |
+| Backlog rows | 65: 28 todo, 13 blocked, 4 deferred, 10 dropped, 10 merged |
 | Requirements in this backlog's rows | 314 |
 | Requirements in the split themes | 443 |
 | Themes | 6 here, 15 split off |

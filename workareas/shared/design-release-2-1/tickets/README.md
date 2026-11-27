@@ -168,6 +168,10 @@ left this list: documents (EUDPA-724) drained on 27 October, and commodities and
 reason (EUDPA-693) on 5 November — both filled in. The ten unsplit themes in the
 main backlog have no tickets at all.
 
+Germinal products was split off on 27 November with a stub, `germinal-products-stub/`
+([EUDPA-854](https://eaflood.atlassian.net/browse/EUDPA-854), `Ready for Dev`): 24 rows,
+18 to build, recorded under `stub` in `tickets.json` until the WRITE flow fills it in.
+
 Commodities and reason drained with two rows still blocked, inc-029 and inc-249,
 both waiting on MDM. A theme is ticketed once no row is buildable, not once every
 row is done, so a blocked row is shown with its state rather than holding the

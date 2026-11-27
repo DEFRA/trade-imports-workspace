@@ -4988,12 +4988,18 @@ describe('increment-build-loop', () => {
           ])
         })
 
-        test('tells the lease taker to start the stack from local source under the run’s holder', async () => {
+        test('tells the lease taker to start the stack from local source under the run’s holder, for the backlog’s own domains', async () => {
           const run = await runFrom(null)
 
           expect(promptOf(run, ACQUIRE_LABEL)).toContain(
-            `\`tim docker lease acquire --holder "${RUN_ID}" --mode dev --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/${RUN_ID}-lease\``
+            `\`tim docker lease acquire --holder "${RUN_ID}" --mode dev --workspace ~/ws --for-workarea shared/args-fixture --e2e local --json --logs ~/ws/workareas/shared/args-fixture/logs/${RUN_ID}-lease\``
           )
+        })
+
+        test('tells the lease taker the run’s own --e2e mode, so a targeted run starts fewer services', async () => {
+          const run = await runFromWithArgs({ e2e: 'targeted' }, null)
+
+          expect(promptOf(run, ACQUIRE_LABEL)).toContain('--e2e targeted')
         })
 
         test('lets only the lease taker and the releaser run a lease command', async () => {

@@ -144,6 +144,32 @@ describe('tim docker lease acquire', () => {
     })
   })
 
+  test('refuses --domain and --for-workarea together, and starts nothing', async () => {
+    const run = await runTim([
+      'acquire',
+      '--holder',
+      HOLDER,
+      '--domain',
+      'plants',
+      '--for-workarea',
+      'shared/theme',
+      '--json'
+    ])
+
+    expect({
+      exitCode: run.exitCode,
+      code: envelopeOf(run).errors[0].code,
+      message: envelopeOf(run).errors[0].message,
+      calls: stackCalls()
+    }).toEqual({
+      exitCode: 2,
+      code: 'USAGE',
+      message:
+        'Name the domains with --domain, or let --for-workarea work them out. Not both.',
+      calls: []
+    })
+  })
+
   test('refuses to run without a holder', async () => {
     const run = await runTim(['acquire'])
 

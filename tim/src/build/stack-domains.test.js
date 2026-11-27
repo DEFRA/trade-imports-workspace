@@ -111,6 +111,78 @@ describe('#domainsForFolders', () => {
   })
 })
 
+describe('#domainsForFolders under a targeted run', () => {
+  const targetedDomainsOf = (folders) =>
+    domainsForFolders({
+      scope: SCOPE,
+      folders,
+      tagDomains: TAG_DOMAINS,
+      e2e: 'targeted'
+    })
+
+  test('Should take only the repo’s own suites, leaving its tagged domains to the pull request', () => {
+    expect(targetedDomainsOf(['trade-imports-animals-frontend'])).toEqual({
+      domains: ['animals'],
+      everyDomain: false,
+      reason:
+        'trade-imports-animals-frontend runs animals; tagged specs in animals-admin, ins run on the pull request'
+    })
+  })
+
+  test('Should union two service repos’ own suites and nothing else', () => {
+    expect(
+      targetedDomainsOf([
+        'trade-imports-plants-backend',
+        'trade-imports-animals-frontend'
+      ]).domains
+    ).toEqual(['animals', 'plants'])
+  })
+
+  test('Should say only the suites when the repo carries no tag', () => {
+    expect(targetedDomainsOf(['trade-imports-plants-backend'])).toEqual({
+      domains: ['plants'],
+      everyDomain: false,
+      reason: 'trade-imports-plants-backend runs plants'
+    })
+  })
+
+  test('Should not need every domain for a tag whose domains are not known', () => {
+    const result = domainsForFolders({
+      scope: SCOPE,
+      folders: ['trade-imports-address-book'],
+      tagDomains: {},
+      e2e: 'targeted'
+    })
+
+    expect({
+      domains: result.domains,
+      everyDomain: result.everyDomain
+    }).toEqual({ domains: ['ins'], everyDomain: false })
+  })
+
+  test('Should still need the whole stack for a repo with no scope entry', () => {
+    expect(
+      targetedDomainsOf(['trade-imports-reference-data']).everyDomain
+    ).toBe(true)
+  })
+
+  test('Should still need the whole stack for the performance suite', () => {
+    expect(targetedDomainsOf([PERF_FOLDER]).everyDomain).toBe(true)
+  })
+
+  test('Should still need no stack when the row changes no service repo', () => {
+    expect(targetedDomainsOf(['trade-imports-workspace']).domains).toEqual([])
+  })
+
+  test('Should count a repo’s tags when the run is not targeted', () => {
+    expect(domainsOf(['trade-imports-animals-frontend']).domains).toEqual([
+      'animals',
+      'animals-admin',
+      'ins'
+    ])
+  })
+})
+
 describe('#tagsIn', () => {
   test('Should name every tag the scope file uses, once each, sorted', () => {
     expect(tagsIn(SCOPE)).toEqual([

@@ -1086,8 +1086,13 @@ took the unit rung red twice on 5000ms timeouts in files that pass in 2.85s alon
 20-container stack no row needed competing for 12 CPUs.
 
 1. **At the start**, after the preflight and before the first increment, a light agent runs
-   `tim docker lease acquire --holder "<run id>" --mode dev`, which starts the stack from
-   local source.
+   `tim docker lease acquire --holder "<run id>" --mode dev --for-workarea <workarea> --e2e <e2e>`,
+   which starts the stack from local source for the domains the backlog's unbuilt rows put in
+   play between them, as `tim build stack-plan` reports them. Under `--e2e targeted` that leaves
+   out the domains a repo reaches only through its service tags, because the gate runs the row's
+   changed specs alone and those tagged specs run on the pull request. A backlog that needs every
+   domain, or no stack, starts the whole stack. The agent passes no `--domain`: tim derives them,
+   so no relay can garble the list.
 2. **Every increment reuses it.** The stack stays up across every increment. Every gate
    command — baseline, implementor, fixer, ladder and the Codex unit phase — passes
    `--holder "<run id>"`, so the gate's E2E phase uses the stack the run holds and rebuilds

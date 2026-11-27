@@ -1307,9 +1307,19 @@ stack is never left up with nobody owning it.
 
 ```bash
 tim docker lease acquire --holder "ibl-20261001T150000Z" --json  # start it, or reuse your own
+tim docker lease acquire --holder "ibl-20261001T150000Z" --for-workarea shared/my-theme --e2e targeted  # only what that backlog needs
 tim docker lease release --holder "ibl-20261001T150000Z" --json  # take down what you started
 tim docker lease status --json                                                    # up or down, and who holds it
 ```
+
+- `--domain <name>`, repeated, starts only the services those test domains
+  need. `--for-workarea <path>` works them out instead, from the domains a
+  backlog's unbuilt rows put in play, as `tim build stack-plan` reports them;
+  give the run's `--e2e` with it, because under `targeted` the gate runs only
+  the specs a row changed, so the specs a repo reaches through its service
+  tags run on the pull request and their domains are left out. The two are
+  alternatives, not a pair. A backlog needing every domain, or no stack,
+  starts the whole stack.
 
 - `acquire` on a stack that is down records the lease, then starts it
   (`tim docker dev`; `--mode up` for the published images; `--mode perf` for

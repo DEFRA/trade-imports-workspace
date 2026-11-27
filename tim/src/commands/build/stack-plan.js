@@ -25,13 +25,15 @@ const BUILDABLE = new Set(['todo', 'blocked', 'in-progress'])
  * @param {string} opts.workspaceRoot
  * @param {string} opts.workarea - A path under workareas/
  * @param {boolean} [opts.everyRow=false] - Count rows already built too
+ * @param {'local'|'targeted'|'ci'} [opts.e2e='local'] - The run's `--e2e` mode
  * @returns {object} As stackPlanFor, with the backlog it read
  * @throws {TimError} NOT_FOUND, PARSE or USAGE from the reads
  */
 export const stackPlanForWorkarea = ({
   workspaceRoot,
   workarea,
-  everyRow = false
+  everyRow = false,
+  e2e = 'local'
 }) => {
   const backlogPath = backlogPathFor(workspaceRoot, workarea)
   const { increments = [] } = readJsonFile(backlogPath)
@@ -47,7 +49,7 @@ export const stackPlanForWorkarea = ({
   return {
     backlog: backlogPath,
     rowsRead: rows.length,
-    ...stackPlanFor({ rows, folderOfKey, scope, tagDomains })
+    ...stackPlanFor({ rows, folderOfKey, scope, tagDomains, e2e })
   }
 }
 
@@ -66,7 +68,8 @@ const reportError = (error, json, timVersion) => {
 
 /**
  * `tim build stack-plan`: say which stack a run over a backlog needs, and
- * why, so a person can choose between the whole stack and a narrowed one.
+ * why, row by row. A build run derives the same answer itself through
+ * `tim docker lease acquire --for-workarea`; this is how a person reads it.
  *
  * @param {import('commander').Command} build
  * @param {string} timVersion
@@ -79,9 +82,14 @@ export const registerStackPlan = (build, timVersion) =>
     )
     .argument('<workarea>', 'A path under workareas/, such as shared/my-theme')
     .option('--every-row', 'Count rows already built, not only the ones left')
+    .option(
+      '--e2e <mode>',
+      "The run's --e2e mode: local (default) or targeted. Under targeted the gate runs only the specs a row changed, so a repo's tagged specs in other domains are left to the pull request and their services are not started",
+      'local'
+    )
     .addHelpText(
       'after',
-      '\nExamples:\n  tim build stack-plan shared/dr21-parity\n  tim build stack-plan shared/dr21-parity --json'
+      '\nExamples:\n  tim build stack-plan shared/dr21-parity\n  tim build stack-plan shared/dr21-parity --e2e targeted\n  tim build stack-plan shared/dr21-parity --json'
     )
     .action(function stackPlanAction(workarea, options) {
       const globalOpts = this.optsWithGlobals()
@@ -92,7 +100,8 @@ export const registerStackPlan = (build, timVersion) =>
         const result = stackPlanForWorkarea({
           workspaceRoot,
           workarea,
-          everyRow: Boolean(options.everyRow)
+          everyRow: Boolean(options.everyRow),
+          e2e: options.e2e
         })
         if (globalOpts.json) {
           emit(JSON.stringify(jsonEnvelope({ ok: true, result, timVersion })))

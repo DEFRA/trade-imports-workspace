@@ -524,7 +524,7 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    there is nothing to ask.
 
    ```bash
-   tim build stack-plan <workarea>
+   tim build stack-plan <workarea> --e2e <the run's e2e>
    ```
 
    It reads every row the run has left to build and says which services they
@@ -536,30 +536,42 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    any other. A row that builds the performance suite, or a repo with no entry
    in `config/e2e-tests-pr-scope.json`, needs the whole stack.
 
-   Put the plan to the user and let them choose:
+   **Pass the run's `--e2e`, because it changes the answer.** A repo's `tags`
+   in the scope file name specs in *other* domains that its pull request also
+   runs. Under `local` the gate runs those too, so their services are needed.
+   Under `targeted` the gate runs only the specs the row changed, so those
+   tagged specs are the pull request's alone and their domains are left out.
+   On Design Release 2.1's manage-notifications theme that was the difference
+   between four domains and two for `inc-121`: two `@mongodb` specs in
+   `tests/animals-admin/` carry `@animals-frontend`, which pulled in the
+   dynamics gateway, toxiproxy, the Service Bus emulator and mssql — none of
+   which either spec touches, and none of which a targeted rung runs.
 
-   - **Narrowed** — `--domain <name>` per domain on the acquire below. Fewer
-     containers, so the machine has room for the suites running beside them.
-   - **The whole stack** — no `--domain`. Nothing can be missing, at the cost
-     of every container being up for the whole run.
-
-   Narrowing is the better default on a machine where the stack and a suite do
-   not fit together; see
+   **You choose nothing here, and pass no `--domain`.** The loop works the
+   domains out itself from the same plan, under the run's own `e2e`
+   ([step 2](#2-launch-it)). Read the plan so you can tell the user what the
+   run will start and what it leaves to the pull request, and say which rows
+   drove it rather than only the number. See
    [`machine-tuning.md`](machine-tuning.md) and
    [`../../../../docs/analysis/local-stack-domain-subsets.md`](../../../../docs/analysis/local-stack-domain-subsets.md),
-   which carries each domain's services and the runs that proved them. Say
-   which rows drove the answer rather than only the number, so the user can
-   see what a narrowed stack would leave out.
+   which carries each domain's services and the runs that proved them.
 
    **The run holds the workspace stack.** Before its first increment the loop
-   takes one lease, `tim docker lease acquire --holder "<run id>" --mode dev`,
-   with a `--domain` for each domain the user chose, which starts the stack
-   from local source. The stack stays up across every
+   takes one lease,
+   `tim docker lease acquire --holder "<run id>" --mode dev --for-workarea <workarea> --e2e <e2e>`,
+   which derives those domains and starts the stack
+   from local source. A backlog that needs every domain, or no stack at all,
+   starts the whole stack as before. The stack stays up across every
    increment, and every gate call passes `--holder "<run id>"`, so the gate
-   reuses it and rebuilds only what changed. A stack already up for fewer
-   domains than a later increment needs is restarted for the wider set, so a
-   run that derives a row outside the launch-time domains keeps working; it
-   costs one stack restart, which the log names. A service that caches another
+   reuses it and rebuilds only what changed. **The lease covers the union of
+   every row the run has left to build**, so no increment it derives can need
+   a domain the stack is missing. The gate itself names no domains, so it
+   reuses the run's stack whatever it holds; a row that needs more than the
+   lease started would go red at its E2E rung rather than widening the stack.
+   That is reachable only by adding a row mid-run
+   ([step 3b](#3b-catch-anything-the-increments-deferred)) whose domains the
+   launch-time union did not cover — relaunch after adding one, and the fresh
+   lease covers it. A service that caches another
    service's answers names it under `x-refresh-with` in
    `docker/stack/dev.compose.yml`, and the gate restarts it whenever that
    service is rebuilt or restarted. Reference-data names the stub, because it

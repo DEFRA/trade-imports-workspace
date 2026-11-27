@@ -7,7 +7,7 @@ What the words mean across the test repo (`trade-imports-ins-tests`), the Behavi
 | Domain | A user-facing application and the tests that describe what its users see. One per frontend | `animals`, `animals-admin`, `ins`, `plants` |
 | Test type | A kind of test within a domain, in its own directory | `e2e`, `a11y`, `security` |
 | Suite | A group of specs you run together, selected by path: a domain's directory, or one test type within it | `tests/animals/`, `tests/animals/e2e/` |
-| Profile | What a CDP Portal run executes, set as `PROFILE` and read by `entrypoint.sh`: a bare profile for every domain, or `<domain>:<suite>` for one. The part after the colon is called a suite there, though it names a profile, not a path | `default`, `dynamics`, `animals:e2e` |
+| Profile | What a CDP Portal run executes, set as `PROFILE` and read by `entrypoint.sh`: a bare profile for every domain, or `<domain>:<suite>` for one. The part after the colon is called a suite there, though it names a profile, not a path | `e2e`, `dynamics`, `animals:e2e` |
 | Type tag | Marks which test type a spec belongs to. Kept in step with the directory by `npm run lint` | `@a11y`, `@active` |
 | Service tag | Names a service whose pull request should also run the spec, from any domain or test type | `@ins-backend` |
 | Capability | One folder under `openspec/specs/` holding one `spec.md` | `live-animals/addresses` |
@@ -36,7 +36,7 @@ The spec prefixes are not renamed: the area codes in [`openspec/coverage/AREAS.m
 
 ## Other uses of the word suite
 
-- The CDP Portal calls the whole `trade-imports-ins-tests` repo a test suite. `entrypoint.sh` and the Portal write a profile as `<domain>:<suite>`, where the suite is `e2e`, `a11y`, `security`, `security:active` or `dynamics`. It is a profile name, not a path: `e2e` runs the `default` profile, and `dynamics` is not a test type. See [E2E tests: CDP](e2e-tests-cdp.md).
+- The CDP Portal calls the whole `trade-imports-ins-tests` repo a test suite. `entrypoint.sh` and the Portal write a profile as `<domain>:<suite>`, where the suite is `e2e`, `a11y`, `security`, `security:active` or `dynamics`. It is a profile name, not a path: `default` or a blank `PROFILE` runs `e2e`, and `dynamics` is not a test type. See [E2E tests: CDP](e2e-tests-cdp.md).
 - Playwright's JSON reporter uses `suites` for `describe` blocks. The tag lint reads these, which is why its types say `Suite`.
 
 ## Where each is used

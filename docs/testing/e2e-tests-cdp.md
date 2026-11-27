@@ -4,7 +4,7 @@
 
 This page records the runs the CDP Portal triggers after each deployment and on a
 [schedule](#scheduled-runs). Each run is one `PROFILE` of the
-`trade-imports-ins-tests` test suite: `default` or `e2e` (the e2e suite), `a11y`,
+`trade-imports-ins-tests` test suite: `e2e` (also run by `default` or a blank `PROFILE`), `a11y`,
 `dynamics`, `cross-browser`, `browserstack` or `security`, run for every domain, or `<domain>:<suite>` (for
 example `animals:e2e`) for one. The profiles are described in the
 [`trade-imports-ins-tests` README](../../repos/trade-imports-ins-tests/README.md#running-tests-via-cdp-portal).
@@ -68,15 +68,15 @@ The [core services](#core-services), below, have no family.
 #### Core services
 
 Core services have no family. They serve every journey, so nothing is left out: they
-run every domain through the bare `default` profile, which also covers any domain added
+run every domain through the bare `e2e` profile, which also covers any domain added
 later.
 
 | Repo | dev | test | perf-test | ext-test |
 |---|---|---|---|---|
-| dynamics-gateway | `default` | as dev, plus `dynamics` | | |
-| defra-id-stub | `default` | as dev | | |
-| reference-data | `default` | as dev | | |
-| stub | `default` | as dev | | |
+| dynamics-gateway | `e2e` | as dev, plus `dynamics` | | |
+| defra-id-stub | `e2e` | as dev | | |
+| reference-data | `e2e` | as dev | | |
+| stub | `e2e` | as dev | | |
 
 [GitHub Actions](e2e-tests-gh-actions.md#repos-that-run-everything) runs the e2e tests
 for these four on every PR too, plus the workspace and ins-tests repos, with the
@@ -104,25 +104,26 @@ runs on a schedule in GitHub Actions instead (see
 The `trade-imports-ins-tests` suite also runs on a schedule, not tied to any
 service's deployment. Each run uses a bare profile, so it covers every domain.
 They run in order: the full e2e run first, then accessibility, then cross-browser,
-then the ZAP scan last, because it is the heaviest.
+then BrowserStack, then the ZAP scan last, because it is the heaviest.
 
 | Profile | Environment | Domains | Schedule |
 |---|---|---|---|
-| `default` (e2e) | test | all | 01:00, Monday to Friday (Europe/London) |
+| `e2e` | test | all | 01:00, Monday to Friday (Europe/London) |
 | `a11y` | test | all | 02:00, Monday to Friday (Europe/London) |
-| `cross-browser` | test | all | 03:00, Monday to Friday (Europe/London) |
-| `security` | test | all | 04:00, Monday to Friday (Europe/London) |
+| `cross-browser` | test | all | 03:00, Monday to Friday (Europe/London). Monday only until a fix lands |
+| `browserstack` | test | all | 04:00, Monday to Friday (Europe/London) |
+| `security` | test | all | 05:00, Monday to Friday (Europe/London) |
 
 The `security` run is not a separate set of specs: it runs the ordinary e2e
 specs through a passive ZAP scan. The `@active` specs under each domain's
 `security/` directory are excluded, and run in GitHub Actions instead.
 
+The `cross-browser` run uses desktop browsers and emulated phones. The
+`browserstack` run sends the same tests to BrowserStack's browsers and devices,
+real iPhones among them. See [Cross-browser testing](../../repos/trade-imports-ins-tests/docs/cross-browser.md).
+
 Times are in the zone the schedule is set in: Europe/London here, UTC in
 GitHub Actions. In summer, 01:00 UTC is 02:00 in London.
-
-## Cross-browser runs `TBC`
-
-The `cross-browser` profile, and `<domain>:cross-browser` for one domain, run the `@cross-browser` tests in Firefox, WebKit and an emulated iPhone. The `cross-browser` profile runs on a [schedule](#scheduled-runs). See [Cross-browser testing](../../repos/trade-imports-ins-tests/docs/cross-browser.md).
 
 ## Family profiles `PROPOSED`
 

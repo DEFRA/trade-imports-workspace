@@ -32,6 +32,18 @@ export const AXE_HOLD = {
   since: '2026-11-19'
 }
 
+export const SPRINGDOC_HOLD = {
+  package: 'org.springdoc:springdoc-openapi-starter-webmvc-ui',
+  versions: '[3.0.0,4.0.0)',
+  repos: ['trade-imports-animals-backend'],
+  reason:
+    'springdoc-openapi 3 needs Spring Boot 4, and the service runs Spring Boot 3.5.',
+  failingTest: 'E2E Tests',
+  clashesWith: 'org.springframework.boot:spring-boot-starter-parent',
+  link: 'https://github.com/DEFRA/trade-imports-animals-backend/pull/144',
+  since: '2026-11-27'
+}
+
 /**
  * The fixture dependency sets with these holds.
  *
@@ -47,9 +59,21 @@ const REPOS_JSON = {
   reposDir: 'repos',
   githubOrg: 'DEFRA',
   repos: [
-    { name: 'trade-imports-animals-frontend', npmUpgradeDefault: true },
-    { name: 'trade-imports-animals-backend', npmUpgradeDefault: false },
-    { name: 'trade-imports-plants-prototype', npmUpgradeDefault: false }
+    {
+      name: 'trade-imports-animals-frontend',
+      stack: 'node',
+      npmUpgradeDefault: true
+    },
+    {
+      name: 'trade-imports-animals-backend',
+      stack: 'java',
+      npmUpgradeDefault: false
+    },
+    {
+      name: 'trade-imports-plants-prototype',
+      stack: 'node',
+      npmUpgradeDefault: false
+    }
   ]
 }
 

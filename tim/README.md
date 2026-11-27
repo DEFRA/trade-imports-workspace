@@ -2241,10 +2241,28 @@ tim deps dependabot trade-imports-animals-frontend                 # print the f
 tim deps dependabot trade-imports-animals-frontend --write         # write it into the repo
 tim deps dependabot trade-imports-animals-frontend --check --json  # exit 1 if the file differs or is missing
 tim deps dependabot tim --write                                    # write the workspace's own file
+tim deps dependabot trade-imports-animals-backend --write          # a Java repo: Maven and GitHub Actions updates
 ```
 
-The repo must be in scope for the sets and cloned under `repos/`. A repo
-outside the scope exits 2. `--write` and `--check` together exit 2.
+The repo must be in scope for the sets or for Maven updates, and cloned
+under `repos/`. A repo outside both scopes exits 2. `--write` and
+`--check` together exit 2.
+
+A repo in `maven.repos` (each repo in `repos.json` whose `stack` matches,
+today every Java repo) gets a Maven update and a GitHub Actions update,
+both set by `maven.dependabot`:
+
+- the Maven update looks in `/`, takes `openPullRequestsLimit` and
+  `schedule`, and updates direct dependencies only
+- a Maven `ignore` entry, with `versions`, for each Maven hold that lists
+  the repo, with the same comment an npm hold gets
+- a `patch-and-minor` group on both updates only when
+  `groupPatchAndMinor` is true, and a `cooldown` on both only when
+  `cooldownDays` is set
+- no `versioning-strategy`: Dependabot does not support it for Maven
+
+The sets and npm holds never reach a Maven repo's file, and Maven holds
+never reach an npm repo's file.
 
 `tim` is the name the sets give this folder, so a set or hold that lists
 `tim` applies here. tim is not its own GitHub repo, so `tim deps dependabot
@@ -2293,15 +2311,17 @@ repo whose file lacks a hold that lists it, or still has one that was lifted.
 | `defaults.majorPolicy`  | The policy every major follows, whatever its set says                                                                                                                        |
 | `defaults.repos`        | The repos in scope: each repo in `repos.json` whose flag named by `fromReposJson` is true, plus `include`, less `exclude`                                                    |
 | `defaults.dependabot`   | `schedule` (`interval`, `time`, `timezone`), `openPullRequestsLimit` and `versioningStrategy` for the npm update                                                             |
+| `maven.repos`           | The repos whose file updates Maven: each repo in `repos.json` whose `stack` is `stack`, plus `include`, less `exclude`                                                       |
+| `maven.dependabot`      | `schedule`, `openPullRequestsLimit`, `groupPatchAndMinor` and an optional `cooldownDays` for the Maven and GitHub Actions updates of those repos                             |
 | `sets[].name`           | Lower-case words joined by `-`; the Dependabot group name for a repo set                                                                                                     |
 | `sets[].members`        | npm package names, with `*` as a wildcard. Empty for a set npm does not manage                                                                                               |
 | `sets[].pins`           | Optional. What a set with no npm members pins instead, such as `.nvmrc` for `node`                                                                                           |
 | `sets[].scope`          | `repo`: Dependabot moves it in each repo as one group. `cross-repo`: the nightly job moves it in every repo on one branch name, and Dependabot ignores it                    |
 | `sets[].policy`         | `ci-is-enough`: green CI is enough to merge. `changelog-driven`: every changelog item needs evidence it was applied, as well as green CI                                     |
 | `sets[].reason`         | Why the members must move together, in a sentence or two                                                                                                                     |
-| `holds[].package`       | The exact npm name of a package held at its current version. One hold per package                                                                                            |
-| `holds[].versions`      | The Dependabot version range held back, such as `4.14.x`, so a later `4.15` is still proposed and tested                                                                     |
-| `holds[].repos`         | The repos the hold covers. Each must be in scope                                                                                                                             |
+| `holds[].package`       | The exact npm name, or Maven `groupId:artifactId`, of a package held at its current version. One hold per package                                                            |
+| `holds[].versions`      | The Dependabot version range held back: an npm range such as `4.14.x`, or a Maven range such as `[3.0.0,4.0.0)`, so a later release outside it is still proposed and tested  |
+| `holds[].repos`         | The repos the hold covers. Each must be in scope: for the sets for an npm hold, for Maven updates for a Maven hold                                                           |
 | `holds[].reason`        | Why the package is held, in plain English                                                                                                                                    |
 | `holds[].failingTest`   | The test or check the held versions break                                                                                                                                    |
 | `holds[].clashesWith`   | Optional. A package whose newer release may clear the hold, such as `govuk-frontend`                                                                                         |
@@ -2321,9 +2341,20 @@ tim deps hold @axe-core/playwright --versions 4.14.x \
   --failing-test "FIT accessibility tests (label-content-name-mismatch)" \
   --clashes-with govuk-frontend \
   --link https://github.com/DEFRA/trade-imports-animals-frontend/pull/492
+tim deps hold org.springdoc:springdoc-openapi-starter-webmvc-ui --versions '[3.0.0,4.0.0)' \
+  --repo trade-imports-animals-backend \
+  --reason "springdoc-openapi 3 needs Spring Boot 4" \
+  --failing-test "E2E Tests" \
+  --clashes-with org.springframework.boot:spring-boot-starter-parent
 tim deps holds --json
 tim deps lift @axe-core/playwright
 ```
+
+A package named `groupId:artifactId` is a Maven hold. It takes a Maven
+range: one interval, such as `[3.0.0,4.0.0)` or `[3.0.0,)`, or one
+version, such as `[3.0.0]`. Quote it in the shell. It may cover only the
+repos in `maven.repos`, and an npm hold only the repos in scope for the
+sets.
 
 When one package in a Dependabot group turns it red, the nightly job keeps
 that package at its current version and records a hold, so the rest of the
@@ -2336,7 +2367,7 @@ group can merge and Dependabot stops proposing the held versions.
   packages. `--versions`,
   `--repo` (once for each repo), `--reason` and `--failing-test` are
   required. A repo out of scope, a wildcard package name, a version range
-  npm cannot read or a link that is not a URL exits 2. It prints the `tim deps dependabot <repo> --write`
+  its package manager cannot read or a link that is not a URL exits 2. It prints the `tim deps dependabot <repo> --write`
   command for every repo to regenerate: those the hold covers, and those a
   replaced hold covered. `--json` gives `{hold, replaced, regenerate}`.
 - `holds` lists every hold with its versions, repos, date, reason and the
@@ -2354,6 +2385,7 @@ cannot leave a hold that affects nothing.
 ```bash
 tim deps drift
 tim deps drift --json
+tim deps drift --fetch --json
 tim deps drift --repo trade-imports-animals-frontend --repo tim
 ```
 
@@ -2361,6 +2393,10 @@ Reads each repo's `package.json` at `origin/main` (`--ref` to change it)
 and asks npm-check-updates which packages have a newer release. It changes
 nothing: no checkout moves and no file is written. The nightly digest uses
 it for npm drift and for the cross-repo sets that are waiting.
+
+- `origin/main` is only as new as the last fetch. `--fetch` fetches origin
+  in each repo first. A repo whose fetch fails is still read, from its local
+  ref, and carries `fetched: false`; the text report says so on its line.
 
 - Without `--repo`, it reads every repo in scope for the dependency sets.
   A repo out of scope exits 2.
@@ -2371,7 +2407,8 @@ it for npm drift and for the cross-repo sets that are waiting.
   not moved to the latest release, with the repos behind.
 - A repo with no checkout, or no `package.json` at the ref, is listed with
   `read: false`.
-- `--json` gives `{ref, repos: [{repo, read, packages, counts}], setsBehind}`.
+- `--json` gives `{ref, repos: [{repo, read, packages, counts}], setsBehind}`,
+  with `fetched` on each repo under `--fetch`.
 
 ### `tim deps policy` — can an upgrade merge on green CI
 
@@ -2388,7 +2425,8 @@ to it), from `config/dependency-sets.json`, in this order:
 
 1. A target in the `versions` range of a hold on the package is `held`.
    With `--repo`, only the holds covering that repo count; without it,
-   every hold on the package does.
+   every hold on the package does. tim compares a version with a Maven
+   hold's range by its numbers only, so `3.0.0-M1` counts as `3.0.0`.
 2. A prerelease target, or a minor of a 0.x version, is
    `changelog-driven`.
 3. A major takes `defaults.majorPolicy`, whatever the package's set says.

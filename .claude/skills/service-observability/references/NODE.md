@@ -54,7 +54,7 @@ site's caller:
 
 | Dependency        | Choke point                                                                                                                                                                                                                                                                                                                                                                                                              | Operations                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `animals-backend` | `createBackendFetch` (`src/server/common/helpers/backend-client/backend-fetch.js`): `backendFetch(operation, url, init)`, called only by `requestBackend` (`src/server/app/services/persistence/records/real/http/send.js`), which the records client and the document uploads (`src/server/app/services/document-uploads/real.js`) both go through. A connection retried once is one call, timed from the first attempt | `create-notification`, `copy-notification`, `get-fulfilment`, `list-notifications`, `replace-notification`, `submit-notification`, `amend-notification`, `cancel-amend-notification`, `soft-delete-notification`, `register-document-upload`, `claim-document-upload`, `get-document-upload-session`, `list-document-uploads`, `get-document-upload-status`, `delete-document-upload`, `stream-document-file` |
+| `animals-backend` | `backendFetch(operation, url, init)` (`src/server/common/helpers/backend-client/backend-fetch.js`), called only by `requestBackend` (`src/server/app/services/persistence/records/real/http/send.js`), which the records client and the document uploads (`src/server/app/services/document-uploads/real.js`) both go through. A connection retried once is one call, timed from the first attempt | `create-notification`, `copy-notification`, `get-fulfilment`, `list-notifications`, `replace-notification`, `submit-notification`, `amend-notification`, `cancel-amend-notification`, `soft-delete-notification`, `register-document-upload`, `claim-document-upload`, `get-document-upload-session`, `list-document-uploads`, `get-document-upload-status`, `delete-document-upload`, `stream-document-file` |
 | `address-book`    | `addressBookFetch(operation, url, init)`, and `sendToAddressBook(operation, url, init)`, which also throws on a response that is not ok (`src/server/app/services/address-book-request.js`)                                                                                                                                                                                                                              | `list-addresses`, `get-address`, `list-transporters`, `create-transporter`                                                                                                                                                                                                                                                                                                                                    |
 | `reference-data`  | `requestReferenceData(operation, url, init)` (`src/server/app/services/reference-data/request.js`)                                                                                                                                                                                                                                                                                                                       | `get-countries`, `get-ports-of-entry`, `search-commodities`, `check-species`                                                                                                                                                                                                                                                                                                                                  |
 | `cdp-uploader`    | `measureExternalCall` in `src/server/app/services/cdp-uploader/real.js`                                                                                                                                                                                                                                                                                                                                                  | `initiate`, `status`                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -72,6 +72,9 @@ The action is the operation id read as words unless the call gives one
 (the cdp-uploader calls do); the metric operation id is unchanged. The
 records client's `BackendRequestError`
 (`src/server/app/services/persistence/records/errors.js`) extends it.
+The line that logs a refusal carries `err` and the journey id as
+`event.reference`, and no other field (`LOGGING.md` → "Other lines
+about a call").
 
 Rules that held:
 
@@ -235,8 +238,8 @@ CloudWatch metric:
 
 | Metric                                                                                         | Where                                                                                                                                                                                                           |
 | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `journey.started`, `journey.submitted`, `journey.amended`, `journey.copied`, `journey.deleted` | `src/server/app/engine/persistence/records.js`: after `create`, `finalise`, `amend`, `copy` and `softDelete` succeed. Every write goes through this facade, stub or real                                        |
-| `journey.concurrency.conflict`                                                                 | The same facade: when `create`, `replaceFulfilment`, `finalise`, `amend`, `copy` or `softDelete` is refused with `STALE_CONCURRENCY_TOKEN`. The refusal is rethrown, and the write's own counter is not counted |
+| `journey.started`, `journey.submitted`, `journey.amended`, `journey.copied`, `journey.deleted` | `src/server/app/engine/persistence/records.js`: after `create`, `submit`, `amend`, `copy` and `softDelete` succeed. Every write goes through this facade, stub or real                                        |
+| `journey.concurrency.conflict`                                                                 | The same facade: when `create`, `replaceFulfilment`, `submit`, `amend`, `copy` or `softDelete` is refused with `STALE_CONCURRENCY_TOKEN`. The refusal is rethrown, and the write's own counter is not counted |
 | `journey.entry.redirect`                                                                       | `entryGuardTarget` in `src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js`, where it decides to redirect and logs it                                                                          |
 
 ## Tests
@@ -287,7 +290,34 @@ Test paths are from the repo root.
 Each was checked to go red without the change it covers. Run the repo's
 `npm run format:check`, `npm run lint` and `npm test` before pushing.
 
-## Not done on animals-frontend
+## Ported to plants-frontend
 
-- The other Node services still publish the old names: `METRICS.md` →
-  "A service built the old way".
+`trade-imports-plants-frontend` has the same files at the same paths,
+with `plants-backend` as its backend dependency. What differed:
+
+- It has no cdp-uploader and no document uploads, so its backend
+  operations are the nine notification ones and its reference-data
+  operations `get-countries` and `get-ports-of-entry`.
+- It has no transporters, so its address-book operations are
+  `list-addresses` and `get-address`.
+- Its entry guard is
+  `src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.js`,
+  tested beside it in `entry-guard.test.js`.
+- Its records stub does not check concurrency tokens, so
+  `records.test.js` proves the conflict count by configuring an adapter
+  that refuses with a stale-token `BackendRequestError`
+  (`staleConcurrencyRefusal` in `src/server/app/engine/test-support.js`).
+- Its submit takes no concurrency token: `records.submit(journeyId, actor)`.
+- Its `BackendRequestError` is always a `plants-backend` refusal: the
+  constructor takes the operation and the response,
+  `new BackendRequestError(operation, response)`.
+- Its `recordEcsLogLines()` returns every reader above but
+  `linesAtLevel(level)`.
+- Its route table, booted in stub mode: 49 routes (29 GET, 19 POST, 1
+  DELETE), 37 under `/high-risk-plants/notifications/{journeyId}/`, 26
+  areas, of which 22 are page areas, and 41 method and area pairs.
+
+## Not done yet
+
+- `trade-imports-ins-frontend` still publishes the old names:
+  `METRICS.md` → "A service built the old way".

@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import semver from 'semver'
 import { run } from '../exec/exec.js'
+import { fetchOrigin } from '../git/fetch-origin.js'
 import { runNcu } from '../npm-upgrade/ncu.js'
 import { depsCheckoutPath } from './checkout.js'
 import {
@@ -89,20 +90,44 @@ const ncuUpgradesOf = async (packageJsonText) => {
  * @param {string} args.ref - The git ref to read `package.json` at, such as `origin/main`
  * @param {object[]} args.sets - `sets` from `loadDependencySets`
  * @param {object[]} args.holds - `holds` from `loadDependencySets`
- * @returns {Promise<{repo: string, read: boolean, packages: object[], counts: {major: number, minor: number, patch: number}}>} `read` is false when the repo has no checkout or no `package.json` at the ref
+ * @param {boolean} [args.fetch] - Fetch origin in the checkout before reading the ref
+ * @returns {Promise<{repo: string, read: boolean, fetched?: boolean, packages: object[], counts: {major: number, minor: number, patch: number}}>} `read` is false when the repo has no checkout or no `package.json` at the ref. `fetched` is there only with `fetch`, and is false when there is no checkout or the fetch failed
  */
-export const repoDrift = async ({ workspaceRoot, repo, ref, sets, holds }) => {
+export const repoDrift = async ({
+  workspaceRoot,
+  repo,
+  ref,
+  sets,
+  holds,
+  fetch = false
+}) => {
   const folder = depsCheckoutPath(workspaceRoot, repo)
-  const text = existsSync(folder) ? await packageJsonAt(folder, ref) : null
+  const cloned = existsSync(folder)
+  const fetchedEntry = fetch
+    ? { fetched: cloned && (await fetchOrigin(folder)) }
+    : {}
+  const text = cloned ? await packageJsonAt(folder, ref) : null
   if (text === null) {
-    return { repo, read: false, packages: [], counts: countsOf([]) }
+    return {
+      repo,
+      read: false,
+      ...fetchedEntry,
+      packages: [],
+      counts: countsOf([])
+    }
   }
   const declared = declaredRanges(JSON.parse(text))
   const upgrades = await ncuUpgradesOf(text)
   const packages = Object.entries(upgrades)
     .map(packageDrift({ sets, holds, repo, declared }))
     .sort((left, right) => left.package.localeCompare(right.package))
-  return { repo, read: true, packages, counts: countsOf(packages) }
+  return {
+    repo,
+    read: true,
+    ...fetchedEntry,
+    packages,
+    counts: countsOf(packages)
+  }
 }
 
 const behindInSet = (setName) => (repoResult) =>
@@ -144,16 +169,24 @@ const driftOfEach = async (repos, request) => {
 
 /**
  * Each repo's drift at the ref, read one repo at a time, and the
- * cross-repo sets some repo has not caught up with.
+ * cross-repo sets some repo has not caught up with. With `fetch`, each
+ * repo fetches origin first; a repo whose fetch fails is still read, from
+ * its local ref, and marked `fetched: false`.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
  * @param {string[]} [args.repos] - Defaults to every repo in scope for the dependency sets
  * @param {string} args.ref
+ * @param {boolean} [args.fetch] - Fetch origin in each checkout before reading the ref
  * @returns {Promise<{ref: string, repos: object[], setsBehind: object[]}>}
  * @throws {TimError} USAGE naming each repo given that is not in scope
  */
-export const dependencyDrift = async ({ workspaceRoot, repos, ref }) => {
+export const dependencyDrift = async ({
+  workspaceRoot,
+  repos,
+  ref,
+  fetch = false
+}) => {
   const { sets, holds, ...dependencySets } = loadDependencySets(workspaceRoot)
   const inScope = reposInScope(workspaceRoot, dependencySets)
   if (repos) assertReposInScope(repos, inScope)
@@ -161,7 +194,8 @@ export const dependencyDrift = async ({ workspaceRoot, repos, ref }) => {
     workspaceRoot,
     ref,
     sets,
-    holds
+    holds,
+    fetch
   })
   return { ref, repos: results, setsBehind: crossRepoSetsBehind(sets, results) }
 }

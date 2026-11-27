@@ -274,8 +274,8 @@
           "name": "A species' own refusal does not depend on another species' card holding a value",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should reject a blank card's own Save and add another beside a filled sibling, reading neither card's value", "strength": "full", "notes": "two lines, the blank card's own add index refused, the filled sibling's own index never read; red when linesToReadFormsFor reads every line regardless of the pressed action" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "validation: a blank card is refused on its own Save and add another, beside a filled sibling card, saving neither", "strength": "full", "notes": "cattle filled, bison blank, bison's own save refused and focused, neither card saved and the cattle field shown empty again; red when linesToReadFormsFor reads every line regardless of the pressed action" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should reject a blank card's own Save and add another beside a filled sibling, saving neither and keeping the sibling's value", "strength": "full", "notes": "two lines, the blank card's own add index refused, neither saved, the filled sibling's value shown in its field; red when the refusal asks whether any form holds a value instead of the pressed card's own" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "validation: a blank card is refused on its own Save and add another, beside a filled sibling card, saving neither", "strength": "full", "notes": "cattle filled, bison blank, bison's own save refused and focused, neither card saved and the cattle value kept in its field; red when a card button reads only its own card's form, restored green" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "refuses a blank card on its own Save and add another beside a filled sibling, and focuses that card on the error link", "strength": "partial", "notes": "not probed — needs the workspace stack" }
           ]
         },
@@ -516,17 +516,17 @@
     },
     {
       "id": "REQ-IDENT-021",
-      "name": "A card's button saves only its own species, Enter saves every species typed in, and the page's save buttons save only species of one animal",
+      "name": "A card's button and Enter save every species typed in, and the page's save buttons save only species of one animal",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-IDENT-021-A",
-          "name": "A card button saves only its own species and shows no error for another",
+          "name": "A card button saves every species typed in",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should save only the pressed card's animal and show no error for another species' over-long value", "strength": "full", "notes": "red when a card button submits every card's form" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "saves only the pressed card's species and reloads with its form empty", "strength": "partial", "notes": "without JavaScript; not probed" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "saves only the pressed card, shows no error for another species, and leaves that species empty", "strength": "partial", "notes": "not probed" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should save every card's typed animal when one card's Save and add another is pressed", "strength": "full", "notes": "red when a card button reads only its own card's form, restored green" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "saves every card's typed animal when one card's button is pressed and reloads each form empty", "strength": "full", "notes": "without JavaScript; red when a card button reads only its own card's form, restored green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "saves every card's typed animal when one card's Save and add another is pressed", "strength": "partial", "notes": "not probed — needs the workspace stack" }
           ]
         },
         {
@@ -562,6 +562,16 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "appends a new animal to the Bos taurus table when Enter is pressed in its field, leaving the Bison bison table unchanged", "strength": "full", "notes": "red when records/append.js's holdsData guard is removed, restored green" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "appends a second cattle animal to the cattle table when Enter is pressed after one is already saved, leaving the bison table unchanged", "strength": "partial", "notes": "not probed — the workspace stack went down mid-run before the probe's reload wait could run" }
+          ]
+        },
+        {
+          "id": "SCN-IDENT-021-F",
+          "name": "A card button with an over-length identifier in another species' form is blocked and keeps both values",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should refuse another card's over-long value on Save and add another, saving neither card and keeping both typed values", "strength": "full", "notes": "red when a card button reads only its own card's form, restored green" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "refuses another card's over-long value on a card button, saving neither card and keeping both typed values", "strength": "full", "notes": "without JavaScript; red when a card button reads only its own card's form, restored green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "refuses another card's over-long ear tag on Save and add another, saving neither card and keeping both typed values", "strength": "partial", "notes": "not probed — needs the workspace stack" }
           ]
         }
       ]

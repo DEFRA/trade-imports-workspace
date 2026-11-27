@@ -114,6 +114,15 @@ service's `metrics` package and change only the package:
 | `ValueRecordingTimer`, `ValueRecordingDistributionSummary`, `RecordedValues` | Package-private: Micrometer's step timer and summary, also keeping each recorded value until the registry takes it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `ExternalCallRecorder`                                                       | Logs each call to a dependency (`LOGGING.md`) and records it as the timer `external.call.duration` and the distribution summary `external.call.failure` (0 or 1 per call), both tagged `dependency` and `operation`. `recordSuccess` and `recordFailure` (with the cause), not a boolean flag. address-book's records a call it is given; it does not time one or keep its outcome. dynamics-gateway's is the reference for a recorder that does both: it takes `LastCallOutcomes` and records each call's outcome there, takes an `ExternalCall` naming a `Dependency` enum value, and `measure(call, action)` runs the call, times it by an injected nano-time source and records it as a success or, rethrowing, a failure; its `callStartedAt()` and `elapsedSince(start)` time a call `measure` cannot wrap, such as one an SDK interceptor sees begin and end in two callbacks. Each metric name is written once, at its one registration call, and the `dependency` tag key is `ExternalCallRecorder.DEPENDENCY_TAG`, which `DependencyAvailabilityMetrics` uses too. A service with its own `ExternalCallMetrics` replaces it ("A service built the old way") |
 
+A service whose one dependency is MongoDB (`trade-imports-plants-backend`)
+copies animals-backend's `metrics` package, which holds the duplicate-key
+handling, and leaves out what only its S3 and SNS calls reach:
+`AwsCallRecorder`, `LastCallOutcomes`, and `ExternalCallRecorder`'s
+`recordUntimedFailure`, `callStartedAt` and `elapsedSince`. `Dependency` then
+holds `MONGODB` alone, and `DependencyAvailabilityMetrics` registers the
+one gauge from `MongoAvailability`. plants-backend's `metrics` package is
+that copy.
+
 Copy the bean method `MetricsConfig.emfMeterRegistry` too, but not its
 class. It creates and starts the registry only when `aws.emf.enabled`
 is true. When it is false, as in integration tests, nothing is
@@ -123,7 +132,10 @@ properties, both in address-book's `application.yml` under `aws.emf`:
 - `aws.emf.environment` (`${AWS_EMF_ENVIRONMENT:}`). Blank, the default,
   leaves the EMF library to detect the environment; on CDP that is ECS,
   sending to the platform's `AWS_EMF_AGENT_ENDPOINT`. Set it to `Local`
-  to write the EMF documents to stdout.
+  to write the EMF documents to stdout. A service made from the older
+  template has `${AWS_EMF_ENVIRONMENT:Local}` (plants-backend did), so on
+  CDP the registry would write the documents to stdout instead of sending
+  them to the agent: change the default to blank.
 - `aws.emf.step` (`${AWS_EMF_STEP:1m}`), bound to a `Duration` and passed
   to `new EmfMeterRegistry(namespace, step, Clock.SYSTEM,
 MetricsLogger::new)`: how often the registry publishes.

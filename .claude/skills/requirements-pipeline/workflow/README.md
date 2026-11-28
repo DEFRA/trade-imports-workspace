@@ -943,6 +943,17 @@ reason that ended it, the time, whether `plans/<id>.md` had passed its lint and 
 the work is: a pushed `wip` commit under the full lifecycle, or patch files under `logs/` on the
 branch lifecycle, whose branch is shared and may carry nothing from a failed attempt.
 
+**`resumeAt` and the record come back together, and the loop refuses to act on one without the
+other.** Every `resumeAt` of `implement`, `review` or `ladder` is read *from* the `attempt` object,
+so a stage that reports one and not the other has contradicted itself. Both are `required` in the
+branch stage's schema for that reason. When it happens anyway, the loop logs `resuming at <stage>
+needs an attempt record, and none came back — building it from the top` and sets the row to
+`build`, so the restore stage is never entered with nothing to restore. Before 27 November 2026
+`attempt` was optional, and a haiku branch stage returned `resumeAt: 'ladder'` with no `attempt`
+after reading one — its summary said "resuming at ladder stage per attempt record". The restore
+stage then dereferenced null and threw, which ended the run with `status: failed` and no `stopped`
+reason, so no stop condition and no preserve applied.
+
 The stage comes from the phase the preserve ran in, so nothing has to be decided twice:
 `Implement` records `implement`, `Review`, `Verify findings` and `Fix` all record `review`, and
 `Land` records `ladder` — the ladder's own failure is preserved under `Land`, because `phase('Land')`
@@ -1086,8 +1097,26 @@ took the unit rung red twice on 5000ms timeouts in files that pass in 2.85s alon
 20-container stack no row needed competing for 12 CPUs.
 
 1. **At the start**, after the preflight and before the first increment, a light agent runs
-   `tim docker lease acquire --holder "<run id>" --mode dev`, which starts the stack from
-   local source.
+   `tim docker lease acquire --holder "<run id>" --mode dev --for-workarea <workarea> --e2e <e2e> --next-row`,
+   which starts the stack from local source for the domains the **next buildable row** puts in
+   play, as `tim build stack-plan --next-row` reports them. Under `--e2e targeted` that leaves
+   out the domains a repo reaches only through its service tags, because the gate runs the row's
+   changed specs alone and those tagged specs run on the pull request. A backlog that needs every
+   domain, or no stack, starts the whole stack. The agent passes no `--domain`: tim derives them,
+   so no relay can garble the list.
+1b. **Each row's gate sizes the stack to its own specs.** `runE2e` reads the spec files its
+   planned E2E rungs will run, maps each to the `tests/<domain>/` it sits in, and passes those
+   domains to its acquire. A stack that already covers them is reused; one missing a domain is
+   taken down and started again under the same lease, for that row. No specs (a whole-suite run)
+   asks for nothing in particular; a spec in no known domain asks for every domain. This is what
+   stops one row's needs — the Service Bus services, say — from being up for every other row.
+   The **ladder's** gate alone also passes `--narrow-stack`, which starts a stack wider than its
+   specs need again for those alone: the launch estimate reads the rows' repos, not their specs,
+   so it over-reaches, and the ladder is the one gate that knows what it is about to run. One
+   restart per row at most. A folder whose specs have different service needs makes every
+   estimate crude whatever this does, and narrowing cannot recover it — `tests/animals-dlq/`
+   exists because two admin specs reached the dynamics gateway and nineteen did not. See
+   BUILD.md on why both the split and the narrowing are needed.
 2. **Every increment reuses it.** The stack stays up across every increment. Every gate
    command — baseline, implementor, fixer, ladder and the Codex unit phase — passes
    `--holder "<run id>"`, so the gate's E2E phase uses the stack the run holds and rebuilds
@@ -1107,10 +1136,12 @@ not run.
 
 `acquire` starts a stack that is down and records its container ids in the lease. It reuses a
 stack the same holder leases only when that start finished and the containers are still the
-ones it recorded; a start of its own that died part-way is taken down and started again. It
+ones it recorded; a start of its own that died part-way is taken down and started again, and
+so is one that has lost a container since (an OOM kill, say), because a stack running fewer of
+the ids it recorded is still its own. It
 refuses a stack leased to anybody else, up with no lease at all (one somebody started by
-hand), or restarted by hand under the lease (other container ids), naming the holder, its
-mode and its branches, and never takes such a stack down. A stale lease is taken over under
+hand), or restarted by hand under the lease (a container id the lease never started), naming
+the holder, its mode and its branches, and never takes such a stack down. A stale lease is taken over under
 a lock, so two processes never both start the stack. While a lease is held,
 `tim docker up|dev|down|restart|bounce-backend` refuse unless given `--force`, which the loop
 never passes.

@@ -2622,9 +2622,23 @@ describe('increment-build-loop', () => {
         const prompt = ladderPrompt(await runThroughFixToLadder())
 
         expect(prompt).toContain(
-          `   1. \`tim build gate shared/args-fixture --phase all --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder/gate-result-all.json --detach\``
+          `   1. \`tim build gate shared/args-fixture --phase all --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID}" --narrow-stack --result ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder/gate-result-all.json --detach\``
         )
         expect(prompt).not.toContain('--phase e2e')
+      })
+
+      test('tells only the ladder to narrow the stack, so a row restarts it at most once', async () => {
+        const run = await runThroughFixToLadder()
+
+        expect({
+          ladder: ladderPrompt(run).includes('--narrow-stack'),
+          baseline: promptOf(run, 'inc-900 baseline').includes(
+            '--narrow-stack'
+          ),
+          implement: promptOf(run, 'inc-900 implement').includes(
+            '--narrow-stack'
+          )
+        }).toEqual({ ladder: true, baseline: false, implement: false })
       })
 
       test('tells the ladder a rung green at baseline and red now is the increment’s to fix', async () => {
@@ -4988,12 +5002,18 @@ describe('increment-build-loop', () => {
           ])
         })
 
-        test('tells the lease taker to start the stack from local source under the run’s holder', async () => {
+        test('tells the lease taker to start the stack from local source under the run’s holder, for the backlog’s own domains', async () => {
           const run = await runFrom(null)
 
           expect(promptOf(run, ACQUIRE_LABEL)).toContain(
-            `\`tim docker lease acquire --holder "${RUN_ID}" --mode dev --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/${RUN_ID}-lease\``
+            `\`tim docker lease acquire --holder "${RUN_ID}" --mode dev --workspace ~/ws --for-workarea shared/args-fixture --e2e local --next-row --json --logs ~/ws/workareas/shared/args-fixture/logs/${RUN_ID}-lease\``
           )
+        })
+
+        test('tells the lease taker the run’s own --e2e mode, so a targeted run starts fewer services', async () => {
+          const run = await runFromWithArgs({ e2e: 'targeted' }, null)
+
+          expect(promptOf(run, ACQUIRE_LABEL)).toContain('--e2e targeted')
         })
 
         test('lets only the lease taker and the releaser run a lease command', async () => {
@@ -7553,6 +7573,37 @@ describe('increment-build-loop', () => {
         expect(labelsOf(run)).toContain('inc-900 plan')
         expect(run.logs).toContain(
           'inc-900: the attempt that reached the ladder stage is not here — building it from the top'
+        )
+      })
+
+      test('requires the branch stage to report the attempt beside the stage it resumes at', async () => {
+        const { schema } = optionsOf(
+          await runResumed('ladder'),
+          'inc-900 branch'
+        )
+
+        expect({
+          required: schema.required.includes('attempt'),
+          allowsNull: schema.properties.attempt.type
+        }).toEqual({ required: true, allowsNull: ['object', 'null'] })
+      })
+
+      test('builds from the top when the branch stage names a resume stage but carries no attempt', async () => {
+        const run = await runBranch(
+          {},
+          { ...ROW, resumeAt: 'ladder' },
+          BASELINE,
+          PLAN,
+          ...AFTER_RESTORE.implement
+        )
+
+        expect({
+          status: run.status,
+          planned: labelsOf(run).includes('inc-900 plan'),
+          restored: labelsOf(run).includes('inc-900 restore')
+        }).toEqual({ status: 'returned', planned: true, restored: false })
+        expect(run.logs).toContain(
+          'inc-900: resuming at ladder needs an attempt record, and none came back — building it from the top'
         )
       })
 

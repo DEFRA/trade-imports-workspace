@@ -118,7 +118,7 @@ the failing spec as a control.
 | With them (control) | 21 | Both DLQ specs pass, 3.5s and 3.7s, no retries |
 
 All seven `outbox-event-*` specs passed without the gateway. What failed was
-`tests/animals-admin/e2e/features/dlq-events.spec.ts`. The cause is a runtime
+`tests/animals-dlq/e2e/features/dlq-events.spec.ts`. The cause is a runtime
 HTTP call:
 
 ```js

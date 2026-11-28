@@ -6,6 +6,14 @@ const NOT_SPACE = '[^ \\t\\n\\v\\f\\r]'
 const GIT_WITH_OPTIONS_THEN_PUSH = new RegExp(
   `(^|[^A-Za-z0-9_./-])git(${SPACE}+${NOT_SPACE}+)*${SPACE}+push(${SPACE}|$)`
 )
+// `git stash push` saves work locally and reaches no remote, and it is the
+// rollback every stage is told to use, so the check must not block it. The
+// loop's preserve step could not stash a repo whose tests were red until
+// this was excluded, which is the one moment a rollback matters.
+const GIT_STASH = new RegExp(
+  `(^|[^A-Za-z0-9_./-])git(${SPACE}+${NOT_SPACE}+)*${SPACE}+stash(${SPACE}|$)`
+)
+
 const GIT_C_FOLDER = new RegExp(`git${SPACE}+-C${SPACE}+(${NOT_SPACE}+)`)
 const GIT_DIR_OR_WORK_TREE_FOLDER = new RegExp(
   `--(?:git-dir|work-tree)=(${NOT_SPACE}+)`
@@ -14,13 +22,15 @@ const GIT_DIR_OR_WORK_TREE_FOLDER = new RegExp(
 /**
  * Whether a shell command pushes with git: `git push` anywhere in it, or
  * `git` followed by options and then `push`, such as `git -C <path> push`.
- * Loose on purpose, so an `echo` that mentions `git push` counts too.
+ * Loose on purpose, so an `echo` that mentions `git push` counts too. A
+ * `git stash` command is not a push, whatever follows it.
  *
  * @param {string} command
  * @returns {boolean}
  */
 export const isGitPush = (command) =>
-  command.includes('git push') || GIT_WITH_OPTIONS_THEN_PUSH.test(command)
+  !GIT_STASH.test(command) &&
+  (command.includes('git push') || GIT_WITH_OPTIONS_THEN_PUSH.test(command))
 
 const stripOne = (text, quote) => {
   const withoutEnd = text.endsWith(quote) ? text.slice(0, -1) : text

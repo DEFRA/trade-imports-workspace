@@ -60,7 +60,16 @@ beforeEach(() => {
   workspace = realpathSync(mkdtempSync(join(tmpdir(), 'tim-stack-plan-')))
   markWorkspaceRoot(workspace)
   writeJson(join(workspace, 'config', 'e2e-tests-pr-scope.json'), SCOPE)
-  mkdirSync(join(workspace, 'repos'), { recursive: true })
+  mkdirSync(
+    join(
+      workspace,
+      'repos',
+      'trade-imports-ins-tests',
+      'tests',
+      'animals-admin'
+    ),
+    { recursive: true }
+  )
 })
 
 afterEach(() => {
@@ -128,6 +137,50 @@ describe('tim build stack-plan', () => {
       left: left.stdout.includes('needs no stack at all'),
       every: every.stdout.includes('Narrowed: 10 of 22')
     }).toEqual({ left: true, every: true })
+  })
+
+  test('Should leave a repo’s tagged domains to the pull request under --e2e targeted', async () => {
+    writeJson(join(workspace, 'config', 'e2e-tests-pr-scope.json'), {
+      ...SCOPE,
+      'trade-imports-animals-frontend': {
+        suites: ['tests/animals/'],
+        tags: ['@animals-frontend']
+      }
+    })
+    writeFileSync(
+      join(
+        workspace,
+        'repos',
+        'trade-imports-ins-tests',
+        'tests',
+        'animals-admin',
+        'seed.spec.ts'
+      ),
+      "test('seeds through the animals frontend', { tag: '@animals-frontend' })",
+      { flag: 'w' }
+    )
+    givenBacklog({
+      repos: {
+        frontend: {
+          path: 'repos/trade-imports-animals-frontend',
+          github: 'DEFRA/trade-imports-animals-frontend'
+        }
+      },
+      increments: [{ id: 'inc-001', repos: ['frontend'], status: 'todo' }]
+    })
+
+    const [whole, targeted] = await Promise.all([
+      runPlan(['--json']),
+      runPlan(['--e2e', 'targeted', '--json'])
+    ])
+
+    expect({
+      whole: JSON.parse(whole.stdout.split('\n').at(-1)).result.domains,
+      targeted: JSON.parse(targeted.stdout.split('\n').at(-1)).result.domains
+    }).toEqual({
+      whole: ['animals', 'animals-admin'],
+      targeted: ['animals']
+    })
   })
 
   test('Should give the plan in --json, with the services it would start', async () => {

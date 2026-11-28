@@ -16,6 +16,7 @@ import {
 } from '../../exec/stack-lease.js'
 import { stackOwners } from '../../exec/stack.js'
 import { DOMAIN_NAMES } from '../../stack/definition.js'
+import { stackPlanForWorkarea } from '../build/stack-plan.js'
 import { TimError } from '../../errors.js'
 
 const emit = (text) => process.stdout.write(`${text}\n`)
@@ -49,7 +50,10 @@ const acquireSchema = z.object({
         message: `--domain must be one of: ${DOMAIN_NAMES.join(', ')}.`
       })
     )
-    .optional()
+    .optional(),
+  forWorkarea: z.string().trim().min(1).optional(),
+  e2e: z.enum(['local', 'targeted', 'ci']).optional(),
+  nextRow: z.boolean().optional()
 })
 
 const releaseSchema = z.object({
@@ -169,6 +173,36 @@ const leaseAction = (run, timVersion) =>
     }
   }
 
+/**
+ * The domains an acquire starts: the ones named with `--domain`, or the ones
+ * a workarea's rows put in play under the run's `--e2e` mode — every row left
+ * to build, or with `nextRow` only the next buildable one. A plan that needs
+ * every domain, or no stack at all, narrows to nothing, and no domains is
+ * what starts the whole stack.
+ *
+ * @param {object} opts
+ * @param {string} opts.workspaceRoot
+ * @param {{domain?: string[], forWorkarea?: string, e2e?: string, nextRow?: boolean}} opts.parsed
+ * @returns {string[]}
+ * @throws {TimError} USAGE when both --domain and --for-workarea are given
+ */
+export const domainsToStart = ({ workspaceRoot, parsed }) => {
+  if (!parsed.forWorkarea) return parsed.domain ?? []
+  if (parsed.domain?.length) {
+    throw new TimError(
+      'USAGE',
+      'Name the domains with --domain, or let --for-workarea work them out. Not both.'
+    )
+  }
+  const plan = stackPlanForWorkarea({
+    workspaceRoot,
+    workarea: parsed.forWorkarea,
+    e2e: parsed.e2e ?? 'local',
+    nextRow: parsed.nextRow ?? false
+  })
+  return plan.needsStack && !plan.everyDomain ? plan.domains : []
+}
+
 const runAcquire = async ({ workspaceRoot, leasePath, opts }) => {
   const parsed = parseOptions(acquireSchema, opts)
   if (parsed.mode === 'perf') requireValidStubProfile()
@@ -179,7 +213,7 @@ const runAcquire = async ({ workspaceRoot, leasePath, opts }) => {
     leasePath,
     logPath: join(logsDirFor(parsed.logs, workspaceRoot), 'lease-acquire.log'),
     force: parsed.force,
-    domains: parsed.domain ?? []
+    domains: domainsToStart({ workspaceRoot, parsed })
   })
   return {
     ok: outcome.acquired,
@@ -294,9 +328,21 @@ export const registerLease = (docker, timVersion) => {
       (name, named) => [...named, name],
       []
     )
+    .option(
+      '--for-workarea <path>',
+      'Work the domains out from this workarea instead of naming them: the ones its unbuilt rows put in play, as tim build stack-plan reports. Cannot be given with --domain. A backlog needing every domain, or no stack, starts the whole stack.'
+    )
+    .option(
+      '--e2e <mode>',
+      "The run's --e2e mode, for --for-workarea: local (default) or targeted. Under targeted the gate runs only the specs a row changed, so a repo's tagged specs in other domains are left to the pull request and their services are not started."
+    )
+    .option(
+      '--next-row',
+      "With --for-workarea, size for the next buildable row alone rather than every row left, as tim backlog next derives it. A build run takes its lease this way: each row's gate asks for the domains its own specs run in, so a stack missing one is started again for that row."
+    )
     .addHelpText(
       'after',
-      '\nExamples:\n  tim docker lease acquire --holder "ibl-20261001T090000Z" --json\n  tim docker lease acquire --holder "ibl-20261001T090000Z" --domain plants'
+      '\nExamples:\n  tim docker lease acquire --holder "ibl-20261001T090000Z" --json\n  tim docker lease acquire --holder "ibl-20261001T090000Z" --domain plants\n  tim docker lease acquire --holder "ibl-20261001T090000Z" --for-workarea shared/my-theme --e2e targeted'
     )
     .action(leaseAction(runAcquire, timVersion))
 

@@ -665,6 +665,38 @@ describe('nextBuildable', () => {
     test('waits when nobody says how to read the other workarea', () => {
       expect(nextBuildable(backlog)).toBe('inc-002')
     })
+
+    test('takes a row combined into another as met, since its work was built there', () => {
+      expect(
+        nextBuildable(backlog, {
+          readWorkareaBacklog: originWith('merged-into')
+        })
+      ).toBe('inc-001')
+    })
+
+    test('still waits on a row set aside rather than built', () => {
+      expect([
+        nextBuildable(backlog, { readWorkareaBacklog: originWith('blocked') }),
+        nextBuildable(backlog, { readWorkareaBacklog: originWith('dropped') }),
+        nextBuildable(backlog, { readWorkareaBacklog: originWith('deferred') })
+      ]).toEqual(['inc-002', 'inc-002', 'inc-002'])
+    })
+  })
+
+  test('takes a dependency in this backlog combined into another row as met', () => {
+    const backlog = backlogOf(
+      row({ id: 'inc-001', status: 'merged-into' }),
+      row({ id: 'inc-002', dependsOn: ['inc-001'] })
+    )
+    expect(nextBuildable(backlog)).toBe('inc-002')
+  })
+
+  test('still waits on a dependency in this backlog that was set aside', () => {
+    const backlog = backlogOf(
+      row({ id: 'inc-001', status: 'dropped' }),
+      row({ id: 'inc-002', dependsOn: ['inc-001'] })
+    )
+    expect(nextBuildable(backlog)).toBeNull()
   })
 })
 

@@ -157,6 +157,14 @@ export const CORE_SERVICES = [
  * seeds its notifications through the animals frontend, and ins drives the
  * animals and plants journeys. Only plants stays within itself.
  *
+ * A folder is the unit of service requirements, so specs that reach a service
+ * the rest of their domain does not get a folder of their own. `animals-dlq`
+ * holds the two admin specs that drive the DLQ page, which is what calls the
+ * dynamics gateway, and with it the Service Bus emulator, mssql and
+ * toxiproxy. Without that split a row touching the animals backend started
+ * those four for specs that never reach them, because the backend owns the
+ * admin suites.
+ *
  * Each of those was found by running a suite without a service, never by
  * reading the compose files. See
  * docs/analysis/local-stack-domain-subsets.md, and prove a change here with
@@ -175,6 +183,15 @@ export const DOMAIN_SERVICES = {
     'trade-imports-ins-backend'
   ],
   'animals-admin': [
+    'trade-imports-animals-admin',
+    'trade-imports-animals-backend',
+    'trade-imports-animals-frontend',
+    'animals-frontend-nginx',
+    'trade-imports-reference-data',
+    'trade-imports-stub',
+    'cdp-uploader'
+  ],
+  'animals-dlq': [
     'trade-imports-animals-admin',
     'trade-imports-animals-backend',
     'trade-imports-dynamics-gateway',

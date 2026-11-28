@@ -20,6 +20,11 @@ describe('#isGitPush', () => {
     ['git pushx', true],
     ['mygit -C x push', false],
     ['git -C x pushy', false],
+    ['git stash push', false],
+    ['git stash push -u', false],
+    ['git stash push -u -m "failed-inc-123"', false],
+    ['git -C repos/x stash push -u', false],
+    ['git stash pop', false],
     ['', false]
   ])('%j is a push: %s', (command, expected) => {
     expect(isGitPush(command)).toBe(expected)

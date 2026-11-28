@@ -9,6 +9,8 @@ import {
   tagDomainsIn,
   tagsIn
 } from '../../build/stack-domains.js'
+import { nextBuildable } from '../../backlog/shape.js'
+import { workareaBacklogReader } from '../../backlog/workarea.js'
 import { backlogPathFor } from '../backlog/rows.js'
 import { errorPayloadFor, exitCodeFor, jsonEnvelope } from '../envelope.js'
 
@@ -16,6 +18,18 @@ const emit = (text) => process.stdout.write(`${text}\n`)
 const emitError = (text) => process.stderr.write(`${text}\n`)
 
 const BUILDABLE = new Set(['todo', 'blocked', 'in-progress'])
+
+const rowsToPlanFor = ({ backlog, workspaceRoot, everyRow, nextRow }) => {
+  const increments = backlog.increments ?? []
+  if (nextRow) {
+    const id = nextBuildable(backlog, {
+      readWorkareaBacklog: workareaBacklogReader(workspaceRoot)
+    })
+    return increments.filter((row) => row.id === id)
+  }
+  if (everyRow) return increments
+  return increments.filter(({ status }) => !status || BUILDABLE.has(status))
+}
 
 /**
  * What stack a run over this backlog needs: the domains its unbuilt rows put
@@ -25,19 +39,21 @@ const BUILDABLE = new Set(['todo', 'blocked', 'in-progress'])
  * @param {string} opts.workspaceRoot
  * @param {string} opts.workarea - A path under workareas/
  * @param {boolean} [opts.everyRow=false] - Count rows already built too
+ * @param {boolean} [opts.nextRow=false] - Count only the next buildable row, as tim backlog next derives it
+ * @param {'local'|'targeted'|'ci'} [opts.e2e='local'] - The run's `--e2e` mode
  * @returns {object} As stackPlanFor, with the backlog it read
  * @throws {TimError} NOT_FOUND, PARSE or USAGE from the reads
  */
 export const stackPlanForWorkarea = ({
   workspaceRoot,
   workarea,
-  everyRow = false
+  everyRow = false,
+  nextRow = false,
+  e2e = 'local'
 }) => {
   const backlogPath = backlogPathFor(workspaceRoot, workarea)
-  const { increments = [] } = readJsonFile(backlogPath)
-  const rows = everyRow
-    ? increments
-    : increments.filter(({ status }) => !status || BUILDABLE.has(status))
+  const backlog = readJsonFile(backlogPath)
+  const rows = rowsToPlanFor({ backlog, workspaceRoot, everyRow, nextRow })
   const repos = readEnvelopeRepos(workspaceRoot, workarea)
   const folderOfKey = Object.fromEntries(
     repos.map(({ key, folder }) => [key, folder])
@@ -47,7 +63,7 @@ export const stackPlanForWorkarea = ({
   return {
     backlog: backlogPath,
     rowsRead: rows.length,
-    ...stackPlanFor({ rows, folderOfKey, scope, tagDomains })
+    ...stackPlanFor({ rows, folderOfKey, scope, tagDomains, e2e })
   }
 }
 
@@ -66,7 +82,8 @@ const reportError = (error, json, timVersion) => {
 
 /**
  * `tim build stack-plan`: say which stack a run over a backlog needs, and
- * why, so a person can choose between the whole stack and a narrowed one.
+ * why, row by row. A build run derives the same answer itself through
+ * `tim docker lease acquire --for-workarea`; this is how a person reads it.
  *
  * @param {import('commander').Command} build
  * @param {string} timVersion
@@ -79,9 +96,18 @@ export const registerStackPlan = (build, timVersion) =>
     )
     .argument('<workarea>', 'A path under workareas/, such as shared/my-theme')
     .option('--every-row', 'Count rows already built, not only the ones left')
+    .option(
+      '--next-row',
+      'Count only the next buildable row, as tim backlog next derives it: what a build run starts its stack for, before each row’s gate asks for the domains its own specs run in'
+    )
+    .option(
+      '--e2e <mode>',
+      "The run's --e2e mode: local (default) or targeted. Under targeted the gate runs only the specs a row changed, so a repo's tagged specs in other domains are left to the pull request and their services are not started",
+      'local'
+    )
     .addHelpText(
       'after',
-      '\nExamples:\n  tim build stack-plan shared/dr21-parity\n  tim build stack-plan shared/dr21-parity --json'
+      '\nExamples:\n  tim build stack-plan shared/dr21-parity\n  tim build stack-plan shared/dr21-parity --e2e targeted\n  tim build stack-plan shared/dr21-parity --json'
     )
     .action(function stackPlanAction(workarea, options) {
       const globalOpts = this.optsWithGlobals()
@@ -92,7 +118,9 @@ export const registerStackPlan = (build, timVersion) =>
         const result = stackPlanForWorkarea({
           workspaceRoot,
           workarea,
-          everyRow: Boolean(options.everyRow)
+          everyRow: Boolean(options.everyRow),
+          nextRow: Boolean(options.nextRow),
+          e2e: options.e2e
         })
         if (globalOpts.json) {
           emit(JSON.stringify(jsonEnvelope({ ok: true, result, timVersion })))

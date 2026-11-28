@@ -13,6 +13,7 @@ import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
 import {
   fakeComposeStartLines,
+  STACK_SERVICES,
   writeStackInitSources
 } from '../test-support/fake-docker.js'
 import { refreshLeasedStack } from './stack-refresh.js'
@@ -346,6 +347,7 @@ const stackWorkspace = async ({ restackFails = false } = {}) => {
   const env = await workspace({
     stackStartLines: fakeComposeStartLines({
       callsPath: callsPath(),
+      services: STACK_SERVICES,
       onUp: `printf 'c5\\nc6\\n' > '${statePath()}'${restackFails ? '; exit 3' : ''}`
     })
   })
@@ -407,6 +409,33 @@ describe('refreshLeasedStack — the workspace’s stack files', () => {
       stackFiles: await stackFilesFingerprint(root),
       fingerprints: await serviceFingerprints(root)
     })
+  })
+
+  test('starts a narrowed stack again for the domains its lease records, not the whole stack', async () => {
+    const env = await stackWorkspace()
+    const lease = await leaseWithCurrentStack({ domains: ['plants'] })
+    editStackFile()
+
+    const outcome = await refreshWithRestack(env, lease)
+
+    expect({
+      ok: outcome.ok,
+      restacked: outcome.restacked,
+      startedFor: readFileSync(restackLog(), 'utf8').includes('--domain plants')
+    }).toEqual({ ok: true, restacked: true, startedFor: true })
+  })
+
+  test('starts the whole stack again for a lease that names no domain', async () => {
+    const env = await stackWorkspace()
+    const lease = await leaseWithCurrentStack({ domains: [] })
+    editStackFile()
+
+    const outcome = await refreshWithRestack(env, lease)
+
+    expect({
+      restacked: outcome.restacked,
+      narrowed: readFileSync(restackLog(), 'utf8').includes('--domain')
+    }).toEqual({ restacked: true, narrowed: false })
   })
 
   test('leaves the stack alone next time, once it has started it again', async () => {

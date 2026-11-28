@@ -118,7 +118,7 @@ The system MUST let the user change an answer while amending, then resubmit thro
 **ID**: REQ-LIFECYCLE-008
 The system MUST let the user cancel an in-progress amendment, after confirming, restoring the notification to its previously submitted answers and status.
 
-While amending, a status bar above each page's caption and heading MUST offer a "Cancel amend" link to that confirmation, with or without JavaScript, except on the confirmation page itself and on the declaration page, which shows no status bar at all.
+While amending, a status bar above each page's caption and heading MUST offer a "Cancel amend" link to that confirmation, with or without JavaScript, except on the declaration page, which shows no status bar at all; the confirmation page shows no status bar either, and nothing else above its heading.
 
 #### Scenario: A Cancel amend option is offered while amending
 **ID**: SCN-LIFECYCLE-008-A
@@ -130,28 +130,28 @@ While amending, a status bar above each page's caption and heading MUST offer a 
 **ID**: SCN-LIFECYCLE-008-B
 - **GIVEN** a notification is being amended
 - **WHEN** the user selects "Cancel amend"
-- **THEN** a confirmation page explains that changes made since amending began will be discarded and the submitted version restored, with options to confirm or reject
-- **AND** a back link returns to check-your-answers without cancelling anything
+- **THEN** a confirmation page opens titled, and headed, "Are you sure you want to cancel this amendment?"
+- **AND** its whole content is that heading, the button "Yes, cancel amendment" and a link-styled "Go back", with no caption, status tag, reference or back link above the heading
 
-#### Scenario: Declining the confirmation keeps the amendment in progress
+#### Scenario: Selecting Go back keeps the amendment in progress
 **ID**: SCN-LIFECYCLE-008-C
 - **GIVEN** the user has opened the cancel-amendment confirmation page
-- **WHEN** they decline to cancel
+- **WHEN** they select "Go back"
 - **THEN** they return to the notification, still "Amend", with its edits and Change links intact
 
 #### Scenario: Confirming the cancellation restores the submitted answers
 **ID**: SCN-LIFECYCLE-008-D
 - **GIVEN** the user has changed an answer while amending and then opened the cancel-amendment confirmation page
 - **WHEN** they confirm the cancellation
-- **THEN** a message confirms the amendment was cancelled and the submitted version restored
-- **AND** the notification's status shows "Submitted" again, with the changed answer reverted and no Change links shown
+- **THEN** the notification's view opens read only, headed by its reference with the "Submitted" tag and nothing above that heading
+- **AND** the changed answer is reverted and no Change links are shown
 
 #### Scenario: Cancel amend on a question page opens the confirmation page
 **ID**: SCN-LIFECYCLE-008-E
 - **GIVEN** a notification is being amended and the user is on a question page
 - **WHEN** the user selects "Cancel amend" in the status bar
 - **THEN** the cancel-amendment confirmation page opens
-- **AND** declining returns to the notification, still "Amend"
+- **AND** "Go back" returns to the notification, still "Amend"
 
 #### Scenario: Cancel amend works without JavaScript
 **ID**: SCN-LIFECYCLE-008-F
@@ -164,6 +164,13 @@ While amending, a status bar above each page's caption and heading MUST offer a 
 - **GIVEN** a draft notification
 - **WHEN** the user views Overview or a question page
 - **THEN** the status bar shows "Draft" and the reference, and no "Cancel amend"
+
+#### Scenario: A notification nobody is amending refuses the cancel-amendment address
+**ID**: SCN-LIFECYCLE-008-H
+- **GIVEN** a notification is not being amended, a submitted one included
+- **WHEN** the user opens the cancel-amendment confirmation page, or confirms on it
+- **THEN** nothing changes
+- **AND** the notification list opens, with no message
 
 ### Requirement: Trader notification reads and writes are scoped to the caller's organisation
 **ID**: REQ-LIFECYCLE-009

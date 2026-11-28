@@ -1312,9 +1312,22 @@ stack is never left up with nobody owning it.
 
 ```bash
 tim docker lease acquire --holder "ibl-20261001T150000Z" --json  # start it, or reuse your own
+tim docker lease acquire --holder "ibl-20261001T150000Z" --for-workarea shared/my-theme --e2e targeted  # only what that backlog needs
 tim docker lease release --holder "ibl-20261001T150000Z" --json  # take down what you started
 tim docker lease status --json                                                    # up or down, and who holds it
 ```
+
+- `--domain <name>`, repeated, starts only the services those test domains
+  need. `--for-workarea <path>` works them out instead, from the domains a
+  backlog's unbuilt rows put in play, as `tim build stack-plan` reports them;
+  give the run's `--e2e` with it, because under `targeted` the gate runs only
+  the specs a row changed, so the specs a repo reaches through its service
+  tags run on the pull request and their domains are left out. Add
+  `--next-row` for the next buildable row alone, which is how a build run
+  takes its lease: each row's gate then asks for the domains its own specs
+  run in, and a stack missing one is started again for that row. The two are
+  alternatives, not a pair. A backlog needing every domain, or no stack,
+  starts the whole stack.
 
 - `acquire` on a stack that is down records the lease, then starts it
   (`tim docker dev`; `--mode up` for the published images; `--mode perf` for
@@ -1324,13 +1337,17 @@ tim docker lease status --json                                                  
   is, but only when that start finished and the containers are still the ones
   recorded. A start of the holder's own that died part-way (a timeout killing
   `acquire`, say) is taken down and started again; one still running is
-  refused.
+  refused. A stack that has lost a container since it started, which is what
+  an OOM kill leaves behind, is taken down and started again too: it runs fewer
+  of the ids the lease recorded and none it did not, so it is still the
+  holder's own stack.
 - `acquire` on a stack leased to anyone else, up with no lease at all (one
   somebody started by hand with `tim docker dev`), or restarted by hand under
-  a lease (other container ids), refuses with `STACK_HELD`, naming the holder,
-  its mode, its branches and when it took the lease. It never reuses or takes
-  down such a stack.
-- `release` takes down the stack its holder started, then clears the lease.
+  a lease (a container id the lease never started), refuses with `STACK_HELD`,
+  naming the holder, its mode, its branches and when it took the lease. It
+  never reuses or takes down such a stack.
+- `release` takes down the stack its holder started, then clears the lease,
+  including one a container short.
   It refuses a lease somebody else holds (`NOT_HOLDER`) and never touches a
   stack nobody leases. A stack restarted by hand under the lease is left up and
   the lease cleared (`FOREIGN_STACK`). When `docker compose down` fails the lease is

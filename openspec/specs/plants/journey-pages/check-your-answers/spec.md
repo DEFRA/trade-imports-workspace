@@ -162,8 +162,7 @@ While a notification is being amended, check-your-answers MUST offer "Cancel ame
 **ID**: SCN-PLANTS-CYA-009-B
 - **GIVEN** a notification is being amended with an edited identification number
 - **WHEN** the user cancels the amendment from check-your-answers and confirms
-- **THEN** they return to a read-only check-your-answers showing the previously submitted answers
-- **AND** a success banner explains the amendment was cancelled
+- **THEN** they return to a read-only check-your-answers showing the previously submitted answers, with nothing above its reference heading
 - **AND** the discarded edit is not shown
 
 ### Requirement: A review's back link goes to the place the user came from; the submitted view's back link opens the notification list

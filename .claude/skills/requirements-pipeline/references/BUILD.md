@@ -134,6 +134,19 @@ Where the work is not on this machine, or will not go green, the row drops back
 on its own — to the top, or to the implementor. `resumeFrom: 'build'` is for the
 case where you want the record ignored anyway.
 
+**A resume stage with no attempt record behind it builds from the top.** The
+stage that reads the row reports the record and the stage to resume at
+together, and the two have to agree: the resume stage is read *from* the
+record. When one comes back without the other, the loop logs
+`resuming at <stage> needs an attempt record, and none came back — building it
+from the top` and builds the row from the plan stage, rather than entering the
+restore stage with nothing to restore. Expect that line to be rare: the
+reporting stage's schema requires both. It cost Design Release 2.1's
+manage-notifications theme a run on 27 November, when the record was optional
+and a light agent returned `resumeAt: ladder` without the attempt it had read
+that from — the restore stage then died on it and took the whole run with it,
+with no stop reason, so none of the recovery below applied.
+
 Record `resumeFrom` in `build-args.json` with the rest, but **default it back to
 null on a relaunch** rather than carrying last time's value over, which is the
 opposite of what `e2e` does. `e2e` is a property of the machine; a forced
@@ -524,7 +537,7 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    there is nothing to ask.
 
    ```bash
-   tim build stack-plan <workarea>
+   tim build stack-plan <workarea> --e2e <the run's e2e>
    ```
 
    It reads every row the run has left to build and says which services they
@@ -536,30 +549,87 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    any other. A row that builds the performance suite, or a repo with no entry
    in `config/e2e-tests-pr-scope.json`, needs the whole stack.
 
-   Put the plan to the user and let them choose:
+   **Pass the run's `--e2e`, because it changes the answer.** A repo's `tags`
+   in the scope file name specs in *other* domains that its pull request also
+   runs. Under `local` the gate runs those too, so their services are needed.
+   Under `targeted` the gate runs only the specs the row changed, so those
+   tagged specs are the pull request's alone and their domains are left out.
+   On Design Release 2.1's manage-notifications theme that was the difference
+   between four domains and two for `inc-121`: two `@mongodb` specs in
+   `tests/animals-admin/` carry `@animals-frontend`, which pulled in the
+   dynamics gateway, toxiproxy, the Service Bus emulator and mssql — none of
+   which either spec touches, and none of which a targeted rung runs.
 
-   - **Narrowed** — `--domain <name>` per domain on the acquire below. Fewer
-     containers, so the machine has room for the suites running beside them.
-   - **The whole stack** — no `--domain`. Nothing can be missing, at the cost
-     of every container being up for the whole run.
-
-   Narrowing is the better default on a machine where the stack and a suite do
-   not fit together; see
+   **You choose nothing here, and pass no `--domain`.** The loop works the
+   domains out itself from the same plan, under the run's own `e2e`
+   ([step 2](#2-launch-it)), and sizes the stack per row rather than for the
+   whole backlog — add `--next-row` to see what it starts with. Read the plan
+   so you can tell the user what the run will start and what it leaves to the
+   pull request, and say which rows drove it rather than only the number. See
    [`machine-tuning.md`](machine-tuning.md) and
    [`../../../../docs/analysis/local-stack-domain-subsets.md`](../../../../docs/analysis/local-stack-domain-subsets.md),
-   which carries each domain's services and the runs that proved them. Say
-   which rows drove the answer rather than only the number, so the user can
-   see what a narrowed stack would leave out.
+   which carries each domain's services and the runs that proved them.
 
-   **The run holds the workspace stack.** Before its first increment the loop
-   takes one lease, `tim docker lease acquire --holder "<run id>" --mode dev`,
-   with a `--domain` for each domain the user chose, which starts the stack
-   from local source. The stack stays up across every
-   increment, and every gate call passes `--holder "<run id>"`, so the gate
-   reuses it and rebuilds only what changed. A stack already up for fewer
-   domains than a later increment needs is restarted for the wider set, so a
-   run that derives a row outside the launch-time domains keeps working; it
-   costs one stack restart, which the log names. A service that caches another
+   **The run holds the workspace stack, sized row by row.** Before its first
+   increment the loop takes one lease,
+   `tim docker lease acquire --holder "<run id>" --mode dev --for-workarea <workarea> --e2e <e2e> --next-row`,
+   which starts the stack from local source for **the next buildable row
+   alone** — not the whole backlog. A backlog that needs every domain, or no
+   stack at all, starts the whole stack as before. The stack stays up across
+   every increment, and every gate call passes `--holder "<run id>"`, so the
+   gate reuses it and rebuilds only what changed.
+
+   **Each row's gate asks for the domains its own specs run in**, taken from
+   the spec files its planned E2E rungs will actually run, so a stack missing
+   one of them is taken down and started again for that row, under the same
+   lease. That costs one stack restart, which the log names, and it is what
+   keeps a run from holding services no row needs: a row whose specs are all
+   in `tests/animals/` and `tests/plants/` never starts the dynamics gateway,
+   toxiproxy, the Service Bus emulator or mssql, whatever a later row needs.
+   A whole-suite run asks for no domain in particular, so it reuses whatever
+   is up. A spec in a folder that names no known domain asks for every
+   domain, because narrowing on a reach tim cannot place would run it against
+   services that are not there.
+
+   **The ladder's gate also narrows a stack wider than its specs need**, with
+   `--narrow-stack`, which only that gate passes. The launch-time estimate
+   comes from the rows' repos rather than their specs, which nothing can know
+   before a row is built, so it over-reaches: one row that owns a wide suite
+   leaves its services up for every row after it. The ladder knows exactly
+   what it is about to run, so it starts the stack again for those domains
+   alone. It costs one restart, and only at the one gate that proves a row,
+   so a row restarts the stack at most once. A gate whose specs name no
+   domain narrows nothing.
+
+   **Narrowing only pays off where the domains are honest, so fix the folders
+   too.** A `tests/<domain>/` folder is the unit of service requirements, so a
+   folder holding specs that reach a service the rest do not makes every
+   estimate here crude, and no amount of narrowing recovers it: the narrowed
+   set still names that domain, and the domain still starts the service. Two
+   of the 21 specs that were in `tests/animals-admin/` drove the DLQ page,
+   which is what calls the dynamics gateway, and with it the Service Bus
+   emulator, mssql and toxiproxy; the other nineteen touch none of them. They
+   now live in `tests/animals-dlq/`, so `animals-admin` starts 13 services
+   rather than 17, proved with `tim docker domain verify animals-admin
+   --against-full`. Only with both changes does a row that touches the animals
+   backend stop starting mssql: the launch estimate still names
+   `animals-dlq`, because the backend's pull request runs those specs, and the
+   ladder is what narrows it away.
+
+   **A stack the gate re-ups keeps the lease's domains.** When
+   `docker/stack` or `tim/src/stack` has changed since the stack started, no
+   single service's refresh can apply that, so the gate starts the stack again
+   under the same lease — in the mode *and for the domains* that lease
+   started it with. Expect one such re-up on any run where `main` has moved
+   those files, because the loop takes its lease before the main sync merges
+   `main` in: the fingerprint the lease recorded is then the pre-merge one.
+   It costs one stack restart, which the gate's result names under
+   `stack.refresh.restacked` with its own log. Design Release 2.1's
+   manage-notifications theme hit exactly that on 27 November, when an nginx
+   sidecar change landed on `main` at 10:23 and the run's lease was taken at
+   12:08 — and before this was fixed the re-up started every service, widening
+   a 16-container stack back to 22 under a lease still recording two domains.
+   A service that caches another
    service's answers names it under `x-refresh-with` in
    `docker/stack/dev.compose.yml`, and the gate restarts it whenever that
    service is rebuilt or restarted. Reference-data names the stub, because it
@@ -583,8 +653,11 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    run's own lease returns `stackDown`: the loop takes the lease again, which
    brings the stack back, and runs that stage once more. A stack somebody brought up by
    hand, with no lease, counts as somebody else's: it is never reused and never
-   taken down, and so does a stack restarted by hand under a lease (its container
-   ids no longer match the lease's). The lease file is per machine
+   taken down, and so does a stack restarted by hand under a lease (it runs a
+   container id the lease never started). A stack that has merely **lost** a
+   container, which is what an OOM kill looks like, is still the run's own: the
+   acquire starts it again under the same lease rather than refusing, so one
+   dead service no longer stops every end-to-end rung. The lease file is per machine
    (`tim docker lease status` shows it), and while it is held `tim docker up`,
    `dev`, `down`, `restart` and `bounce-backend` refuse unless given `--force`,
    which the loop never passes.
@@ -706,7 +779,15 @@ died whenever the session did.
 
 **Buildability is status and dependencies. Nothing else.** A dependency is a
 `dependsOn` id in the same backlog, or an `externalDependsOn` row in another
-workarea's backlog, which must be `done` there ([Building one theme](#building-one-theme)).
+workarea's backlog ([Building one theme](#building-one-theme)). It is met by
+`done`, and by **`merged-into`** — a row whose work was combined into another
+in its own backlog and built there. Waiting for such a row to turn `done`
+waits for a row that no longer exists as a unit of work, which withholds its
+dependants for ever: `inc-120` and `inc-124` of Design Release 2.1's
+manage-notifications theme sat unbuildable behind `inc-112` of
+overview-and-review, which had merged into `inc-111` and shipped inside it on
+13 November. No other withheld status meets a dependency, because the work is
+not on the branch.
 The six withheld
 statuses (`done`, `deferred`, `dropped`, `blocked`, `rejected`, `merged-into`)
 are named explicitly and everything else counts as buildable, so an
@@ -1380,7 +1461,8 @@ conflict.
   start at once; a later theme can start once the rows it waits for are `done`. `tim backlog next` on its workarea
   prints NONE until then.
 - **`externalDependsOn` is a wait on another workarea.** A row with one is buildable only when each row it names is
-  `done` in that workarea's own `backlog.json`. `tim backlog next` and `tim build start` both read it there, so the
+  built in that workarea's own `backlog.json` — `done`, or `merged-into` by a row that built the work there.
+  `tim backlog next` and `tim build start` both read it there, so the
   other theme's landed state must be on this machine: pull the workspace repo before you launch. The loop never
   commits its `backlog.json` writes, so after a theme lands rows another theme waits for, commit and push that
   theme's `backlog.json`.

@@ -26,6 +26,7 @@ import {
 } from './gates.js'
 import { TimError } from '../errors.js'
 import { isSpecFile } from './changed-scope.js'
+import { domainsOfSpecs } from './stack-domains.js'
 import { assertBaseExists, changedFilesSince } from './duplication.js'
 import { isPortHeld, portHolder, describeHolder } from './ports.js'
 import {
@@ -112,10 +113,13 @@ const SPEC_ARG = /\.spec\.[cm]?[jt]sx?$/
 // What the planned rungs will actually run, not what the change touched: a
 // frontend's *.fit.spec.js is a changed spec no e2e rung can run, so counting
 // changed specs would credit a row with end-to-end proof it never had.
-const plannedSpecCount = (e2eRungs) =>
-  new Set(
+const plannedSpecs = (e2eRungs) => [
+  ...new Set(
     e2eRungs.flatMap(({ scope }) => scope.filter((arg) => SPEC_ARG.test(arg)))
-  ).size
+  )
+]
+
+const plannedSpecCount = (e2eRungs) => plannedSpecs(e2eRungs).length
 
 const targetedE2e = (e2eRungs) => {
   const specs = plannedSpecCount(e2eRungs)
@@ -436,7 +440,7 @@ const failAll = (rungs, reason) => rungs.map((rung) => failed(rung, reason))
 
 const messageOf = (error) => error.message ?? String(error)
 
-const takeLease = async (context) => {
+const takeLease = async (context, domains) => {
   try {
     return await acquireStack({
       workspaceRoot: context.workspaceRoot,
@@ -444,7 +448,9 @@ const takeLease = async (context) => {
       mode: 'dev',
       leasePath: context.leasePath,
       logPath: logIn(context, 'gate-stack-up.log'),
-      env: context.env
+      env: context.env,
+      domains,
+      narrow: context.narrowStack === true
     })
   } catch (error) {
     return {
@@ -605,7 +611,7 @@ const runE2e = async (rungs, context) => {
   if (context.stackAfterLocal) await context.localDone
   const ownerRefusal = await refusalForOtherCloneOwner(context)
   if (ownerRefusal) return refusedE2e(rungs, ownerRefusal)
-  const lease = await takeLease(context)
+  const lease = await takeLease(context, domainsOfSpecs(plannedSpecs(rungs)))
   if (!lease.acquired) return refusedE2e(rungs, lease)
   const keptForHolder = lease.started && lease.heldBefore === true
   const stack = {
@@ -771,6 +777,7 @@ const layerDurations = (startedAt, ran) => {
  * @param {'local'|'targeted'|'ci'} [args.e2e] - Where the e2e rungs run, over this machine's setting (default: local). `targeted` runs only the spec files each repo changed since `base`, and plans no rung for a repo that changed nothing
  * @param {string} [args.base] - The ref `targeted` diffs each repo against (default: origin/main)
  * @param {string[]} [args.coveredSpecs] - Specs `targeted` runs whether or not the repo changed them, each named `<repoKey>:<path>`
+ * @param {boolean} [args.narrowStack] - Start a stack up for more domains than this gate's specs run in again for those alone, so one row's needs do not stay up for the rows after it. Costs a stack restart, so only the gate that proves a row passes it
  * @param {object} [args.env] - Extra environment for every command the gate runs
  * @returns {Promise<{green: boolean, phase: string, serial: boolean, logs: string, durationMs: number, phases: object, layers: object, rungs: object[], dependencies: object[], stack: object, e2e: {where: string, leftToCi: object[], evidence: string|null}}>}
  */
@@ -783,6 +790,7 @@ export const runGate = async ({
   e2e,
   base = DEFAULT_CHANGE_BASE,
   coveredSpecs = [],
+  narrowStack = false,
   logsDir,
   holder = defaultGateHolder(workarea),
   leasePath = defaultLeasePath(),
@@ -824,6 +832,7 @@ export const runGate = async ({
     parallelRepos: machine?.parallelRepos ?? gates.parallelRepos,
     stackAfterLocal:
       (machine?.stackAfterLocal ?? gates.stackAfterLocal) === true,
+    narrowStack,
     claimedPorts: new Map()
   }
 

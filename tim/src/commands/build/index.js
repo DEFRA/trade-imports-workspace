@@ -83,6 +83,7 @@ const gateOptionsSchema = z.object({
     .optional(),
   base: z.string().trim().min(1).optional(),
   coveredSpec: z.array(z.string().trim().min(1)).optional(),
+  narrowStack: z.boolean(),
   serial: z.boolean()
 })
 
@@ -456,6 +457,10 @@ const registerGate = (build, timVersion) =>
       (path, paths = []) => [...paths, path]
     )
     .option(
+      '--narrow-stack',
+      'Start a stack up for more test domains than this gate’s specs run in again for those alone, so one row’s needs do not stay up for every row after it. It costs a stack restart, so only the gate that proves a row passes it, and a gate whose specs name no domain narrows nothing'
+    )
+    .option(
       '--detach',
       'Start the gate in its own background process and return at once, printing its process id. The gate keeps running when the shell that started it ends. Wait for it with `tim build gate-wait`; its own output goes to the result file plus `.out`'
     )
@@ -480,6 +485,7 @@ const registerGate = (build, timVersion) =>
           e2e: opts.e2e,
           base: opts.base,
           coveredSpec: opts.coveredSpec?.length ? opts.coveredSpec : undefined,
+          narrowStack: opts.narrowStack === true,
           serial: opts.serial === true
         })
         const workspaceRoot = resolveWorkspaceRoot({
@@ -513,6 +519,7 @@ const registerGate = (build, timVersion) =>
           ...(parsed.e2e ? { e2e: parsed.e2e } : {}),
           ...(parsed.base ? { base: parsed.base } : {}),
           ...(parsed.coveredSpec ? { coveredSpecs: parsed.coveredSpec } : {}),
+          narrowStack: parsed.narrowStack === true,
           ...(parsed.holder ? { holder: parsed.holder } : {})
         })
         const envelope = gateEnvelope(outcome, timVersion)

@@ -10,7 +10,7 @@ import {
 const reportOf = (specs, stats = {}) => ({
   suites: [
     {
-      file: 'tests/animals-admin/e2e/features/dlq-events.spec.ts',
+      file: 'tests/animals-dlq/e2e/features/dlq-events.spec.ts',
       specs: specs.map(({ title, ok, ran = true }) => ({
         title,
         ok,
@@ -22,9 +22,9 @@ const reportOf = (specs, stats = {}) => ({
 })
 
 const DLQ_SPEC =
-  'tests/animals-admin/e2e/features/dlq-events.spec.ts > starts a replay'
+  'tests/animals-dlq/e2e/features/dlq-events.spec.ts > starts a replay'
 const OUTBOX_SPEC =
-  'tests/animals-admin/e2e/features/dlq-events.spec.ts > records an outbox event'
+  'tests/animals-dlq/e2e/features/dlq-events.spec.ts > records an outbox event'
 
 const passing = (titles) =>
   outcomesOf(reportOf(titles.map((title) => ({ title, ok: true }))))
@@ -264,7 +264,7 @@ describe('#verifyDomain', () => {
     await expect(
       verifyDomain({ domain: 'germinal', runPhase: () => Promise.resolve({}) })
     ).rejects.toThrow(
-      "unknown domain 'germinal'; valid: animals, animals-admin, ins, plants"
+      "unknown domain 'germinal'; valid: animals, animals-admin, animals-dlq, ins, plants"
     )
   })
 })

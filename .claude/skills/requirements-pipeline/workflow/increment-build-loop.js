@@ -1039,8 +1039,14 @@ const repoFlags = (repoKeys) => (repoKeys ?? []).map((key) => ` --repo ${key}`).
 // would see none of a resumed row's work. The base branch is the row.
 const ROW_CHANGE_BASE = IS_BRANCH ? 'HEAD' : `origin/${BASE_BRANCH}`
 
-const gateCommand = (phase, logs, repoKeys, base = ROW_CHANGE_BASE) =>
-  `tim build gate ${WORKAREA_REL} --phase ${phase} --e2e ${E2E}${E2E === 'targeted' ? ` --base ${base}` : ''} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}"${repoFlags(repoKeys)} --result ${gateResultFile(phase, logs)} --detach`
+const gateCommand = (
+  phase,
+  logs,
+  repoKeys,
+  base = ROW_CHANGE_BASE,
+  { narrowStack = false } = {}
+) =>
+  `tim build gate ${WORKAREA_REL} --phase ${phase} --e2e ${E2E}${E2E === 'targeted' ? ` --base ${base}` : ''} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}"${repoFlags(repoKeys)}${narrowStack ? ' --narrow-stack' : ''} --result ${gateResultFile(phase, logs)} --detach`
 const MAX_GATE_WAITS = 20
 const GATE_WAIT_RULE = `WAITING FOR THE GATE. Every gate command carries \`--detach\`: it starts the gate in its own background
   process and returns at once, printing \`result.detached\` true and the gate's \`pid\`. The gate is now running: never
@@ -1051,8 +1057,8 @@ const GATE_WAIT_RULE = `WAITING FOR THE GATE. Every gate command carries \`--det
   gate's process stopped without a result: that gate is RED, reported as "the gate died", with the error's message
   copied word for word. A gate that has still written no result after the last wait is RED, reported as "the gate did
   not finish". Never use run_in_background, a trailing \`&\` or \`sleep\` for any of this: each wait returns by itself.`
-const gateCommandList = (phases, logs, repoKeys, base) =>
-  phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs, repoKeys, base)}\``).join('\n')
+const gateCommandList = (phases, logs, repoKeys, base, options) =>
+  phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs, repoKeys, base, options)}\``).join('\n')
 
 const owesWholeGate = (phases) => GATE_PHASES.every((phase) => phases.includes(phase))
 
@@ -1359,7 +1365,12 @@ const acquireRunLease = () =>
 its first increment. That is your whole job.
 ${leaseGuardrails('acquire')}
 Run exactly one command, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
-\`tim docker lease acquire --holder "${RUN_HOLDER}" --mode dev --workspace ${TILDE} --json --logs ${RUN_LEASE_LOGS}\`
+\`tim docker lease acquire --holder "${RUN_HOLDER}" --mode dev --workspace ${TILDE} --for-workarea ${WORKAREA_REL} --e2e ${E2E} --next-row --json --logs ${RUN_LEASE_LOGS}\`
+It works the domains out from the backlog itself: the services the NEXT BUILDABLE ROW puts in play, which under
+\`--e2e targeted\` leaves out the domains whose specs run on the pull request rather than in this run's gate. Each
+row's own gate then asks for the domains its specs run in, and a stack missing one is started again for that row, so
+the run never holds services no row needs. A backlog needing every domain, or no stack, starts the whole stack as
+before. You pass no \`--domain\`.
 It prints one JSON line. Report acquired:true only when it exited 0 and printed ok:true, whether it started the stack
 or found it already leased to \`${RUN_HOLDER}\`. When it printed ok:false, report acquired:false with \`errors[0].message\`
 word for word as summary; set refused:true only when \`errors[0].code\` is STACK_HELD, and copy \`result.holder\` into
@@ -4366,7 +4377,7 @@ const UNRESOLVED_CHECK = `\`git -C ${TILDE}/<repoPath> diff --name-only --diff-f
 
 const BRANCH_ROW_SCHEMA = {
   type: 'object',
-  required: ['ok', 'repos', 'merge', 'resumeAt', 'summary'],
+  required: ['ok', 'repos', 'merge', 'resumeAt', 'attempt', 'summary'],
   properties: {
     ok: {
       type: 'boolean',
@@ -4409,7 +4420,8 @@ const BRANCH_ROW_SCHEMA = {
     resumeAt: { type: 'string', enum: [...RESUME_FROM_VALUES, 'pr', 'ci'] },
     attempt: {
       type: ['object', 'null'],
-      description: "The row's `attempt` object exactly as written, or null when it has none",
+      description:
+        "The row's `attempt` object exactly as written, or null when it has none. Always report it, beside resumeAt: a resumeAt of implement, review or ladder is read FROM this object, so returning one without the other is a contradiction the loop cannot act on",
       additionalProperties: true
     },
     summary: { type: 'string' }
@@ -4633,17 +4645,19 @@ const ciE2eEvidenceStep = (repoKeys) => {
    completed no end-to-end run yet is not red: say it is awaited. Add no rung for any of this — rungs[] is the gate's.`
 }
 
+const NARROW_AT_LADDER = { narrowStack: true }
+
 const ladderGateStep = (phases, logs, base) => {
   if (phases.length === 0) return `1. THE GATE.\n${NO_GATE_STEP}`
   if (owesWholeGate(phases)) {
     return `1. THE GATE. ONE command — the same one the baseline ran, into its own folder — which runs unit, FIT and E2E
    side by side:
-${gateCommandList([WHOLE_GATE], logs, undefined, base)}
+${gateCommandList([WHOLE_GATE], logs, undefined, base, NARROW_AT_LADDER)}
    Its \`result.rungs[]\` holds every rung of every phase, red or green: you have the whole picture before you repair
    anything.`
   }
   return `1. THE GATE. These, in this order, one Bash call each — the same commands the baseline ran, into their own folder:
-${gateCommandList(phases, logs, undefined, base)}
+${gateCommandList(phases, logs, undefined, base, NARROW_AT_LADDER)}
    Run every one, even after a red one, so you have the whole picture before you repair anything.`
 }
 
@@ -6604,6 +6618,13 @@ while (stopped === null) {
     }
 
     let enterAt = forcedResumeFor(id) ?? resumeAt
+
+    if (enterAt !== 'build' && !rowAttempt) {
+      log(
+        `${id}: resuming at ${enterAt} needs an attempt record, and none came back — building it from the top`
+      )
+      enterAt = 'build'
+    }
 
     if (enterAt !== 'build') {
       phase('Resume')

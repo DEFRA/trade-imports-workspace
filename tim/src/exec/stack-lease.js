@@ -239,6 +239,21 @@ const sameContainers = (recorded, running) =>
   recorded.length === running.length &&
   [...recorded].sort().join('\n') === [...running].sort().join('\n')
 
+const runsOnlyWhatTheLeaseStarted = (recorded, running) =>
+  Array.isArray(recorded) &&
+  running.every((container) => recorded.includes(container))
+
+// Whether the stack is up for more than these domains, so starting it again
+// for them alone drops services nothing is about to use. A lease with no
+// domains is the whole stack, which is wider than any named set. Asking for
+// no domain in particular narrows nothing: that is a whole-suite run, which
+// says nothing about what it can do without.
+const widerThanDomains = (lease, domains) =>
+  domains.length > 0 &&
+  (!Array.isArray(lease.domains) ||
+    lease.domains.length === 0 ||
+    lease.domains.some((domain) => !domains.includes(domain)))
+
 /**
  * What an acquire does, given whether the stack is up, which containers it
  * runs and who holds it: reuse it, start it, restart it, or refuse.
@@ -250,14 +265,20 @@ const sameContainers = (recorded, running) =>
  *   are still the ones it recorded. A start of its own still running is
  *   refused (`starting`). A start that died part-way (a Bash timeout killing
  *   the acquire, say) left containers nobody finished: they are its own, so
- *   they are taken down and started again (`restart`). Containers other than
- *   the ones it recorded mean somebody restarted the stack by hand
- *   (`replaced`): never reused, never taken down.
+ *   they are taken down and started again (`restart`). A stack running fewer
+ *   of the ids it recorded has lost a container, which is still its own
+ *   stack, so it is started again too (`restart`). A container id it never
+ *   recorded means somebody restarted the stack by hand (`replaced`): never
+ *   reused, never taken down. With `narrow`, a stack up for more domains
+ *   than `domains` names is started again for those alone (`restart`), so
+ *   one row's needs do not stay up for every row after it. Only a caller
+ *   that knows what it is about to run passes it, and asking for no domain
+ *   in particular never narrows.
  *
  * - The same holder name taken from another clone of the workspace is
  *   refused like another holder (`otherClone`), unless `force` is set.
  *
- * @param {{up: boolean, lease: object|null, holder: string, workspaceRoot?: string, force?: boolean, containers?: string[]}} state
+ * @param {{up: boolean, lease: object|null, holder: string, workspaceRoot?: string, force?: boolean, containers?: string[], domains?: string[], narrow?: boolean}} state
  * @returns {'reuse'|'start'|'restart'|'held'|'otherClone'|'unleased'|'starting'|'replaced'}
  */
 export const acquireDecision = ({
@@ -267,7 +288,8 @@ export const acquireDecision = ({
   workspaceRoot,
   force = false,
   containers = [],
-  domains = []
+  domains = [],
+  narrow = false
 }) => {
   if (!lease) return up ? 'unleased' : 'start'
   if (lease.holder !== holder) {
@@ -280,7 +302,11 @@ export const acquireDecision = ({
   if (!up) return 'start'
   if (lease.state !== UP) return 'restart'
   if (!coversDomains(lease, domains)) return 'restart'
-  return sameContainers(lease.containers, containers) ? 'reuse' : 'replaced'
+  if (narrow && widerThanDomains(lease, domains)) return 'restart'
+  if (sameContainers(lease.containers, containers)) return 'reuse'
+  return runsOnlyWhatTheLeaseStarted(lease.containers, containers)
+    ? 'restart'
+    : 'replaced'
 }
 
 const REFUSALS = {
@@ -584,6 +610,8 @@ const restartUnderLease = async (context, lease) => {
  * @param {string} args.logPath - Where the stack's start writes its output
  * @param {object} [args.env] - Extra environment for docker and git
  * @param {boolean} [args.force] - Take a lease the same holder name holds from another clone
+ * @param {string[]} [args.domains] - The test domains the stack must cover
+ * @param {boolean} [args.narrow] - Start a stack wider than `domains` again for those alone. Only a caller that knows what it is about to run passes it
  * @returns {Promise<object>} acquired, and either reused/started with the lease, or refused with the holder and the reason
  */
 export const acquireStack = async ({
@@ -594,7 +622,8 @@ export const acquireStack = async ({
   logPath,
   env,
   force = false,
-  domains = []
+  domains = [],
+  narrow = false
 }) => {
   const { up, containers, lease } = await stackStatus({ leasePath, env })
   const decision = acquireDecision({
@@ -604,7 +633,8 @@ export const acquireStack = async ({
     workspaceRoot,
     force,
     containers,
-    domains
+    domains,
+    narrow
   })
   const context = {
     workspaceRoot,
@@ -684,7 +714,10 @@ export const releaseStack = async ({
     rmSync(leasePath, { force: true })
     return { released: true, stoppedStack: false, holder, log: null }
   }
-  if (lease.state === UP && !sameContainers(lease.containers, containers)) {
+  if (
+    lease.state === UP &&
+    !runsOnlyWhatTheLeaseStarted(lease.containers, containers)
+  ) {
     rmSync(leasePath, { force: true })
     return {
       released: false,

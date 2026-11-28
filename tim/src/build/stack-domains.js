@@ -32,6 +32,40 @@ const everyDomain = (reason) => ({
   reason
 })
 
+/** The `--e2e` mode whose gate runs only the specs a row changed. */
+const CHANGED_SPECS_ONLY = 'targeted'
+
+/**
+ * The domains a stack must cover to run these spec files: each one's own, by
+ * the `tests/<domain>/` folder it sits in. No specs asks for no domain in
+ * particular, which any stack covers — that is a whole-suite run, whose
+ * domains come from its repos instead. A spec in no domain this knows asks
+ * for every domain, because narrowing on a reach it cannot place would run
+ * it against services that are not there.
+ *
+ * @param {string[]} specs - Repo-relative spec paths an E2E rung will run
+ * @returns {string[]}
+ */
+export const domainsOfSpecs = (specs) => {
+  const placed = specs.map(domainOfSuite)
+  return placed.every(Boolean) ? sorted(placed) : [...DOMAIN_NAMES]
+}
+
+const narrowedToOwnSuites = ({ signalling, fromSuites, tags, tagDomains }) => {
+  const leftToPullRequest = sorted(
+    tags.flatMap((tag) => tagDomains[tag] ?? [])
+  ).filter((domain) => !fromSuites.includes(domain))
+  const runs = `${signalling.join(', ')} runs ${fromSuites.join(', ')}`
+  return {
+    domains: fromSuites,
+    everyDomain: fromSuites.length === DOMAIN_NAMES.length,
+    reason:
+      leftToPullRequest.length === 0
+        ? runs
+        : `${runs}; tagged specs in ${leftToPullRequest.join(', ')} run on the pull request`
+  }
+}
+
 /**
  * Which test domains a row's repos put in play, and so which services its
  * stack needs.
@@ -42,13 +76,28 @@ const everyDomain = (reason) => ({
  * {@link tagDomainsIn}. A tag with no entry there is taken as reaching every
  * domain, because an unknown reach is not a safe one to narrow on.
  *
+ * Under `e2e: 'targeted'` the tags name nothing the local gate will run: its
+ * E2E rung runs only the specs the row changed, and the tagged specs in other
+ * domains are the pull request's to run. So the domains are the repos' own
+ * suites alone, and the reason says which domains were left to the pull
+ * request. A row that changes a spec in some other domain is the case this
+ * does not see, because the tests repo signals no domain of its own; that
+ * row's rung goes red against a stack missing those services rather than
+ * passing unproven.
+ *
  * @param {object} opts
  * @param {object} opts.scope - The parsed e2e-tests-pr-scope.json
  * @param {string[]} opts.folders - The row's repo folder names
  * @param {Record<string, string[]>} [opts.tagDomains] - Which domains carry each service tag
+ * @param {'local'|'targeted'|'ci'} [opts.e2e] - The run's `--e2e` mode
  * @returns {{domains: string[], everyDomain: boolean, reason: string}} No domains means the row needs no stack
  */
-export const domainsForFolders = ({ scope, folders, tagDomains = {} }) => {
+export const domainsForFolders = ({
+  scope,
+  folders,
+  tagDomains = {},
+  e2e = 'local'
+}) => {
   const signalling = folders.filter((folder) => !SAYS_NOTHING.has(folder))
   if (signalling.length === 0) {
     return {
@@ -76,13 +125,16 @@ export const domainsForFolders = ({ scope, folders, tagDomains = {} }) => {
     )
   }
   const tags = sorted(entries.flatMap((entry) => entry.tags ?? []))
+  const fromSuites = sorted(suites.map(domainOfSuite).filter(Boolean))
+  if (e2e === CHANGED_SPECS_ONLY) {
+    return narrowedToOwnSuites({ signalling, fromSuites, tags, tagDomains })
+  }
   const unknownTags = tags.filter((tag) => !tagDomains[tag])
   if (unknownTags.length > 0) {
     return everyDomain(
       `${unknownTags.join(', ')} marks specs in no domain this could find, so its reach is unknown`
     )
   }
-  const fromSuites = suites.map(domainOfSuite).filter(Boolean)
   const fromTags = tags.flatMap((tag) => tagDomains[tag])
   const domains = sorted([...fromSuites, ...fromTags])
   return {
@@ -145,9 +197,16 @@ export const tagsIn = (scope) =>
  * @param {Record<string, string>} opts.folderOfKey - Each envelope repo key mapped to its folder name
  * @param {object} opts.scope - The parsed e2e-tests-pr-scope.json
  * @param {Record<string, string[]>} [opts.tagDomains] - From {@link tagDomainsIn}
+ * @param {'local'|'targeted'|'ci'} [opts.e2e] - The run's `--e2e` mode
  * @returns {{needsStack: boolean, everyDomain: boolean, domains: string[], services: string[], wholeStack: string[], rows: object[]}}
  */
-export const stackPlanFor = ({ rows, folderOfKey, scope, tagDomains = {} }) => {
+export const stackPlanFor = ({
+  rows,
+  folderOfKey,
+  scope,
+  tagDomains = {},
+  e2e = 'local'
+}) => {
   const perRow = rows.map((row) => {
     const folders = (row.repos ?? Object.keys(folderOfKey))
       .map((key) => folderOfKey[key])
@@ -156,7 +215,7 @@ export const stackPlanFor = ({ rows, folderOfKey, scope, tagDomains = {} }) => {
       id: row.id,
       title: row.title,
       folders,
-      ...domainsForFolders({ scope, folders, tagDomains })
+      ...domainsForFolders({ scope, folders, tagDomains, e2e })
     }
   })
   const domains = sorted(perRow.flatMap(({ domains: own }) => own))
